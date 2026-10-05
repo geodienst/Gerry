@@ -6,7 +6,7 @@ Een interactieve kaart van alle Amerikaanse congresdistricten die per staat en l
 
 1. **Proportional**: zetels naar rato van de stemmen in de staat (elke stem even zwaar).
 2. **Neutral baseline**: wat neutraal getekende kaarten gemiddeld opleveren, met spreiding.
-3. **Enacted**: wat de huidige, werkelijk vastgestelde kaart oplevert.
+3. **Enacted**: wat de kaart oplevert waarmee op 3 november 2026 gestemd wordt.
 
 Het verschil tussen 1 en 2 is het **geografische effect** (onder meer de concentratie van stedelijke kiezers). Het verschil tussen 2 en 3 is het **effect van het tekenen**. Die twee verschillen zijn de kern van het verhaal en moeten in de UI expliciet zichtbaar zijn.
 
@@ -14,8 +14,8 @@ De rangorde tussen de drie wordt niet vooraf aangenomen. De data bepaalt per sta
 
 ## Methodologische regels
 
-- **Eén stembasis voor alle drie de scenario's.** Gebruik dezelfde composiet van statewide verkiezingen (de basis die ALARM hanteert) op precinctniveau. Enacted zetels worden berekend door die precincten aan de huidige districten toe te wijzen, niet uit losse House-uitslagen. Zo zijn de drie getallen direct vergelijkbaar, ook voor kaarten die in 2025-2026 zijn hertekend en nog geen verkiezing hebben gehad.
-- **Werkelijke House-uitslagen (2024, later 2026)** zijn een aparte, optionele laag, duidelijk gescheiden van de vergelijking.
+- **Eén stembasis voor alle drie de scenario's.** Gebruik dezelfde composiet op precinctniveau: de presidentsverkiezingen van 2016 en 2020, stemmen opgeteld. Dat is de presidentiële basis die ALARM aanraadt voor vergelijkingen tussen staten. West Virginia: alleen 2020, op countyniveau, omdat ALARM's precinctbestand daar onvolledig is. Enacted zetels worden berekend door die precincten aan de huidige districten toe te wijzen, niet uit losse House-uitslagen. Zo zijn de drie getallen direct vergelijkbaar, ook voor kaarten die in 2025-2026 zijn hertekend en nog geen verkiezing hebben gehad.
+- **Werkelijke House-uitslagen (2026, in versie 2)** zijn een aparte, optionele laag, duidelijk gescheiden van de vergelijking.
 - **Proportional**: tweepartijenaandeel van de staat maal aantal zetels, afgerond met largest remainder per staat. Landelijk totaal is de som over staten.
 - **Neutral baseline**: mediaan plus 5e tot 95e percentiel van het aantal Democratische zetels over het ensemble. Rapporteer ook het percentiel van de enacted kaart binnen het ensemble.
 - **Aanvullende maten per staat**: efficiency gap en mean-median difference, berekend op dezelfde stembasis.
@@ -26,11 +26,13 @@ De rangorde tussen de drie wordt niet vooraf aangenomen. De data bepaalt per sta
 ## Databronnen
 
 - **ALARM Project, 50-State Redistricting Simulations** (Harvard Dataverse, McCartan, Imai e.a.). Ensembles en precinct-niveau stemcomposiet per staat. Lees eerst de documentatie en codebook voordat je iets bouwt.
-- **Census TIGER/Line**: grenzen van de congresdistricten (119e Congres) en staten.
-- **Hertekende kaarten 2025-2026**: verifieer per staat via webonderzoek of de kaart tussentijds is gewijzigd. Haal dan de officiële shapefile of block assignment file op (staatsbron of Redistricting Data Hub). Houd een tabel bij in `data/sources.md` met per staat: bron, datum, status (vastgesteld, aangevochten, geblokkeerd door rechter).
+- **Census TIGER/Line en blokbestanden**: grenzen en blok-naar-districttoewijzing van de kaarten waarmee in november 2026 gestemd wordt (120e Congres, CD120; voor Missouri de kaart van 2022), plus de staten.
+- **Hertekende kaarten 2025-2026**: verifieer per staat via webonderzoek of de kaart tussentijds is gewijzigd. De pijplijn gebruikt de blokbestanden van Census; vergelijk die eenmalig met de officiële shapefile of block assignment file van de staat. Houd een tabel bij in `data/sources.md` met per staat: bron, datum, status (In effect, Challenged, Blocked, At-large).
 - **Kruiscontrole**: PlanScore en Dave's Redistricting App voor een handvol staten.
 
 Ruwe data komt niet in git. `data/raw/` staat in `.gitignore`; alles is reproduceerbaar via de downloadscripts.
+
+Het goedgekeurde ontwerp staat in `docs/superpowers/specs/2026-10-05-gerrymandering-map-design.md`.
 
 ## Stack
 
