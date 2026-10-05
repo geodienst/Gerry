@@ -52,6 +52,6 @@ De bestanden van Census volstaan voor de pijplijn. De bestanden van de staten zi
 | FL | EOGPCRP2026 | https://www.flsenate.gov/Session/Redistricting/Congressional |
 | TN | HB 7003 (2026) | https://www.capitol.tn.gov/redistricting/ (niet bereikbaar van hieruit), laag CONGRESSIONAL_DISTRICTS van TN STS |
 | LA | Act 2 (2026) | https://redist.legis.la.gov/ (het blokbestand van de staat bevat 1.751 GEOID's die geen tabulatieblok van 2020 zijn; CD120 heeft de voorkeur) |
-| AL | Plan van de wetgever (mei 2026) | https://alison.legislature.state.al.us/reapportionment-documents |
+| AL | Livingston Congressional Plan 3-2023 (wetgever, juli 2023; pas in 2026 in gebruik, na de schorsing door het Supreme Court op 2 juni 2026) | https://alison.legislature.state.al.us/reapportionment-documents |
 
 Let op bij Utah: district 1 is nu het district in Salt Lake County. Districtsnummers zijn tussen kaarten niet vergelijkbaar.

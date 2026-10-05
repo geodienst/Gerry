@@ -36,7 +36,7 @@ Dit zijn controlegetallen, geen eindresultaten. De pijplijn rekent ze straks opn
 
 - Plannummers lopen niet van 1 tot 5000. TX begint bij 2, NC springt van 2500 naar 10001, UT mist 2501 tot 3000. Selecteer simulaties met `draw != "cd_2020"`.
 - Het stats-bestand slaat stemmen per district op als gehele getallen. Staatstotalen per plan wijken daardoor een paar stemmen af. Toets de afwijking van het totaal uit het eenhedenbestand, met een tolerantie van 0,5 maal het aantal districten.
-- In CA liggen de totalen in het stats-bestand 0,005 tot 0,03% onder die van het blokbestand, zonder aanwijsbare oorzaak. Tolerantie nodig, en een notitie.
+- In CA liggen de totalen in het stats-bestand 0,005 tot 0,03% onder die van het blokbestand. Het hele verschil zit in twee tracts: 06049000300 (Modoc) en 06093000200 (Siskiyou), waar ALARM's tractdata minder stemmen heeft dan het blokbestand (oorzaak onbekend; het blokbestand is sinds november 2021 niet veranderd). De tracts liggen niet altijd in hetzelfde district, en dat district loopt van 39% tot 74% Democratisch. In 4 van de 5.000 plannen zou het verschil de winnaar van één district veranderen. De pijplijn volgt daarom in die tracts ALARM's cijfers.
 - GEOID's zijn tekst: koppeltekens (`32001008-03`) en `ZZZZZZ` komen voor. Nooit naar een getal omzetten.
 - Eenheden zonder VAP maar met stemmen bestaan (NV 0,12%, UT 0,67% van de stemmen). Als zo'n eenheid gesplitst is, verdelen we naar aantal blokken en loggen we het.
 - West Virginia: het VTD-bestand mist stemmen voor 13 county's (38% van de VAP). Voor WV moeten we ALARM's county-data uit `map.rds` lezen. Het pakket `rdata` doet dat zonder R. Er zijn ook geen kolommen voor 2016, dus de pijplijn heeft per staat een lijst verkiezingen nodig.

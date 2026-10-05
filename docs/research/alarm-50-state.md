@@ -17,7 +17,7 @@ De dataset dekt 44 staten: alle staten met meer dan één zetel, samen 429 distr
 
 Er is ook een 2010-cyclus (43 staten). Die gebruiken we niet.
 
-Er staan herberekeningen op GitHub die nog niet op Dataverse staan. PR #375, samengevoegd op 27 augustus 2026, draait AL, CO, KS, MI, MS, NC, NY, OH, PA, SC en WA opnieuw omdat ze de R-hat-drempel van 1,05 niet meer haalden. PR #348 (nog open) doet hetzelfde voor CA, FL en TX. Een v16 ligt dus in het verschiet. We pinnen v15 en maken de versie een instelling.
+Er staan herberekeningen op GitHub die nog niet op Dataverse staan. PR #375, samengevoegd op 27 augustus 2026, draait AL, CO, KS, MI, MS, NC, NY, OH, PA, SC en WA opnieuw omdat ze de R-hat-drempel van 1,05 niet meer haalden. PR #348, nog open, vervangt voor CA, FL en TX de gedeeltelijke simulatie door een nieuwe methode. Een v16 ligt dus in het verschiet. We pinnen v15 en maken de versie een instelling.
 
 Een werkdocument van juli 2026 (Kenny, Zhou, Simko en Imai) noemt twee nieuwere datasets: race-blinde ensembles (doi:10.7910/DVN/A3SE7Y) en de kaarten van het 119e Congres plus kaarten vastgesteld tot 15 juni 2026, gescoord op presidentsuitslagen van 2024 (doi:10.7910/DVN/KI4BHR). Beide geven nu HTTP 401. Ze zijn nog niet openbaar.
 
@@ -78,7 +78,7 @@ In de vastgestelde kaart van ALARM zijn gesplitste VTD's in hun geheel aan één
 - Zachte eisen: compactheid en penalties per staat.
 - VRA: een hinge-penalty als het aandeel minderheden in de VAP van een district onder een doel zakt, en een omgekeerde hinge tegen packing. De doelen volgen het aantal opportunity districts in de kaart van 2022. Dit staat aan in AL, AZ, CA, FL, GA, LA, MI, MO, MS, NC, OH, RI, SC, TX (op CVAP) en WA. Achteraf filteren AL en SC plannen weg zonder district met meer dan 30% zwarte VAP en een Democratische meerderheid, en MO eist minstens 30% zwarte VAP in het meest zwarte district. De documentatie van IL noemt VRA-beperkingen, maar die stonden niet aan.
 - Niet partij-blind: CO (beperking op competitiviteit) en AZ. De filters in AL en SC gebruiken ook stemdata.
-- Kernbehoud: KS, LA, NE, NM en UT. In Utah worden alle precincts die meer dan twee precincts van een districtsgrens van de kaart van 2010 liggen samengevoegd. De neutrale kaarten van Utah volgen daardoor in grote lijnen de kaart van 2010.
+- Kernbehoud: KS, LA, NE, NM en UT. Alle precincts die meer dan twee precincts van een districtsgrens liggen, worden samengevoegd, zodat de kern van elk district intact blijft. Volgens de documentatie gaat het overal om de kaart van 2010. De code zegt iets anders (`analyses/*_cd_2020/02_setup_*.R`, gecontroleerd op 5 oktober 2026): KS en NE gebruiken `cd_2010`, maar LA, NM en UT gebruiken `cd_2020`, de vastgestelde kaart van 2021-2022. In Utah is dat de kaart van de wetgever uit 2021, die een rechter in 2025 verving. De neutrale kaarten van LA, NM en UT lijken daardoor meer op die kaart dan vrij getekende kaarten zouden doen.
 - Clusters of gedeeltelijke simulatie: CA, FL, TX, AZ, HI en OH.
 
 Louisiana v. Callais (april 2026) heeft Sectie 2 van de VRA verzwakt. De VRA-beperkingen in v15 volgen het recht van vóór die uitspraak. Kenny e.a. (juni 2026) vinden dat race-blinde neutrale kaarten landelijk ongeveer dezelfde partijverhouding geven als de ensembles met VRA-beperkingen.
