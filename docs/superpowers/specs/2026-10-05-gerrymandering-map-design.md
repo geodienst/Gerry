@@ -54,7 +54,7 @@ Een eenheid is het kleinste gebied met stemcijfers: meestal een VTD (stemdistric
 | [Census CD118](https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip), per staat `{ss}_{ST}_CD118.txt` | Missouri (kaart van 2022, gelijk aan 2024), en de controle tegen ALARM's `cd_2020` | 16-12-2022 |
 | [Census CD120](https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2027/120-congressional-district-befs/cd120.zip), `NationalCD120.txt` | Alle andere staten, plus Missouri HB 1 | 31-08-2026 |
 | Census P.L. 94-171, `{st}2020.pl.zip`, alle 44 staten | Per blok de VAP (P0030001), de VTD-code en het interne punt | 2020 |
-| Census TIGER 2026, nationale GeoPackage, laag `Congressional_Districts`, veld `CD120FP` | Districtsgrenzen 2026 | 27-08-2026 |
+| Census TIGER 2026, nationale GeoPackage, laag `Congressional Districts` (met spatie), veld `CD120FP` | Districtsgrenzen 2026 | 27-08-2026 |
 | Census TIGER/Line 2025, `tl_2025_29_cd119` | Districtsgrenzen Missouri 2022 | 22-09-2025 |
 | Census cartografische grenzen 2025, `cb_2025_us_state_500k` | Afsnijden op de kustlijn | 23-04-2026 |
 
@@ -114,7 +114,7 @@ Globaal:
 
 - `status_checked`: de datum van de laatste statuscontrole. Moet gelijk zijn aan de datum in de eerste regel van `data/sources.md`.
 - `ensemble`: naam (`alarm_v15`), DOI, versie, en per staat de noten die bij deze ensembleset horen, met hun invulwaarden (hoofdstuk 5, notentabel). Wisselen van ensembleset wisselt zo ook die noten.
-- `census_vest_commit`, de URL's en datums van de Census-bestanden.
+- `census_vest_commit` en de URL's van de bronnen. Datums en checksums staan in `data/sources.md` en `data/manifest.json`.
 - `align_to_alarm`: eenheden waar het eenheidsbestand andere stemmen heeft dan de data waarmee ALARM de ensembles optelde. Nu alleen California: in tracts 06049000300 (Modoc) en 06093000200 (Siskiyou) heeft ALARM's tractdata samen 429,9 (D 2016), 1.431,4 (R 2016), 552,4 (D 2020) en 1.716,2 (R 2020) stemmen minder dan het blokbestand. `units.py` schaalt de blokstemmen in die tracts per kolom naar de tracttotalen uit `CA_cd_2020_map.rds`. Zo gebruiken alle drie de scenario's dezelfde cijfers. Zonder deze stap zou in 4 van de 5.000 plannen van California één district een andere winnaar hebben dan op het blokbestand.
 
 Per staat:
@@ -246,10 +246,10 @@ Controles in de pijplijn (`gerry/checks.py`). Faalt er een, dan stopt de pijplij
 Controles van de methode, in `docs/validation.md`:
 
 - De kaarten van 2022 (CD118) met onze methode tegen ALARM's `cd_2020`, alle 44 staten. Drempel: per district hoogstens 0,5 procentpunt verschil en hetzelfde aantal zetels. In California en Texas wijkt de referentiekaart van ALARM zelf al tot 0,4 procentpunt af, omdat ALARM hele eenheden toewijst.
-- Hele-eenheidstoewijzing tegen blokverdeling voor de kaarten van 2026: districten met een andere winnaar worden genoemd.
+- Hele-eenheidstoewijzing tegen blokverdeling voor de kaarten van 2026: districten met een andere winnaar worden genoemd, en elk krijgt een verklaring in `data/validation_notes.yaml`. Zo'n district ligt dicht bij 50%, en dan doet de methode ertoe.
 - Aantal plannen, aantal beslechte gelijke standen en het effect van `align_to_alarm` per kolom.
 
-Eenmalige vergelijking met bestanden van staten (`tools/compare_state_files.py`). CD120 tegen het officiële bestand voor AL, OH, TN, UT en MO HB 1, naast de al gedane vergelijking voor TX, CA, NC, FL en LA. Waar een staat een blokbestand heeft (OH, MO HB 1), vergelijken we blok voor blok. Anders (AL via ALGeoHub, TN via de staatslaag, UT via UGRC) vergelijken we de officiële districtsvormen met CD120 via de interne punten van de blokken. Het script schrijft `data/crosscheck/state_files.csv` en werkt de vergelijkingstabel in `data/sources.md` bij. In dezelfde stap stellen we de officiële naam van de kaart van Utah vast.
+Eenmalige vergelijking met bestanden van staten (`tools/compare_state_files.py`). CD120 tegen het officiële bestand voor AL, OH, TN, UT en MO HB 1, naast de al gedane vergelijking voor TX, CA, NC, FL en LA. Waar een staat een blokbestand heeft (OH, MO HB 1), vergelijken we blok voor blok. Anders (AL via ALGeoHub, TN via de staatslaag, UT via UGRC) vergelijken we de officiële districtsvormen met CD120 via de interne punten van de blokken. Het script schrijft `data/crosscheck/state_files.csv`; daarna werken we de vergelijkingstabel in `data/sources.md` met de hand bij en draaien we `03_metrics` opnieuw. In dezelfde stap legt de eigenaar de naam van de kaart van Utah vast.
 
 Kruiscontroles uit CLAUDE.md:
 
@@ -279,7 +279,7 @@ Aandelen zijn fracties tussen 0 en 1, stemmen afgerond op hele getallen, `positi
 
 Route van de geometrie, in `gerry/geometry.py`:
 
-1. De GeoPackage één keer uitpakken in de datamap. Met `pyogrio.list_layers` controleren dat de laag `Congressional_Districts` met veld `CD120FP` bestaat, anders stoppen. Alleen `STATEFP` en `CD120FP` lezen.
+1. De GeoPackage één keer uitpakken in de datamap. Met `pyogrio.list_layers` controleren dat de laag `Congressional Districts` (met spatie) met veld `CD120FP` bestaat, anders stoppen. Alleen `STATEFP` en `CD120FP` lezen.
 2. `ZZ`, `98`, eilandgebieden en Missouri weglaten; Missouri toevoegen uit `tl_2025_29_cd119` (veld `CD119FP` hernoemen). Omzetten naar EPSG:4326 en schrijven als `data/interim/districts.geojson`.
 3. De omtrek van alle staten uit `cb_2025_us_state_500k` samenvoegen tot één vorm. We snijden af op die omtrek, zodat alleen kust en meren veranderen en grenzen tussen staten de volle TIGER-lijn houden.
 4. Mapshaper starten als `node node_modules/mapshaper/bin/mapshaper` (niet via `npx`, dat is op Windows een `.cmd`): invoer, `snap`, afsnijden, `dissolve` per staat tot de laag `states`, vereenvoudigen met `keep-shapes`, uitvoer als TopoJSON. Doel: onder 1 MB, vormen herkenbaar op een telefoon. Missouri komt uit een andere TIGER-jaargang; `snap` en een visuele controle van de grens met de buurstaten horen bij deze stap.
@@ -303,7 +303,7 @@ Inhoud:
 
 Statuslabels op de site: "In effect", "Challenged in court", "Blocked", "At-large". Zo botst de status niet met het scenariolabel "Enacted".
 
-Opmaak van getallen. Eén formatter in `site/js/format.js`, getest met `node --test` (zonder extra pakketten). Python exporteert alleen ruwe getallen. Regels:
+Opmaak van getallen. Eén formatter in `site/js/format.js`, getest met `node --test "site/js/*.test.js"` (zonder extra pakketten). Python exporteert alleen ruwe getallen. Regels:
 
 - Aandelen in procenten met één decimaal. Rondt een aandeel af op 50,0%, dan twee decimalen; is het dan nog 50,00%, dan "just under 50%" of "just over 50%".
 - Aandelen van plannen in hele procenten. Is de waarde groter dan 0 maar rondt ze af op 0, dan "<1%"; is ze kleiner dan 1 maar rondt ze af op 100, dan ">99%". Alleen exact 0 en 1 worden "0%" en "100%". Testgevallen onder meer 25/5000 en 4975/5000.
@@ -315,10 +315,10 @@ Werkt met muis, toetsenbord en aanraking; panelen naast de kaart op desktop, ero
 
 ## 9. Gereedschap en werkwijze
 
-- Python 3.12 in `.venv`, versies vast in `requirements.txt`: pandas (3.x), pyarrow, numpy, geopandas, pyogrio, pyyaml, rdata, pytest.
+- Python 3.12 in `.venv`, versies vast in `requirements.txt`: pandas (3.x), pyarrow, numpy, geopandas, pyogrio, pyyaml, rdata, pytest, en openpyxl (alleen voor de `.xlsx`-blokbestanden in `tools/compare_state_files.py`).
 - Alle tekstbestanden openen met `encoding="utf-8"` (P.L. 94-171 uitgezonderd, dat is Latin-1). `PYTHONUTF8=1` staat in de Makefile en in de instructie om scripts los te draaien.
 - Node-pakketten als devDependencies in `package.json`: mapshaper, d3, topojson-client. Het npm-script `vendor` kopieert met `node -e` en `fs.copyFileSync` de bestanden `d3.min.js`, `topojson-client.min.js` en beide licenties naar `site/vendor/`. Eén keer draaien na `npm install` en het resultaat committen.
-- Makefile met `download`, `join`, `metrics`, `export`, `test`, `all` en `serve`. `PY ?= python`, gestart na het activeren van `.venv`, nooit `python3`. Elk recept is één regel zonder shell-gereedschap (geen `rm`, `cp`, `source`, `&&`), bijvoorbeeld `$(PY) pipeline/02_join.py` en `$(PY) -m http.server -d site`. `test` draait pytest en `node --test site/js`. Make staat nog niet op deze machine; installeren gaat met `winget install ezwinports.make`. De scripts draaien ook zonder Make.
+- Makefile met `download`, `join`, `metrics`, `export`, `test`, `all` en `serve`. `PY ?= python`, gestart na het activeren van `.venv`, nooit `python3`. Elk recept is één regel zonder shell-gereedschap (geen `rm`, `cp`, `source`, `&&`), bijvoorbeeld `$(PY) pipeline/02_join.py` en `$(PY) -m http.server 8000 --bind 127.0.0.1 --directory site`. `test` draait pytest en `node --test "site/js/*.test.js"`, via de hulpdoelen `test-py` en `test-js`. Make staat nog niet op deze machine; installeren gaat met `winget install ezwinports.make`. De scripts draaien ook zonder Make.
 - `.gitignore` krijgt `data/interim/` erbij.
 - Werken in een git worktree op een feature branch, commits in logische stukken, nooit een co-author. Elke sessie eindigt met de push-commando's; er is nog geen remote.
 

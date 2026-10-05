@@ -27,7 +27,7 @@ Missouri is de uitzondering. CD120 bevat de kaart van 2025 (HB 1). Het Missouri 
 | CD119, generalized 500k | https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_cd119_500k.zip | 7.067.743 B | Landelijk, 441 objecten |
 | CD119, generalized 5m | https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_cd119_5m.zip | 2.095.960 B | |
 | CD119 TIGER/Line per staat | https://www2.census.gov/geo/tiger/TIGER2025/CD/tl_2025_{SS}_cd119.zip | samen ongeveer 40 MB | Volle resolutie |
-| CD120, TIGER 2026 GeoPackage | https://www2.census.gov/geo/tiger/TGRGPKG26/tlgpkg_2026_us_legislative.gpkg.zip | 249.289.919 B (27-08-2026) | Laag `Congressional_Districts`, veld `CD120FP`, volle resolutie |
+| CD120, TIGER 2026 GeoPackage | https://www2.census.gov/geo/tiger/TGRGPKG26/tlgpkg_2026_us_legislative.gpkg.zip | 249.289.919 B (27-08-2026) | Laag `Congressional Districts` (met spatie), veld `CD120FP`, volle resolutie, Measured 3D MultiPolygon |
 | CD120, TIGER 2026 geodatabase | https://www2.census.gov/geo/tiger/TGRGDB26/tlgdb_2026_us_legislative.gdb.zip | 104.502.291 B | Zelfde inhoud |
 | Staten, generalized | https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_state_5m.zip | 1.120.533 B | Ook 500k en 20m |
 | VTD's 2020 | https://www2.census.gov/geo/tiger/TIGER2020PL/STATE/{SS}_{NAAM}/{SS}/tl_2020_{SS}_vtd20.zip | TX 43 MB | Geen VTD-bestanden voor CA, HI en OR |
