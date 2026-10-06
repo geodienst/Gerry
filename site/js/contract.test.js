@@ -52,11 +52,58 @@ function checkPosition(position, where) {
   assert.ok(near(position.midrank, position.fewer + position.equal / 2, 1e-9), `${where}.position.midrank`);
 }
 
+// Smallest seat count whose cumulative share of plans reaches q (spec chapter 5, inverted CDF).
+function percentile(dist, q) {
+  const total = sum(dist);
+  let cumulative = 0;
+  for (let k = 0; k < dist.length; k++) {
+    cumulative += dist[k];
+    if (cumulative >= q * total - 1e-9) return k;
+  }
+  return dist.length - 1;
+}
+
 function checkNeutral(neutral, length, total, where) {
   for (const key of ['median', 'p5', 'p95']) assert.ok(isInt(neutral[key]), `${where}.neutral.${key}`);
   assert.ok(neutral.p5 <= neutral.median && neutral.median <= neutral.p95, `${where}.neutral order`);
   assert.equal(neutral.dist.length, length, `${where}.neutral.dist length`);
   assert.ok(near(sum(neutral.dist), total, 1e-6), `${where}.neutral.dist sums to ${total}`);
+  for (const [key, q] of [['p5', 0.05], ['median', 0.5], ['p95', 0.95]]) {
+    assert.equal(neutral[key], percentile(neutral.dist, q), `${where}.neutral.${key} follows from neutral.dist`);
+  }
+}
+
+// EG and MM follow from the exported districts; positive favors Republicans (spec chapter 5).
+// Winners go by share > 0.5. No exported district sits at exactly 0.5 (real data: none); a tie would need the 2020 tie rule.
+function efficiencyGap(districts) {
+  let wastedD = 0;
+  let wastedR = 0;
+  let total = 0;
+  for (const { share, d, r } of districts) {
+    total += d + r;
+    if (share > 0.5) { wastedD += (d - r) / 2; wastedR += r; } else { wastedR += (r - d) / 2; wastedD += d; }
+  }
+  return (wastedD - wastedR) / total;
+}
+
+function meanMedian(districts) {
+  const shares = districts.map((d) => d.share).sort((a, b) => a - b);
+  const mid = shares.length >> 1;
+  const median = shares.length % 2 ? shares[mid] : (shares[mid - 1] + shares[mid]) / 2;
+  return sum(shares) / shares.length - median;
+}
+
+// fewer, equal and more are the shares of plans with fewer, as many and more Democratic seats than Enacted.
+function checkPositionFromDist(position, dist, enacted, where) {
+  const total = sum(dist);
+  const expected = {
+    fewer: sum(dist.slice(0, enacted)) / total,
+    equal: dist[enacted] / total,
+    more: sum(dist.slice(enacted + 1)) / total,
+  };
+  for (const key of ['fewer', 'equal', 'more']) {
+    assert.ok(near(position[key], expected[key], 1e-9), `${where}.position.${key} ${position[key]} follows from neutral.dist and enacted (${expected[key]})`);
+  }
 }
 
 function checkEffects(block, proportional, where) {
@@ -75,6 +122,8 @@ function checkDistricts(districts, fips, seats, where) {
     assert.ok(near(d.share, d.d / (d.d + d.r), 1e-4), `${where} ${d.id}.share matches d and r`);
   }
   assert.equal(new Set(districts.map((d) => d.id)).size, seats, `${where} district ids unique`);
+  const numbered = Array.from({ length: seats }, (_, i) => `${fips}${String(i + 1).padStart(2, '0')}`);
+  assert.deepEqual(districts.map((d) => d.id).sort(), numbered, `${where} district ids run from 01 to ${seats}`);
 }
 
 function checkSeatsMatchDistricts(enacted, districts, where) {
@@ -87,6 +136,7 @@ function checkSeatsMatchDistricts(enacted, districts, where) {
 function checkMeasure(measure, where) {
   for (const key of ['value', 'median', 'p5', 'p95']) {
     assert.ok(typeof measure[key] === 'number' && Number.isFinite(measure[key]), `${where}.${key}`);
+    assert.ok(Math.abs(measure[key]) <= 1, `${where}.${key} is a fraction, not percentage points`);
   }
   assert.ok(measure.p5 <= measure.median && measure.median <= measure.p95, `${where} order`);
 }
@@ -98,7 +148,7 @@ function checkSource(source, where) {
 
 test('meta has the fields of chapter 7', { skip }, () => {
   const { meta } = data().results;
-  assert.match(meta.generated, /^\d{4}-\d{2}-\d{2}/);
+  assert.match(meta.generated, /^\d{4}-\d{2}-\d{2}$/);
   assert.deepEqual(Object.keys(meta.ensemble).sort(), ['doi', 'name', 'version']);
   assert.match(meta.census_vest_commit, /^[0-9a-f]{40}$/);
   assert.deepEqual(meta.vote_basis, ['pre_16', 'pre_20']);
@@ -115,6 +165,7 @@ test('national totals add up to 429, with the six single-seat states apart', { s
   assert.equal(national.enacted, sum(all.map((s) => s.enacted)));
   checkNeutral(national.neutral, 430, 1, 'national');
   checkPosition(national.position, 'national');
+  checkPositionFromDist(national.position, national.neutral.dist, national.enacted, 'national');
   checkEffects(national, national.proportional, 'national');
   assert.deepEqual(national.single_seat.map((s) => s.postal).sort(), SINGLE_SEAT);
   for (const s of national.single_seat) {
@@ -128,12 +179,14 @@ test('every state has the fields of chapter 7', { skip }, () => {
   for (const [postal, s] of Object.entries(data().results.states)) {
     for (const field of STATE_FIELDS) assert.ok(field in s, `${postal}.${field} missing`);
     assert.match(s.fips, /^\d{2}$/, `${postal}.fips`);
+    for (const key of ['name', 'map_name']) assert.ok(typeof s[key] === 'string' && s[key].length > 0, `${postal}.${key}`);
     assert.ok(isInt(s.seats) && s.seats >= 2, `${postal}.seats`);
     assert.ok(['In effect', 'Challenged'].includes(s.status), `${postal}.status`);
     checkSource(s.source, postal);
     for (const note of s.notes) {
       assert.ok(NOTE_KEYS.includes(note.key), `${postal} note key ${note.key}`);
       assert.ok(typeof note.text === 'string' && note.text.length > 0, `${postal} note ${note.key} text`);
+      assert.ok(!/[{}]/.test(note.text), `${postal} note ${note.key} has an unfilled placeholder`);
     }
     assert.ok(isFraction(s.d_share), `${postal}.d_share`);
     assert.ok(isInt(s.proportional) && s.proportional >= 0 && s.proportional <= s.seats, `${postal}.proportional`);
@@ -149,11 +202,21 @@ test('neutral band, position, effects and districts agree per state', { skip }, 
   for (const [postal, s] of Object.entries(data().results.states)) {
     checkNeutral(s.neutral, s.seats + 1, PLANS, postal);
     checkPosition(s.position, postal);
+    checkPositionFromDist(s.position, s.neutral.dist, s.enacted, postal);
     checkEffects(s, s.proportional, postal);
     checkDistricts(s.districts, s.fips, s.seats, postal);
     for (const key of ['enacted', 'p5', 'p50', 'p95']) {
-      assert.equal(s.sorted[key].length, s.seats, `${postal}.sorted.${key} length`);
+      const band = s.sorted[key];
+      assert.equal(band.length, s.seats, `${postal}.sorted.${key} length`);
+      assert.ok(band.every((v, i) => isFraction(v) && (i === 0 || band[i - 1] <= v)), `${postal}.sorted.${key} holds fractions in ascending order`);
     }
+    assert.ok(near(s.eg.value, efficiencyGap(s.districts), 1e-4), `${postal}.eg.value ${s.eg.value} follows from the districts (${efficiencyGap(s.districts)})`);
+    if (s.mm) assert.ok(near(s.mm.value, meanMedian(s.districts), 1e-9), `${postal}.mm.value ${s.mm.value} follows from the districts (${meanMedian(s.districts)})`);
+    // One vote base: the statewide share behind Proportional is the share of the district votes behind Enacted.
+    const votes = sum(s.districts.map((d) => d.d)) / sum(s.districts.map((d) => d.d + d.r));
+    assert.ok(near(s.d_share, votes, 1e-5), `${postal}.d_share ${s.d_share} matches the district votes ${votes}`);
+    const quota = s.d_share * s.seats;
+    assert.ok(Math.floor(quota) <= s.proportional && s.proportional <= Math.ceil(quota), `${postal}.proportional ${s.proportional} is the quota ${quota} rounded`);
     const shares = s.districts.map((d) => d.share).sort((a, b) => a - b);
     assert.deepEqual(s.sorted.enacted, shares, `${postal}.sorted.enacted is the sorted district shares`);
     s.sorted.p50.forEach((p50, i) => {
@@ -175,6 +238,7 @@ test('only Missouri has a blocked map, with the fields of chapter 7', { skip }, 
   checkDistricts(b.districts, states.MO.fips, states.MO.seats, 'MO.blocked_map');
   checkSeatsMatchDistricts(b.enacted, b.districts, 'MO.blocked_map');
   checkPosition(b.position, 'MO.blocked_map');
+  checkPositionFromDist(b.position, states.MO.neutral.dist, b.enacted, 'MO.blocked_map');
 });
 
 test('topojson districts match results.json per state', { skip }, () => {
@@ -183,6 +247,7 @@ test('topojson districts match results.json per state', { skip }, () => {
   const geometries = topology.objects.districts.geometries;
   for (const g of geometries) {
     assert.ok(g.type, `district ${g.properties.id} has no geometry`);
+    assert.ok(!('id' in g), `district ${g.properties.id} keeps its id in properties, not in geometry.id`);
   }
   const byState = new Map();
   for (const { properties: p } of geometries) {
@@ -204,6 +269,10 @@ test('topojson states layer matches results.json ids and postal codes', { skip }
   const { results, topology } = data();
   const expected = new Map(Object.entries(results.states).map(([postal, s]) => [postal, s.fips]));
   for (const s of results.national.single_seat) expected.set(s.postal, s.fips);
+  for (const g of topology.objects.states.geometries) {
+    assert.ok(g.type, `state ${g.properties.postal} has no geometry`);
+    assert.ok(!('id' in g), `state ${g.properties.postal} keeps its id in properties, not in geometry.id`);
+  }
   const props = topology.objects.states.geometries.map((g) => g.properties);
   assert.equal(props.length, 50);
   sameSet(props.map((p) => p.postal), [...expected.keys()]);
@@ -211,7 +280,8 @@ test('topojson states layer matches results.json ids and postal codes', { skip }
 });
 
 test('visible text in results.json has no em dashes', { skip }, () => {
-  const texts = [];
+  const { meta, national } = data().results;
+  const texts = [meta.ensemble.name, ...national.single_seat.map((s) => s.name)];
   for (const s of Object.values(data().results.states)) {
     texts.push(s.name, s.map_name, s.source.label, ...s.notes.map((n) => n.text));
     if (s.blocked_map) texts.push(s.blocked_map.name, s.blocked_map.source.label);
