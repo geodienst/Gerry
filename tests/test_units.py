@@ -5,8 +5,9 @@ import pandas as pd
 import pytest
 import rdata
 
-from gerry.config import StateConfig
-from gerry.units import UnitsError, add_composite, load_units, select_columns
+from gerry.config import AlignEntry, StateConfig, data_dir
+from gerry.rds import read_rds_table
+from gerry.units import UnitsError, add_composite, align_to_alarm, load_units, select_columns
 
 
 def make_state(postal, fips, unit_source, elections=("pre_16", "pre_20")):
@@ -134,3 +135,74 @@ def test_add_composite_with_one_election_copies_it():
     df = pd.DataFrame({"unit_id": ["a"], "d_pre_20": [1345.0], "r_pre_20": [5068.0]})
     out = add_composite(df, ["pre_20"])
     assert (out.loc[0, "d"], out.loc[0, "r"]) == (1345.0, 5068.0)
+
+
+# ---- align_to_alarm (Task 1.6) ----
+
+TRACT_ENTRY = AlignEntry(state="CA", rds="alarm/CA_cd_2020_map.rds", unit_column="tract", unit_len=11,
+                         units=("06049000300",))
+
+
+def block_units():
+    return pd.DataFrame({
+        "unit_id": ["060490003001000", "060490003001001", "060490003001452", "060014001001000"],
+        "vap": [10, 30, 0, 5],
+        "d_pre_16": [10.0, 30.0, 0.0, 7.0],
+        "r_pre_16": [20.0, 20.0, 0.0, 9.0],
+    })
+
+
+def test_align_scales_each_column_to_the_tract_total():
+    alarm = pd.DataFrame({"tract": ["06049000300", "06001400100"],
+                          "pre_16_dem_cli": [20.0, 7.0], "pre_16_rep_tru": [40.0, 9.0]})
+    units = block_units()
+    out, diff = align_to_alarm(units, alarm, TRACT_ENTRY, ["pre_16"])
+    # d: blocks in the tract hold 10 + 30 = 40, ALARM has 20, factor 0.5: 10 -> 5, 30 -> 15.
+    # r: blocks hold 20 + 20 = 40, ALARM has 40, factor 1. The block outside the tract is untouched.
+    assert out["d_pre_16"].tolist() == [5.0, 15.0, 0.0, 7.0]
+    assert out["r_pre_16"].tolist() == [20.0, 20.0, 0.0, 9.0]
+    assert diff.to_dict("records") == [{"column": "d_pre_16", "before": 40.0, "after": 20.0},
+                                       {"column": "r_pre_16", "before": 40.0, "after": 40.0}]
+    assert units["d_pre_16"].tolist() == [10.0, 30.0, 0.0, 7.0]
+
+
+def test_align_to_a_zero_total_empties_the_tract():
+    alarm = pd.DataFrame({"tract": ["06049000300"], "pre_16_dem_cli": [0.0], "pre_16_rep_tru": [0.0]})
+    out, diff = align_to_alarm(block_units(), alarm, TRACT_ENTRY, ["pre_16"])
+    assert out["d_pre_16"].tolist() == [0.0, 0.0, 0.0, 7.0]
+    assert diff["after"].tolist() == [0.0, 0.0]
+
+
+def test_align_needs_the_tract_in_the_alarm_table():
+    alarm = pd.DataFrame({"tract": ["06001400100"], "pre_16_dem_cli": [7.0], "pre_16_rep_tru": [9.0]})
+    with pytest.raises(UnitsError, match="06049000300"):
+        align_to_alarm(block_units(), alarm, TRACT_ENTRY, ["pre_16"])
+
+
+def test_align_cannot_scale_zero_votes_up():
+    units = block_units()
+    units["d_pre_16"] = [0.0, 0.0, 0.0, 7.0]
+    alarm = pd.DataFrame({"tract": ["06049000300"], "pre_16_dem_cli": [5.0], "pre_16_rep_tru": [40.0]})
+    with pytest.raises(UnitsError, match="no d_pre_16 votes"):
+        align_to_alarm(units, alarm, TRACT_ENTRY, ["pre_16"])
+
+
+CA_BLOCKS = data_dir() / "census_vest" / "ca_2020_block.csv"
+CA_MAP = data_dir() / "alarm" / "CA_cd_2020_map.rds"
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not (CA_BLOCKS.exists() and CA_MAP.exists()), reason="needs the California unit files")
+def test_align_california_matches_the_spec():
+    st = make_state("CA", "06", "block")
+    entry = AlignEntry(state="CA", rds="alarm/CA_cd_2020_map.rds", unit_column="tract", unit_len=11,
+                       units=("06049000300", "06093000200"))
+    units = load_units(st, data_dir())
+    alarm = read_rds_table(CA_MAP)
+    out, diff = align_to_alarm(units, alarm, entry, st.elections)
+    assert diff["column"].tolist() == ["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]
+    # Spec chapter 4: ALARM's tract data has 429.9, 1431.4, 552.4 and 1716.2 votes fewer.
+    assert (diff["before"] - diff["after"]).round(1).tolist() == [429.9, 1431.4, 552.4, 1716.2]
+    # After the step the block file and ALARM's tract table have the same statewide totals.
+    for col, alarm_col in zip(diff["column"], ["pre_16_dem_cli", "pre_16_rep_tru", "pre_20_dem_bid", "pre_20_rep_tru"]):
+        assert abs(out[col].sum() - alarm[alarm_col].sum()) < 0.5

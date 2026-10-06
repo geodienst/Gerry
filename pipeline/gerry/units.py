@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from gerry.config import AlignEntry, StateConfig
 from gerry.rds import read_rds_table
 
 log = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def select_columns(columns: Iterable[str], election: str) -> tuple[str, str]:
     return found[0], found[1]
 
 
-def _county_id_column(table: pd.DataFrame, st) -> str:
+def _county_id_column(table: pd.DataFrame, st: StateConfig) -> str:
     """The one text column that holds 5-character county GEOIDs of this state."""
     hits = []
     for name in table.columns:
@@ -45,7 +46,7 @@ def _county_id_column(table: pd.DataFrame, st) -> str:
     return hits[0]
 
 
-def _read_table(st, root: Path) -> tuple[pd.DataFrame, str]:
+def _read_table(st: StateConfig, root: Path) -> tuple[pd.DataFrame, str]:
     """Raw unit table and the name of its id column."""
     if st.unit_source in ("vtd", "block"):
         path = Path(root) / "census_vest" / f"{st.postal.lower()}_2020_{st.unit_source}.csv"
@@ -58,7 +59,7 @@ def _read_table(st, root: Path) -> tuple[pd.DataFrame, str]:
     raise UnitsError(f"{st.postal}: unknown unit_source {st.unit_source!r}")
 
 
-def load_units(st, root: Path) -> pd.DataFrame:
+def load_units(st: StateConfig, root: Path) -> pd.DataFrame:
     """unit_id (str), vap (int64) and d_<e>, r_<e> (float64) for each election of the state.
 
     Empty vote fields become 0; their number is in .attrs["empty_vote_fields"] and
@@ -95,3 +96,40 @@ def add_composite(df: pd.DataFrame, elections: Sequence[str]) -> pd.DataFrame:
     out["d"] = out[[f"d_{e}" for e in elections]].sum(axis=1)
     out["r"] = out[[f"r_{e}" for e in elections]].sum(axis=1)
     return out
+
+
+def align_to_alarm(units: pd.DataFrame, alarm_table: pd.DataFrame, entry: AlignEntry,
+                   elections: Sequence[str]) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Scale the unit votes inside each of entry.units, per column, to ALARM's total for that unit.
+
+    Returns (scaled copy of units, table with columns column, before, after summed over entry.units)."""
+    out = units.copy()
+    out.attrs = dict(units.attrs)
+    key = out["unit_id"].str[: entry.unit_len]
+    listed = alarm_table[alarm_table[entry.unit_column].isin(entry.units)]
+    counts = listed[entry.unit_column].value_counts()
+    wrong = [u for u in entry.units if counts.get(u, 0) != 1]
+    if wrong:
+        raise UnitsError(f"{entry.state}: expected one row per unit in column {entry.unit_column} "
+                         f"of {entry.rds}: {', '.join(wrong)}")
+    alarm = listed.set_index(entry.unit_column)
+    rows = []
+    for e in elections:
+        dem, rep = select_columns(alarm_table.columns, e)
+        for col, alarm_col in ((f"d_{e}", dem), (f"r_{e}", rep)):
+            before = after = 0.0
+            for unit in entry.units:
+                inside = key == unit
+                if not inside.any():
+                    raise UnitsError(f"{entry.state}: no units inside {unit}")
+                current = float(out.loc[inside, col].sum())
+                target = float(alarm.at[unit, alarm_col])
+                if current == 0 and target != 0:
+                    raise UnitsError(f"{entry.state}: {unit} has no {col} votes to scale to {target}")
+                if current != 0:
+                    out.loc[inside, col] = out.loc[inside, col] * (target / current)
+                before += current
+                after += target
+            rows.append({"column": col, "before": before, "after": after})
+            log.info("%s: align_to_alarm %s %.1f -> %.1f", entry.state, col, before, after)
+    return out, pd.DataFrame(rows, columns=["column", "before", "after"])
