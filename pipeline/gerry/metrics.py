@@ -119,3 +119,24 @@ def pmf_percentile(pmf, q: float) -> int:
     cum = np.cumsum(p)
     hits = np.flatnonzero((p > 0) & (cum >= q / 100 - CUM_TOLERANCE))
     return int(hits[0])
+
+
+def _position(fewer: float, equal: float, more: float) -> dict:
+    return {"fewer": fewer, "equal": equal, "more": more, "midrank": fewer + equal / 2}
+
+
+def position(samples, value: int) -> dict:
+    """Share of plans with fewer, equal and more Democratic seats than value."""
+    values = np.asarray(samples)
+    if values.size == 0:
+        raise ValueError("no samples")
+    return _position(float(np.mean(values < value)), float(np.mean(values == value)),
+                     float(np.mean(values > value)))
+
+
+def pmf_position(pmf, value: int) -> dict:
+    """position() for a distribution given as counts or probabilities per seat count."""
+    p = _normalize(pmf)
+    if not 0 <= value < p.size:
+        raise ValueError(f"value {value} outside 0..{p.size - 1}")
+    return _position(float(p[:value].sum()), float(p[value]), float(p[value + 1:].sum()))

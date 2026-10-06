@@ -185,3 +185,33 @@ def test_pmf_percentile_agrees_with_samples():
     pmf = m.distribution(samples, 4)
     for q in (0, 1, 5, 25, 50, 75, 95, 100):
         assert m.pmf_percentile(pmf, q) == m.sample_percentile(samples, q)
+
+
+# Task 2.5: position and pmf_position
+
+def test_position_counts_fewer_equal_more():
+    # 10 plans with seats 1, 2, 2, 3, 3, 3, 3, 4, 4, 5; enacted 3
+    # fewer: 1, 2, 2 = 3/10 = 0.3; equal: 4/10 = 0.4; more: 4, 4, 5 = 0.3
+    # midrank = 0.3 + 0.4 / 2 = 0.5
+    pos = m.position([1, 2, 2, 3, 3, 3, 3, 4, 4, 5], 3)
+    assert pos == pytest.approx({"fewer": 0.3, "equal": 0.4, "more": 0.3, "midrank": 0.5})
+
+
+def test_position_nevada():
+    # Nevada: enacted 3; 13 + 1901 = 1914 plans fewer (0.3828), 3086 equal (0.6172), none more
+    # midrank = 0.3828 + 0.6172 / 2 = 0.6914
+    samples = [1] * 13 + [2] * 1901 + [3] * 3086
+    pos = m.position(samples, 3)
+    assert pos == pytest.approx({"fewer": 0.3828, "equal": 0.6172, "more": 0.0, "midrank": 0.6914})
+
+
+def test_pmf_position_from_counts():
+    # plans per seat count 0..3: 1, 3, 4, 2; value 2
+    # fewer = (1 + 3) / 10 = 0.4; equal = 4/10 = 0.4; more = 2/10 = 0.2; midrank = 0.4 + 0.2 = 0.6
+    pos = m.pmf_position([1, 3, 4, 2], 2)
+    assert pos == pytest.approx({"fewer": 0.4, "equal": 0.4, "more": 0.2, "midrank": 0.6})
+
+
+def test_pmf_position_rejects_value_outside_range():
+    with pytest.raises(ValueError):
+        m.pmf_position([1, 3, 4, 2], 4)
