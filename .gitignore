@@ -1,5 +1,6 @@
 # Raw data is never committed; it is reproducible via the download scripts
 data/raw/
+data/interim/
 
 # Local worktrees
 .worktrees/
