@@ -307,6 +307,12 @@ def test_linear_band_interpolates():
     # p95: 4 * 0.95 = 3.8 -> 0.40 + 0.8 * (0.50 - 0.40) = 0.48
     band = m.linear_band([0.50, 0.10, 0.40, 0.20, 0.30])
     assert band == pytest.approx({"median": 0.30, "p5": 0.12, "p95": 0.48})
+    # 0.10, 0.20, 0.30, 0.40, 1.00: median 0.30, mean 0.40
+    # p5 = 0.10 + 0.2 * 0.10 = 0.12, p95 = 0.40 + 0.8 * 0.60 = 0.88
+    assert m.linear_band([1.00, 0.10, 0.40, 0.20, 0.30]) == pytest.approx(
+        {"median": 0.30, "p5": 0.12, "p95": 0.88})
+    with pytest.raises(ValueError, match="no values"):
+        m.linear_band([])
 
 
 def test_sorted_band_sorts_each_plan_first():
@@ -322,6 +328,14 @@ def test_sorted_band_sorts_each_plan_first():
     assert band["p50"] == pytest.approx([0.3, 0.6])
     assert band["p95"] == pytest.approx([0.39, 0.69])
     assert isinstance(band["p50"], list)
+    # p5, p50 and p95 are plain lists with one entry per district (two here)
+    assert all(isinstance(v, list) and len(v) == 2 for v in band.values())
+    # one district, plans 0.9, 0.1, 0.2: sorted 0.1, 0.2, 0.9; median 0.2 (mean would be 0.4)
+    # p5 = 0.1 + 0.1 * 0.1 = 0.11; p95 = 0.2 + 0.9 * 0.7 = 0.83
+    one = m.sorted_band(np.array([[0.9], [0.1], [0.2]]))
+    assert one["p5"] == pytest.approx([0.11])
+    assert one["p50"] == pytest.approx([0.2])
+    assert one["p95"] == pytest.approx([0.83])
 
 
 # Task 2.10: convolve and is_narrow
