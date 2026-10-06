@@ -44,6 +44,8 @@ def test_largest_remainder_larger_remainder_wins():
     # 60 to 40, 4 seats: quota D = 60 * 4 / 100 = 2.4, quota R = 4 - 2.4 = 1.6
     # floors 2 + 1 = 3, one seat left; remainders 0.4 (D) and 0.6 (R) -> R
     assert m.largest_remainder(60, 40, 4) == 2
+    # quota D 2.8, R 1.2, floors 2 + 1, remainders 0.8 vs 0.2 -> leftover seat to D
+    assert m.largest_remainder(70, 30, 4) == 3
 
 
 def test_largest_remainder_nevada():
