@@ -215,7 +215,7 @@ def main() -> None:
     print(f"Wrote {out}")
     report = build_report(metrics, REPO_ROOT / "data" / "crosscheck", REPO_ROOT / "data" / "validation_notes.yaml")
     report_path = REPO_ROOT / "docs" / "validation.md"
-    report_path.write_text(report, encoding="utf-8")
+    report_path.write_text(report, encoding="utf-8", newline="\n")   # tracked in git: LF on Windows too
     status = next(line for line in report.splitlines() if line.startswith("**Open items"))
     print(f"Wrote {report_path}: {status.replace('**', '')}")
 

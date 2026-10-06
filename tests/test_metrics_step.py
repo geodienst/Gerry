@@ -337,3 +337,46 @@ def test_main_writes_metrics_and_report(tmp_path, monkeypatch):
     assert written == metrics
     report = (tmp_path / "docs" / "validation.md").read_text(encoding="utf-8")
     assert report.startswith("# Validation report")
+
+
+# --- main(): where it reads its inputs and how it writes the report --------------------------
+
+
+def _main_setup(tmp_path, monkeypatch):
+    metrics = {"national": {"seats": 0, "proportional": 0, "enacted": 0, "neutral": {"median": 0},
+                            "single_seat": []},
+               "states": {},
+               "checks": {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {},
+                          "join_log": {}}}
+    (tmp_path / "data" / "interim").mkdir(parents=True)
+    (tmp_path / "docs").mkdir()
+    monkeypatch.setattr(step, "load_config", lambda: None)
+    monkeypatch.setattr(step, "interim_dir", lambda: tmp_path / "data" / "interim")
+    monkeypatch.setattr(step, "compute", lambda cfg, idir: metrics)
+    monkeypatch.setattr(step, "REPO_ROOT", tmp_path)
+    return metrics
+
+
+def test_main_reads_notes_and_cross_check_files_from_the_repo_data_folder(tmp_path, monkeypatch, capsys):
+    _main_setup(tmp_path, monkeypatch)
+    (tmp_path / "data" / "validation_notes.yaml").write_text("AA:\n  dra: A note kept in the repo.\n",
+                                                             encoding="utf-8")
+    (tmp_path / "data" / "crosscheck").mkdir()
+    (tmp_path / "data" / "crosscheck" / "dra.csv").write_text(
+        "state,map_name,url,accessed,district,dem,rep\n", encoding="utf-8")
+    step.main()
+    report = (tmp_path / "docs" / "validation.md").read_text(encoding="utf-8")
+    # dra.csv is found (header only); planscore.csv and state_files.csv are not
+    assert "Pending: 2." in report
+    # AA is not in this made-up run, so its note is listed as one without an exceedance
+    assert "- **AA, dra.** A note kept in the repo." in report
+    assert "Open items: 0. Pending: 2." in capsys.readouterr().out
+
+
+def test_main_writes_the_report_with_lf_line_ends(tmp_path, monkeypatch):
+    # docs/validation.md is tracked in git: LF on Windows too, as for results.json and the manifest
+    _main_setup(tmp_path, monkeypatch)
+    step.main()
+    raw = (tmp_path / "docs" / "validation.md").read_bytes()
+    assert b"\r" not in raw
+    assert raw.endswith(b"\n") and not raw.endswith(b"\n\n")
