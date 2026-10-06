@@ -1,4 +1,5 @@
-"""Census blocks: P.L. 94-171 (VAP, VTD code, interior point) and the block equivalency files."""
+"""Census blocks: P.L. 94-171 (VAP, population, VTD code, interior point, county names) and the block
+equivalency files; the unit of each block and the votes per district."""
 from __future__ import annotations
 
 import csv
@@ -11,8 +12,11 @@ import numpy as np
 import pandas as pd
 
 # 0-based field positions in the pipe-delimited 2020 P.L. 94-171 files
-PL_GEO_FIELDS = {"SUMLEV": 2, "LOGRECNO": 7, "GEOCODE": 9, "VTD": 77, "POP100": 90, "INTPTLAT": 92, "INTPTLON": 93}
+PL_GEO_FIELDS = {"SUMLEV": 2, "LOGRECNO": 7, "GEOCODE": 9, "VTD": 77, "NAME": 87, "POP100": 90,
+                 "INTPTLAT": 92, "INTPTLON": 93}
 PL_SEG2_FIELDS = {"LOGRECNO": 4, "P0030001": 5}
+_BLOCK_FIELDS = ("SUMLEV", "LOGRECNO", "GEOCODE", "VTD", "POP100", "INTPTLAT", "INTPTLON")
+_COUNTY_FIELDS = ("SUMLEV", "GEOCODE", "NAME")
 
 
 class BlocksError(ValueError):
@@ -26,13 +30,17 @@ def _read_pipe(zf: zipfile.ZipFile, member: str, fields: dict[str, int]) -> pd.D
     return table.rename(columns={pos: name for name, pos in fields.items()})
 
 
-def read_pl_blocks(zip_path: Path, st: str) -> pd.DataFrame:
-    """block_id (str 15), vap (int64), vtd (str), lat, lon (float64) for every block (SUMLEV 750).
+def _fields(names: Sequence[str]) -> dict[str, int]:
+    return {name: PL_GEO_FIELDS[name] for name in names}
 
-    Read from the zip without extracting. The block VAP must add up to the state record (SUMLEV 040)."""
+
+def read_pl_blocks(zip_path: Path, st: str) -> pd.DataFrame:
+    """block_id (str 15), vap, pop (int64), vtd (str), lat, lon (float64) for every block (SUMLEV 750).
+
+    Read from the zip without extracting. The block VAP and POP100 must add up to the state record (SUMLEV 040)."""
     st = st.lower()
     with zipfile.ZipFile(zip_path) as zf:
-        geo = _read_pipe(zf, f"{st}geo2020.pl", PL_GEO_FIELDS)
+        geo = _read_pipe(zf, f"{st}geo2020.pl", _fields(_BLOCK_FIELDS))
         seg2 = _read_pipe(zf, f"{st}000022020.pl", PL_SEG2_FIELDS)
     if not seg2["LOGRECNO"].is_unique:
         raise BlocksError(f"{st}: LOGRECNO is not unique in segment 2")
@@ -44,22 +52,39 @@ def read_pl_blocks(zip_path: Path, st: str) -> pd.DataFrame:
     vap = blocks["LOGRECNO"].map(vap_of)
     if vap.isna().any():
         raise BlocksError(f"{st}: {int(vap.isna().sum())} blocks have no segment 2 record")
+    pop = pd.to_numeric(blocks["POP100"], errors="coerce")
+    if pop.isna().any():
+        raise BlocksError(f"{st}: {int(pop.isna().sum())} blocks have no POP100")
     out = pd.DataFrame({
         "block_id": blocks["GEOCODE"].to_numpy(),
         "vap": vap.astype("int64").to_numpy(),
+        "pop": pop.astype("int64").to_numpy(),
         "vtd": blocks["VTD"].to_numpy(),
         "lat": pd.to_numeric(blocks["INTPTLAT"]).to_numpy(),
         "lon": pd.to_numeric(blocks["INTPTLON"]).to_numpy(),
     })
-    pop = pd.to_numeric(blocks["POP100"]).to_numpy()
     if not out["block_id"].str.len().eq(15).all() or not out["block_id"].is_unique:
         raise BlocksError(f"{st}: block GEOCODE is not a unique 15-character code")
-    if (out["vap"].to_numpy() > pop).any():
-        raise BlocksError(f"{st}: VAP above POP100 in {int((out['vap'].to_numpy() > pop).sum())} blocks; "
+    if (out["vap"] > out["pop"]).any():
+        raise BlocksError(f"{st}: VAP above POP100 in {int((out['vap'] > out['pop']).sum())} blocks; "
                           "check PL_GEO_FIELDS and PL_SEG2_FIELDS")
     state_vap = int(vap_of[state["LOGRECNO"].iloc[0]])
     if int(out["vap"].sum()) != state_vap:
         raise BlocksError(f"{st}: block VAP adds up to {int(out['vap'].sum())}, state record says {state_vap}")
+    state_pop = int(state["POP100"].iloc[0])
+    if int(out["pop"].sum()) != state_pop:
+        raise BlocksError(f"{st}: block POP100 adds up to {int(out['pop'].sum())}, state record says {state_pop}")
+    return out
+
+
+def read_pl_counties(zip_path: Path, st: str) -> pd.DataFrame:
+    """county_id (str 5) and name (str, e.g. "Adair County") of every county record (SUMLEV 050)."""
+    with zipfile.ZipFile(zip_path) as zf:
+        geo = _read_pipe(zf, f"{st.lower()}geo2020.pl", _fields(_COUNTY_FIELDS))
+    counties = geo[geo["SUMLEV"] == "050"]
+    out = pd.DataFrame({"county_id": counties["GEOCODE"].to_numpy(), "name": counties["NAME"].to_numpy()})
+    if out.empty or not out["county_id"].str.len().eq(5).all() or not out["county_id"].is_unique:
+        raise BlocksError(f"{st}: county records are missing or their GEOCODE is not a unique 5-character code")
     return out
 
 
@@ -92,22 +117,23 @@ def read_bef(zip_path: Path, kind: str, fips: str, postal: str) -> pd.Series:
     return pd.Series(cdfp.to_numpy(), index=pd.Index(geoid.to_numpy(), name="block_id"), name="district")
 
 
-def unit_of_block(blocks: pd.DataFrame, unit_source: str, fips: str) -> pd.Series:
-    """block_id -> unit_id. vtd: county GEOID + VTD code; block: the block; rds_county: the county."""
+def unit_of_block(blocks: pd.DataFrame, unit_kind: str, fips: str) -> pd.Series:
+    """block_id -> key of the unit the block lies in: vtd: county (GEOCODE[:5]) + VTD code;
+    tract: GEOCODE[:11]; county: GEOCODE[:5]. A key need not be a unit of map.rds (water)."""
     ids = blocks["block_id"]
     if not ids.str.startswith(fips).all():
         raise BlocksError(f"blocks that do not start with FIPS {fips}, e.g. {ids[~ids.str.startswith(fips)].iloc[0]}")
-    if unit_source == "vtd":
+    if unit_kind == "vtd":
         blank = blocks["vtd"].str.strip() == ""
         if blank.any():
             raise BlocksError(f"{fips}: {int(blank.sum())} blocks without VTD code, e.g. {ids[blank].iloc[0]}")
         units = ids.str[:5] + blocks["vtd"]
-    elif unit_source == "block":
-        units = ids
-    elif unit_source == "rds_county":
+    elif unit_kind == "tract":
+        units = ids.str[:11]
+    elif unit_kind == "county":
         units = ids.str[:5]
     else:
-        raise BlocksError(f"unknown unit_source {unit_source!r}")
+        raise BlocksError(f"unknown unit_kind {unit_kind!r}")
     return pd.Series(units.to_numpy(), index=pd.Index(ids.to_numpy(), name="block_id"), name="unit_id")
 
 

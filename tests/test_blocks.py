@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gerry.blocks import (PL_GEO_FIELDS, BlocksError, block_weighted, read_bef, read_pl_blocks, unit_of_block,
-                          whole_unit)
+from gerry.blocks import (PL_GEO_FIELDS, BlocksError, block_weighted, read_bef, read_pl_blocks, read_pl_counties,
+                          unit_of_block, whole_unit)
 from gerry.config import data_dir
 
 
@@ -21,7 +21,7 @@ def geo_line(sumlev, logrecno, geocode, vtd="", pop100="0", lat="+39.0000000", l
     fields[PL_GEO_FIELDS["POP100"]] = pop100
     fields[PL_GEO_FIELDS["INTPTLAT"]] = lat
     fields[PL_GEO_FIELDS["INTPTLON"]] = lon
-    fields[87] = name
+    fields[PL_GEO_FIELDS["NAME"]] = name
     return "|".join(fields)
 
 
@@ -46,16 +46,29 @@ def make_pl_zip(path, state_vap=8, block2_pop="0"):
 
 def test_read_pl_blocks_returns_blocks_with_vap(tmp_path):
     blocks = read_pl_blocks(make_pl_zip(tmp_path / "nv2020.pl.zip"), "nv")
-    assert list(blocks.columns) == ["block_id", "vap", "vtd", "lat", "lon"]
+    assert list(blocks.columns) == ["block_id", "vap", "pop", "vtd", "lat", "lon"]
     assert blocks["block_id"].tolist() == ["320010001001000", "320010001001001"]
     assert blocks["vap"].dtype == np.int64 and blocks["vap"].tolist() == [8, 0]
+    assert blocks["pop"].dtype == np.int64 and blocks["pop"].tolist() == [10, 0]
     assert blocks["vtd"].tolist() == ["000010", "008-03"]
     assert blocks["lat"].tolist() == [39.5, 39.0] and blocks["lon"].tolist() == [-117.25, -117.0]
+
+
+def test_read_pl_counties_returns_fips_and_name(tmp_path):
+    counties = read_pl_counties(make_pl_zip(tmp_path / "nv2020.pl.zip"), "NV")
+    # the county name holds a Latin-1 byte, as in the real files
+    assert counties.to_dict("records") == [{"county_id": "32001", "name": "Doña Ana County"}]
 
 
 def test_read_pl_blocks_checks_the_state_record(tmp_path):
     with pytest.raises(BlocksError, match="8.*9"):
         read_pl_blocks(make_pl_zip(tmp_path / "nv2020.pl.zip", state_vap=9), "nv")
+
+
+def test_read_pl_blocks_checks_the_state_population(tmp_path):
+    # block POP100 adds up to 10 + 3 = 13; the state record says 10
+    with pytest.raises(BlocksError, match="POP100 adds up to 13, state record says 10"):
+        read_pl_blocks(make_pl_zip(tmp_path / "nv2020.pl.zip", block2_pop="3"), "nv")
 
 
 def test_read_pl_blocks_rejects_vap_above_population(tmp_path):
@@ -121,6 +134,7 @@ def test_nevada_blocks():
     blocks = read_pl_blocks(NV_PL, "nv")
     assert len(blocks) == 57409
     assert blocks["vap"].sum() == 2413326
+    assert blocks["pop"].sum() == 3104614
     assert blocks["block_id"].str.len().eq(15).all() and blocks["vtd"].str.len().eq(6).all()
 
 
@@ -155,19 +169,24 @@ def test_unit_of_block_rejects_a_blank_vtd_code():
         unit_of_block(blocks, "vtd", "32")
 
 
-def test_unit_of_block_for_block_states_is_the_block():
-    blocks = pl_blocks(["060014001001000"])
-    assert unit_of_block(blocks, "block", "06").to_dict() == {"060014001001000": "060014001001000"}
+def test_unit_of_block_for_tract_states_is_the_tract():
+    blocks = pl_blocks(["060014001001000", "060014001002003"])
+    assert unit_of_block(blocks, "tract", "06").tolist() == ["06001400100", "06001400100"]
 
 
 def test_unit_of_block_for_county_units_is_the_county():
     blocks = pl_blocks(["540630001001000", "540370001001000"])
-    assert unit_of_block(blocks, "rds_county", "54").tolist() == ["54063", "54037"]
+    assert unit_of_block(blocks, "county", "54").tolist() == ["54063", "54037"]
+
+
+def test_unit_of_block_rejects_an_unknown_kind():
+    with pytest.raises(BlocksError, match="'block'"):
+        unit_of_block(pl_blocks(["060014001001000"]), "block", "06")
 
 
 def test_unit_of_block_rejects_blocks_of_another_state():
     with pytest.raises(BlocksError, match="32"):
-        unit_of_block(pl_blocks(["060014001001000"]), "block", "32")
+        unit_of_block(pl_blocks(["060014001001000"]), "tract", "32")
 
 
 VOTES = ["d", "r"]
