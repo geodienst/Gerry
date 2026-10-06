@@ -234,6 +234,8 @@ def test_effects_geographic_and_drawing():
 def test_outside_band():
     # Texas band 15..20: 11 is below it; 15 and 20 are on the edges and count as inside; 21 is above
     assert m.outside_band(11, 15, 20) is True
+    # 14 lies just below the band 15..20
+    assert m.outside_band(14, 15, 20) is True
     assert m.outside_band(15, 15, 20) is False
     assert m.outside_band(20, 15, 20) is False
     assert m.outside_band(21, 15, 20) is True
