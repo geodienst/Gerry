@@ -63,3 +63,25 @@ def largest_remainder(d_votes: float, r_votes: float, seats: int) -> int:
     if d_votes != r_votes:
         return floor_d + 1 if d_votes > r_votes else floor_d
     raise TieError(f"equal remainders and equal votes ({d_votes} each) for {seats} seats")
+
+
+def seats_by_plan(ensemble: pd.DataFrame) -> pd.Series:
+    """Democratic seats per draw. Needs columns state, draw, district, d, r, d_pre_20, r_pre_20."""
+    try:
+        wins = dem_wins(ensemble["d"], ensemble["r"], ensemble["d_pre_20"], ensemble["r_pre_20"])
+    except TieError as err:
+        rows = ensemble.iloc[list(err.positions)]
+        where = "; ".join(f"{row.state} plan {row.draw} district {row.district}"
+                          for row in rows.itertuples(index=False))
+        raise TieError(f"{where}: {err}", err.positions) from err
+    seats = pd.Series(wins.astype(np.int64), index=ensemble.index).groupby(ensemble["draw"], sort=False).sum()
+    seats.name = "dem_seats"
+    return seats
+
+
+def distribution(seat_samples, seats: int) -> np.ndarray:
+    """Number of plans with 0, 1, ..., seats Democratic seats."""
+    samples = np.asarray(seat_samples, dtype=np.int64)
+    if samples.size == 0 or samples.min() < 0 or samples.max() > seats:
+        raise ValueError(f"seat counts must lie in 0..{seats}")
+    return np.bincount(samples, minlength=seats + 1)

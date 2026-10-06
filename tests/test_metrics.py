@@ -77,3 +77,47 @@ def test_largest_remainder_rejects_bad_input():
         m.largest_remainder(0, 0, 4)
     with pytest.raises(ValueError):
         m.largest_remainder(10, 20, 0)
+
+
+# Task 2.3: seats_by_plan and distribution
+
+def _ensemble(rows):
+    return pd.DataFrame(rows, columns=["state", "draw", "district", "d", "r", "d_pre_20", "r_pre_20"])
+
+
+def test_seats_by_plan_counts_dem_districts_per_draw():
+    ens = _ensemble([
+        # draw "1": 01 D (60 > 40), 02 R (30 < 70) -> 1 seat
+        ("NV", "1", "01", 60, 40, 30, 20),
+        ("NV", "1", "02", 30, 70, 15, 35),
+        # draw "2": both tied 50-50; 2020 gives 01 to D (30 > 20), 02 to R (10 < 40) -> 1 seat
+        ("NV", "2", "01", 50, 50, 30, 20),
+        ("NV", "2", "02", 50, 50, 10, 40),
+        # draw "7": 01 D (80 > 20), 02 D (55 > 45) -> 2 seats
+        ("NV", "7", "01", 80, 20, 40, 10),
+        ("NV", "7", "02", 55, 45, 30, 20),
+    ])
+    assert m.seats_by_plan(ens).to_dict() == {"1": 1, "2": 1, "7": 2}
+
+
+def test_seats_by_plan_double_tie_names_state_plan_and_district():
+    ens = _ensemble([
+        ("NV", "1", "01", 60, 40, 30, 20),
+        ("NV", "1", "02", 30, 70, 15, 35),
+        ("NV", "9", "01", 50, 50, 25, 25),  # tied in the composite and in 2020
+        ("NV", "9", "02", 30, 70, 15, 35),
+    ])
+    with pytest.raises(m.TieError, match="NV plan 9 district 01"):
+        m.seats_by_plan(ens)
+
+
+def test_distribution_counts_plans_per_seat_count():
+    # 4 seats, so counts for 0 to 4 seats; samples 1, 1, 2, 3, 3, 3 -> [0, 2, 1, 3, 0]
+    assert m.distribution([1, 1, 2, 3, 3, 3], 4).tolist() == [0, 2, 1, 3, 0]
+
+
+def test_distribution_rejects_impossible_counts():
+    with pytest.raises(ValueError):
+        m.distribution([5], 4)
+    with pytest.raises(ValueError):
+        m.distribution([], 4)
