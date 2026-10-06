@@ -36,6 +36,28 @@ def test_r_missing_values_become_pandas_missing_values(tmp_path):
     assert table["muni"].isna().tolist() == [False, True]
 
 
+def test_logical_na_stays_missing_and_complete_logical_stays_bool(tmp_path):
+    path = tmp_path / "lgl.rds"
+    rdata.write_rds(path, pd.DataFrame({
+        "with_na": pd.array([True, None, False], dtype="boolean"),
+        "complete": np.array([True, False, True]),
+    }))
+    table = read_rds_table(path)
+    assert table["with_na"].dtype == "boolean"
+    assert table["with_na"].isna().tolist() == [False, True, False]
+    assert table["with_na"].dropna().tolist() == [True, False]
+    assert table["complete"].dtype == np.bool_
+    assert table["complete"].tolist() == [True, False, True]
+
+
+def test_strings_flagged_latin1_are_decoded(tmp_path):
+    path = tmp_path / "latin1.rds"
+    # cp1252 makes rdata write the strings with R's LATIN1 flag and one byte per character.
+    rdata.write_rds(path, {"name": np.array(["café", "abc"], dtype=object)}, encoding="cp1252")
+    table = read_rds_table(path)
+    assert table["name"].tolist() == ["café", "abc"]
+
+
 WV_MAP = data_dir() / "alarm" / "WV_cd_2020_map.rds"
 CA_MAP = data_dir() / "alarm" / "CA_cd_2020_map.rds"
 

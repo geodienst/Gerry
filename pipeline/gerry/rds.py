@@ -12,7 +12,14 @@ import pandas as pd
 import rdata
 
 _T = rdata.parser.RObjectType
-_R_NA_INTEGER = np.iinfo(np.int32).min    # R stores NA_integer_ and NA (logical) as this value
+
+
+def _text(char) -> str | None:
+    """R CHARSXP -> str, following its encoding flags (UTF-8, Latin-1, ASCII).
+
+    Unmarked strings are in R's native encoding; ALARM's files are written in UTF-8.
+    """
+    return rdata.conversion.convert_char(char, default_encoding="utf-8")
 
 
 def _attributes(obj) -> dict:
@@ -23,13 +30,13 @@ def _attributes(obj) -> dict:
         tag = cur.tag
         if tag is not None and tag.info.type == _T.REF:
             tag = tag.referenced_object
-        out[tag.value.value.decode("utf-8")] = cur.value[0]
+        out[_text(tag.value)] = cur.value[0]
         cur = cur.value[1]
     return out
 
 
 def _strings(obj) -> list[str | None]:
-    return [x.value.decode("utf-8") if x.value is not None else None for x in obj.value]
+    return [_text(x) for x in obj.value]
 
 
 def _column(obj):
@@ -40,10 +47,13 @@ def _column(obj):
     if kind == _T.REAL:
         return np.asarray(obj.value, dtype=np.float64)
     if kind in (_T.INT, _T.LGL):
-        values = np.asarray(obj.value).astype(np.int64)
-        missing = values == _R_NA_INTEGER
+        # rdata returns R's NA as a masked array; the data under the mask is not reliable.
+        missing = np.ma.getmaskarray(obj.value)
+        data = np.ma.getdata(obj.value)
         if kind == _T.LGL:
-            return pd.arrays.BooleanArray(values != 0, missing) if missing.any() else values != 0
+            flags = data.astype(bool)
+            return pd.arrays.BooleanArray(flags, missing) if missing.any() else flags
+        values = data.astype(np.int64)
         return pd.arrays.IntegerArray(values, missing) if missing.any() else values
     return None
 
