@@ -131,6 +131,10 @@ def test_sample_percentile_takes_lower_middle_value():
     # samples 1, 1, 2, 2: share of plans with at most 1 seat = 2/4 = 0.5 >= 0.5
     # so the median is 1, never the average 1.5
     assert m.sample_percentile([1, 1, 2, 2], 50) == 1
+    # 1, 1, 3, 3: share with at most 1 seat = 0.5 >= 0.5 -> 1; averaging would give 2
+    assert m.sample_percentile([1, 1, 3, 3], 50) == 1
+    # q = 51: 0.5 < 0.51 <= 1.0 -> 2; a "lower" rule would give 1
+    assert m.sample_percentile([1, 1, 2, 2], 51) == 2
 
 
 def test_sample_percentile_with_many_equal_values():
