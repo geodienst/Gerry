@@ -108,6 +108,9 @@ def test_report_planscore_section(crosscheck, notes):
     report = v.build_report(METRICS, crosscheck, notes)
     # PlanScore +6.70, ours on their votes +6.67, equal-turnout +6.67, our composite +5.00
     assert "| AA | 2024 U.S. House | +6.70 | +6.67 | +6.67 | ok | +5.00 | yes | explained | https://planscore.org/x (2026-10-12) |" in report
+    # the sentence above the table names the column that has to match PlanScore
+    assert ("\"Equal-turnout formula\" is PlanScore's own formula on its own district votes; "
+            "it must match PlanScore to the rounding of its printed value") in report
 
 
 def test_report_lists_explanations_and_unused_notes(crosscheck, notes):
@@ -170,7 +173,7 @@ def test_failed_reproduction_is_open(tmp_path, notes):
             for r in (("01", 60, 40), ("02", 30, 70), ("03", 45, 55))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     report = v.build_report(METRICS, d, notes)
-    assert "- AA planscore_reproduction: PlanScore +5.00, ours +6.67" in report
+    assert "- AA planscore_reproduction: PlanScore +5.00, equal-turnout formula +6.67" in report
 
 
 def test_planscore_comparison_signs_and_tolerance(tmp_path):
@@ -379,14 +382,28 @@ def test_planscore_equal_turnout_column_is_its_own_number(tmp_path, notes):
     d = tmp_path / "cc"
     d.mkdir()
     # (80, 20), (10, 30), (25, 35): wasted-votes EG 0.15, equal-turnout 0.15 + 1/6 = 0.31667
-    rows = ["AA,2024 U.S. House,u,2026-10-12,yes,15.0,Republicans,%s,%d,%d" % r
+    # PlanScore prints 31.7, the equal-turnout number: "Reproduced" judges that column, not ours (+15.00)
+    rows = ["AA,2024 U.S. House,u,2026-10-12,yes,31.7,Republicans,%s,%d,%d" % r
             for r in (("01", 80, 20), ("02", 10, 30), ("03", 25, 35))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     [row] = v.planscore_comparison(v.read_crosscheck(d / "planscore.csv", v.PLANSCORE_COLUMNS))
     assert row["reproduced"] == pytest.approx(0.15)
     assert row["equal_turnout"] == pytest.approx(0.15 + 1 / 6)
     report = v.build_report(METRICS, d, notes)
-    assert "| AA | 2024 U.S. House | +15.00 | +15.00 | +31.67 | ok | +5.00 | yes | explained | u (2026-10-12) |" in report
+    assert "| AA | 2024 U.S. House | +31.70 | +15.00 | +31.67 | ok | +5.00 | yes | explained | u (2026-10-12) |" in report
+
+
+def test_reproduction_is_judged_on_the_equal_turnout_number_not_on_ours(tmp_path, notes):
+    d = tmp_path / "cc"
+    d.mkdir()
+    # same votes as above, but PlanScore prints 15.0: that is our wasted-votes number (+15.00),
+    # not the equal-turnout number (+31.67), so the reproduction is open
+    rows = ["AA,2024 U.S. House,u,2026-10-12,yes,15.0,Republicans,%s,%d,%d" % r
+            for r in (("01", 80, 20), ("02", 10, 30), ("03", 25, 35))]
+    (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
+    report = v.build_report(METRICS, d, notes)
+    assert "- AA planscore_reproduction: PlanScore +15.00, equal-turnout formula +31.67" in report
+    assert "| AA | 2024 U.S. House | +15.00 | +15.00 | +31.67 | open | +5.00 | yes | explained | u (2026-10-12) |" in report
 
 
 @pytest.mark.parametrize("printed, tolerance", [("7", 0.005), ("6.7", 0.0005), ("6.75", 0.00005)])

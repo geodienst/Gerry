@@ -79,8 +79,10 @@ def equal_turnout_gap(d, r, dem_win) -> float:
 
 
 def planscore_comparison(df: pd.DataFrame) -> list[dict]:
-    """One dict per state and election: PlanScore's EG in our sign, the rounding
-    tolerance of the printed value, and our EG on PlanScore's district votes."""
+    """One dict per state and election: PlanScore's EG in our sign, the rounding tolerance of
+    the printed value, and two EGs on PlanScore's district votes: ours (wasted votes) as
+    "reproduced" and PlanScore's equal-turnout formula as "equal_turnout". The report judges
+    "equal_turnout" against PlanScore."""
     out = []
     for (state, election), rows in df.groupby(["state", "election"], sort=False):
         for col in _PLAN_LEVEL:
@@ -259,8 +261,10 @@ def _join_log(metrics: dict) -> str:
 def _planscore(metrics: dict, crosscheck_dir: Path, ledger: _Ledger) -> str:
     head = ["## PlanScore",
             "EG in percentage points, positive favors Republicans. PlanScore's own sign is the opposite; "
-            "the CSV records the size and the party PlanScore names. \"Ours on PlanScore's votes\" must "
-            "match PlanScore to the rounding of its printed value."]
+            "the CSV records the size and the party PlanScore names. \"Equal-turnout formula\" is PlanScore's "
+            "own formula on its own district votes; it must match PlanScore to the rounding of its printed "
+            "value. \"Ours on PlanScore's votes\" is our wasted-votes EG on the same votes; the two differ "
+            "when turnout differs between districts."]
     df = read_crosscheck(crosscheck_dir / "planscore.csv", PLANSCORE_COLUMNS)
     if df is None:
         ledger.pending.append("data/crosscheck/planscore.csv not found")
@@ -270,9 +274,9 @@ def _planscore(metrics: dict, crosscheck_dir: Path, ledger: _Ledger) -> str:
         state = c["state"]
         if state not in metrics["states"]:
             raise ValueError(f"planscore.csv: {state} is not a state in metrics.json")
-        repro_ok = abs(c["reproduced"] - c["planscore"]) <= c["tolerance"] + 1e-12
+        repro_ok = abs(c["equal_turnout"] - c["planscore"]) <= c["tolerance"] + 1e-12
         repro = ledger.judge(state, "planscore_reproduction", repro_ok,
-                             f"PlanScore {_eg(c['planscore'])}, ours {_eg(c['reproduced'])}")
+                             f"PlanScore {_eg(c['planscore'])}, equal-turnout formula {_eg(c['equal_turnout'])}")
         ours = metrics["states"][state]["eg"]["value"]
         composite = ledger.judge(state, "planscore", False,
                                  f"PlanScore {_eg(c['planscore'])}, our composite {_eg(ours)}")
