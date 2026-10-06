@@ -24,13 +24,14 @@ Versie 1 bevat niet:
 
 | Onderwerp | Besluit | Reden |
 |---|---|---|
-| Stembasis | President 2016 plus 2020, stemmen opgeteld. West Virginia alleen 2020, want ALARM heeft daar geen 2016. | In elke staat dezelfde verkiezingen, altijd een tweestrijd. ALARM raadt voor vergelijkingen tussen staten een presidentiële basis aan; 2016 en 2020 optellen is onze keuze. ALARM's eigen `ndv`/`nrv` middelt over alle kandidaatkolommen en geeft daardoor scheve aandelen in LA, IA, RI en NE, en telt runoffs mee in GA, MS en LA. |
+| Stembasis | President 2016 plus 2020, stemmen opgeteld. West Virginia alleen 2020, want ALARM heeft daar geen 2016. Alle drie de scenario's rekenen met dezelfde stemmen per eenheid. | In elke staat dezelfde verkiezingen, altijd een tweestrijd. ALARM raadt voor vergelijkingen tussen staten een presidentiële basis aan; 2016 en 2020 optellen is onze keuze. ALARM's eigen `ndv`/`nrv` middelt over alle kandidaatkolommen en geeft daardoor scheve aandelen in LA, IA, RI en NE, en telt runoffs mee in GA, MS en LA. |
+| Stembron | ALARM's `{ST}_cd_2020_map.rds` voor alle 44 staten. De eenheid is een VTD in 38 staten, een tract in CA, HI, ME en OR en een county in IA en WV. De blokbestanden van census-vest (CA, HI, ME, OR) gebruiken we alleen om de stemmen van een tract over zijn blokken te verdelen. Besluit van de eigenaar, 6 oktober 2026. | ALARM telde de stats-bestanden op uit deze eenheden. Met `map.rds` sluiten de staatstotalen per plan in alle 44 staten aan op de stats-bestanden; met de bestanden van census-vest lukte dat niet in CA, ME, MI en NJ. VAP en bevolking per eenheid zijn in alle 44 staten gelijk aan de som over de blokken uit P.L. 94-171. |
 | Enacted | De kaart waarmee op 3 november 2026 gestemd wordt. Missouri: kaart van 2022. Virginia: kaart van 2021. | Op deze kaart stemmen de kiezers. Een aangevochten kaart die nu geldt, telt mee met de status "Challenged". |
 | Geblokkeerde kaart | Missouri krijgt in het staatspaneel een extra rij voor HB 1 (2025). Die wet staat als Proposition A op het stembiljet. | Laat zien waar het referendum over gaat. |
 | VRA na Louisiana v. Callais (april 2026) | ALARM v15 zoals gepubliceerd, met een noot per staat. Welke ensembles we gebruiken staat in `config.yaml`, zodat we later ensembles kunnen inwisselen die ras niet meewegen. | ALARM heeft die ensembles nog niet gepubliceerd. |
 | Kernbehoud | De cijfers van UT, NM en LA tonen, met een noot per staat. Die noot zegt welke kaart de neutrale kaarten volgen en wat dat betekent voor het tekeneffect: in NM en grotendeels in LA wordt het naar nul getrokken, in UT is de richting onbekend. KS en NE krijgen een lichtere noot (kernen van de districten van na de census van 2010). | Weglaten maakt het landelijke totaal moeilijk uit te leggen. Het gaat om 13 van de 429 zetels. |
 | Detail | Zetels plus districtsdetail: aandeel per district en de gesorteerde districtsgrafiek. | Aan zetels alleen zie je niet hoe geconcentreerd de stemmen zijn (Utah) of hoe nipt een district is (Iowa). |
-| Eenheden op een districtsgrens | Stemmen verdelen over blokken naar volwassen bevolking (VAP). Ter controle wijzen we elke eenheid ook in haar geheel toe aan één district. | Zo kloppen de stemtotalen per district. In de haalbaarheidscontrole gaven beide methoden in elk district dezelfde winnaar. |
+| Eenheden op een districtsgrens | Stemmen verdelen over blokken naar volwassen bevolking (VAP), in de tractstaten naar de blokstemmen van census-vest. Ter controle wijzen we elke eenheid ook in haar geheel toe aan één district. | Zo kloppen de stemtotalen per district. In de haalbaarheidscontrole gaven beide methoden in elk district dezelfde winnaar. |
 
 Afwijkingen van CLAUDE.md, besloten door de eigenaar of volgend uit die besluiten:
 
@@ -38,22 +39,22 @@ Afwijkingen van CLAUDE.md, besloten door de eigenaar of volgend uit die besluite
 2. CLAUDE.md noemt de grenzen van het 119e Congres. We tonen de kaarten van november 2026, in negen staten die van het 120e Congres.
 3. De House-uitslagen van 2024 vervallen; die van 2026 komen in versie 2.
 4. Voor hertekende kaarten vraagt CLAUDE.md de officiële bestanden van de staat of de Redistricting Data Hub. De pijplijn gebruikt de blokbestanden van Census (CD120, CD118); een eenmalige vergelijking met de bestanden van de staten (hoofdstuk 6) toont dat ze overeenkomen.
-5. CLAUDE.md vraagt de stemcomposiet op precinctniveau. West Virginia gebruikt counties, omdat het precinctbestand daar 13 county's mist.
+5. CLAUDE.md vraagt de stemcomposiet op precinctniveau. We gebruiken de eenheden uit ALARM's `map.rds`: VTD's (ongeveer precincten) in 38 staten, tracts in CA, HI, ME en OR, county's in IA en WV.
 
 Voorstel: CLAUDE.md op deze vijf punten bijwerken. Dat besluit ligt bij de eigenaar.
 
 ## 3. Databronnen
 
-Een eenheid is het kleinste gebied met stemcijfers: meestal een VTD (stemdistrict uit de census, ongeveer een precinct), in CA, HI, ME en OR een censusblok, in West Virginia een county.
+Een eenheid is het kleinste gebied met stemcijfers in ALARM's `map.rds`: meestal een VTD (stemdistrict uit de census, ongeveer een precinct), in CA, HI, ME en OR een censustract, in IA en WV een county.
 
 | Bron | Gebruik | Versie |
 |---|---|---|
 | ALARM 50-State Simulations, `XX_cd_2020_stats.tab`, als CSV via `?format=original`, 44 staten | Stemmen per district per plan voor de neutrale band, en ALARM's referentiekaart `cd_2020` | Dataverse doi:10.7910/DVN/SLCD3E, versie 15 |
-| ALARM `WV_cd_2020_map.rds` en `CA_cd_2020_map.rds` | County-stemmen voor West Virginia, en de tracttotalen voor `align_to_alarm` in California | Dezelfde dataset en versie, gelezen met het Python-pakket `rdata` |
-| ALARM census-2020, `census-vest-2020/{st}_2020_vtd.csv`, voor CA, HI, ME en OR `{st}_2020_block.csv` | Stemmen per eenheid voor Enacted en Proportional | Commit `243c8a8134ecf8151777a9388c48323e274767e2` |
+| ALARM `XX_cd_2020_map.rds`, 44 staten | Stemmen, VAP, bevolking en de referentiekaart `cd_2020` per eenheid, voor alle drie de scenario's | Dezelfde dataset en versie, gelezen met het Python-pakket `rdata` |
+| ALARM census-2020, `census-vest-2020/{st}_2020_block.csv`, alleen CA, HI, ME en OR | Stemmen per blok, alleen als gewicht om de stemmen van een tract over zijn blokken te verdelen | Commit `243c8a8134ecf8151777a9388c48323e274767e2` |
 | [Census CD118](https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip), per staat `{ss}_{ST}_CD118.txt` | Missouri (kaart van 2022, gelijk aan 2024), en de controle tegen ALARM's `cd_2020` | 16-12-2022 |
 | [Census CD120](https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2027/120-congressional-district-befs/cd120.zip), `NationalCD120.txt` | Alle andere staten, plus Missouri HB 1 | 31-08-2026 |
-| Census P.L. 94-171, `{st}2020.pl.zip`, alle 44 staten | Per blok de VAP (P0030001), de VTD-code en het interne punt | 2020 |
+| Census P.L. 94-171, `{st}2020.pl.zip`, alle 44 staten | Per blok de VAP (P0030001), de bevolking (POP100), de VTD-code en het interne punt; voor Iowa de countynamen | 2020 |
 | Census TIGER 2026, nationale GeoPackage, laag `Congressional Districts` (met spatie), veld `CD120FP` | Districtsgrenzen 2026 | 27-08-2026 |
 | Census TIGER/Line 2025, `tl_2025_29_cd119` | Districtsgrenzen Missouri 2022 | 22-09-2025 |
 | Census cartografische grenzen 2025, `cb_2025_us_state_500k` | Afsnijden op de kustlijn | 23-04-2026 |
@@ -66,6 +67,7 @@ Licenties: de ALARM-dataset is CC0, de VEST-verkiezingsdata CC BY 4.0 en de cens
 - Anders downloadt het script naar `<naam>.part`, controleert het bestand en hernoemt het met `os.replace`. Drie pogingen met een wachttijd ertussen.
 - Dataverse: voor ingelezen tabellen (`.tab`, gehaald met `?format=original`) gelden `originalFileSize` en `md5` uit de API voor versie 15; voor andere bestanden (`.rds`) `filesize` en `md5`.
 - Census en GitHub: de eerste download legt sha256 vast in `data/manifest.json`, dat in git staat. Wijkt een latere download af, dan stopt het script en noemt het de URL.
+- Regels in `data/manifest.json` voor bestanden die niet meer in het downloadplan staan, haalt het script weg. De VTD-bestanden van census-vest staan niet meer in het plan en verdwijnen zo uit het manifest.
 
 TX, NC, OH en MO blokkeren buitenlandse IP-adressen. Dat raakt de pijplijn niet: die haalt niets van websites van staten. Alleen de eenmalige vergelijking in hoofdstuk 6 gebruikt bestanden van staten, waar nodig via het Internet Archive.
 
@@ -77,7 +79,7 @@ pipeline/
   gerry/               gedeelde code, getest
     config.py          laden en valideren van config.yaml; repo-root uit __file__
     sources.py         downloads, checksums, manifest
-    units.py           stemmen per eenheid, kolomkeuze, align_to_alarm, composiet
+    units.py           stemmen per eenheid uit map.rds, eenheid-ID's, kolomkeuze, composiet
     blocks.py          P.L. 94-171 lezen, verdelen over blokken, optellen per district
     ensemble.py        stemmen per district per plan uit de stats-bestanden
     metrics.py         alle rekenregels uit hoofdstuk 5
@@ -114,15 +116,14 @@ Globaal:
 
 - `status_checked`: de datum van de laatste statuscontrole. Moet gelijk zijn aan de datum in de eerste regel van `data/sources.md`.
 - `ensemble`: naam (`alarm_v15`), DOI, versie, en per staat de noten die bij deze ensembleset horen, met hun invulwaarden (hoofdstuk 5, notentabel). Wisselen van ensembleset wisselt zo ook die noten.
-- `census_vest_commit` en de URL's van de bronnen. Datums en checksums staan in `data/sources.md` en `data/manifest.json`.
-- `align_to_alarm`: eenheden waar het eenheidsbestand andere stemmen heeft dan de data waarmee ALARM de ensembles optelde. Nu alleen California: in tracts 06049000300 (Modoc) en 06093000200 (Siskiyou) heeft ALARM's tractdata samen 429,9 (D 2016), 1.431,4 (R 2016), 552,4 (D 2020) en 1.716,2 (R 2020) stemmen minder dan het blokbestand. `units.py` schaalt de blokstemmen in die tracts per kolom naar de tracttotalen uit `CA_cd_2020_map.rds`. Zo gebruiken alle drie de scenario's dezelfde cijfers. Zonder deze stap zou in 4 van de 5.000 plannen van California één district een andere winnaar hebben dan op het blokbestand.
+- `census_vest_commit` (voor de blokbestanden van CA, HI, ME en OR) en de URL's van de bronnen. Datums en checksums staan in `data/sources.md` en `data/manifest.json`.
 
 Per staat:
 
 - `seats`, `name`, `fips`, `map_name` (gelijk aan de linktekst in `data/sources.md`), `status` (`In effect`, `Challenged`, `At-large`), `source_label`, `source_url`.
 - `bef`: `cd120` of `cd118` (Missouri).
 - `elections`: `[pre_16, pre_20]`, West Virginia `[pre_20]`.
-- `unit_source`: `vtd`, `block` of `rds_county`.
+- `unit_kind`: `vtd`, `tract` (CA, HI, ME, OR) of `county` (IA, WV).
 - `extra_maps`: alleen Missouri, `mo_hb1` uit `cd120`, met `status: Blocked`, `name`, `source_label` en `source_url`.
 - `notes`: de noten die bij de staat horen en niet bij de ensembleset (`adopted_after_2024_election`, `composite_2020_only`, `blocked_map`).
 
@@ -132,25 +133,26 @@ Alle ID's zijn tekst. Districten zijn twee tekens met voorloopnul (`"09"`); ALAR
 
 `02_join` leest het landelijke CD120-bestand één keer, met de C-engine van pandas, `usecols=["GEOID","CDFP"]` en `dtype=str`, en filtert per staat op de eerste twee tekens. De pyarrow-engine haalt voorloopnullen weg en is daarom verboden. CD118 leest het per staat (`{ss}_{ST}_CD118.txt`) met `skipinitialspace=True`, omdat de header een spatie heeft (`GEOID, CDFP`). Het schrijft naar `data/interim/`:
 
-- `units/{ST}.parquet`: `unit_id`, `vap`, de stemkolommen, na `align_to_alarm`.
+- `units/{ST}.parquet`: `unit_id`, `vap`, `pop` en de stemkolommen, uit `map.rds`.
 - `enacted_districts.parquet`: `state`, `map_id` (`enacted`, `mo_hb1`, `check_2022`), `method` (`block`, `whole_unit`), `district`, de stemkolommen.
 - `ensemble_districts.parquet`: `state`, `draw`, `district`, de stemkolommen. Alle rijen met `draw != "cd_2020"`.
-- `alarm_reference.parquet`: dezelfde kolommen voor de rijen met `draw == "cd_2020"`.
+- `alarm_reference.parquet`: dezelfde kolommen voor de rijen met `draw == "cd_2020"`, met de districtlabels van `map.rds` (koppelregels).
 
 `03_metrics` leest deze bestanden, `config.yaml` en `data/crosscheck/`, en schrijft `data/interim/metrics.json` (alle uitkomsten uit hoofdstuk 5) en via `validation.py` het rapport `docs/validation.md`. `04_export` leest `metrics.json`, `config.yaml` en de geometrie, en schrijft de bestanden uit hoofdstuk 7.
 
 ### Koppelregels
 
-- Kolomkeuze: voor elke verkiezing in `elections` zoekt `units.py` in het eenheidsbestand en `ensemble.py` in het stats-bestand de kolom met patroon `^<verkiezing>_dem_` en de kolom met `^<verkiezing>_rep_`. Precies één treffer per partij, anders een fout.
-- Blokken uit P.L. 94-171: `blocks.py` leest de zip zonder uit te pakken. Uit `{st}geo2020.pl` (scheidingsteken `|`, geen header, `dtype=str`, `encoding="latin-1"`) de records met SUMLEV 750, met LOGRECNO, GEOCODE (15 tekens), de VTD-code en het interne punt. Uit `{st}000022020.pl` LOGRECNO en P0030001. De veldposities staan als constanten in de code en worden bij het inlezen gecontroleerd: de som van P0030001 over de blokken is gelijk aan het staatsrecord (SUMLEV 040).
-- VTD-staten: `unit_id` = GEOCODE[:5] + VTD-code. Een blok zonder VTD-code is een fout.
-- West Virginia: `unit_id` = GEOCODE[:5], de county. Stemmen uit `WV_cd_2020_map.rds`.
-- Blokstaten (CA, HI, ME, OR): `unit_id` = blok-GEOID. VAP uit de kolom `vap` van het blokbestand, gecontroleerd tegen P0030001.
-- Lege stemvelden worden 0 en komen in het log (in California twee blokken zonder bevolking).
+- Kolomkeuze: voor elke verkiezing in `elections` zoekt `units.py` in `map.rds` en in de blokbestanden van census-vest, en `ensemble.py` in het stats-bestand, de kolom met patroon `^<verkiezing>_dem_` en de kolom met `^<verkiezing>_rep_`. Precies één treffer per partij, anders een fout.
+- Blokken uit P.L. 94-171: `blocks.py` leest de zip zonder uit te pakken. Uit `{st}geo2020.pl` (scheidingsteken `|`, geen header, `dtype=str`, `encoding="latin-1"`) de records met SUMLEV 750, met LOGRECNO, GEOCODE (15 tekens), de VTD-code, POP100 en het interne punt. Voor Iowa ook de records met SUMLEV 050, met GEOCODE en NAME. Uit `{st}000022020.pl` LOGRECNO en P0030001. De veldposities staan als constanten in de code en worden bij het inlezen gecontroleerd: de som van P0030001 over de blokken is gelijk aan het staatsrecord (SUMLEV 040).
+- Eenheid-ID's in `map.rds`: tekst, uniek en nooit leeg. CA en HI gebruiken de kolom `tract`. Iowa heeft geen ID-kolom: `units.py` zoekt de naam in de kolom `county` (bijvoorbeeld `Adair County`) op in NAME van de SUMLEV 050-records en neemt de FIPS-code van vijf tekens. Alle 99 county's moeten precies één treffer hebben. De andere staten gebruiken `GEOID`. In VTD-staten moet `GEOID` gelijk zijn aan `GEOID[:5]` plus de kolom `vtd` van `map.rds`.
+- Sleutel van een blok: in VTD-staten GEOCODE[:5] + VTD-code, in tractstaten GEOCODE[:11], in IA en WV GEOCODE[:5]. Een blok zonder VTD-code in een VTD-staat is een fout. Een blok waarvan de sleutel bij geen eenheid hoort, doet niet mee; hoofdstuk 6 controleert dat zulke blokken geen VAP en geen bevolking hebben.
+- Lege stemvelden in `map.rds` en in de blokbestanden van census-vest worden 0 en komen in het log (in het blokbestand van California twee blokken zonder bevolking, in dat van Oregon vier).
 - Blokken met CDFP `ZZ` (water in CT, IL en NH) vallen weg vóór het verdelen. Een eenheid met stemmen zonder overgebleven blokken is een fout; een eenheid zonder stemmen en zonder overgebleven blokken komt in het log.
-- Blokverdeling: de stemmen van een eenheid gaan naar haar blokken naar verhouding van de blok-VAP. Heeft de eenheid geen VAP, dan naar verhouding van het aantal blokken; dat komt in het log.
+- Blokverdeling in VTD-staten en in IA en WV: de stemmen van een eenheid gaan naar haar blokken naar verhouding van de blok-VAP. Heeft de eenheid geen VAP, dan krijgt elk blok hetzelfde deel (1 gedeeld door het aantal blokken); per kaart komen het aantal zulke eenheden en hun stemmen in `join_log.json`.
+- Blokverdeling in tractstaten: per stemkolom is het gewicht van een blok de waarde van die kolom in het blokbestand van census-vest, gedeeld door de som van die kolom over de blokken van het tract buiten `ZZ`. Is die som 0, dan geldt de regel met VAP.
 - Hele-eenheidstoewijzing (controle): een eenheid gaat in haar geheel naar het district met de meeste blok-VAP binnen de eenheid; bij gelijke VAP, of zonder VAP, naar het district met de meeste blokken; blijft het gelijk, dan naar het laagste districtnummer.
 - Plannen: elke draw behalve `cd_2020` moet precies `seats` rijen hebben met districten 1 tot en met `seats`, en elke draw komt één keer voor. Het aantal plannen moet 5.000 zijn.
+- ALARM's referentiekaart: de stats-bestanden en `map.rds` nummeren de districten van `cd_2020` niet altijd gelijk. Elk label van `cd_2020` in het stats-bestand krijgt het label uit `map.rds` met precies dezelfde bevolking (`total_pop` tegen de som van `pop` per label van `cd_2020` in `map.rds`). Daarna moet elk label van `map.rds` gelijk zijn aan de CDFP van het CD118-district met de grootste bevolkingsoverlap, en over de hele staat moet minstens 97% van de bevolking in een district met hetzelfde label liggen (de laagste waarde is nu AZ met 97,9%). Per district geldt geen drempel, omdat ALARM's referentie hele eenheden toewijst. Een gelijke stand of een ontbrekende match is een fout. Alleen Oregon krijgt andere labels: 1 wordt 02, 2 wordt 04, 3 wordt 05, 4 wordt 06, 5 wordt 03 en 6 wordt 01. In de andere staten blijft elk label gelijk.
 
 ## 5. Rekenregels
 
@@ -227,17 +229,23 @@ Tests voor de rekenregels (pytest). De test komt steeds vóór de code. Elk geva
 - neutrale context voor EG en MM met lineaire interpolatie;
 - gesorteerde band;
 - convolutie van drie kleine verdelingen, met mediaan, 5e en 95e percentiel en positie;
+- eenheid-ID's: de kolom `tract`, `GEOID` met de controle op de kolom `vtd`, en de countynamen van Iowa, ook een naam zonder treffer en een naam met twee treffers;
+- sleutel van een blok per soort eenheid, en de fout bij een blok zonder VTD-code;
 - verdelen over blokken: een gesplitste eenheid, een eenheid zonder VAP, ZZ-blokken;
-- `align_to_alarm`: blokstemmen in een tract geschaald naar een gegeven tracttotaal, per kolom;
+- verdelen binnen een tract: gewichten per stemkolom uit het blokbestand, een lege blokwaarde, en een tract waar de som 0 is;
+- VAP en bevolking per eenheid tegen de blokken, en blokken zonder eenheid met en zonder VAP of bevolking;
+- nieuwe labels voor ALARM's referentiekaart: de match op bevolking, de controle tegen CD118, een gelijke stand en een ontbrekende match;
 - hele-eenheidstoewijzing, ook bij gelijke stand;
 - het inlezen van `data/sources.md`, op een kopie van het echte bestand.
 
 Controles in de pijplijn (`gerry/checks.py`). Faalt er een, dan stopt de pijplijn met een melding die de controle, de staat en de waarden noemt:
 
-- Elke eenheid met stemmen is aan minstens één blok buiten `ZZ` gekoppeld, en de som van de stemmen per kaart is gelijk aan het totaal van `units/{ST}.parquet`, dus na `align_to_alarm` (relatief verschil onder 1e-9).
-- Opgetelde blok-VAP per eenheid is gelijk aan de VAP in het eenheidsbestand; voor blokstaten is de VAP per blok gelijk aan P0030001.
-- Per plan en per stemkolom, vóór de composiet: |staatstotaal − totaal van `units/{ST}.parquet`| ≤ 0,5 × aantal districten. ALARM rondt per district af op hele stemmen, en de grootste afwijking in de haalbaarheidscontrole bleef binnen deze grens (NC 3,7 bij een grens van 7, LA 2,7 bij 3). Overschrijdt een staat de grens, dan stopt de pijplijn en zoeken we de oorzaak uit voordat we iets aanpassen.
-- De structuur van de plannen klopt (hoofdstuk 4, koppelregels).
+- Elke eenheid met stemmen is aan minstens één blok buiten `ZZ` gekoppeld, en de som van de stemmen per kaart is gelijk aan het totaal van `units/{ST}.parquet` (relatief verschil onder 1e-9).
+- De eenheid-ID's volgen de regels uit hoofdstuk 4.
+- Per eenheid is de opgetelde blok-VAP (P0030001) gelijk aan `vap` en de opgetelde POP100 gelijk aan `pop` uit `map.rds`. Dat klopt in alle 44 staten.
+- Blokken waarvan de sleutel bij geen eenheid hoort, hebben VAP 0 en bevolking 0. Hun aantal komt in het log. Nu zijn dat 631 blokken in 38 VTD's in MI, 63 blokken in 4 VTD's in OH en 112 blokken in 6 tracts in ME. Het gaat steeds om water dat niet in ALARM's `map.rds` staat.
+- Per plan en per stemkolom, vóór de composiet: |staatstotaal − totaal van `units/{ST}.parquet`| ≤ 0,5 × aantal districten. Een afwijking gelijk aan de grens is toegestaan; in HI en RI is de grootste afwijking 1,0 bij een grens van 1. ALARM rondt per district af op hele stemmen, en de grootste afwijking in de haalbaarheidscontrole bleef binnen deze grens (NC 3,7 bij een grens van 7, LA 2,7 bij 3). Overschrijdt een staat de grens, dan stopt de pijplijn en zoeken we de oorzaak uit voordat we iets aanpassen.
+- De structuur van de plannen klopt, en de labels van ALARM's referentiekaart passen bij CD118 (hoofdstuk 4, koppelregels).
 - Elke staat heeft het aantal districten uit `config.yaml`; landelijk 429 plus zes at-large zetels.
 - GEOID's zijn tekst van 15 tekens en beginnen met de FIPS-code van de staat. `ZZ` en `98` (DC, PR) komen niet in de uitvoer.
 - Geometrie en blokbestand beschrijven dezelfde kaart: per staat dezelfde set districtscodes, en minstens 99,9% van de interne punten van de blokken (uit P.L. 94-171) ligt in het district dat het blokbestand noemt. Voor Missouri met `tl_2025_29_cd119` tegen CD118.
@@ -245,9 +253,9 @@ Controles in de pijplijn (`gerry/checks.py`). Faalt er een, dan stopt de pijplij
 
 Controles van de methode, in `docs/validation.md`:
 
-- De kaarten van 2022 (CD118) met onze methode tegen ALARM's `cd_2020`, alle 44 staten. Drempel: per district hoogstens 0,5 procentpunt verschil en hetzelfde aantal zetels. In California en Texas wijkt de referentiekaart van ALARM zelf al tot 0,4 procentpunt af, omdat ALARM hele eenheden toewijst.
+- De kaarten van 2022 (CD118) met onze methode tegen ALARM's `cd_2020`, alle 44 staten. Drempel: per district hoogstens 0,5 procentpunt verschil en hetzelfde aantal zetels. In California en Texas wijkt de referentiekaart van ALARM zelf al tot 0,4 procentpunt af, omdat ALARM hele eenheden toewijst. Tennessee overschrijdt de drempel naar verwachting: in CD-09 is het verschil 0,699 procentpunt, bij hetzelfde aantal zetels. ALARM's referentiekaart wijst hele VTD's toe, terwijl CD118 rond Memphis 21 VTD's splitst. Ook een verdeling naar bevolking in plaats van VAP blijft boven de drempel. Tennessee krijgt daarom een verklaring in `data/validation_notes.yaml`. In Massachusetts zet ALARM's referentiekaart 12 VTD's in een district waar ze geen blok hebben; MA blijft wel binnen de drempel.
 - Hele-eenheidstoewijzing tegen blokverdeling voor de kaarten van 2026: districten met een andere winnaar worden genoemd, en elk krijgt een verklaring in `data/validation_notes.yaml`. Zo'n district ligt dicht bij 50%, en dan doet de methode ertoe.
-- Aantal plannen, aantal beslechte gelijke standen en het effect van `align_to_alarm` per kolom.
+- Aantal plannen en aantal beslechte gelijke standen.
 
 Eenmalige vergelijking met bestanden van staten (`tools/compare_state_files.py`). CD120 tegen het officiële bestand voor AL, OH, TN, UT en MO HB 1, naast de al gedane vergelijking voor TX, CA, NC, FL en LA. Waar een staat een blokbestand heeft (OH, MO HB 1), vergelijken we blok voor blok. Anders (AL via ALGeoHub, TN via de staatslaag, UT via UGRC) vergelijken we de officiële districtsvormen met CD120 via de interne punten van de blokken. Het script schrijft `data/crosscheck/state_files.csv`; daarna werken we de vergelijkingstabel in `data/sources.md` met de hand bij en draaien we `03_metrics` opnieuw. In dezelfde stap legt de eigenaar de naam van de kaart van Utah vast.
 
@@ -331,9 +339,12 @@ Deze staan ook in de methodetoelichting of in de noten per staat.
 - In KS en NE houden de neutrale kaarten de kernen vast van de districten van na de census van 2010, in LA, NM en UT die van de kaart van 2021-2022. In NM en grotendeels in LA trekt dat het tekeneffect naar nul; in UT is de richting onbekend. In LA ligt de uitkomst door de VRA-eis en het kernbehoud bijna vast: 99,8% van de plannen geeft 1 Democratische zetel.
 - In AZ en CO vragen de regels van de staat om competitieve districten, en ALARM's neutrale kaarten wegen dat mee met partijdata. In AL en SC filtert ALARM de plannen op bevolkings- en stemdata, in MO alleen op bevolkingsdata, alle drie om de VRA te volgen.
 - ALARM heeft voor 11 staten nieuwe simulaties op GitHub gezet (AL, CO, KS, MI, MS, NC, NY, OH, PA, SC, WA), omdat de runs van v15 niet meer door hun convergentiecontrole kwamen; voor CA, FL en TX staat een nieuwe methode in een open pull request. Geen van beide staat op Dataverse. Wij gebruiken v15.
-- West Virginia gebruikt alleen 2020, op countyniveau.
-- In California hebben twee tracts in Modoc en Siskiyou County in ALARM's tractdata minder stemmen dan het blokbestand, samen ongeveer 4.100 over de vier stemkolommen. We volgen daar ALARM's cijfers, zodat de drie scenario's één stembasis houden. De oorzaak aan de kant van ALARM is onbekend.
-- Het blokbestand van Maine bij ALARM is van oktober 2025, nieuwer dan de stats-bestanden. Als de totalen niet aansluiten, stopt de controle en zoeken we het uit.
+- West Virginia gebruikt alleen 2020. Iowa en West Virginia hebben county's als eenheid, CA, HI, ME en OR tracts, zoals in ALARM's `map.rds`.
+- In California hebben twee tracts in Modoc en Siskiyou County in ALARM's `map.rds` geen stemmen. In het blokbestand van census-vest hebben ze samen ongeveer 4.100 stemmen over de vier stemkolommen. We volgen ALARM, zodat de drie scenario's één stembasis houden. De oorzaak aan de kant van ALARM is onbekend.
+- In Michigan staan 38 watereenheden niet in ALARM's `map.rds`. In census-vest hebben ze samen 17.272 stemmen; die tellen bij ons niet mee. In Ohio ontbreken 4 watereenheden, zonder stemmen.
+- Het blokbestand van census-vest voor Maine is van oktober 2025 en verdeelt de stemmen anders over de tracts dan `map.rds`. We gebruiken het alleen voor de verdeling binnen een tract; de stemmen per tract komen uit `map.rds`.
+- De `map.rds` van New Jersey heeft voor 2020 de cijfers van vóór ALARM's herziening van het census-vest-bestand van die staat. We volgen `map.rds`.
+- Heeft een eenheid geen VAP, dan gaan haar stemmen in gelijke delen naar haar blokken. Op de kaarten van 2026 liggen zulke eenheden in acht VTD-staten over een districtsgrens, met samen ongeveer 4.500 stemmen.
 - We toetsen de vastgestelde kaarten niet op gelijke bevolking. NV en CA tellen gevangenen bij herindeling anders mee dan de census.
 - Een districtsnummer kan op een andere kaart een heel ander gebied zijn, zoals in Utah.
 
