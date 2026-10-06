@@ -50,6 +50,9 @@ def main() -> None:
     if total != HOUSE_SEATS:
         raise CheckError("export_seats", "US", f"{national['seats']} seats plus {len(national['single_seat'])} "
                          f"single-seat states is {total}, expected {HOUSE_SEATS}")
+    # Serialise now: a NaN (allow_nan=False) stops the export here, before the slow work and before
+    # anything is written to site/data/.
+    text = json.dumps(results, ensure_ascii=False, indent=1, allow_nan=False) + "\n"
 
     print("Loading district geometry")
     districts = load_districts(tiger / "tlgpkg_2026_us_legislative.gpkg.zip", tiger / "tl_2025_29_cd119.zip", tiger)
@@ -72,8 +75,8 @@ def main() -> None:
 
     SITE_DATA.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(map_tmp, SITE_DATA / "map.topojson")
-    (SITE_DATA / "results.json").write_text(
-        json.dumps(results, ensure_ascii=False, indent=1, allow_nan=False) + "\n", encoding="utf-8")
+    # tracked in git: LF on Windows too
+    (SITE_DATA / "results.json").write_text(text, encoding="utf-8", newline="\n")
     print(f"Wrote site/data/results.json ({len(results['states'])} states) "
           f"and site/data/map.topojson ({size:,} bytes)")
 
