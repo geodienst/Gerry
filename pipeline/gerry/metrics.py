@@ -188,3 +188,23 @@ def sorted_band(share_matrix: np.ndarray) -> dict:
     ordered = np.sort(np.asarray(share_matrix, dtype=float), axis=1)
     p5, p50, p95 = np.percentile(ordered, [5, 50, 95], axis=0)
     return {"p5": p5.tolist(), "p50": p50.tolist(), "p95": p95.tolist()}
+
+
+def convolve(pmfs: Sequence[np.ndarray]) -> np.ndarray:
+    """Distribution of the sum of independent seat counts. Each input may be counts
+    or probabilities; the result is probabilities for 0..sum of seats."""
+    if len(pmfs) == 0:
+        raise ValueError("no distributions")
+    total = np.array([1.0])
+    for pmf in pmfs:
+        total = np.convolve(total, _normalize(pmf))
+    return total
+
+
+def is_narrow(dist_counts) -> bool:
+    """True when one seat count has at least 95% of the plans (integer arithmetic)."""
+    counts = np.asarray(dist_counts, dtype=np.int64)
+    total = int(counts.sum())
+    if total <= 0:
+        raise ValueError("no plans")
+    return int(counts.max()) * 20 >= 19 * total

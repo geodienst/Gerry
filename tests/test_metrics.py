@@ -322,3 +322,42 @@ def test_sorted_band_sorts_each_plan_first():
     assert band["p50"] == pytest.approx([0.3, 0.6])
     assert band["p95"] == pytest.approx([0.39, 0.69])
     assert isinstance(band["p50"], list)
+
+
+# Task 2.10: convolve and is_narrow
+
+THREE = [np.array([1, 3]), np.array([2, 2]), np.array([0, 1, 1])]
+
+
+def test_convolve_three_distributions():
+    # A (1 seat): plans [1, 3] -> P = [0.25, 0.75]
+    # B (1 seat): plans [2, 2] -> P = [0.5, 0.5]
+    # C (2 seats): plans [0, 1, 1] -> P = [0, 0.5, 0.5]
+    # A*B: P(0) = 0.25 * 0.5 = 0.125; P(1) = 0.25 * 0.5 + 0.75 * 0.5 = 0.5; P(2) = 0.75 * 0.5 = 0.375
+    # (A*B)*C: P(0) = 0.125 * 0 = 0
+    #          P(1) = 0.125 * 0.5 = 0.0625
+    #          P(2) = 0.125 * 0.5 + 0.5 * 0.5 = 0.3125
+    #          P(3) = 0.5 * 0.5 + 0.375 * 0.5 = 0.4375
+    #          P(4) = 0.375 * 0.5 = 0.1875
+    assert m.convolve(THREE) == pytest.approx([0, 0.0625, 0.3125, 0.4375, 0.1875])
+
+
+def test_convolution_percentiles_and_position():
+    pmf = m.convolve(THREE)
+    # cumulative: 0, 0.0625, 0.375, 0.8125, 1.0
+    # p5: 0.0625 >= 0.05 -> 1; median: 0.375 < 0.5 <= 0.8125 -> 3; p95: 0.8125 < 0.95 -> 4
+    assert [m.pmf_percentile(pmf, q) for q in (5, 50, 95)] == [1, 3, 4]
+    # value 2: fewer = 0 + 0.0625; equal = 0.3125; more = 0.4375 + 0.1875 = 0.625
+    # midrank = 0.0625 + 0.3125 / 2 = 0.21875
+    assert m.pmf_position(pmf, 2) == pytest.approx(
+        {"fewer": 0.0625, "equal": 0.3125, "more": 0.625, "midrank": 0.21875})
+
+
+def test_is_narrow():
+    # Louisiana: 4989 of 5000 plans give 1 seat, 0.9978 >= 0.95
+    assert m.is_narrow([1, 4989, 10]) is True
+    # exactly 95% counts as narrow, 94% does not
+    assert m.is_narrow([5, 95]) is True
+    assert m.is_narrow([6, 94]) is False
+    # Nevada: largest share 3086 / 5000 = 0.6172
+    assert m.is_narrow([0, 13, 1901, 3086, 0]) is False
