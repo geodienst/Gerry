@@ -3,6 +3,7 @@ Every expected value is worked out by hand in the comments."""
 import dataclasses
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -216,3 +217,102 @@ def test_national_metrics_checks_house_total():
     states = {"AA": {"proportional": 1, "enacted": 0, "neutral": {"dist": [1, 3]}}}
     with pytest.raises(CheckError, match="house_total"):
         step.national_metrics(states, {})
+
+
+# Wiring of effects, position, band and checks
+
+
+def _with_main_map(enacted, votes):
+    """enacted with its enacted/block rows replaced: one district per (d, r) pair."""
+    keep = enacted[~((enacted.map_id == "enacted") & (enacted.method == "block"))]
+    rows = [["XX", "enacted", "block", f"{i:02d}"] + _votes(d, r) for i, (d, r) in enumerate(votes, start=1)]
+    return pd.concat([keep, pd.DataFrame(rows, columns=keep.columns)], ignore_index=True)
+
+
+def test_state_metrics_effects_position_and_band_with_distinct_values():
+    # 1700 D / 1300 R: quota D 1.7, quota R 1.3, floors 1 + 1, rest 0.7 vs 0.3 -> D: proportional 2
+    # all three enacted districts D: enacted 3; plans give 1, 2, 0, 1 seats: median 1, p5 0, p95 2
+    res = step.state_metrics(XX, 1700.0, 1300.0, _with_main_map(_enacted(), [(600, 400)] * 3), _ensemble())
+    assert (res["proportional"], res["enacted"], res["neutral"]["median"]) == (2, 3, 1)
+    # geographic = median 1 - proportional 2 = -1; drawing = enacted 3 - median 1 = 2
+    assert res["effects"] == {"geographic": -1, "drawing": 2}
+    # all 4 plans give fewer than 3 seats: fewer 1, equal 0, more 0, midrank 1
+    assert res["position"] == pytest.approx({"fewer": 1.0, "equal": 0.0, "more": 0.0, "midrank": 1.0})
+    assert res["outside_band"] is True            # 3 > p95 (2)
+
+
+@pytest.mark.parametrize("votes, outside", [
+    ([(450, 550)] * 3, False),                         # 0 seats = p5 (0): not below the band
+    ([(600, 400), (600, 400), (400, 600)], False),     # 2 seats = p95 (2): not above the band
+    ([(600, 400)] * 3, True),                          # 3 seats > p95 (2)
+])
+def test_state_metrics_outside_band_edges(votes, outside):
+    # plans give 1, 2, 0, 1 seats: median 1, p5 0, p95 2
+    res = step.state_metrics(XX, 1300.0, 1700.0, _with_main_map(_enacted(), votes), _ensemble())
+    assert res["outside_band"] is outside
+
+
+def _states(enacted):
+    # as test_national_metrics: A 1 seat [1, 3], B 1 seat [2, 2], C 2 seats [0, 1, 1]
+    def state(dist, prop, e):
+        return {"proportional": prop, "enacted": e, "neutral": {"dist": dist}}
+    return {"AA": state([1, 3], 1, enacted[0]), "BB": state([2, 2], 0, enacted[1]),
+            "CC": state([0, 1, 1], 1, enacted[2])}
+
+
+@pytest.mark.parametrize("enacted, geographic, drawing, position, outside", [
+    # P = [0, 0.0625, 0.3125, 0.4375, 0.1875], proportional 2, median 3, p5 1, p95 4
+    ((0, 1, 0), 1, -2, {"fewer": 0.0, "equal": 0.0625, "more": 0.9375, "midrank": 0.03125}, False),   # 1 = p5
+    ((1, 1, 2), 1, 1, {"fewer": 0.8125, "equal": 0.1875, "more": 0.0, "midrank": 0.90625}, False),    # 4 = p95
+    ((0, 0, 0), 1, -3, {"fewer": 0.0, "equal": 0.0, "more": 1.0, "midrank": 0.0}, True),              # 0 < p5
+])
+def test_national_metrics_effects_position_and_band_edges(monkeypatch, enacted, geographic, drawing, position, outside):
+    monkeypatch.setattr(step, "HOUSE_SEATS", 4 + 2)
+    at_large = {"WY": AtLargeState("WY", "Wyoming", "56"), "AK": AtLargeState("AK", "Alaska", "02")}
+    nat = step.national_metrics(_states(enacted), at_large)
+    assert nat["effects"] == {"geographic": geographic, "drawing": drawing}
+    assert nat["position"] == pytest.approx(position)
+    assert nat["outside_band"] is outside
+
+
+# --- validation-report numbers ---------------------------------------------------------------
+
+
+def test_state_checks_pre_20_uses_2020_columns():
+    enacted = _enacted()
+    hit = (enacted.map_id == "enacted") & (enacted.method == "block") & (enacted.district == "01")
+    enacted.loc[hit, COLS] = _votes(600, 400, 270, 230)     # 2020: 270 / 500 = 0.54, composite 0.6
+    checks = step.state_checks(XX, enacted, _ensemble(), _reference())
+    assert checks["pre_20"]["01"] == pytest.approx(0.54)
+
+
+def test_state_checks_counts_tied_enacted_rows():
+    enacted = _enacted()
+    hit = (enacted.map_id == "xx_new") & (enacted.method == "whole_unit") & (enacted.district == "03")
+    enacted.loc[hit, COLS] = _votes(500, 500, 300, 200)     # tie, decided by 2020 for D
+    checks = step.state_checks(XX, enacted, _ensemble(), _reference())
+    assert checks["ties"] == {"ensemble": 1, "enacted": 1}
+
+
+def test_state_checks_counts_alarm_seats_from_the_reference():
+    ref = _reference()
+    ref.loc[ref.district == "01", COLS] = _votes(388, 612)      # ALARM: R wins district 01
+    cd118 = step.state_checks(XX, _enacted(), _ensemble(), ref)["cd118_vs_alarm"]
+    assert (cd118["seats_ours"], cd118["seats_alarm"]) == (1, 0)
+
+
+def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
+    (tmp_path / "units").mkdir()
+    pd.DataFrame({"d": [1300.0], "r": [1700.0]}).to_parquet(tmp_path / "units" / "XX.parquet")
+    _enacted().to_parquet(tmp_path / "enacted_districts.parquet")
+    _ensemble().to_parquet(tmp_path / "ensemble_districts.parquet")
+    _reference().to_parquet(tmp_path / "alarm_reference.parquet")
+    (tmp_path / "join_log.json").write_text('{"XX": {"note": "x"}}', encoding="utf-8")
+    cfg = SimpleNamespace(states={"XX": XX}, at_large={"WY": AtLargeState("WY", "Wyoming", "56")})
+    monkeypatch.setattr(step, "HOUSE_SEATS", 3 + 1)
+    out = step.compute(cfg, tmp_path)
+    assert set(out) == {"national", "states", "checks"}
+    assert out["states"]["XX"]["proportional"] == 1             # units 1300 D / 1700 R, as in the hand example
+    assert out["checks"]["plans"] == {"XX": 4}
+    assert out["checks"]["totals"] == {"district_seats": 3, "at_large": 1}
+    assert out["checks"]["join_log"] == {"XX": {"note": "x"}}
