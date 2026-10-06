@@ -354,6 +354,8 @@ def test_convolve_three_distributions():
     #          P(3) = 0.5 * 0.5 + 0.375 * 0.5 = 0.4375
     #          P(4) = 0.375 * 0.5 = 0.1875
     assert m.convolve(THREE) == pytest.approx([0, 0.0625, 0.3125, 0.4375, 0.1875])
+    with pytest.raises(ValueError, match="no distributions"):
+        m.convolve([])
 
 
 def test_convolution_percentiles_and_position():
@@ -373,5 +375,10 @@ def test_is_narrow():
     # exactly 95% counts as narrow, 94% does not
     assert m.is_narrow([5, 95]) is True
     assert m.is_narrow([6, 94]) is False
+    # 949 / 1000 = 94.9% < 95%; in integers 949 * 20 = 18980 < 19 * 1000 = 19000
+    assert m.is_narrow([51, 949]) is False
     # Nevada: largest share 3086 / 5000 = 0.6172
     assert m.is_narrow([0, 13, 1901, 3086, 0]) is False
+    # no plans at all
+    with pytest.raises(ValueError, match="no plans"):
+        m.is_narrow([0, 0])
