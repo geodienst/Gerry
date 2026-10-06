@@ -3,11 +3,13 @@ import http.server
 import json
 import threading
 from collections import Counter
+from datetime import date
 from pathlib import Path
 
 import pytest
 
 from gerry import sources
+from gerry.config import AlignEntry, Config, EnsembleConfig, StateConfig
 from gerry.sources import Download, DownloadError, Manifest, fetch
 
 
@@ -234,3 +236,113 @@ def test_fetch_sends_its_own_user_agent(tmp_path, server):
     dl = publish(server, "cd.txt", b"abc")
     fetch(dl, tmp_path / "raw", Manifest(tmp_path / "m.json"), wait=0)
     assert server.user_agents == [sources.USER_AGENT]
+
+
+# ---- Task 1.2: Dataverse listing and the download plan ----
+
+FIXTURE = Path(__file__).parent / "fixtures" / "dataverse_v15_files.json"
+LISTING = "api/datasets/:persistentId/versions/15/files"
+DOI = "doi:10.7910/DVN/SLCD3E"
+
+
+def test_dataverse_files_reads_the_version_listing(server):
+    server.routes[LISTING] = FIXTURE.read_bytes()
+    files = sources.dataverse_files(server.url("api"), DOI, 15)
+    assert server.requests == [f"/{LISTING}?persistentId={DOI}"]
+    assert len(files) == 6
+    # tabular file: size of the original CSV, not of the ingested .tab
+    assert files["NV_cd_2020_stats.tab"] == {
+        "id": 6392701, "size": 7257601, "md5": "10f038a740da8bf18a18a5fbd33f8f2e", "tabular": True}
+    assert files["WV_cd_2020_map.rds"] == {
+        "id": 6380448, "size": 17740, "md5": "40ecd77e6862f5d5605951fcb75aeb8f", "tabular": False}
+
+
+def test_dataverse_files_rejects_an_incomplete_listing(server):
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    payload["totalCount"] = 348
+    server.routes[LISTING] = json.dumps(payload).encode()
+    with pytest.raises(DownloadError, match="348"):
+        sources.dataverse_files(server.url("api"), DOI, 15)
+
+
+def test_dataverse_files_rejects_an_error_status(server):
+    server.routes[LISTING] = b'{"status": "ERROR", "message": "Version not found"}'
+    with pytest.raises(DownloadError, match="Version not found"):
+        sources.dataverse_files(server.url("api"), DOI, 15)
+
+
+def make_state(postal, name, fips, seats, unit_source, elections=("pre_16", "pre_20")):
+    return StateConfig(postal=postal, name=name, fips=fips, seats=seats, map_name="m", status="In effect",
+                       source_label="s", source_url="https://example.org/", bef="cd120",
+                       elections=tuple(elections), unit_source=unit_source, extra_maps=(), notes=())
+
+
+API = "https://dataverse.harvard.edu/api"
+COMMIT = "243c8a8134ecf8151777a9388c48323e274767e2"
+SOURCES = {
+    "dataverse_api": API,
+    "cd118": "https://www2.census.gov/x/cd118.zip",
+    "cd120": "https://www2.census.gov/x/cd120.zip",
+    "pl94171": "https://www2.census.gov/pl/{folder}/{st}2020.pl.zip",
+    "census_vest": "https://raw.githubusercontent.com/alarm-redist/census-2020/{commit}/census-vest-2020/{st}_2020_{kind}.csv",
+    "tiger_gpkg": "https://www2.census.gov/geo/tiger/TGRGPKG26/tlgpkg_2026_us_legislative.gpkg.zip",
+    "tiger_mo_cd119": "https://www2.census.gov/geo/tiger/TIGER2025/CD/tl_2025_29_cd119.zip",
+    "cb_states": "https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_state_500k.zip",
+}
+
+
+def small_config():
+    return Config(
+        status_checked=date(2026, 10, 3),
+        census_vest_commit=COMMIT,
+        ensemble=EnsembleConfig(name="alarm_v15", doi=DOI, version=15, notes={}, fill={}),
+        align_to_alarm=(AlignEntry(state="CA", rds="alarm/CA_cd_2020_map.rds", unit_column="tract",
+                                   unit_len=11, units=("06049000300", "06093000200")),),
+        sources=SOURCES,
+        states={"NV": make_state("NV", "Nevada", "32", 4, "vtd"),
+                "CA": make_state("CA", "California", "06", 52, "block"),
+                "WV": make_state("WV", "West Virginia", "54", 2, "rds_county", elections=("pre_20",))},
+        at_large={},
+    )
+
+
+DV_FILES = {
+    "CA_cd_2020_map.rds": {"id": 6391062, "size": 2117872, "md5": "e227564fe85c6729d49aa49e90019ecf", "tabular": False},
+    "CA_cd_2020_stats.tab": {"id": 6392648, "size": 75228117, "md5": "ffd1cb0dbc4f62b1c710ef6186170ea9", "tabular": True},
+    "NV_cd_2020_stats.tab": {"id": 6392701, "size": 7257601, "md5": "10f038a740da8bf18a18a5fbd33f8f2e", "tabular": True},
+    "WV_cd_2020_map.rds": {"id": 6380448, "size": 17740, "md5": "40ecd77e6862f5d5605951fcb75aeb8f", "tabular": False},
+    "WV_cd_2020_stats.tab": {"id": 6392761, "size": 2158565, "md5": "e4d14ea21a0130bf01c0fbea17be9806", "tabular": True},
+}
+
+
+def test_plan_downloads_follows_the_data_dir_layout():
+    plan = sources.plan_downloads(small_config(), DV_FILES)
+    vest = f"https://raw.githubusercontent.com/alarm-redist/census-2020/{COMMIT}/census-vest-2020"
+    assert plan == [
+        Download("alarm/CA_cd_2020_stats.csv", f"{API}/access/datafile/6392648?format=original",
+                 75228117, "ffd1cb0dbc4f62b1c710ef6186170ea9"),
+        Download("alarm/NV_cd_2020_stats.csv", f"{API}/access/datafile/6392701?format=original",
+                 7257601, "10f038a740da8bf18a18a5fbd33f8f2e"),
+        Download("alarm/WV_cd_2020_stats.csv", f"{API}/access/datafile/6392761?format=original",
+                 2158565, "e4d14ea21a0130bf01c0fbea17be9806"),
+        Download("alarm/CA_cd_2020_map.rds", f"{API}/access/datafile/6391062",
+                 2117872, "e227564fe85c6729d49aa49e90019ecf"),
+        Download("alarm/WV_cd_2020_map.rds", f"{API}/access/datafile/6380448",
+                 17740, "40ecd77e6862f5d5605951fcb75aeb8f"),
+        Download("census_vest/ca_2020_block.csv", f"{vest}/ca_2020_block.csv", None, None),
+        Download("census_vest/nv_2020_vtd.csv", f"{vest}/nv_2020_vtd.csv", None, None),
+        Download("census/cd118.zip", "https://www2.census.gov/x/cd118.zip", None, None),
+        Download("census/cd120.zip", "https://www2.census.gov/x/cd120.zip", None, None),
+        Download("census/pl/ca2020.pl.zip", "https://www2.census.gov/pl/California/ca2020.pl.zip", None, None),
+        Download("census/pl/nv2020.pl.zip", "https://www2.census.gov/pl/Nevada/nv2020.pl.zip", None, None),
+        Download("census/pl/wv2020.pl.zip", "https://www2.census.gov/pl/West_Virginia/wv2020.pl.zip", None, None),
+        Download("census/tiger/tlgpkg_2026_us_legislative.gpkg.zip", SOURCES["tiger_gpkg"], None, None),
+        Download("census/tiger/tl_2025_29_cd119.zip", SOURCES["tiger_mo_cd119"], None, None),
+        Download("census/tiger/cb_2025_us_state_500k.zip", SOURCES["cb_states"], None, None),
+    ]
+
+
+def test_plan_downloads_names_a_missing_dataverse_file():
+    files = {k: v for k, v in DV_FILES.items() if k != "WV_cd_2020_map.rds"}
+    with pytest.raises(DownloadError, match="WV_cd_2020_map.rds"):
+        sources.plan_downloads(small_config(), files)

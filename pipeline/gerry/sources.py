@@ -10,6 +10,10 @@ import time
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from gerry.config import Config
 
 USER_AGENT = "gerry-pipeline/1.0"   # Dataverse answers 403 to the default "Python-urllib/3.x"
 TIMEOUT = 120                       # seconds per connection attempt
@@ -138,3 +142,72 @@ def fetch(dl: Download, root: Path, manifest: Manifest, retries: int = 3, wait: 
     os.replace(part, target)
     manifest.record(dl.key, dl.url, size, sha)
     return target
+
+
+def dataverse_files(api_base: str, doi: str, version: int, session=None) -> dict[str, dict]:
+    """File name -> {"id", "size", "md5", "tabular"} for one published version of a dataset.
+
+    For ingested tables Dataverse serves the original CSV with ?format=original; its size is
+    originalFileSize. The md5 is that of the original upload in both cases."""
+    url = f"{api_base}/datasets/:persistentId/versions/{version}/files?persistentId={doi}"
+    session = session or open_session()
+    try:
+        with session.open(url, timeout=TIMEOUT) as response:
+            payload = json.load(response)
+    except (OSError, http.client.HTTPException, ValueError) as exc:
+        raise DownloadError(f"{url}: {type(exc).__name__}: {exc}") from exc
+    if payload.get("status") != "OK":
+        raise DownloadError(f"{url}: status {payload.get('status')}: {payload.get('message')}")
+    items = payload["data"]
+    if payload.get("totalCount", len(items)) != len(items):
+        raise DownloadError(f"{url}: listing has {len(items)} of {payload['totalCount']} files")
+    files: dict[str, dict] = {}
+    for item in items:
+        df = item["dataFile"]
+        tabular = bool(df.get("tabularData"))
+        name = df["filename"]
+        if name in files:
+            raise DownloadError(f"{url}: file name {name} occurs twice")
+        files[name] = {"id": int(df["id"]), "size": int(df["originalFileSize"] if tabular else df["filesize"]),
+                       "md5": df["md5"], "tabular": tabular}
+    return files
+
+
+def _dataverse_download(cfg: Config, dv_files: dict[str, dict], name: str, key: str) -> Download:
+    f = dv_files.get(name)
+    if f is None:
+        raise DownloadError(f"{name} is not in {cfg.ensemble.doi} version {cfg.ensemble.version}")
+    url = f"{cfg.sources['dataverse_api']}/access/datafile/{f['id']}"
+    if f["tabular"]:
+        url += "?format=original"
+    return Download(key, url, f["size"], f["md5"])
+
+
+def plan_downloads(cfg: Config, dv_files: dict[str, dict]) -> list[Download]:
+    """Every file the pipeline reads, keyed by its path in the data directory (Interfaces, "Datamap")."""
+    src = cfg.sources
+    postals = sorted(cfg.states)
+    plan = [_dataverse_download(cfg, dv_files, f"{p}_cd_2020_stats.tab", f"alarm/{p}_cd_2020_stats.csv")
+            for p in postals]
+    rds_keys = {f"alarm/{p}_cd_2020_map.rds" for p in postals if cfg.states[p].unit_source == "rds_county"}
+    rds_keys |= {entry.rds for entry in cfg.align_to_alarm}
+    plan += [_dataverse_download(cfg, dv_files, key.rsplit("/", 1)[1], key) for key in sorted(rds_keys)]
+    for p in postals:
+        kind = cfg.states[p].unit_source
+        if kind in ("vtd", "block"):
+            st = p.lower()
+            url = src["census_vest"].format(commit=cfg.census_vest_commit, st=st, kind=kind)
+            plan.append(Download(f"census_vest/{st}_2020_{kind}.csv", url, None, None))
+    plan.append(Download("census/cd118.zip", src["cd118"], None, None))
+    plan.append(Download("census/cd120.zip", src["cd120"], None, None))
+    for p in postals:
+        folder = cfg.states[p].name.replace(" ", "_")
+        st = p.lower()
+        plan.append(Download(f"census/pl/{st}2020.pl.zip", src["pl94171"].format(folder=folder, st=st), None, None))
+    for name in ("tiger_gpkg", "tiger_mo_cd119", "cb_states"):
+        url = src[name]
+        plan.append(Download(f"census/tiger/{url.rsplit('/', 1)[1]}", url, None, None))
+    keys = [dl.key for dl in plan]
+    if len(set(keys)) != len(keys):
+        raise DownloadError("download plan has duplicate keys")
+    return plan
