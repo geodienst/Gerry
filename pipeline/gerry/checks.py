@@ -359,7 +359,8 @@ def check_map_ids(topo: dict, results: dict) -> None:
     if wrong:
         raise CheckError("map_ids", "US", f"districts with the wrong state property: {wrong}")
 
-    states = {g["properties"]["id"]: g["properties"]["postal"] for g in topo["objects"]["states"]["geometries"]}
-    if states != postal:
-        raise CheckError("map_ids", "US", f"states in map.topojson {sorted(states.values())}, "
+    layer = topo["objects"]["states"]["geometries"]
+    pairs = sorted((g["properties"]["id"], g["properties"]["postal"]) for g in layer)
+    if pairs != sorted(postal.items()):
+        raise CheckError("map_ids", "US", f"states in map.topojson {sorted(p for _, p in pairs)}, "
                          f"expected {sorted(postal.values())}")

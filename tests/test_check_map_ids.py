@@ -63,3 +63,24 @@ def test_check_map_ids_needs_the_at_large_district():
     with pytest.raises(CheckError) as err:
         check_map_ids(topo(DISTRICTS, [*STATES, ("10", "DE")]), results)
     assert "1000" in err.value.detail
+
+
+def test_check_map_ids_stops_on_a_district_that_results_does_not_have():
+    # DC (11) is not in results.json: the map must not carry it
+    with pytest.raises(CheckError) as err:
+        check_map_ids(topo([*DISTRICTS, ("1100", "DC")], STATES), RESULTS)
+    assert err.value.check == "map_ids"
+    assert "extra ['1100']" in err.value.detail
+
+
+def test_check_map_ids_stops_on_wrong_postal_in_the_states_layer():
+    with pytest.raises(CheckError) as err:
+        check_map_ids(topo(DISTRICTS, [("02", "AK"), ("15", "NM"), ("35", "NM")]), RESULTS)
+    assert "states in map.topojson" in err.value.detail
+
+
+def test_check_map_ids_stops_on_a_state_that_occurs_twice():
+    # comparing the layer as a dict keyed by id would collapse the duplicate
+    with pytest.raises(CheckError) as err:
+        check_map_ids(topo(DISTRICTS, [*STATES, ("15", "HI")]), RESULTS)
+    assert "states in map.topojson" in err.value.detail
