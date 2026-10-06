@@ -339,3 +339,27 @@ def check_geometry(districts, blocks, district_of, state, min_share: float = 0.9
                          f"{len(confirmed):,} of {len(named):,} block points ({share:.4%}) lie in the district "
                          f"the block file names, minimum {min_share:.1%}; first misses: {misses}")
     return share
+
+
+def check_map_ids(topo: dict, results: dict) -> None:
+    """map.topojson has exactly the districts and states of results.json, plus the at-large states."""
+    postal = {s["fips"]: p for p, s in results["states"].items()}
+    postal |= {a["fips"]: a["postal"] for a in results["national"]["single_seat"]}
+    want = {d["id"] for s in results["states"].values() for d in s["districts"]}
+    want |= {f"{a['fips']}00" for a in results["national"]["single_seat"]}
+
+    props = [g["properties"] for g in topo["objects"]["districts"]["geometries"]]
+    ids = [p["id"] for p in props]
+    duplicated = sorted({i for i in ids if ids.count(i) > 1})
+    missing, extra = sorted(want - set(ids)), sorted(set(ids) - want)
+    if duplicated or missing or extra:
+        raise CheckError("map_ids", "US", f"districts in map.topojson: missing {missing}, extra {extra}, "
+                         f"duplicated {duplicated}")
+    wrong = sorted(p["id"] for p in props if p["state"] != postal[p["id"][:2]])
+    if wrong:
+        raise CheckError("map_ids", "US", f"districts with the wrong state property: {wrong}")
+
+    states = {g["properties"]["id"]: g["properties"]["postal"] for g in topo["objects"]["states"]["geometries"]}
+    if states != postal:
+        raise CheckError("map_ids", "US", f"states in map.topojson {sorted(states.values())}, "
+                         f"expected {sorted(postal.values())}")
