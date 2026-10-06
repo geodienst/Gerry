@@ -85,3 +85,37 @@ def distribution(seat_samples, seats: int) -> np.ndarray:
     if samples.size == 0 or samples.min() < 0 or samples.max() > seats:
         raise ValueError(f"seat counts must lie in 0..{seats}")
     return np.bincount(samples, minlength=seats + 1)
+
+
+# Cumulative shares from a convolution of 44 distributions carry float error near 1e-15.
+CUM_TOLERANCE = 1e-9
+
+
+def _check_q(q: float) -> None:
+    if not 0 <= q <= 100:
+        raise ValueError(f"q must lie in 0..100, got {q}")
+
+
+def _normalize(pmf) -> np.ndarray:
+    p = np.asarray(pmf, dtype=float)
+    if p.ndim != 1 or p.size == 0 or (p < 0).any() or p.sum() <= 0:
+        raise ValueError("a distribution needs non-negative counts or probabilities with a positive sum")
+    return p / p.sum()
+
+
+def sample_percentile(samples, q: float) -> int:
+    """Smallest seat count k with share of samples <= k at least q/100 (inverse CDF)."""
+    _check_q(q)
+    values = np.asarray(samples)
+    if values.size == 0:
+        raise ValueError("no samples")
+    return int(np.percentile(values, q, method="inverted_cdf"))
+
+
+def pmf_percentile(pmf, q: float) -> int:
+    """Smallest seat count k that occurs and has cumulative share >= q/100."""
+    _check_q(q)
+    p = _normalize(pmf)
+    cum = np.cumsum(p)
+    hits = np.flatnonzero((p > 0) & (cum >= q / 100 - CUM_TOLERANCE))
+    return int(hits[0])

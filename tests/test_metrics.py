@@ -123,3 +123,65 @@ def test_distribution_rejects_impossible_counts():
         m.distribution([5], 4)
     with pytest.raises(ValueError):
         m.distribution([], 4)
+
+
+# Task 2.4: sample_percentile and pmf_percentile
+
+def test_sample_percentile_takes_lower_middle_value():
+    # samples 1, 1, 2, 2: share of plans with at most 1 seat = 2/4 = 0.5 >= 0.5
+    # so the median is 1, never the average 1.5
+    assert m.sample_percentile([1, 1, 2, 2], 50) == 1
+
+
+def test_sample_percentile_with_many_equal_values():
+    # 7 plans with 2 seats, 3 with 3: cumulative share 0.7 at 2 seats, 1.0 at 3
+    # p5: 0.7 >= 0.05 -> 2; median: 0.7 >= 0.5 -> 2; p95: 0.7 < 0.95 <= 1.0 -> 3
+    samples = [2] * 7 + [3] * 3
+    assert [m.sample_percentile(samples, q) for q in (5, 50, 95)] == [2, 2, 3]
+
+
+def test_sample_percentile_all_equal():
+    # West Virginia: every plan gives 0 seats
+    assert [m.sample_percentile([0] * 5000, q) for q in (5, 50, 95)] == [0, 0, 0]
+
+
+def test_sample_percentile_rejects_q_out_of_range():
+    with pytest.raises(ValueError):
+        m.sample_percentile([1, 2], 101)
+
+
+def test_pmf_percentile_matches_hand_cdf():
+    # plans per seat count 0..3: 1, 3, 4, 2 (10 plans); cumulative 0.1, 0.4, 0.8, 1.0
+    # p5: 0.1 >= 0.05 -> 0; median: 0.4 < 0.5 <= 0.8 -> 2; p95: 0.8 < 0.95 <= 1.0 -> 3
+    assert [m.pmf_percentile([1, 3, 4, 2], q) for q in (5, 50, 95)] == [0, 2, 3]
+
+
+def test_pmf_percentile_skips_seat_counts_without_plans():
+    # no plan has 0 seats, so the 0th percentile is 1, as numpy gives for the samples
+    assert m.pmf_percentile([0, 5, 5], 0) == 1
+    assert m.sample_percentile([1] * 5 + [2] * 5, 0) == 1
+
+
+def test_pmf_percentile_tolerates_float_error():
+    # twelve seat counts with one plan each: in floats the cumulative share at 5 is
+    # 0.49999999999999994, just under 0.5; by hand it is 6/12 = 0.5, so the median is 5
+    assert np.cumsum(np.ones(12) / 12)[5] < 0.5
+    assert m.pmf_percentile(np.ones(12), 50) == 5
+    assert m.sample_percentile(range(12), 50) == 5
+
+
+def test_percentiles_at_exact_boundaries_take_the_lower_value():
+    # 5000 plans; the cumulative share at 0 seats hits q exactly, so the answer is 0
+    # p5: 250 / 5000 = 0.05; median: 2500 / 5000 = 0.5; p95: 4750 / 5000 = 0.95
+    for zeros, q in ((250, 5), (2500, 50), (4750, 95)):
+        samples = [0] * zeros + [1] * (5000 - zeros)
+        assert m.sample_percentile(samples, q) == 0
+        assert m.pmf_percentile([zeros, 5000 - zeros], q) == 0
+
+
+def test_pmf_percentile_agrees_with_samples():
+    # Nevada's distribution: 13 plans with 1 seat, 1901 with 2, 3086 with 3
+    samples = [1] * 13 + [2] * 1901 + [3] * 3086
+    pmf = m.distribution(samples, 4)
+    for q in (0, 1, 5, 25, 50, 75, 95, 100):
+        assert m.pmf_percentile(pmf, q) == m.sample_percentile(samples, q)
