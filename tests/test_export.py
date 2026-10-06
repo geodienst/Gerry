@@ -1,12 +1,14 @@
+import json
 from datetime import date
 
 import pytest
 
+from gerry.checks import CheckError
 from gerry.config import (
     COMPUTED_NOTE_KEYS, ENSEMBLE_NOTE_KEYS, REPO_ROOT, STATE_NOTE_KEYS, AtLargeState, Config,
     ConfigError, EnsembleConfig, ExtraMap, StateConfig, load_config,
 )
-from gerry.export import NOTE_TEXTS, resolve_notes
+from gerry.export import NOTE_TEXTS, build_results, resolve_notes
 
 SPEC = REPO_ROOT / "docs" / "superpowers" / "specs" / "2026-10-05-gerrymandering-map-design.md"
 
@@ -121,3 +123,148 @@ def test_repo_config_note_lists_match_the_spec():
         assert actual == set(states.split(", ")), key
     fill = {row[0]: {"reference_map": row[1], "consequence": row[2]} for row in table_after("Invulwaarden voor")}
     assert cfg.ensemble.fill == fill
+
+
+# --- build_results -------------------------------------------------------------------------------
+
+def toy_state_metrics(fips, computed_notes=()):
+    """Numeric fields for a 2-seat state, shaped like data/interim/metrics.json."""
+    return {
+        "d_share": 0.55,
+        "proportional": 1,
+        "enacted": 1,
+        "neutral": {"median": 1, "p5": 1, "p95": 2, "dist": [0, 4000, 1000]},
+        "position": {"fewer": 0.0, "equal": 0.8, "more": 0.2, "midrank": 0.4},
+        "effects": {"geographic": 0, "drawing": 0},
+        "outside_band": False,
+        "eg": {"value": 0.031, "median": 0.02, "p5": -0.05, "p95": 0.09},
+        "mm": None,
+        "districts": [
+            {"id": f"{fips}02", "share": 0.4, "d": 1000.5, "r": 1500.4999},
+            {"id": f"{fips}01", "share": 0.7, "d": 2100.0, "r": 900.25},
+        ],
+        "sorted": {"enacted": [0.4, 0.7], "p5": [0.38, 0.6], "p50": [0.45, 0.65], "p95": [0.5, 0.71]},
+        "computed_notes": list(computed_notes),
+    }
+
+
+def toy_metrics():
+    mo = toy_state_metrics("29")
+    mo["blocked_map"] = {
+        "enacted": 0,
+        "districts": [{"id": "2901", "share": 0.45, "d": 10.0, "r": 12.2},
+                      {"id": "2902", "share": 0.48, "d": 20.0, "r": 21.7}],
+        "position": {"fewer": 0.1, "equal": 0.3, "more": 0.6, "midrank": 0.25},
+    }
+    return {
+        "national": {
+            "seats": 4, "proportional": 2, "enacted": 2,
+            "neutral": {"median": 2, "p5": 2, "p95": 3, "dist": [0.0, 0.0, 0.7, 0.3, 0.0]},
+            "position": {"fewer": 0.0, "equal": 0.7, "more": 0.3, "midrank": 0.35},
+            "effects": {"geographic": 0, "drawing": 0},
+            "outside_band": False,
+        },
+        "states": {"HI": toy_state_metrics("15", ["narrow_ensemble"]), "MO": mo},
+        "checks": {"anything": "not exported"},
+    }
+
+
+def toy_results_config():
+    return toy_config(
+        [state("HI", "Hawaii", "15", 2),
+         state("MO", "Missouri", "29", 2, notes=["blocked_map"], extra_maps=[HB1])],
+        ens_notes={"MO": ("vra_constraint",)},
+    )
+
+
+def test_build_results_meta():
+    results = build_results(toy_metrics(), toy_results_config(), "2026-10-06")
+    assert results["meta"] == {
+        "generated": "2026-10-06",
+        "ensemble": {"name": "alarm_v15", "doi": "doi:10.7910/DVN/SLCD3E", "version": 15},
+        "census_vest_commit": "243c8a8134ecf8151777a9388c48323e274767e2",
+        "vote_basis": ["pre_16", "pre_20"],
+        "status_checked": "2026-10-03",
+    }
+
+
+def test_build_results_national_adds_single_seat_states_sorted_by_postal():
+    results = build_results(toy_metrics(), toy_results_config(), "2026-10-06")
+    national = results["national"]
+    assert national["seats"] == 4
+    assert national["neutral"]["dist"] == [0.0, 0.0, 0.7, 0.3, 0.0]
+    assert national["single_seat"] == [{"postal": "AK", "fips": "02", "name": "Alaska"},
+                                       {"postal": "DE", "fips": "10", "name": "Delaware"}]
+    assert list(national) == ["seats", "proportional", "enacted", "neutral", "position", "effects",
+                              "outside_band", "single_seat"]
+
+
+def test_build_results_state_entry():
+    results = build_results(toy_metrics(), toy_results_config(), "2026-10-06")
+    m = toy_state_metrics("15")
+    assert results["states"]["HI"] == {
+        "name": "Hawaii", "fips": "15", "seats": 2, "map_name": "Hawaii map", "status": "In effect",
+        "source": {"label": "Hawaii source", "url": "https://example.org/hi"},
+        "notes": [{"key": "narrow_ensemble", "text": NOTE_TEXTS["narrow_ensemble"]}],
+        "d_share": 0.55, "proportional": 1, "enacted": 1,
+        "neutral": m["neutral"], "position": m["position"], "effects": m["effects"],
+        "outside_band": False, "eg": m["eg"], "mm": None,
+        # sorted by id, votes rounded half up: 1000.5 -> 1001, 1500.4999 -> 1500, 900.25 -> 900
+        "districts": [{"id": "1501", "share": 0.7, "d": 2100, "r": 900},
+                      {"id": "1502", "share": 0.4, "d": 1001, "r": 1500}],
+        "sorted": m["sorted"],
+    }
+    assert "blocked_map" not in results["states"]["HI"]
+
+
+def test_build_results_blocked_map_for_missouri():
+    results = build_results(toy_metrics(), toy_results_config(), "2026-10-06")
+    mo = results["states"]["MO"]
+    assert [n["key"] for n in mo["notes"]] == ["vra_constraint", "blocked_map"]
+    assert mo["blocked_map"] == {
+        "name": "HB 1 of 2025", "status": "Blocked",
+        "source": {"label": "Redistricting Data Hub (Missouri House)",
+                   "url": "https://redistrictingdatahub.org/dataset/2025-missouri-congressional-districts-plan/"},
+        "enacted": 0,
+        "districts": [{"id": "2901", "share": 0.45, "d": 10, "r": 12},
+                      {"id": "2902", "share": 0.48, "d": 20, "r": 22}],
+        "position": {"fewer": 0.1, "equal": 0.3, "more": 0.6, "midrank": 0.25},
+    }
+
+
+def test_build_results_is_valid_json_without_nan():
+    results = build_results(toy_metrics(), toy_results_config(), "2026-10-06")
+    text = json.dumps(results, allow_nan=False)
+    assert '"mm": null' in text
+
+
+def test_build_results_stops_when_states_differ():
+    metrics = toy_metrics()
+    del metrics["states"]["HI"]
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert err.value.check == "export_states"
+
+
+def test_build_results_stops_on_wrong_district_ids():
+    metrics = toy_metrics()
+    metrics["states"]["HI"]["districts"][0]["id"] = "1503"
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert (err.value.check, err.value.state) == ("export_districts", "HI")
+
+
+def test_build_results_stops_when_national_seats_differ_from_config():
+    metrics = toy_metrics()
+    metrics["national"]["seats"] = 5
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert err.value.check == "export_seats"
+
+
+def test_build_results_stops_when_blocked_map_is_missing():
+    metrics = toy_metrics()
+    del metrics["states"]["MO"]["blocked_map"]
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert (err.value.check, err.value.state) == ("export_blocked_map", "MO")
