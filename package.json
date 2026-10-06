@@ -1,0 +1,19 @@
+{
+  "name": "gerry",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Static map that compares proportional, neutral and enacted House seat counts by state",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "vendor": "node -e \"const fs=require('fs');fs.mkdirSync('site/vendor',{recursive:true});for(const[f,t]of[['d3/dist/d3.min.js','d3.min.js'],['d3/LICENSE','d3.LICENSE.txt'],['topojson-client/dist/topojson-client.min.js','topojson-client.min.js'],['topojson-client/LICENSE','topojson-client.LICENSE.txt']])fs.copyFileSync('node_modules/'+f,'site/vendor/'+t)\"",
+    "test": "node --test \"site/js/*.test.js\""
+  },
+  "devDependencies": {
+    "d3": "7.9.0",
+    "mapshaper": "0.7.77",
+    "topojson-client": "3.1.0"
+  }
+}
