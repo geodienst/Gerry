@@ -1,0 +1,576 @@
+# Pipeline settings. Schema: "Interfaces" in docs/superpowers/plans/2026-10-05-gerrymandering-map.md.
+# map_name, status, seats, bef and source_url must match data/sources.md
+# (checked by gerry.checks.check_sources_md).
+
+status_checked: 2026-10-03
+census_vest_commit: 243c8a8134ecf8151777a9388c48323e274767e2
+
+ensemble:
+  name: alarm_v15
+  doi: doi:10.7910/DVN/SLCD3E
+  version: 15
+  # Notes that belong to this ensemble set (spec chapter 5, notes table).
+  notes:
+    AL: [vra_constraint, vra_filter_with_votes, alarm_rerun_unpublished]
+    AZ: [vra_constraint, competitiveness_rule]
+    CA: [vra_constraint, alarm_method_update_pending]
+    CO: [competitiveness_rule, alarm_rerun_unpublished]
+    FL: [vra_constraint, alarm_method_update_pending]
+    GA: [vra_constraint]
+    KS: [core_preservation_2010, alarm_rerun_unpublished]
+    LA: [vra_constraint, core_preservation_prior_map]
+    MI: [vra_constraint, alarm_rerun_unpublished]
+    MO: [vra_constraint, vra_filter_bvap]
+    MS: [vra_constraint, alarm_rerun_unpublished]
+    NC: [vra_constraint, alarm_rerun_unpublished]
+    NE: [core_preservation_2010]
+    NM: [core_preservation_prior_map]
+    NY: [alarm_rerun_unpublished]
+    OH: [vra_constraint, alarm_rerun_unpublished]
+    PA: [alarm_rerun_unpublished]
+    RI: [vra_constraint]
+    SC: [vra_constraint, vra_filter_with_votes, alarm_rerun_unpublished]
+    TX: [vra_constraint, alarm_method_update_pending]
+    UT: [core_preservation_prior_map]
+    WA: [vra_constraint, alarm_rerun_unpublished]
+  # Fill values for core_preservation_prior_map.
+  fill:
+    NM:
+      reference_map: "the 2021 map"
+      consequence: "The current map is that 2021 map, so the drawing effect shown here is probably closer to zero than it should be."
+    LA:
+      reference_map: "the 2022 map"
+      consequence: "The current map, adopted in 2026, largely follows the 2022 lines, so the drawing effect shown here is probably closer to zero than it should be."
+    UT:
+      reference_map: "the legislature's 2021 map"
+      consequence: "A court replaced that map in 2025 with the current map. We cannot say in which direction this rule shifts the drawing effect shown here."
+
+# Units whose votes in the unit file differ from the data ALARM summed for the
+# ensembles. units.py scales the block votes in these tracts to ALARM's totals.
+align_to_alarm:
+  - state: CA
+    rds: alarm/CA_cd_2020_map.rds
+    unit_column: tract
+    unit_len: 11
+    units: ["06049000300", "06093000200"]
+
+sources:
+  dataverse_api: https://dataverse.harvard.edu/api
+  cd118: https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip
+  cd120: https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2027/120-congressional-district-befs/cd120.zip
+  pl94171: https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/{folder}/{st}2020.pl.zip
+  census_vest: https://raw.githubusercontent.com/alarm-redist/census-2020/{commit}/census-vest-2020/{st}_2020_{kind}.csv
+  tiger_gpkg: https://www2.census.gov/geo/tiger/TGRGPKG26/tlgpkg_2026_us_legislative.gpkg.zip
+  tiger_mo_cd119: https://www2.census.gov/geo/tiger/TIGER2025/CD/tl_2025_29_cd119.zip
+  cb_states: https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_state_500k.zip
+
+states:
+  AL:
+    name: Alabama
+    fips: "01"
+    seats: 7
+    map_name: "Livingston Congressional Plan 3-2023"
+    status: Challenged
+    source_label: "Alabama Secretary of State"
+    source_url: https://www.sos.alabama.gov/sites/default/files/2026-5-14/Livingston%20Congressional%20Plan%203-2023%20Legal%20Description.pdf
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  AZ:
+    name: Arizona
+    fips: "04"
+    seats: 9
+    map_name: "Independent Redistricting Commission map v14.0"
+    status: In effect
+    source_label: "Arizona Independent Redistricting Commission"
+    source_url: https://redistricting-irc-az.hub.arcgis.com/pages/official-maps
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  AR:
+    name: Arkansas
+    fips: "05"
+    seats: 4
+    map_name: "Acts 1114 and 1116 of 2021"
+    status: In effect
+    source_label: "Arkansas GIS Office"
+    source_url: https://gis.arkansas.gov/arcgis/rest/services/FEATURESERVICES/Boundaries/FeatureServer/6
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  CA:
+    name: California
+    fips: "06"
+    seats: 52
+    map_name: "AB 604 (Proposition 50)"
+    status: Challenged
+    source_label: "California State Assembly Elections Committee"
+    source_url: https://aelc.assembly.ca.gov/proposed-congressional-map
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: block
+    notes: [adopted_after_2024_election]
+  CO:
+    name: Colorado
+    fips: "08"
+    seats: 8
+    map_name: "Independent Congressional Redistricting Commission plan"
+    status: In effect
+    source_label: "Colorado Independent Redistricting Commissions"
+    source_url: https://redistricting.colorado.gov/content/congressional-final-approved
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  CT:
+    name: Connecticut
+    fips: "09"
+    seats: 5
+    map_name: "Special master plan"
+    status: In effect
+    source_label: "Connecticut General Assembly"
+    source_url: https://www.cga.ct.gov/rr/tfs/20210401_2021%20Redistricting%20Project/cmaps.asp
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  FL:
+    name: Florida
+    fips: "12"
+    seats: 28
+    map_name: "EOGPCRP2026 (HB 1-D)"
+    status: Challenged
+    source_label: "Florida Senate"
+    source_url: https://www.flsenate.gov/Session/Redistricting/Congressional
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+    notes: [adopted_after_2024_election]
+  GA:
+    name: Georgia
+    fips: "13"
+    seats: 14
+    map_name: "December 2023 remedial plan (SB 3EX)"
+    status: Challenged
+    source_label: "Georgia Legislative and Congressional Reapportionment Office"
+    source_url: https://www.legis.ga.gov/joint-office/reapportionment
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  HI:
+    name: Hawaii
+    fips: "15"
+    seats: 2
+    map_name: "Reapportionment Commission plan"
+    status: In effect
+    source_label: "Hawaii Office of Elections"
+    source_url: https://elections.hawaii.gov/about-us/boards-and-commissions/reapportionment/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: block
+  ID:
+    name: Idaho
+    fips: "16"
+    seats: 2
+    map_name: "Commission for Reapportionment plan"
+    status: In effect
+    source_label: "Idaho Legislature"
+    source_url: https://legislature.idaho.gov/redistricting/2021/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  IL:
+    name: Illinois
+    fips: "17"
+    seats: 17
+    map_name: "HB 1291 of 2021"
+    status: Challenged
+    source_label: "Redistricting Data Hub"
+    source_url: https://redistrictingdatahub.org/dataset/2021-illinois-congressional-districts-approved-plan/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  IN:
+    name: Indiana
+    fips: "18"
+    seats: 9
+    map_name: "HEA 1581 of 2021"
+    status: In effect
+    source_label: "Indiana Geographic Information Office"
+    source_url: https://gisdata.in.gov/server/rest/services/Hosted/Congressional_Districts_of_Indiana_Current/FeatureServer
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  IA:
+    name: Iowa
+    fips: "19"
+    seats: 4
+    map_name: "SF 621, LSA Plan 2"
+    status: In effect
+    source_label: "Iowa Legislative Services Agency"
+    source_url: https://services2.arcgis.com/KhKjlwEBlPJd6v51/arcgis/rest/services/RedistrictingPlan2/FeatureServer
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  KS:
+    name: Kansas
+    fips: "20"
+    seats: 4
+    map_name: "SB 355, Ad Astra 2"
+    status: In effect
+    source_label: "Kansas Legislative Research Department"
+    source_url: https://klrd.gov/redistricting/enacted-plans-2022/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  KY:
+    name: Kentucky
+    fips: "21"
+    seats: 6
+    map_name: "SB 3 of 2022"
+    status: In effect
+    source_label: "Kentucky General Assembly"
+    source_url: https://apps.legislature.ky.gov/record/22RS/sb3.html
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  LA:
+    name: Louisiana
+    fips: "22"
+    seats: 6
+    map_name: "SB 121 of 2026 (Act 2)"
+    status: Challenged
+    source_label: "Louisiana Legislature"
+    source_url: https://redist.legis.la.gov/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+    notes: [adopted_after_2024_election]
+  ME:
+    name: Maine
+    fips: "23"
+    seats: 2
+    map_name: "LD 1739 of 2021"
+    status: In effect
+    source_label: "Maine Office of GIS"
+    source_url: https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/MaineVotingDistricts2021USCongress/FeatureServer
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: block
+  MD:
+    name: Maryland
+    fips: "24"
+    seats: 8
+    map_name: "SB 1012 of 2022"
+    status: In effect
+    source_label: "Redistricting Data Hub"
+    source_url: https://redistrictingdatahub.org/dataset/2021-maryland-us-congressional-adopted-plan/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  MA:
+    name: Massachusetts
+    fips: "25"
+    seats: 9
+    map_name: "Chapter 93 of the Acts of 2021"
+    status: In effect
+    source_label: "MassGIS"
+    source_url: https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/Congress118/FeatureServer
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  MI:
+    name: Michigan
+    fips: "26"
+    seats: 13
+    map_name: "Independent Citizens Redistricting Commission, Chestnut plan"
+    status: In effect
+    source_label: "State of Michigan GIS Open Data"
+    source_url: https://gisagocss.state.mi.us/arcgis/rest/services/OpenData/michigan_geographic_framework/MapServer/23
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  MN:
+    name: Minnesota
+    fips: "27"
+    seats: 8
+    map_name: "Court plan C2022 with the 2022 CD7/CD8 fix"
+    status: In effect
+    source_label: "Minnesota Legislative Coordinating Commission"
+    source_url: https://gis.lcc.mn.gov/redist2020/cong20.php?plname=C2022&pltype=court
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  MS:
+    name: Mississippi
+    fips: "28"
+    seats: 4
+    map_name: "HB 384 of 2022"
+    status: In effect
+    source_label: "Redistricting Data Hub"
+    source_url: https://redistrictingdatahub.org/dataset/2022-mississippi-congressional-districts-approved-plan/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  MO:
+    name: Missouri
+    fips: "29"
+    seats: 8
+    map_name: "HB 2909 of 2022"
+    status: In effect
+    source_label: "Redistricting Data Hub"
+    source_url: https://redistrictingdatahub.org/dataset/2022-missouri-congressional-districts-approved-plan/
+    bef: cd118
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+    extra_maps:
+      mo_hb1:
+        name: "HB 1 of 2025"
+        status: Blocked
+        bef: cd120
+        source_label: "Redistricting Data Hub"
+        source_url: https://redistrictingdatahub.org/dataset/2025-missouri-congressional-districts-plan/
+    notes: [blocked_map]
+  MT:
+    name: Montana
+    fips: "30"
+    seats: 2
+    map_name: "Districting and Apportionment Commission plan"
+    status: In effect
+    source_label: "Montana Districting and Apportionment Commission"
+    source_url: https://mtredistricting.gov/congressional-maps/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  NE:
+    name: Nebraska
+    fips: "31"
+    seats: 3
+    map_name: "LB 1 of 2021"
+    status: In effect
+    source_label: "State of Nebraska GIS"
+    source_url: https://gis.ne.gov/Enterprise/rest/services/PoliticalBoundaries_2021/FeatureServer/1
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  NV:
+    name: Nevada
+    fips: "32"
+    seats: 4
+    map_name: "SB 1 of 2021"
+    status: In effect
+    source_label: "Nevada Legislative Counsel Bureau"
+    source_url: https://services9.arcgis.com/UU5yXg9PV67U0ebq/arcgis/rest/services/2021Congressional_Final_SB1_Amd2/FeatureServer
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  NH:
+    name: New Hampshire
+    fips: "33"
+    seats: 2
+    map_name: "Special master plan"
+    status: In effect
+    source_label: "NH GRANIT"
+    source_url: https://ftp.granit.unh.edu/GRANIT_Data/Vector_Data/Administrative_and_Political_Boundaries/d-congressional/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  NJ:
+    name: New Jersey
+    fips: "34"
+    seats: 12
+    map_name: "Congressional Redistricting Commission plan"
+    status: In effect
+    source_label: "New Jersey Office of GIS"
+    source_url: https://njogis-newjersey.opendata.arcgis.com/datasets/2d5a9cbb86da4519899ff56e4d094f4c_1/about
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  NM:
+    name: New Mexico
+    fips: "35"
+    seats: 3
+    map_name: "SB 1 of 2021"
+    status: In effect
+    source_label: "New Mexico Legislature"
+    source_url: https://www.nmlegis.gov/Redistricting2021/Maps_And_Data
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  NY:
+    name: New York
+    fips: "36"
+    seats: 26
+    map_name: "2024 plan"
+    status: In effect
+    source_label: "New York Legislative Task Force on Demographic Research and Reapportionment"
+    source_url: https://latfor.state.ny.us/maps/?sec=2024_congress
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  NC:
+    name: North Carolina
+    fips: "37"
+    seats: 14
+    map_name: "SL 2025-95 (SB 249)"
+    status: Challenged
+    source_label: "North Carolina General Assembly"
+    source_url: https://webservices.ncleg.gov/ViewBillDocument/2025/7669/0/SL%202025-95%20-%20Block%20Assignment%20File
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+    notes: [adopted_after_2024_election]
+  OH:
+    name: Ohio
+    fips: "39"
+    seats: 15
+    map_name: "Ohio Redistricting Commission plan"
+    status: In effect
+    source_label: "Ohio Secretary of State"
+    source_url: https://www.ohiosos.gov/assets/uscongressionaldistricts-2026-2032-adopted-2025-10-31-equivalencyfile.xlsx
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+    notes: [adopted_after_2024_election]
+  OK:
+    name: Oklahoma
+    fips: "40"
+    seats: 5
+    map_name: "HB 1002X of 2021"
+    status: In effect
+    source_label: "Oklahoma House of Representatives"
+    source_url: https://www.arcgis.com/home/item.html?id=7aeb90448393499c8367cd426ff511d1
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  OR:
+    name: Oregon
+    fips: "41"
+    seats: 6
+    map_name: "SB 881 of 2021"
+    status: In effect
+    source_label: "Oregon GEOHub"
+    source_url: https://geohub.oregon.gov/datasets/oregon-geo::congressional-districts
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: block
+  PA:
+    name: Pennsylvania
+    fips: "42"
+    seats: 17
+    map_name: "Carter plan"
+    status: In effect
+    source_label: "Pennsylvania Legislative Reapportionment Commission"
+    source_url: https://www.redistricting.state.pa.us/maps/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  RI:
+    name: Rhode Island
+    fips: "44"
+    seats: 2
+    map_name: "S 2162 / H 7323 of 2022"
+    status: In effect
+    source_label: "Rhode Island Department of State"
+    source_url: https://services3.arcgis.com/KZcv0G0UvX0bPG3L/arcgis/rest/services/RI_Congressional_Districts_as_of_2022_/FeatureServer
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  SC:
+    name: South Carolina
+    fips: "45"
+    seats: 7
+    map_name: "S. 865 of 2022"
+    status: In effect
+    source_label: "South Carolina Senate"
+    source_url: https://redistricting.scsenate.gov/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  TN:
+    name: Tennessee
+    fips: "47"
+    seats: 9
+    map_name: "HB 7003 / SB 7004 of 2026"
+    status: Challenged
+    source_label: "Tennessee Comptroller of the Treasury"
+    source_url: https://comptroller.tn.gov/maps/u-s--congress-districts.html
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+    notes: [adopted_after_2024_election]
+  TX:
+    name: Texas
+    fips: "48"
+    seats: 38
+    map_name: "PLANC2333 (HB 4)"
+    status: Challenged
+    source_label: "Texas Legislative Council"
+    source_url: https://data.capitol.texas.gov/dataset/planc2333
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+    notes: [adopted_after_2024_election]
+  UT:
+    name: Utah
+    fips: "49"
+    seats: 4
+    map_name: "Court-adopted Map 1"
+    status: Challenged
+    source_label: "Utah Geospatial Resource Center"
+    source_url: https://gis.utah.gov/products/sgid/political/us-congressional-districts/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+    notes: [adopted_after_2024_election]
+  VA:
+    name: Virginia
+    fips: "51"
+    seats: 11
+    map_name: "2021 Supreme Court of Virginia plan"
+    status: In effect
+    source_label: "Virginia Division of Legislative Services"
+    source_url: https://www.virginiaredistricting.org/
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  WA:
+    name: Washington
+    fips: "53"
+    seats: 10
+    map_name: "Redistricting Commission plan as amended"
+    status: In effect
+    source_label: "Washington State Redistricting Commission"
+    source_url: https://www.redistricting.wa.gov/district-maps-handouts.html
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+  WV:
+    name: West Virginia
+    fips: "54"
+    seats: 2
+    map_name: "SB 3033 of 2021"
+    status: In effect
+    source_label: "West Virginia Legislature"
+    source_url: https://www.wvlegislature.gov/redistricting.cfm
+    bef: cd120
+    elections: [pre_20]
+    unit_source: rds_county
+    notes: [composite_2020_only]
+  WI:
+    name: Wisconsin
+    fips: "55"
+    seats: 8
+    map_name: "Least-change plan, Johnson v. WEC"
+    status: Challenged
+    source_label: "Wisconsin Legislative Technology Services Bureau"
+    source_url: https://gis-ltsb.hub.arcgis.com/datasets/e0c6f0979bc04c56b346042e34497f9e_0/about
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_source: vtd
+
+at_large:
+  AK: {name: Alaska, fips: "02"}
+  DE: {name: Delaware, fips: "10"}
+  ND: {name: North Dakota, fips: "38"}
+  SD: {name: South Dakota, fips: "46"}
+  VT: {name: Vermont, fips: "50"}
+  WY: {name: Wyoming, fips: "56"}
