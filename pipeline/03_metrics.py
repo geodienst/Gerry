@@ -1,7 +1,7 @@
 """Step 3: seats, neutral baseline, EG and MM per state and for the nation.
 
-Reads data/interim/ (written by 02_join.py) and pipeline/config.yaml.
-Writes data/interim/metrics.json.
+Reads data/interim/ (written by 02_join.py), pipeline/config.yaml, data/crosscheck/ and
+data/validation_notes.yaml. Writes data/interim/metrics.json and docs/validation.md.
 Run from the repo root: python pipeline/03_metrics.py
 """
 from __future__ import annotations
@@ -13,11 +13,12 @@ import numpy as np
 import pandas as pd
 
 from gerry.checks import CheckError
-from gerry.config import AtLargeState, StateConfig, interim_dir, load_config
+from gerry.config import REPO_ROOT, AtLargeState, StateConfig, interim_dir, load_config
 from gerry.metrics import (TieError, convolve, dem_wins, distribution, effects, efficiency_gap,
                            is_narrow, largest_remainder, linear_band, mean_median, outside_band,
                            pmf_percentile, pmf_position, position, sample_percentile, seats_by_plan,
                            sorted_band)
+from gerry.validation import build_report
 
 HOUSE_SEATS = 435
 WIN_COLS = ["d", "r", "d_pre_20", "r_pre_20"]
@@ -212,6 +213,11 @@ def main() -> None:
     out = idir / "metrics.json"
     out.write_text(json.dumps(metrics, indent=1, allow_nan=False), encoding="utf-8")
     print(f"Wrote {out}")
+    report = build_report(metrics, REPO_ROOT / "data" / "crosscheck", REPO_ROOT / "data" / "validation_notes.yaml")
+    report_path = REPO_ROOT / "docs" / "validation.md"
+    report_path.write_text(report, encoding="utf-8")
+    status = next(line for line in report.splitlines() if line.startswith("**Open items"))
+    print(f"Wrote {report_path}: {status.replace('**', '')}")
 
 
 if __name__ == "__main__":

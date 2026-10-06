@@ -316,3 +316,24 @@ def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
     assert out["checks"]["plans"] == {"XX": 4}
     assert out["checks"]["totals"] == {"district_seats": 3, "at_large": 1}
     assert out["checks"]["join_log"] == {"XX": {"note": "x"}}
+
+
+def test_main_writes_metrics_and_report(tmp_path, monkeypatch):
+    import json
+
+    metrics = {"national": {"seats": 0, "proportional": 0, "enacted": 0, "neutral": {"median": 0},
+                            "single_seat": []},
+               "states": {},
+               "checks": {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {},
+                          "join_log": {}}}
+    (tmp_path / "data" / "interim").mkdir(parents=True)
+    (tmp_path / "docs").mkdir()
+    monkeypatch.setattr(step, "load_config", lambda: None)
+    monkeypatch.setattr(step, "interim_dir", lambda: tmp_path / "data" / "interim")
+    monkeypatch.setattr(step, "compute", lambda cfg, idir: metrics)
+    monkeypatch.setattr(step, "REPO_ROOT", tmp_path)
+    step.main()
+    written = json.loads((tmp_path / "data" / "interim" / "metrics.json").read_text(encoding="utf-8"))
+    assert written == metrics
+    report = (tmp_path / "docs" / "validation.md").read_text(encoding="utf-8")
+    assert report.startswith("# Validation report")
