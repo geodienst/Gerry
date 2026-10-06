@@ -48,7 +48,7 @@ class Manifest:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         text = json.dumps(dict(sorted(self._entries.items())), indent=2) + "\n"
         tmp = self.path.with_name(self.path.name + ".part")
-        tmp.write_text(text, encoding="utf-8")
+        tmp.write_text(text, encoding="utf-8", newline="\n")   # tracked in git: LF on Windows too
         os.replace(tmp, self.path)
 
 
@@ -111,9 +111,14 @@ def fetch(dl: Download, root: Path, manifest: Manifest, retries: int = 3, wait: 
     for attempt in range(1, retries + 1):
         try:
             with session.open(dl.url, timeout=TIMEOUT) as response, open(part, "wb") as fh:
+                announced = getattr(response, "headers", {}).get("Content-Length")
                 shutil.copyfileobj(response, fh, CHUNK)
             size, md5, sha = _digests(part)
             problem = _expected_problem(dl, size, md5)
+            # copyfileobj does not raise when the server closes early; Census and GitHub give
+            # no size or md5, so Content-Length is the only check against a short file.
+            if problem is None and announced is not None and announced.isdigit() and int(announced) != size:
+                problem = f"size {size}, Content-Length {announced}"
         except (OSError, http.client.HTTPException) as exc:
             problem = f"{type(exc).__name__}: {exc}"
         if problem is None:

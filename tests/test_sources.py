@@ -21,6 +21,7 @@ class LocalServer:
         self.user_agents = []
         self.failures = {}         # path -> number of 503 answers before the file is served
         self.routes = {}           # path -> bytes, served instead of a file
+        self.truncated = {}        # path -> bytes, sent with a Content-Length larger than the body
         srv = self
 
         class Handler(http.server.SimpleHTTPRequestHandler):
@@ -43,6 +44,14 @@ class LocalServer:
                     self.end_headers()
                     self.wfile.write(body)
                     return
+                if path in srv.truncated:
+                    body = srv.truncated[path]
+                    self.send_response(200)
+                    self.send_header("Content-Length", str(len(body) + 10))
+                    self.end_headers()
+                    self.wfile.write(body)
+                    self.close_connection = True
+                    return
                 super().do_GET()
 
             def log_message(self, *args):
@@ -50,7 +59,8 @@ class LocalServer:
 
         self.httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self.base = f"http://127.0.0.1:{self.httpd.server_port}"
-        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+        self.thread = threading.Thread(
+            target=self.httpd.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True)
         self.thread.start()
 
     def url(self, path: str) -> str:
@@ -98,6 +108,15 @@ def test_manifest_saves_sorted_and_reloads(tmp_path):
     assert text.endswith("\n")
     assert list(json.loads(text)) == ["census/a.zip", "census/b.zip"]
     assert Manifest(path).get("census/a.zip") == {"url": "https://example.org/a.zip", "size": 5, "sha256": "aa"}
+
+
+def test_manifest_is_written_with_lf_line_endings(tmp_path):
+    # The manifest is tracked in git; Windows must not turn its newlines into CRLF.
+    path = tmp_path / "manifest.json"
+    m = Manifest(path)
+    m.record("census/a.zip", "https://example.org/a.zip", 5, "aa")
+    m.save()
+    assert b"\r" not in path.read_bytes()
 
 
 def test_fetch_downloads_and_records_sha256(tmp_path, server):
@@ -151,6 +170,32 @@ def test_fetch_checks_size_and_md5_from_dataverse(tmp_path, server):
         fetch(bad, tmp_path / "raw", manifest, retries=2, wait=0)
     assert not (tmp_path / "raw" / "alarm" / "UT_cd_2020_stats.csv").exists()
     assert manifest.get(bad.key) is None
+
+
+def test_fetch_checks_the_size_from_dataverse(tmp_path, server):
+    content = b"draw,district\ncd_2020,1\n"
+    (server.root / "stats.csv").write_bytes(content)
+    manifest = Manifest(tmp_path / "manifest.json")
+    wrong_size = Download("alarm/NV_cd_2020_stats.csv", server.url("stats.csv"), len(content) + 1, md5(content))
+    with pytest.raises(DownloadError, match=rf"size {len(content)}, expected {len(content) + 1}"):
+        fetch(wrong_size, tmp_path / "raw", manifest, retries=2, wait=0)
+    assert server.hits["stats.csv"] == 2
+    assert not (tmp_path / "raw" / "alarm" / "NV_cd_2020_stats.csv").exists()
+    assert not (tmp_path / "raw" / "alarm" / "NV_cd_2020_stats.csv.part").exists()
+    assert manifest.get(wrong_size.key) is None
+
+
+def test_fetch_rejects_a_truncated_download(tmp_path, server):
+    # Census and GitHub give no size or md5, so Content-Length is the only check on these files.
+    server.truncated["cd.txt"] = b"GEOID,CDFP\n3200"
+    dl = Download("census/cd.txt", server.url("cd.txt"), None, None)
+    manifest = Manifest(tmp_path / "manifest.json")
+    with pytest.raises(DownloadError, match="Content-Length"):
+        fetch(dl, tmp_path / "raw", manifest, retries=2, wait=0)
+    assert server.hits["cd.txt"] == 2
+    assert not (tmp_path / "raw" / "census" / "cd.txt").exists()
+    assert not (tmp_path / "raw" / "census" / "cd.txt.part").exists()
+    assert manifest.get(dl.key) is None
 
 
 def test_fetch_accepts_existing_file_with_matching_md5(tmp_path, server):
