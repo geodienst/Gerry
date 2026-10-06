@@ -3,6 +3,8 @@
 # (checked by gerry.checks.check_sources_md).
 
 status_checked: 2026-10-03
+# census-vest block files of CA, HI, ME and OR: only weights within a tract.
+# The votes per unit come from ALARM's map.rds (unit_kind per state below).
 census_vest_commit: 243c8a8134ecf8151777a9388c48323e274767e2
 
 ensemble:
@@ -45,15 +47,6 @@ ensemble:
       reference_map: "the legislature's 2021 map"
       consequence: "A court replaced that map in 2025 with the current map. We cannot say in which direction this rule shifts the drawing effect shown here."
 
-# Units whose votes in the unit file differ from the data ALARM summed for the
-# ensembles. units.py scales the block votes in these tracts to ALARM's totals.
-align_to_alarm:
-  - state: CA
-    rds: alarm/CA_cd_2020_map.rds
-    unit_column: tract
-    unit_len: 11
-    units: ["06049000300", "06093000200"]
-
 sources:
   dataverse_api: https://dataverse.harvard.edu/api
   cd118: https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip
@@ -75,7 +68,7 @@ states:
     source_url: https://www.sos.alabama.gov/sites/default/files/2026-5-14/Livingston%20Congressional%20Plan%203-2023%20Legal%20Description.pdf
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   AZ:
     name: Arizona
     fips: "04"
@@ -86,7 +79,7 @@ states:
     source_url: https://redistricting-irc-az.hub.arcgis.com/pages/official-maps
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   AR:
     name: Arkansas
     fips: "05"
@@ -97,7 +90,7 @@ states:
     source_url: https://gis.arkansas.gov/arcgis/rest/services/FEATURESERVICES/Boundaries/FeatureServer/6
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   CA:
     name: California
     fips: "06"
@@ -108,7 +101,7 @@ states:
     source_url: https://aelc.assembly.ca.gov/proposed-congressional-map
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: block
+    unit_kind: tract
     notes: [adopted_after_2024_election]
   CO:
     name: Colorado
@@ -120,7 +113,7 @@ states:
     source_url: https://redistricting.colorado.gov/content/congressional-final-approved
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   CT:
     name: Connecticut
     fips: "09"
@@ -131,7 +124,7 @@ states:
     source_url: https://www.cga.ct.gov/rr/tfs/20210401_2021%20Redistricting%20Project/cmaps.asp
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   FL:
     name: Florida
     fips: "12"
@@ -142,7 +135,7 @@ states:
     source_url: https://www.flsenate.gov/Session/Redistricting/Congressional
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
     notes: [adopted_after_2024_election]
   GA:
     name: Georgia
@@ -154,7 +147,7 @@ states:
     source_url: https://www.legis.ga.gov/joint-office/reapportionment
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   HI:
     name: Hawaii
     fips: "15"
@@ -165,7 +158,7 @@ states:
     source_url: https://elections.hawaii.gov/about-us/boards-and-commissions/reapportionment/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: block
+    unit_kind: tract
   ID:
     name: Idaho
     fips: "16"
@@ -176,7 +169,7 @@ states:
     source_url: https://legislature.idaho.gov/redistricting/2021/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   IL:
     name: Illinois
     fips: "17"
@@ -187,7 +180,7 @@ states:
     source_url: https://redistrictingdatahub.org/dataset/2021-illinois-congressional-districts-approved-plan/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   IN:
     name: Indiana
     fips: "18"
@@ -198,7 +191,7 @@ states:
     source_url: https://gisdata.in.gov/server/rest/services/Hosted/Congressional_Districts_of_Indiana_Current/FeatureServer
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   IA:
     name: Iowa
     fips: "19"
@@ -209,7 +202,7 @@ states:
     source_url: https://services2.arcgis.com/KhKjlwEBlPJd6v51/arcgis/rest/services/RedistrictingPlan2/FeatureServer
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: county
   KS:
     name: Kansas
     fips: "20"
@@ -220,7 +213,7 @@ states:
     source_url: https://klrd.gov/redistricting/enacted-plans-2022/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   KY:
     name: Kentucky
     fips: "21"
@@ -231,7 +224,7 @@ states:
     source_url: https://apps.legislature.ky.gov/record/22RS/sb3.html
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   LA:
     name: Louisiana
     fips: "22"
@@ -242,7 +235,7 @@ states:
     source_url: https://redist.legis.la.gov/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
     notes: [adopted_after_2024_election]
   ME:
     name: Maine
@@ -254,7 +247,7 @@ states:
     source_url: https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/MaineVotingDistricts2021USCongress/FeatureServer
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: block
+    unit_kind: tract
   MD:
     name: Maryland
     fips: "24"
@@ -265,7 +258,7 @@ states:
     source_url: https://redistrictingdatahub.org/dataset/2021-maryland-us-congressional-adopted-plan/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   MA:
     name: Massachusetts
     fips: "25"
@@ -276,7 +269,7 @@ states:
     source_url: https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/Congress118/FeatureServer
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   MI:
     name: Michigan
     fips: "26"
@@ -287,7 +280,7 @@ states:
     source_url: https://gisagocss.state.mi.us/arcgis/rest/services/OpenData/michigan_geographic_framework/MapServer/23
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   MN:
     name: Minnesota
     fips: "27"
@@ -298,7 +291,7 @@ states:
     source_url: https://gis.lcc.mn.gov/redist2020/cong20.php?plname=C2022&pltype=court
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   MS:
     name: Mississippi
     fips: "28"
@@ -309,7 +302,7 @@ states:
     source_url: https://redistrictingdatahub.org/dataset/2022-mississippi-congressional-districts-approved-plan/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   MO:
     name: Missouri
     fips: "29"
@@ -320,7 +313,7 @@ states:
     source_url: https://redistrictingdatahub.org/dataset/2022-missouri-congressional-districts-approved-plan/
     bef: cd118
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
     extra_maps:
       mo_hb1:
         name: "HB 1 of 2025"
@@ -339,7 +332,7 @@ states:
     source_url: https://mtredistricting.gov/congressional-maps/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   NE:
     name: Nebraska
     fips: "31"
@@ -350,7 +343,7 @@ states:
     source_url: https://gis.ne.gov/Enterprise/rest/services/PoliticalBoundaries_2021/FeatureServer/1
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   NV:
     name: Nevada
     fips: "32"
@@ -361,7 +354,7 @@ states:
     source_url: https://services9.arcgis.com/UU5yXg9PV67U0ebq/arcgis/rest/services/2021Congressional_Final_SB1_Amd2/FeatureServer
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   NH:
     name: New Hampshire
     fips: "33"
@@ -372,7 +365,7 @@ states:
     source_url: https://ftp.granit.unh.edu/GRANIT_Data/Vector_Data/Administrative_and_Political_Boundaries/d-congressional/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   NJ:
     name: New Jersey
     fips: "34"
@@ -383,7 +376,7 @@ states:
     source_url: https://njogis-newjersey.opendata.arcgis.com/datasets/2d5a9cbb86da4519899ff56e4d094f4c_1/about
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   NM:
     name: New Mexico
     fips: "35"
@@ -394,7 +387,7 @@ states:
     source_url: https://www.nmlegis.gov/Redistricting2021/Maps_And_Data
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   NY:
     name: New York
     fips: "36"
@@ -405,7 +398,7 @@ states:
     source_url: https://latfor.state.ny.us/maps/?sec=2024_congress
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   NC:
     name: North Carolina
     fips: "37"
@@ -416,7 +409,7 @@ states:
     source_url: https://webservices.ncleg.gov/ViewBillDocument/2025/7669/0/SL%202025-95%20-%20Block%20Assignment%20File
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
     notes: [adopted_after_2024_election]
   OH:
     name: Ohio
@@ -428,7 +421,7 @@ states:
     source_url: https://www.ohiosos.gov/assets/uscongressionaldistricts-2026-2032-adopted-2025-10-31-equivalencyfile.xlsx
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
     notes: [adopted_after_2024_election]
   OK:
     name: Oklahoma
@@ -440,7 +433,7 @@ states:
     source_url: https://www.arcgis.com/home/item.html?id=7aeb90448393499c8367cd426ff511d1
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   OR:
     name: Oregon
     fips: "41"
@@ -451,7 +444,7 @@ states:
     source_url: https://geohub.oregon.gov/datasets/oregon-geo::congressional-districts
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: block
+    unit_kind: tract
   PA:
     name: Pennsylvania
     fips: "42"
@@ -462,7 +455,7 @@ states:
     source_url: https://www.redistricting.state.pa.us/maps/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   RI:
     name: Rhode Island
     fips: "44"
@@ -473,7 +466,7 @@ states:
     source_url: https://services3.arcgis.com/KZcv0G0UvX0bPG3L/arcgis/rest/services/RI_Congressional_Districts_as_of_2022_/FeatureServer
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   SC:
     name: South Carolina
     fips: "45"
@@ -484,7 +477,7 @@ states:
     source_url: https://redistricting.scsenate.gov/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   TN:
     name: Tennessee
     fips: "47"
@@ -495,7 +488,7 @@ states:
     source_url: https://comptroller.tn.gov/maps/u-s--congress-districts.html
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
     notes: [adopted_after_2024_election]
   TX:
     name: Texas
@@ -507,7 +500,7 @@ states:
     source_url: https://data.capitol.texas.gov/dataset/planc2333
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
     notes: [adopted_after_2024_election]
   UT:
     name: Utah
@@ -519,7 +512,7 @@ states:
     source_url: https://gis.utah.gov/products/sgid/political/us-congressional-districts/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
     notes: [adopted_after_2024_election]
   VA:
     name: Virginia
@@ -531,7 +524,7 @@ states:
     source_url: https://www.virginiaredistricting.org/
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   WA:
     name: Washington
     fips: "53"
@@ -542,7 +535,7 @@ states:
     source_url: https://www.redistricting.wa.gov/district-maps-handouts.html
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
   WV:
     name: West Virginia
     fips: "54"
@@ -553,7 +546,7 @@ states:
     source_url: https://www.wvlegislature.gov/redistricting.cfm
     bef: cd120
     elections: [pre_20]
-    unit_source: rds_county
+    unit_kind: county
     notes: [composite_2020_only]
   WI:
     name: Wisconsin
@@ -565,7 +558,7 @@ states:
     source_url: https://gis-ltsb.hub.arcgis.com/datasets/e0c6f0979bc04c56b346042e34497f9e_0/about
     bef: cd120
     elections: [pre_16, pre_20]
-    unit_source: vtd
+    unit_kind: vtd
 
 at_large:
   AK: {name: Alaska, fips: "02"}

@@ -24,7 +24,7 @@ COMPUTED_NOTE_KEYS = ("narrow_ensemble",)
 _STATE_STATUS = ("In effect", "Challenged")
 _EXTRA_MAP_STATUS = ("Blocked",)
 _BEF = ("cd120", "cd118")
-_UNIT_SOURCES = ("vtd", "block", "rds_county")
+_UNIT_KINDS = ("vtd", "tract", "county")
 _FILL_KEYS = ("reference_map", "consequence")
 _RESERVED_MAP_IDS = ("enacted", "check_2022")
 _SOURCE_KEYS = (
@@ -32,12 +32,11 @@ _SOURCE_KEYS = (
     "tiger_gpkg", "tiger_mo_cd119", "cb_states",
 )
 _TOP_KEYS = (
-    "status_checked", "census_vest_commit", "ensemble", "align_to_alarm",
-    "sources", "states", "at_large",
+    "status_checked", "census_vest_commit", "ensemble", "sources", "states", "at_large",
 )
 _STATE_REQUIRED = (
     "name", "fips", "seats", "map_name", "status", "source_label", "source_url",
-    "bef", "elections", "unit_source",
+    "bef", "elections", "unit_kind",
 )
 _STATE_KEYS = _STATE_REQUIRED + ("extra_maps", "notes")
 _EXTRA_MAP_KEYS = ("name", "status", "bef", "source_label", "source_url")
@@ -71,7 +70,7 @@ class StateConfig:
     source_url: str
     bef: str
     elections: tuple[str, ...]
-    unit_source: str
+    unit_kind: str
     extra_maps: tuple[ExtraMap, ...]
     notes: tuple[str, ...]
 
@@ -93,20 +92,10 @@ class EnsembleConfig:
 
 
 @dataclass(frozen=True)
-class AlignEntry:
-    state: str
-    rds: str
-    unit_column: str
-    unit_len: int
-    units: tuple[str, ...]
-
-
-@dataclass(frozen=True)
 class Config:
     status_checked: date
     census_vest_commit: str
     ensemble: EnsembleConfig
-    align_to_alarm: tuple[AlignEntry, ...]
     sources: dict[str, str]
     states: dict[str, StateConfig]
     at_large: dict[str, AtLargeState]
@@ -149,7 +138,6 @@ def load_config(path: Path | None = None) -> Config:
         status_checked=_date(raw["status_checked"], "status_checked"),
         census_vest_commit=_commit(raw["census_vest_commit"]),
         ensemble=_ensemble(raw["ensemble"], states),
-        align_to_alarm=_align(raw["align_to_alarm"], states),
         sources=_sources(raw["sources"]),
         states=states,
         at_large=at_large,
@@ -260,7 +248,7 @@ def _state(postal: Any, raw: Any) -> StateConfig:
         source_url=_url(raw, "source_url", where),
         bef=_choice(raw, "bef", where, _BEF),
         elections=tuple(elections),
-        unit_source=_choice(raw, "unit_source", where, _UNIT_SOURCES),
+        unit_kind=_choice(raw, "unit_kind", where, _UNIT_KINDS),
         extra_maps=tuple(_extra_map(k, v, f"{where}.extra_maps") for k, v in extra_raw.items()),
         notes=_keys(raw.get("notes"), STATE_NOTE_KEYS, f"{where}.notes"),
     )
@@ -324,41 +312,6 @@ def _ensemble(raw: Any, states: dict[str, StateConfig]) -> EnsembleConfig:
         notes=notes,
         fill=fill,
     )
-
-
-def _align(raw: Any, states: dict[str, StateConfig]) -> tuple[AlignEntry, ...]:
-    if raw is None:
-        return ()
-    if not isinstance(raw, list):
-        raise ConfigError("align_to_alarm: expected a list")
-    entries = []
-    keys = ("state", "rds", "unit_column", "unit_len", "units")
-    for i, item in enumerate(raw):
-        where = f"align_to_alarm[{i}]"
-        _mapping(item, where)
-        _only_keys(item, keys, where, required=keys)
-        postal = _text(item, "state", where)
-        if postal not in states:
-            raise ConfigError(f"{where}.state: {postal!r} is not in states")
-        unit_len = _int(item["unit_len"], f"{where}.unit_len", 1)
-        units = item["units"]
-        if not isinstance(units, list) or not units:
-            raise ConfigError(f"{where}.units: expected a non-empty list")
-        for unit in units:
-            if (not isinstance(unit, str) or len(unit) != unit_len
-                    or not unit.startswith(states[postal].fips)):
-                raise ConfigError(
-                    f"{where}.units: {unit!r} must be quoted text of length {unit_len} "
-                    f"starting with {states[postal].fips}"
-                )
-        entries.append(AlignEntry(
-            state=postal,
-            rds=_text(item, "rds", where),
-            unit_column=_text(item, "unit_column", where),
-            unit_len=unit_len,
-            units=tuple(units),
-        ))
-    return tuple(entries)
 
 
 def _sources(raw: Any) -> dict[str, str]:

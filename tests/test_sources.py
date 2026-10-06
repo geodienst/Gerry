@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from gerry import sources
-from gerry.config import AlignEntry, Config, EnsembleConfig, StateConfig
+from gerry.config import Config, EnsembleConfig, StateConfig
 from gerry.sources import Download, DownloadError, Manifest, fetch
 
 
@@ -283,10 +283,10 @@ def test_dataverse_files_rejects_an_error_status(server):
         sources.dataverse_files(server.url("api"), DOI, 15)
 
 
-def make_state(postal, name, fips, seats, unit_source, elections=("pre_16", "pre_20")):
+def make_state(postal, name, fips, seats, unit_kind, elections=("pre_16", "pre_20")):
     return StateConfig(postal=postal, name=name, fips=fips, seats=seats, map_name="m", status="In effect",
                        source_label="s", source_url="https://example.org/", bef="cd120",
-                       elections=tuple(elections), unit_source=unit_source, extra_maps=(), notes=())
+                       elections=tuple(elections), unit_kind=unit_kind, extra_maps=(), notes=())
 
 
 API = "https://dataverse.harvard.edu/api"
@@ -308,12 +308,10 @@ def small_config():
         status_checked=date(2026, 10, 3),
         census_vest_commit=COMMIT,
         ensemble=EnsembleConfig(name="alarm_v15", doi=DOI, version=15, notes={}, fill={}),
-        align_to_alarm=(AlignEntry(state="CA", rds="alarm/CA_cd_2020_map.rds", unit_column="tract",
-                                   unit_len=11, units=("06049000300", "06093000200")),),
         sources=SOURCES,
         states={"NV": make_state("NV", "Nevada", "32", 4, "vtd"),
-                "CA": make_state("CA", "California", "06", 52, "block"),
-                "WV": make_state("WV", "West Virginia", "54", 2, "rds_county", elections=("pre_20",))},
+                "CA": make_state("CA", "California", "06", 52, "tract"),
+                "WV": make_state("WV", "West Virginia", "54", 2, "county", elections=("pre_20",))},
         at_large={},
     )
 

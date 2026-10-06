@@ -79,7 +79,7 @@ def test_california_map_has_9129_tracts():
     table = read_rds_table(CA_MAP)
     assert len(table) == 9129
     assert table["tract"].str.len().eq(11).all() and table["tract"].is_unique
-    # The two tracts of align_to_alarm: ALARM's tract data has no votes there.
+    # Two tracts without votes in ALARM's map.rds (spec chapter 10).
     votes = table.set_index("tract").loc[["06049000300", "06093000200"],
                                          ["pre_16_dem_cli", "pre_16_rep_tru", "pre_20_dem_bid", "pre_20_rep_tru"]]
     assert (votes == 0).all().all()

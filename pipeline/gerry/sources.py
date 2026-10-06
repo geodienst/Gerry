@@ -203,7 +203,7 @@ def plan_downloads(cfg: Config, dv_files: dict[str, dict]) -> list[Download]:
              for p in postals]
     # census-vest: only the block files of CA, HI, ME and OR, as weights within a tract
     for p in postals:
-        if cfg.states[p].unit_source == "block":
+        if cfg.states[p].unit_kind == "tract":
             st = p.lower()
             url = src["census_vest"].format(commit=cfg.census_vest_commit, st=st, kind="block")
             plan.append(Download(f"census_vest/{st}_2020_block.csv", url, None, None))

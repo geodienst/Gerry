@@ -5,15 +5,15 @@ import pandas as pd
 import pytest
 import rdata
 
-from gerry.config import AlignEntry, StateConfig, data_dir
-from gerry.rds import read_rds_table
-from gerry.units import UnitsError, add_composite, align_to_alarm, load_units, select_columns
+from gerry.blocks import read_pl_counties
+from gerry.config import StateConfig, data_dir
+from gerry.units import UnitsError, add_composite, load_units, read_block_votes, select_columns, unit_ids
 
 
-def make_state(postal, fips, unit_source, elections=("pre_16", "pre_20")):
+def make_state(postal, fips, unit_kind, elections=("pre_16", "pre_20")):
     return StateConfig(postal=postal, name="Test", fips=fips, seats=2, map_name="m", status="In effect",
                        source_label="s", source_url="https://example.org/", bef="cd120",
-                       elections=tuple(elections), unit_source=unit_source, extra_maps=(), notes=())
+                       elections=tuple(elections), unit_kind=unit_kind, extra_maps=(), notes=())
 
 
 def write(path, text):
@@ -43,24 +43,138 @@ def test_select_columns_with_two_matches_fails():
         select_columns(["pre_16_dem_cli", "pre_16_dem_oth", "pre_16_rep_tru"], "pre_16")
 
 
+# ---- unit_ids (spec chapter 4, "Eenheid-ID's in map.rds") ----
+
+NV = make_state("NV", "32", "vtd")
+CA = make_state("CA", "06", "tract")
+ME = make_state("ME", "23", "tract")
+IA = make_state("IA", "19", "county")
+
+
+def test_unit_ids_of_a_vtd_state_are_geoid():
+    # VTD codes can hold letters and dashes, as in New Hampshire (ALTO01) and Alabama (008-03)
+    table = pd.DataFrame({"GEOID": ["32001000001", "32003ALTO01", "32003008-03"],
+                          "vtd": ["000001", "ALTO01", "008-03"]})
+    assert unit_ids(table, NV).tolist() == ["32001000001", "32003ALTO01", "32003008-03"]
+
+
+def test_unit_ids_of_a_vtd_state_must_be_county_plus_vtd():
+    table = pd.DataFrame({"GEOID": ["32001000001", "32001000002"], "vtd": ["000001", "000003"]})
+    with pytest.raises(UnitsError, match="32001000002"):
+        unit_ids(table, NV)
+
+
+def test_unit_ids_of_ca_and_hi_come_from_the_tract_column():
+    # CA and HI have no GEOID column; tract holds the 11-character tract GEOID
+    table = pd.DataFrame({"tract": ["06001400100", "06049000300"], "county": ["Alameda County", "Modoc County"]})
+    assert unit_ids(table, CA).tolist() == ["06001400100", "06049000300"]
+
+
+def test_unit_ids_prefer_geoid_over_a_short_tract_column():
+    # Maine: GEOID is the tract GEOID, tract only the 6-digit tract code
+    table = pd.DataFrame({"GEOID": ["23019000500"], "tract": ["000500"]})
+    assert unit_ids(table, ME).tolist() == ["23019000500"]
+
+
+COUNTIES = pd.DataFrame({"county_id": ["19001", "19003", "19005"],
+                         "name": ["Adair County", "Adams County", "Allamakee County"]})
+
+
+def test_unit_ids_of_iowa_come_from_the_county_names():
+    table = pd.DataFrame({"county": ["Adams County", "Adair County"]})
+    assert unit_ids(table, IA, COUNTIES).tolist() == ["19003", "19001"]
+
+
+def test_unit_ids_of_iowa_need_a_matching_county_name():
+    table = pd.DataFrame({"county": ["Adair County", "Adair"]})
+    with pytest.raises(UnitsError, match="'Adair' \\(0 matches\\)"):
+        unit_ids(table, IA, COUNTIES)
+
+
+def test_unit_ids_of_iowa_need_a_unique_county_name():
+    counties = pd.concat([COUNTIES, pd.DataFrame({"county_id": ["19007"], "name": ["Adams County"]})])
+    table = pd.DataFrame({"county": ["Adair County", "Adams County"]})
+    with pytest.raises(UnitsError, match="'Adams County' \\(2 matches\\)"):
+        unit_ids(table, IA, counties)
+
+
+def test_unit_ids_of_iowa_need_the_county_records():
+    with pytest.raises(UnitsError, match="county records"):
+        unit_ids(pd.DataFrame({"county": ["Adair County"]}), IA)
+
+
+@pytest.mark.parametrize("ids, message", [
+    (["0600140010", "06001400200"], "11 characters"),      # ten characters
+    (["32001400100", "06001400200"], "starting with 06"),  # another state
+    (["06001400100", "06001400100"], "duplicate"),
+    (["06001400100", None], "without id"),
+])
+def test_unit_ids_are_checked(ids, message):
+    table = pd.DataFrame({"tract": pd.array(ids, dtype="str")})
+    with pytest.raises(UnitsError, match=message):
+        unit_ids(table, CA)
+
+
+def test_unit_ids_need_an_id_column():
+    with pytest.raises(UnitsError, match="no id column"):
+        unit_ids(pd.DataFrame({"vtd": ["000001"]}), NV)
+
+
 # ---- load_units ----
 
-VTD_CSV = """GEOID20,state,county,vtd,pop,vap,pre_16_rep_tru,pre_16_dem_cli,uss_16_dem_x,uss_16_rep_y,pre_20_dem_bid,pre_20_rep_tru
-01001000010,AL,Autauga County,000010,1741,1334,529.2,164.7,1,2,172.8,510.4
-01003008-03,AL,Baldwin County,008-03,10,8,2.5,1.5,1,2,3,4
-"""
+def write_map(path, **columns):
+    """A small map.rds: the given columns plus a list column, as in ALARM's redist_map."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    n = len(next(iter(columns.values())))
+    columns["adj"] = [np.array([0], dtype=np.int32)] * n
+    rdata.write_rds(path, columns)
 
 
-def test_load_units_reads_a_vtd_file(tmp_path):
-    write(tmp_path / "census_vest" / "al_2020_vtd.csv", VTD_CSV)
-    units = load_units(make_state("AL", "01", "vtd"), tmp_path)
-    assert list(units.columns) == ["unit_id", "vap", "d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]
-    assert units["unit_id"].tolist() == ["01001000010", "01003008-03"]   # text, leading zero kept
+def nv_map(tmp_path, vap=(1334.0, 8.0), d16=(164.7, np.nan)):
+    write_map(tmp_path / "alarm" / "NV_cd_2020_map.rds",
+              GEOID=np.array(["32001000001", "32003008-03"], dtype=object),
+              vtd=np.array(["000001", "008-03"], dtype=object),
+              cd_2020=np.array([2, 1], dtype=np.int32),
+              pop=np.array([1741.0, 10.0]), vap=np.array(vap),
+              pre_16_dem_cli=np.array(d16), pre_16_rep_tru=np.array([529.2, 2.5]),
+              uss_16_dem_cor=np.array([1.0, 2.0]),
+              pre_20_dem_bid=np.array([172.8, 3.0]), pre_20_rep_tru=np.array([510.4, 4.0]))
+
+
+def test_load_units_reads_the_alarm_map(tmp_path, caplog):
+    nv_map(tmp_path)
+    with caplog.at_level(logging.INFO, logger="gerry.units"):
+        units = load_units(NV, tmp_path)
+    assert list(units.columns) == ["unit_id", "vap", "pop", "cd_2020", "d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]
+    assert units["unit_id"].tolist() == ["32001000001", "32003008-03"]
     assert units["vap"].dtype == np.int64 and units["vap"].tolist() == [1334, 8]
-    assert units["d_pre_16"].tolist() == [164.7, 1.5]
+    assert units["pop"].dtype == np.int64 and units["pop"].tolist() == [1741, 10]
+    assert units["cd_2020"].tolist() == ["02", "01"]
+    assert units["d_pre_16"].tolist() == [164.7, 0.0]          # the empty field became 0
     assert units["r_pre_20"].dtype == np.float64 and units["r_pre_20"].tolist() == [510.4, 4.0]
-    assert units.attrs["empty_vote_fields"] == 0
+    assert units.attrs == {"empty_vote_fields": 1, "empty_vote_units": 1}
+    assert "NV: 1 empty vote fields in 1 units set to 0" in caplog.text
 
+
+def test_load_units_rejects_fractional_vap(tmp_path):
+    nv_map(tmp_path, vap=(1334.5, 8.0))
+    with pytest.raises(UnitsError, match="vap"):
+        load_units(NV, tmp_path)
+
+
+def test_load_units_with_one_election_and_county_geoids(tmp_path):
+    write_map(tmp_path / "alarm" / "WV_cd_2020_map.rds",
+              GEOID=np.array(["54063", "54037"], dtype=object), county=np.array(["063", "037"], dtype=object),
+              cd_2020=np.array([1, 2], dtype=np.int32), pop=np.array([12376.0, 57701.0]),
+              vap=np.array([9895.0, 44965.0]),
+              pre_20_rep_tru=np.array([5068.0, 15033.0]), pre_20_dem_bid=np.array([1345.0, 12127.0]))
+    units = load_units(make_state("WV", "54", "county", elections=("pre_20",)), tmp_path)
+    assert list(units.columns) == ["unit_id", "vap", "pop", "cd_2020", "d_pre_20", "r_pre_20"]
+    assert units["unit_id"].tolist() == ["54063", "54037"]
+    assert units["d_pre_20"].tolist() == [1345.0, 12127.0]
+
+
+# ---- read_block_votes (census-vest, tract states only) ----
 
 BLOCK_CSV = """GEOID20,state,county,pop,vap,pre_16_dem_cli,pre_16_rep_tru,pre_20_dem_bid,pre_20_rep_tru,arv_16
 060014001001000,CA,Alameda County,0,0,0,0,0,0,NA
@@ -69,56 +183,17 @@ BLOCK_CSV = """GEOID20,state,county,pop,vap,pre_16_dem_cli,pre_16_rep_tru,pre_20
 """
 
 
-def test_load_units_sets_empty_vote_fields_of_a_block_file_to_zero(tmp_path, caplog):
+def test_read_block_votes_sets_empty_fields_to_zero(tmp_path, caplog):
     write(tmp_path / "census_vest" / "ca_2020_block.csv", BLOCK_CSV)
     with caplog.at_level(logging.INFO, logger="gerry.units"):
-        units = load_units(make_state("CA", "06", "block"), tmp_path)
-    assert units["unit_id"].tolist() == ["060014001001000", "060490003001452", "060014001001001"]
-    assert units.loc[1, ["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]].tolist() == [0.0, 0.0, 0.0, 0.0]
-    assert units.attrs["empty_vote_fields"] == 4
-    assert units.attrs["empty_vote_units"] == 1
-    assert "CA: 4 empty vote fields in 1 units set to 0" in caplog.text
-
-
-def test_load_units_rejects_duplicate_unit_ids(tmp_path):
-    write(tmp_path / "census_vest" / "al_2020_vtd.csv", VTD_CSV + VTD_CSV.splitlines()[1] + "\n")
-    with pytest.raises(UnitsError, match="01001000010"):
-        load_units(make_state("AL", "01", "vtd"), tmp_path)
-
-
-def write_county_map(path, ids, vap=(9895.0, 44965.0)):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    rdata.write_rds(path, {
-        "GEOID": np.array(ids, dtype=object),
-        "NAME": np.array(["Monroe County, West Virginia", "Jefferson County, West Virginia"], dtype=object),
-        "state": np.array(["WV", "WV"], dtype=object),
-        "county": np.array(["063", "037"], dtype=object),
-        "vap": np.array(vap),
-        "pre_20_rep_tru": np.array([5068.0, 15033.0]),
-        "pre_20_dem_bid": np.array([1345.0, 12127.0]),
-        "adj": [np.array([1], dtype=np.int32), np.array([0], dtype=np.int32)],
-    })
-
-
-def test_load_units_reads_counties_from_the_alarm_map(tmp_path):
-    write_county_map(tmp_path / "alarm" / "WV_cd_2020_map.rds", ["54063", "54037"])
-    units = load_units(make_state("WV", "54", "rds_county", elections=("pre_20",)), tmp_path)
-    assert list(units.columns) == ["unit_id", "vap", "d_pre_20", "r_pre_20"]
-    assert units["unit_id"].tolist() == ["54063", "54037"]
-    assert units["vap"].tolist() == [9895, 44965]
-    assert units["d_pre_20"].tolist() == [1345.0, 12127.0]
-
-
-def test_load_units_needs_one_county_id_column(tmp_path):
-    write_county_map(tmp_path / "alarm" / "WV_cd_2020_map.rds", ["Monroe", "Jefferson"])
-    with pytest.raises(UnitsError, match="county GEOID"):
-        load_units(make_state("WV", "54", "rds_county", elections=("pre_20",)), tmp_path)
-
-
-def test_load_units_rejects_fractional_vap(tmp_path):
-    write_county_map(tmp_path / "alarm" / "WV_cd_2020_map.rds", ["54063", "54037"], vap=(9895.5, 44965.0))
-    with pytest.raises(UnitsError, match="vap"):
-        load_units(make_state("WV", "54", "rds_county", elections=("pre_20",)), tmp_path)
+        votes = read_block_votes(CA, tmp_path)
+    assert votes.index.name == "block_id"
+    assert votes.index.tolist() == ["060014001001000", "060490003001452", "060014001001001"]
+    assert list(votes.columns) == ["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]
+    assert votes.loc["060490003001452"].tolist() == [0.0, 0.0, 0.0, 0.0]
+    assert votes.loc["060014001001001"].tolist() == [2.5, 1.25, 3.0, 1.0]
+    assert votes.attrs == {"empty_vote_fields": 4, "empty_vote_units": 1}
+    assert "CA: 4 empty vote fields in 1 census-vest blocks set to 0" in caplog.text
 
 
 # ---- add_composite ----
@@ -137,72 +212,27 @@ def test_add_composite_with_one_election_copies_it():
     assert (out.loc[0, "d"], out.loc[0, "r"]) == (1345.0, 5068.0)
 
 
-# ---- align_to_alarm (Task 1.6) ----
+# ---- the real map.rds files ----
 
-TRACT_ENTRY = AlignEntry(state="CA", rds="alarm/CA_cd_2020_map.rds", unit_column="tract", unit_len=11,
-                         units=("06049000300",))
-
-
-def block_units():
-    return pd.DataFrame({
-        "unit_id": ["060490003001000", "060490003001001", "060490003001452", "060014001001000"],
-        "vap": [10, 30, 0, 5],
-        "d_pre_16": [10.0, 30.0, 0.0, 7.0],
-        "r_pre_16": [20.0, 20.0, 0.0, 9.0],
-    })
-
-
-def test_align_scales_each_column_to_the_tract_total():
-    alarm = pd.DataFrame({"tract": ["06049000300", "06001400100"],
-                          "pre_16_dem_cli": [20.0, 7.0], "pre_16_rep_tru": [40.0, 9.0]})
-    units = block_units()
-    out, diff = align_to_alarm(units, alarm, TRACT_ENTRY, ["pre_16"])
-    # d: blocks in the tract hold 10 + 30 = 40, ALARM has 20, factor 0.5: 10 -> 5, 30 -> 15.
-    # r: blocks hold 20 + 20 = 40, ALARM has 40, factor 1. The block outside the tract is untouched.
-    assert out["d_pre_16"].tolist() == [5.0, 15.0, 0.0, 7.0]
-    assert out["r_pre_16"].tolist() == [20.0, 20.0, 0.0, 9.0]
-    assert diff.to_dict("records") == [{"column": "d_pre_16", "before": 40.0, "after": 20.0},
-                                       {"column": "r_pre_16", "before": 40.0, "after": 40.0}]
-    assert units["d_pre_16"].tolist() == [10.0, 30.0, 0.0, 7.0]
-
-
-def test_align_to_a_zero_total_empties_the_tract():
-    alarm = pd.DataFrame({"tract": ["06049000300"], "pre_16_dem_cli": [0.0], "pre_16_rep_tru": [0.0]})
-    out, diff = align_to_alarm(block_units(), alarm, TRACT_ENTRY, ["pre_16"])
-    assert out["d_pre_16"].tolist() == [0.0, 0.0, 0.0, 7.0]
-    assert diff["after"].tolist() == [0.0, 0.0]
-
-
-def test_align_needs_the_tract_in_the_alarm_table():
-    alarm = pd.DataFrame({"tract": ["06001400100"], "pre_16_dem_cli": [7.0], "pre_16_rep_tru": [9.0]})
-    with pytest.raises(UnitsError, match="06049000300"):
-        align_to_alarm(block_units(), alarm, TRACT_ENTRY, ["pre_16"])
-
-
-def test_align_cannot_scale_zero_votes_up():
-    units = block_units()
-    units["d_pre_16"] = [0.0, 0.0, 0.0, 7.0]
-    alarm = pd.DataFrame({"tract": ["06049000300"], "pre_16_dem_cli": [5.0], "pre_16_rep_tru": [40.0]})
-    with pytest.raises(UnitsError, match="no d_pre_16 votes"):
-        align_to_alarm(units, alarm, TRACT_ENTRY, ["pre_16"])
-
-
-CA_BLOCKS = data_dir() / "census_vest" / "ca_2020_block.csv"
+IA_MAP = data_dir() / "alarm" / "IA_cd_2020_map.rds"
+IA_PL = data_dir() / "census" / "pl" / "ia2020.pl.zip"
 CA_MAP = data_dir() / "alarm" / "CA_cd_2020_map.rds"
 
 
 @pytest.mark.data
-@pytest.mark.skipif(not (CA_BLOCKS.exists() and CA_MAP.exists()), reason="needs the California unit files")
-def test_align_california_matches_the_spec():
-    st = make_state("CA", "06", "block")
-    entry = AlignEntry(state="CA", rds="alarm/CA_cd_2020_map.rds", unit_column="tract", unit_len=11,
-                       units=("06049000300", "06093000200"))
-    units = load_units(st, data_dir())
-    alarm = read_rds_table(CA_MAP)
-    out, diff = align_to_alarm(units, alarm, entry, st.elections)
-    assert diff["column"].tolist() == ["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]
-    # Spec chapter 4: ALARM's tract data has 429.9, 1431.4, 552.4 and 1716.2 votes fewer.
-    assert (diff["before"] - diff["after"]).round(1).tolist() == [429.9, 1431.4, 552.4, 1716.2]
-    # After the step the block file and ALARM's tract table have the same statewide totals.
-    for col, alarm_col in zip(diff["column"], ["pre_16_dem_cli", "pre_16_rep_tru", "pre_20_dem_bid", "pre_20_rep_tru"]):
-        assert abs(out[col].sum() - alarm[alarm_col].sum()) < 0.5
+@pytest.mark.skipif(not (IA_MAP.exists() and IA_PL.exists()), reason="needs the Iowa map.rds and P.L. 94-171 files")
+def test_iowa_counties_match_the_census_names():
+    units = load_units(make_state("IA", "19", "county"), data_dir(), read_pl_counties(IA_PL, "IA"))
+    assert len(units) == 99
+    assert units["unit_id"].str.startswith("19").all() and units["unit_id"].is_unique
+    assert units.loc[0, ["unit_id", "vap", "cd_2020"]].tolist() == ["19001", 5834, "03"]   # Adair County
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not CA_MAP.exists(), reason="needs alarm/CA_cd_2020_map.rds")
+def test_california_tracts_follow_alarm():
+    units = load_units(make_state("CA", "06", "tract"), data_dir())
+    assert len(units) == 9129
+    # spec chapter 10: two tracts in Modoc and Siskiyou County have no votes in ALARM's map.rds
+    two = units[units["unit_id"].isin(["06049000300", "06093000200"])]
+    assert two[["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]].to_numpy().sum() == 0.0

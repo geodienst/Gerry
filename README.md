@@ -6,7 +6,7 @@ A static map of every US congressional district. For each state with more than o
 2. Neutral baseline. The median and the 5th to 95th percentile of Democratic seats over 5,000 simulated maps from the ALARM Project.
 3. Enacted. The seats from the map that voters use on November 3, 2026.
 
-All three count the same votes. These are the 2016 and 2020 presidential results added together, by precinct. West Virginia uses 2020 only, by county. The difference between Proportional and Neutral baseline is the geographic effect. The difference between Neutral baseline and Enacted is the drawing effect.
+All three count the same votes. These are the 2016 and 2020 presidential results added together, per voting district, from the ALARM Project's data. California, Hawaii, Maine and Oregon have them per census tract, Iowa and West Virginia per county. West Virginia uses 2020 only. The difference between Proportional and Neutral baseline is the geographic effect. The difference between Neutral baseline and Enacted is the drawing effect.
 
 Alaska, Delaware, North Dakota, South Dakota, Vermont and Wyoming have one at-large seat each, so there is nothing to compare.
 

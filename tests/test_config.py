@@ -26,14 +26,13 @@ def minimal() -> dict:
             "notes": {"NM": ["core_preservation_prior_map"], "MO": ["vra_constraint", "vra_filter_bvap"]},
             "fill": {"NM": {"reference_map": "the 2021 map", "consequence": "It is closer to zero."}},
         },
-        "align_to_alarm": [],
         "sources": {key: f"https://example.org/{key}" for key in SOURCE_KEYS},
         "states": {
             "MO": {
                 "name": "Missouri", "fips": "29", "seats": 8, "map_name": "HB 2909 of 2022",
                 "status": "In effect", "source_label": "Redistricting Data Hub",
                 "source_url": "https://example.org/mo-2022", "bef": "cd118",
-                "elections": ["pre_16", "pre_20"], "unit_source": "vtd",
+                "elections": ["pre_16", "pre_20"], "unit_kind": "vtd",
                 "extra_maps": {"mo_hb1": {
                     "name": "HB 1 of 2025", "status": "Blocked", "bef": "cd120",
                     "source_label": "Redistricting Data Hub", "source_url": "https://example.org/mo-2025"}},
@@ -43,7 +42,7 @@ def minimal() -> dict:
                 "name": "New Mexico", "fips": "35", "seats": 3, "map_name": "SB 1 of 2021",
                 "status": "In effect", "source_label": "New Mexico Legislature",
                 "source_url": "https://example.org/nm", "bef": "cd120",
-                "elections": ["pre_16", "pre_20"], "unit_source": "vtd",
+                "elections": ["pre_16", "pre_20"], "unit_kind": "tract",
             },
         },
         "at_large": {"VT": {"name": "Vermont", "fips": "50"}},
@@ -65,6 +64,7 @@ def test_minimal_config_loads_with_types(tmp_path):
     mo = cfg.states["MO"]
     assert (mo.postal, mo.fips, mo.seats, mo.bef) == ("MO", "29", 8, "cd118")
     assert mo.elections == ("pre_16", "pre_20")
+    assert (mo.unit_kind, cfg.states["NM"].unit_kind) == ("vtd", "tract")
     assert mo.notes == ("blocked_map",)
     assert mo.extra_maps == (ExtraMap(
         id="mo_hb1", name="HB 1 of 2025", status="Blocked", bef="cd120",
@@ -72,7 +72,6 @@ def test_minimal_config_loads_with_types(tmp_path):
     assert cfg.states["NM"].extra_maps == ()
     assert cfg.states["NM"].notes == ()
     assert cfg.at_large["VT"].fips == "50"
-    assert cfg.align_to_alarm == ()
 
 
 def set_path(raw: dict, path: str, value) -> None:
@@ -90,7 +89,9 @@ def set_path(raw: dict, path: str, value) -> None:
 BAD_VALUES = [
     ("states.NM.status", "Blocked", "status"),
     ("states.NM.bef", "cd119", "bef"),
-    ("states.NM.unit_source", "tract", "unit_source"),
+    ("states.NM.unit_kind", "block", "unit_kind"),
+    ("states.NM.unit_source", "vtd", "unknown keys"),     # the key before unit_kind
+    ("align_to_alarm", [], "unknown keys"),               # replaced by the weights within a tract
     ("states.NM.fips", 35, "fips"),
     ("states.NM.seats", 1, "seats"),
     ("states.NM.elections", [], "elections"),
@@ -122,18 +123,6 @@ def test_invalid_config_raises(tmp_path, path, value, message):
         load_config(write(tmp_path, raw))
 
 
-@pytest.mark.parametrize("units, message", [
-    (["0604900030"], "length 11"),        # ten characters
-    (["06049000300"], "starting with 35"),  # California tract in a New Mexico entry
-])
-def test_align_entry_units_are_checked(tmp_path, units, message):
-    raw = minimal()
-    raw["align_to_alarm"] = [{"state": "NM", "rds": "alarm/NM_cd_2020_map.rds",
-                              "unit_column": "tract", "unit_len": 11, "units": units}]
-    with pytest.raises(ConfigError, match=message):
-        load_config(write(tmp_path, raw))
-
-
 def test_repo_root_holds_the_pipeline():
     assert (REPO_ROOT / "pipeline" / "gerry" / "config.py").is_file()
 
@@ -155,7 +144,7 @@ def test_interim_dir():
 # --- the real pipeline/config.yaml ------------------------------------------
 
 AT_LARGE = {"AK", "DE", "ND", "SD", "VT", "WY"}
-BLOCK_STATES = {"CA", "HI", "ME", "OR"}
+TRACT_STATES = {"CA", "HI", "ME", "OR"}
 # Spec chapter 5, notes table: which states get which note.
 ENSEMBLE_NOTES = {
     "vra_constraint": {"AL", "AZ", "CA", "FL", "GA", "LA", "MI", "MO", "MS", "NC", "OH", "RI", "SC", "TX", "WA"},
@@ -213,13 +202,14 @@ def test_real_config_fill_for_core_preservation(cfg):
     assert cfg.ensemble.fill["NM"]["reference_map"] == "the 2021 map"
 
 
-def test_real_config_bef_and_unit_source(cfg):
+def test_real_config_bef_and_unit_kind(cfg):
     assert {p for p, s in cfg.states.items() if s.bef == "cd118"} == {"MO"}
     assert {s.bef for s in cfg.states.values()} == {"cd120", "cd118"}
-    assert {p for p, s in cfg.states.items() if s.unit_source == "block"} == BLOCK_STATES
-    assert {p for p, s in cfg.states.items() if s.unit_source == "rds_county"} == {"WV"}
-    vtd = {p for p, s in cfg.states.items() if s.unit_source == "vtd"}
-    assert len(vtd) == 39 and "IA" in vtd
+    # the units of ALARM's map.rds (spec chapter 3)
+    assert {p for p, s in cfg.states.items() if s.unit_kind == "tract"} == TRACT_STATES
+    assert {p for p, s in cfg.states.items() if s.unit_kind == "county"} == {"IA", "WV"}
+    vtd = {p for p, s in cfg.states.items() if s.unit_kind == "vtd"}
+    assert len(vtd) == 38 and "NH" in vtd
 
 
 def test_real_config_elections(cfg):
@@ -231,5 +221,3 @@ def test_real_config_elections(cfg):
 def test_real_config_globals(cfg):
     assert cfg.status_checked >= date(2026, 10, 3)  # moves forward with every status re-check
     assert cfg.ensemble.name == "alarm_v15" and cfg.ensemble.version == 15
-    assert [(a.state, a.unit_column, a.units) for a in cfg.align_to_alarm] == [
-        ("CA", "tract", ("06049000300", "06093000200"))]
