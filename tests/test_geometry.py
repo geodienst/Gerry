@@ -4,10 +4,10 @@ import zipfile
 
 import geopandas as gpd
 import pytest
-from shapely.geometry import box
+from shapely.geometry import Point, box
 
 from gerry.checks import CheckError
-from gerry.config import REPO_ROOT
+from gerry.config import REPO_ROOT, load_config
 from gerry.geometry import (
     MAPSHAPER_JS, STATE_POSTAL, build_topojson, load_districts, mapshaper_cmd, national_outline,
 )
@@ -70,6 +70,12 @@ def test_load_districts_keeps_states_and_takes_missouri_from_2022_file(tmp_path)
     assert mo1.bounds == pytest.approx((5, 0, 6, 1))
 
 
+def test_load_districts_puts_missouri_between_its_neighbours_by_id(tmp_path):
+    rows = [*NATIONAL_ROWS, ("56", "00", box(30, 30, 31, 31))]           # Wyoming sorts after Missouri
+    districts = load_districts(write_gpkg_zip(tmp_path, rows), write_mo_zip(tmp_path), tmp_path / "work")
+    assert districts["id"].tolist() == ["0101", "0102", "0200", "2901", "2902", "5600"]
+
+
 def test_load_districts_extracts_the_geopackage_once(tmp_path):
     gpkg_zip = write_gpkg_zip(tmp_path, NATIONAL_ROWS)
     mo_zip = write_mo_zip(tmp_path)
@@ -129,6 +135,19 @@ def test_national_outline_stops_when_a_state_is_missing(tmp_path):
     assert err.value.check == "outline"
 
 
+def test_national_outline_is_named_us(tmp_path):
+    outline = national_outline(write_cb_zip(tmp_path, [*sorted(STATE_POSTAL), "72", "11"]))
+    assert outline["name"].tolist() == ["US"]
+
+
+def test_state_postal_matches_config():
+    cfg = load_config()
+    expected = {s.fips: postal for postal, s in cfg.states.items()}
+    expected |= {s.fips: postal for postal, s in cfg.at_large.items()}
+    assert len(STATE_POSTAL) == 50
+    assert STATE_POSTAL == expected
+
+
 def test_mapshaper_cmd_runs_the_repo_copy_with_node():
     assert mapshaper_cmd(["-v"]) == ["node", str(REPO_ROOT / "node_modules" / "mapshaper" / "bin" / "mapshaper"), "-v"]
 
@@ -166,3 +185,23 @@ def test_build_topojson_writes_district_and_state_layers(tmp_path):
                   for g in topo["objects"]["states"]["geometries"]) == [("01", "AL"), ("02", "AK")]
     # clipped to the outline: nothing above y = 0.5 or right of x = 3.5
     assert topojson_bounds(topo) == pytest.approx((0, 0, 3.5, 0.5), abs=1e-4)
+
+
+@pytest.mark.skipif(shutil.which("node") is None or not MAPSHAPER_JS.exists(),
+                    reason="needs node and npm install (node_modules/mapshaper)")
+def test_build_topojson_simplifies_by_the_given_percentage(tmp_path):
+    circle = Point(0.5, 0.5).buffer(0.4, quad_segs=50)              # 200 segments
+    districts = gpd.GeoDataFrame({"id": ["0101", "0102"], "state": ["AL", "AL"]},
+                                 geometry=[circle, box(1, 0, 2, 1)], crs="EPSG:4326")
+    districts.to_file(tmp_path / "districts.geojson", driver="GeoJSON")
+    outline = gpd.GeoDataFrame({"name": ["US"]}, geometry=[box(-1, -1, 3, 2)], crs="EPSG:4326")
+    outline.to_file(tmp_path / "outline.geojson", driver="GeoJSON")
+
+    def arc_points(pct):
+        out = build_topojson(tmp_path / "districts.geojson", tmp_path / "outline.geojson",
+                             tmp_path / f"map{pct}.topojson", simplify_pct=pct)
+        return sum(len(arc) for arc in json.loads(out.read_text(encoding="utf-8"))["arcs"])
+
+    full, small = arc_points(100), arc_points(10)
+    assert full > 150
+    assert small < full / 4
