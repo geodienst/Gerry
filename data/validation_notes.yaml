@@ -8,3 +8,100 @@
 #   cd118_vs_alarm: >
 #     District 03 differs by 0.62 points. ALARM assigns each split VTD whole to one
 #     district; we split its votes over blocks by voting-age population.
+
+AZ:
+  planscore: >
+    PlanScore gives 12.9 points in favor of Republicans for the 2016 presidential vote and 5.2
+    points in favor of Democrats for 2020. Our composite gives 22.1 points in favor of
+    Republicans. The map is the same. PlanScore's library entry is the Approved Final Draft Map.
+    It has 9 districts like ours, and its 2020 district shares differ from ours by 0.031 points at
+    most. Formula. PlanScore uses the equal-turnout form and we count wasted votes. On PlanScore's
+    own district votes our EG is 19.6 points in favor of Republicans for 2016 and 2.7 points in
+    favor of Democrats for 2020. The largest district casts 2.2 times the two-party votes of the
+    smallest in 2016 and 2.0 times in 2020. Allocation. Our own allocation of each election
+    changes those two numbers by 0.02 points at most. Vote basis. The composite sums 2016 and
+    2020. Democrats win 3 of 9 districts with 48.1% of the vote on 2016, 5 with 50.2% on 2020 and
+    3 with 49.3% on the sum. Districts 01 and 06 are 50.7% and 50.0% Democratic in 2020 and 49.4%
+    and 48.8% on the sum, so the sum gives them to Republicans.
+CA:
+  planscore: >
+    PlanScore gives 12.5 points in favor of Democrats for the 2020 presidential vote. Its plan has
+    no 2016 presidential votes. Our composite gives 11.1 points in favor of Democrats. The map is
+    the same. PlanScore's library entry is Proposition 50 Plan AB 604. It has 52 districts like
+    ours, and its 2020 district shares differ from ours by 0.211 points at most. Formula.
+    PlanScore uses the equal-turnout form and we count wasted votes. On PlanScore's own district
+    votes our EG is 12.1 points in favor of Democrats. The largest district casts 2.2 times the
+    two-party votes of the smallest. Allocation. Our own allocation of 2020 changes that number by
+    less than 0.01 points. Vote basis. The composite sums 2016 and 2020. Democrats win 48 of 52
+    districts on 2020 and on the sum, with 64.9% of the vote in 2020 and 65.4% on the sum. The
+    higher share with the same seats moves the EG 1.0 point toward Republicans.
+CO:
+  planscore: >
+    PlanScore gives 5.4 points in favor of Republicans for the 2016 presidential vote and 1.4
+    points in favor of Republicans for 2020. Our composite gives 2.5 points in favor of Democrats.
+    The map is the same. PlanScore's library entry is the Final Approved Plan. It has 8 districts
+    like ours, and its 2020 district shares differ from ours by 0.072 points at most. Formula.
+    PlanScore uses the equal-turnout form and we count wasted votes. On PlanScore's own district
+    votes our EG is 2.7 points in favor of Republicans for 2016 and 1.5 points for 2020. The
+    largest district casts 1.4 times the two-party votes of the smallest in 2016 and 1.3 times in
+    2020. Allocation. Our own allocation of each election changes those two numbers by 0.02 points
+    at most. Vote basis. The composite sums 2016 and 2020. Democrats win 4 of 8 districts with
+    52.7% of the vote on 2016, 5 with 56.9% on 2020 and 5 with 55.0% on the sum. District 08 is
+    49.0% Democratic in 2016, 52.4% in 2020 and 50.9% on the sum, so the sum gives Democrats a
+    fifth seat that 2016 alone does not. Against 2020 the sum keeps the same 5 seats on 1.9 points
+    less of the vote, which moves the EG 4.0 points toward Democrats.
+MI:
+  planscore: >
+    PlanScore gives 3.6 points in favor of Republicans for the 2016 presidential vote and 1.0
+    point in favor of Democrats for 2020. Our composite gives 6.0 points in favor of Republicans.
+    The map is the same. PlanScore's library entry is the Chestnut Final Plan. It has 13 districts
+    like ours, and its 2020 district shares differ from ours by 0.067 points at most. Formula.
+    PlanScore uses the equal-turnout form and we count wasted votes. On PlanScore's own district
+    votes our EG is 3.9 points in favor of Republicans for 2016 and 0.3 points in favor of
+    Democrats for 2020. The largest district casts 1.3 times the two-party votes of the smallest
+    in 2016 and 1.4 times in 2020. Allocation. Our own allocation of each election changes those
+    two numbers by 0.04 points at most. Vote basis. The composite sums 2016 and 2020. Democrats
+    win 6 of 13 districts with 49.9% of the vote on 2016, 7 with 51.4% on 2020 and 6 with 50.7% on
+    the sum. District 07 is 50.5% Democratic in 2020 and 49.4% on the sum, so the sum gives it to
+    Republicans.
+NV:
+  planscore: >
+    PlanScore gives 22.4 points in favor of Democrats for the 2016 presidential vote and 22.6
+    points in favor of Democrats for 2020. Our composite gives 18.8 points in favor of Democrats.
+    The map is the same. PlanScore's library entry is the Final Plan. It has 4 districts like
+    ours, and its 2020 district shares differ from ours by 0.001 points at most. Formula.
+    PlanScore uses the equal-turnout form and we count wasted votes. On PlanScore's own district
+    votes our EG is 18.3 points in favor of Democrats for 2016 and 19.1 points for 2020. The
+    largest district casts 1.3 times the two-party votes of the smallest in both years.
+    Allocation. Our own allocation of each election changes those two numbers by 0.01 points at
+    most. Vote basis. The composite sums 2016 and 2020. Democrats win 3 of 4 districts with 51.3%
+    of the vote on 2016, 51.2% on 2020 and 51.3% on the sum. No winner changes, and the sum moves
+    the EG by 0.5 points or less.
+PA:
+  planscore: >
+    PlanScore gives 2.2 points in favor of Republicans for the 2016 presidential vote and 1.7
+    points in favor of Democrats for 2020. Our composite gives 1.4 points in favor of Republicans.
+    The map is the same. PlanScore's library entry is the Carter Plan. It has 17 districts like
+    ours, and its 2020 district shares differ from ours by 0.124 points at most. Formula.
+    PlanScore uses the equal-turnout form and we count wasted votes. On PlanScore's own district
+    votes our EG is 0.01 points in favor of Republicans for 2016 and 3.0 points in favor of
+    Democrats for 2020. The largest district casts 1.3 times the two-party votes of the smallest
+    in 2016 and 1.5 times in 2020. Allocation. Our own allocation of each election changes those
+    two numbers by 0.04 points at most. Vote basis. The composite sums 2016 and 2020. Democrats
+    win 8 of 17 districts with 49.6% of the vote on 2016, 9 with 50.6% on 2020 and 8 with 50.1% on
+    the sum. District 07 is 50.3% Democratic in 2020 and 49.5% on the sum, so the sum gives it to
+    Republicans.
+WI:
+  planscore: >
+    PlanScore gives 24.2 points in favor of Republicans for the 2016 presidential vote and 25.6
+    points in favor of Republicans for 2020. Our composite gives 25.7 points in favor of
+    Republicans. The map is the same. PlanScore's library entry is the Adopted Plan for 2020s. It
+    has 8 districts like ours, and its 2020 district shares differ from ours by 0.018 points at
+    most. Formula. PlanScore uses the equal-turnout form and we count wasted votes. On PlanScore's
+    own district votes our EG is 24.5 points in favor of Republicans for 2016 and 26.7 points for
+    2020. The largest district casts 1.2 times the two-party votes of the smallest in 2016 and 1.4
+    times in 2020. Allocation. Our own allocation of each election changes those two numbers by
+    0.01 points at most. Vote basis. The composite sums 2016 and 2020. Democrats win 2 of 8
+    districts with 49.6% of the vote on 2016, 50.3% on 2020 and 50.0% on the sum. No winner
+    changes. The sum moves the EG 1.2 points toward Republicans from 2016 and 1.0 point toward
+    Democrats from 2020.
