@@ -162,24 +162,49 @@ def _linked_blocks(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series
 
 
 def block_weighted(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, district_of: pd.Series,
-                   vote_cols: Sequence[str]) -> pd.DataFrame:
-    """Votes per district: each unit's votes go to its blocks by block VAP, or by block count
-    if the unit has no VAP. Counts for the log are in .attrs."""
+                   vote_cols: Sequence[str], weights: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Votes per district: each unit's votes go to its blocks outside ZZ.
+
+    With `weights` (tract states: census-vest block votes, index block_id, a column per vote column) a block
+    gets its share of the unit's weight in that column. Where those weights add up to 0, and without
+    `weights`, a block gets its share of the unit's VAP; in a unit without VAP every block gets the same
+    share. Counts for the log are in .attrs; block_count_votes sums the votes of split units that went by
+    block count, over vote_cols."""
     b, votes, districts, without_blocks = _linked_blocks(units, blocks, unit_of, district_of, vote_cols)
     per_unit = b.groupby("unit_id").agg(unit_vap=("vap", "sum"), n_blocks=("vap", "size"))
     b = b.join(per_unit, on="unit_id")
     has_vap = (b["unit_vap"] > 0).to_numpy()
-    weight = np.where(has_vap, b["vap"].to_numpy() / np.where(has_vap, b["unit_vap"].to_numpy(), 1),
+    by_vap = np.where(has_vap, b["vap"].to_numpy() / np.where(has_vap, b["unit_vap"].to_numpy(), 1),
                       1.0 / b["n_blocks"].to_numpy())
-    block_votes = votes.loc[b["unit_id"]].to_numpy() * weight[:, None]
+    unit_votes = votes.loc[b["unit_id"]].to_numpy()
+    by_count = np.repeat(~has_vap[:, None], len(vote_cols), axis=1)   # block x column: weight from block count
+    weight = np.repeat(by_vap[:, None], len(vote_cols), axis=1)
+    fallback_units = set()
+    if weights is not None:
+        own = weights.reindex(b["block_id"].to_numpy())[list(vote_cols)]
+        missing = own.isna().any(axis=1).to_numpy()
+        if missing.any():
+            first = b["block_id"].iloc[missing.argmax()]
+            raise BlocksError(f"{int(missing.sum())} blocks have no weight, e.g. {first}")
+        own = own.to_numpy()
+        unit_total = pd.DataFrame(own).groupby(b["unit_id"].to_numpy()).transform("sum").to_numpy()
+        usable = unit_total > 0
+        weight = np.where(usable, own / np.where(usable, unit_total, 1), weight)
+        by_count &= ~usable
+        no_weight = ~usable & (unit_votes != 0)
+        fallback_units = set(b["unit_id"].to_numpy()[no_weight.any(axis=1)])
+    block_votes = unit_votes * weight
     totals = (pd.DataFrame(block_votes, columns=list(vote_cols)).groupby(b["district"].to_numpy()).sum()
               .reindex(districts, fill_value=0.0))
     out = totals.rename_axis("district").reset_index()
     n_districts = b.groupby("unit_id")["district"].nunique()
     split = n_districts.index[n_districts > 1]
     zero_vap = per_unit.index[per_unit["unit_vap"] == 0]
+    in_split = b["unit_id"].isin(split).to_numpy()[:, None]
     out.attrs = {"split_units": len(split), "zero_vap_units": len(zero_vap),
-                 "zero_vap_split_units": int(split.isin(zero_vap).sum()), "units_without_blocks": without_blocks}
+                 "zero_vap_split_units": int(split.isin(zero_vap).sum()), "units_without_blocks": without_blocks,
+                 "block_count_votes": float(block_votes[by_count & in_split].sum()),
+                 "weight_fallback_units": len(fallback_units)}
     return out
 
 

@@ -209,8 +209,40 @@ def test_block_weighted_splits_by_vap_and_by_block_count():
     assert out["district"].tolist() == ["01", "02"]
     assert out["d"].tolist() == pytest.approx([12.0, 34.0])
     assert out["r"].tolist() == pytest.approx([20.0, 50.0])
+    # U2 is split and its 6 + 0 votes went by block count
     assert out.attrs == {"split_units": 2, "zero_vap_units": 1, "zero_vap_split_units": 1,
-                         "units_without_blocks": 0}
+                         "units_without_blocks": 0, "block_count_votes": 6.0, "weight_fallback_units": 0}
+
+
+def tract_case():
+    # T1: VAP 40 over t1 (01), t2 (02) and t3 (ZZ). T2: no VAP, t4 (01) and t5 (02).
+    blocks = pl_blocks(["t1", "t2", "t3", "t4", "t5"], vaps=[10, 30, 0, 0, 0])
+    unit_of = pd.Series(["T1", "T1", "T1", "T2", "T2"], index=blocks["block_id"])
+    district_of = pd.Series(["01", "02", "ZZ", "01", "02"], index=blocks["block_id"])
+    units = pd.DataFrame({"unit_id": ["T1", "T2"], "vap": [40, 0], "d": [100.0, 8.0], "r": [50.0, 4.0]})
+    # census-vest block votes: the weight of a block within its tract, per column
+    weights = pd.DataFrame({"d": [3.0, 1.0, 96.0, 0.0, 0.0], "r": [0.0, 0.0, 5.0, 0.0, 0.0]},
+                           index=pd.Index(["t1", "t2", "t3", "t4", "t5"], name="block_id"))
+    return units, blocks, unit_of, district_of, weights
+
+
+def test_block_weighted_uses_block_weights_per_column():
+    units, blocks, unit_of, district_of, weights = tract_case()
+    out = block_weighted(units, blocks, unit_of, district_of, VOTES, weights=weights)
+    # T1 d: weights 3 and 1 outside ZZ (t3 goes first): 75 to 01, 25 to 02.
+    # T1 r: weights add up to 0 outside ZZ, so VAP: 10/40 = 12.5 to 01, 30/40 = 37.5 to 02.
+    # T2: no weight and no VAP, so block count: d 4 and 4, r 2 and 2.
+    assert out["d"].tolist() == pytest.approx([79.0, 29.0])
+    assert out["r"].tolist() == pytest.approx([14.5, 39.5])
+    # T1 (r) and T2 (d, r) have votes but no weight; T2's 8 + 4 votes went by block count
+    assert out.attrs["weight_fallback_units"] == 2
+    assert out.attrs["block_count_votes"] == pytest.approx(12.0)
+
+
+def test_block_weighted_needs_a_weight_for_every_block():
+    units, blocks, unit_of, district_of, weights = tract_case()
+    with pytest.raises(BlocksError, match="t4"):
+        block_weighted(units, blocks, unit_of, district_of, VOTES, weights=weights.drop("t4"))
 
 
 def test_block_weighted_needs_a_block_for_every_unit_with_votes():
