@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gerry.blocks import PL_GEO_FIELDS, BlocksError, read_bef, read_pl_blocks
+from gerry.blocks import (PL_GEO_FIELDS, BlocksError, block_weighted, read_bef, read_pl_blocks, unit_of_block,
+                          whole_unit)
 from gerry.config import data_dir
 
 
@@ -131,3 +132,99 @@ def test_nevada_block_equivalency_files():
     assert len(cd120) == 57409
     assert cd120.value_counts().sort_index().to_dict() == {"01": 7655, "02": 27405, "03": 7124, "04": 15225}
     assert cd118.sort_index().equals(cd120.sort_index())   # Nevada has not redrawn since 2021
+
+
+# ---- Task 1.8: blocks to units, votes to districts ----
+
+def pl_blocks(ids, vtds=None, vaps=None):
+    n = len(ids)
+    return pd.DataFrame({"block_id": ids, "vap": vaps or [0] * n, "vtd": vtds or [""] * n,
+                         "lat": [0.0] * n, "lon": [0.0] * n})
+
+
+def test_unit_of_block_for_vtd_states_is_county_plus_vtd():
+    blocks = pl_blocks(["320010001001000", "320039501001000"], vtds=["000010", "008-03"])
+    unit_of = unit_of_block(blocks, "vtd", "32")
+    assert unit_of.index.name == "block_id"
+    assert unit_of.to_dict() == {"320010001001000": "32001000010", "320039501001000": "32003008-03"}
+
+
+def test_unit_of_block_rejects_a_blank_vtd_code():
+    blocks = pl_blocks(["320010001001000", "320010001001001"], vtds=["000010", "      "])
+    with pytest.raises(BlocksError, match="320010001001001"):
+        unit_of_block(blocks, "vtd", "32")
+
+
+def test_unit_of_block_for_block_states_is_the_block():
+    blocks = pl_blocks(["060014001001000"])
+    assert unit_of_block(blocks, "block", "06").to_dict() == {"060014001001000": "060014001001000"}
+
+
+def test_unit_of_block_for_county_units_is_the_county():
+    blocks = pl_blocks(["540630001001000", "540370001001000"])
+    assert unit_of_block(blocks, "rds_county", "54").tolist() == ["54063", "54037"]
+
+
+def test_unit_of_block_rejects_blocks_of_another_state():
+    with pytest.raises(BlocksError, match="32"):
+        unit_of_block(pl_blocks(["060014001001000"]), "block", "32")
+
+
+VOTES = ["d", "r"]
+
+
+def weighted_case():
+    # U1: VAP 30 in two districts. U2: no VAP, three blocks. U3: one block in 02 and one ZZ block.
+    blocks = pl_blocks(["b1", "b2", "b3", "b4", "b5", "b6", "b7"], vaps=[10, 20, 0, 0, 0, 5, 5])
+    unit_of = pd.Series(["U1", "U1", "U2", "U2", "U2", "U3", "U3"], index=blocks["block_id"])
+    district_of = pd.Series(["01", "02", "01", "02", "02", "02", "ZZ"], index=blocks["block_id"])
+    units = pd.DataFrame({"unit_id": ["U1", "U2", "U3"], "vap": [30, 0, 10],
+                          "d": [30.0, 6.0, 10.0], "r": [60.0, 0.0, 10.0]})
+    return units, blocks, unit_of, district_of
+
+
+def test_block_weighted_splits_by_vap_and_by_block_count():
+    out = block_weighted(*weighted_case(), VOTES)
+    # 01: U1 gets 10/30 of (30, 60) = (10, 20); U2 has no VAP, 1 of 3 blocks: (2, 0).
+    # 02: U1 20/30 = (20, 40); U2 2 of 3 blocks = (4, 0); U3 all of (10, 10) since ZZ goes first.
+    assert out["district"].tolist() == ["01", "02"]
+    assert out["d"].tolist() == pytest.approx([12.0, 34.0])
+    assert out["r"].tolist() == pytest.approx([20.0, 50.0])
+    assert out.attrs == {"split_units": 2, "zero_vap_units": 1, "zero_vap_split_units": 1,
+                         "units_without_blocks": 0}
+
+
+def test_block_weighted_needs_a_block_for_every_unit_with_votes():
+    units, blocks, unit_of, district_of = weighted_case()
+    district_of["b6"] = "ZZ"
+    with pytest.raises(BlocksError, match="U3"):
+        block_weighted(units, blocks, unit_of, district_of, VOTES)
+
+
+def test_block_weighted_logs_a_unit_without_votes_or_blocks():
+    units, blocks, unit_of, district_of = weighted_case()
+    district_of["b6"] = "ZZ"
+    units.loc[2, ["d", "r"]] = 0.0
+    out = block_weighted(units, blocks, unit_of, district_of, VOTES)
+    assert out.attrs["units_without_blocks"] == 1
+    assert out["d"].sum() == pytest.approx(36.0)
+
+
+def test_block_weighted_needs_every_block_in_the_equivalency_file():
+    units, blocks, unit_of, district_of = weighted_case()
+    with pytest.raises(BlocksError, match="b7"):
+        block_weighted(units, blocks, unit_of, district_of.drop("b7"), VOTES)
+
+
+def test_whole_unit_assigns_by_vap_then_blocks_then_lowest_district():
+    blocks = pl_blocks([f"b{i}" for i in range(1, 11)], vaps=[10, 20, 0, 0, 0, 5, 5, 5, 5, 0])
+    unit_of = pd.Series(["A", "A", "B", "B", "B", "C", "C", "D", "D", "D"], index=blocks["block_id"])
+    district_of = pd.Series(["01", "02", "01", "02", "02", "01", "03", "03", "02", "02"], index=blocks["block_id"])
+    units = pd.DataFrame({"unit_id": ["A", "B", "C", "D"], "vap": [30, 0, 10, 10],
+                          "d": [1.0, 3.0, 5.0, 7.0], "r": [2.0, 4.0, 6.0, 8.0]})
+    out = whole_unit(units, blocks, unit_of, district_of, VOTES)
+    # A -> 02 (VAP 20 against 10). B has no VAP -> 02 (two blocks against one).
+    # C: VAP 5 and 5, one block each -> 01, the lowest. D: VAP 5 and 5 -> 02 (two blocks against one).
+    assert out["district"].tolist() == ["01", "02", "03"]
+    assert out["d"].tolist() == [5.0, 11.0, 0.0]
+    assert out["r"].tolist() == [6.0, 14.0, 0.0]

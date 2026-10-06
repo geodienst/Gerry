@@ -4,8 +4,10 @@ from __future__ import annotations
 import csv
 import functools
 import zipfile
+from collections.abc import Sequence
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 # 0-based field positions in the pipe-delimited 2020 P.L. 94-171 files
@@ -88,3 +90,80 @@ def read_bef(zip_path: Path, kind: str, fips: str, postal: str) -> pd.Series:
     if not cdfp.str.len().eq(2).all():
         raise BlocksError(f"{postal}: {kind} has district codes that are not 2 characters")
     return pd.Series(cdfp.to_numpy(), index=pd.Index(geoid.to_numpy(), name="block_id"), name="district")
+
+
+def unit_of_block(blocks: pd.DataFrame, unit_source: str, fips: str) -> pd.Series:
+    """block_id -> unit_id. vtd: county GEOID + VTD code; block: the block; rds_county: the county."""
+    ids = blocks["block_id"]
+    if not ids.str.startswith(fips).all():
+        raise BlocksError(f"blocks that do not start with FIPS {fips}, e.g. {ids[~ids.str.startswith(fips)].iloc[0]}")
+    if unit_source == "vtd":
+        blank = blocks["vtd"].str.strip() == ""
+        if blank.any():
+            raise BlocksError(f"{fips}: {int(blank.sum())} blocks without VTD code, e.g. {ids[blank].iloc[0]}")
+        units = ids.str[:5] + blocks["vtd"]
+    elif unit_source == "block":
+        units = ids
+    elif unit_source == "rds_county":
+        units = ids.str[:5]
+    else:
+        raise BlocksError(f"unknown unit_source {unit_source!r}")
+    return pd.Series(units.to_numpy(), index=pd.Index(ids.to_numpy(), name="block_id"), name="unit_id")
+
+
+def _linked_blocks(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, district_of: pd.Series,
+                   vote_cols: Sequence[str]) -> tuple[pd.DataFrame, pd.DataFrame, list[str], int]:
+    """Blocks outside ZZ with unit_id and district, the votes per unit, the district codes of the map,
+    and the number of units without votes and without blocks. Units with votes must keep a block."""
+    b = pd.DataFrame({"block_id": blocks["block_id"].to_numpy(), "vap": blocks["vap"].to_numpy()})
+    b["unit_id"] = b["block_id"].map(unit_of)
+    b["district"] = b["block_id"].map(district_of)
+    for col, source in (("unit_id", "unit_of"), ("district", "the block equivalency file")):
+        missing = b.loc[b[col].isna(), "block_id"]
+        if len(missing):
+            raise BlocksError(f"{len(missing)} blocks missing from {source}, e.g. {missing.iloc[0]}")
+    b = b[b["district"] != "ZZ"]
+    votes = units.set_index("unit_id")[list(vote_cols)]
+    has_votes = (votes != 0).any(axis=1)
+    linked = votes.index.isin(b["unit_id"].unique())
+    orphans = votes.index[has_votes.to_numpy() & ~linked]
+    if len(orphans):
+        raise BlocksError(f"{len(orphans)} units with votes have no block outside ZZ, e.g. {orphans[0]}")
+    without_blocks = int((~has_votes.to_numpy() & ~linked).sum())
+    b = b[b["unit_id"].isin(votes.index)]
+    districts = sorted(set(district_of.unique()) - {"ZZ"})
+    return b, votes, districts, without_blocks
+
+
+def block_weighted(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, district_of: pd.Series,
+                   vote_cols: Sequence[str]) -> pd.DataFrame:
+    """Votes per district: each unit's votes go to its blocks by block VAP, or by block count
+    if the unit has no VAP. Counts for the log are in .attrs."""
+    b, votes, districts, without_blocks = _linked_blocks(units, blocks, unit_of, district_of, vote_cols)
+    per_unit = b.groupby("unit_id").agg(unit_vap=("vap", "sum"), n_blocks=("vap", "size"))
+    b = b.join(per_unit, on="unit_id")
+    has_vap = (b["unit_vap"] > 0).to_numpy()
+    weight = np.where(has_vap, b["vap"].to_numpy() / np.where(has_vap, b["unit_vap"].to_numpy(), 1),
+                      1.0 / b["n_blocks"].to_numpy())
+    block_votes = votes.loc[b["unit_id"]].to_numpy() * weight[:, None]
+    totals = (pd.DataFrame(block_votes, columns=list(vote_cols)).groupby(b["district"].to_numpy()).sum()
+              .reindex(districts, fill_value=0.0))
+    out = totals.rename_axis("district").reset_index()
+    n_districts = b.groupby("unit_id")["district"].nunique()
+    split = n_districts.index[n_districts > 1]
+    zero_vap = per_unit.index[per_unit["unit_vap"] == 0]
+    out.attrs = {"split_units": len(split), "zero_vap_units": len(zero_vap),
+                 "zero_vap_split_units": int(split.isin(zero_vap).sum()), "units_without_blocks": without_blocks}
+    return out
+
+
+def whole_unit(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, district_of: pd.Series,
+               vote_cols: Sequence[str]) -> pd.DataFrame:
+    """Votes per district with each unit wholly in one district: most block VAP, then most blocks,
+    then the lowest district code."""
+    b, votes, districts, _ = _linked_blocks(units, blocks, unit_of, district_of, vote_cols)
+    per = b.groupby(["unit_id", "district"]).agg(vap=("vap", "sum"), n=("vap", "size")).reset_index()
+    per = per.sort_values(["unit_id", "vap", "n", "district"], ascending=[True, False, False, True])
+    choice = per.drop_duplicates("unit_id").set_index("unit_id")["district"]
+    totals = votes.loc[choice.index].groupby(choice.to_numpy()).sum().reindex(districts, fill_value=0.0)
+    return totals.rename_axis("district").reset_index()
