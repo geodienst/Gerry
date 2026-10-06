@@ -58,6 +58,14 @@ def test_check_geometry_stops_when_district_codes_differ():
     assert (err.value.check, err.value.state) == ("geometry_codes", "NV")
 
 
+def test_check_geometry_stops_when_geometry_has_a_district_the_block_file_lacks():
+    third = gpd.GeoDataFrame({"id": ["3203"], "state": ["NV"]}, geometry=[box(2, 0, 3, 1)], crs="EPSG:4326")
+    extra = pd.concat([DISTRICTS, third], ignore_index=True)
+    with pytest.raises(CheckError) as err:
+        check_geometry(extra, blocks(POINTS), bef(NAMED), "NV")
+    assert (err.value.check, err.value.state) == ("geometry_codes", "NV")
+
+
 def test_check_geometry_stops_below_min_share():
     named = {**NAMED, "320010001001003": "01"}                 # point lies in 02, block file says 01
     with pytest.raises(CheckError) as err:
@@ -66,10 +74,25 @@ def test_check_geometry_stops_below_min_share():
     assert "320010001001003" in err.value.detail
 
 
+def test_check_geometry_lists_only_the_first_five_misses_in_id_order():
+    points = {f"3200100010020{i:02d}": (0.5, 0.5) for i in range(7)}     # all lie in district 01
+    named = {k: "02" for k in points}                                      # the block file says 02
+    points["320010001009999"] = (0.5, 0.5)
+    named["320010001009999"] = "01"                                        # one confirmed block, so both codes occur
+    with pytest.raises(CheckError) as err:
+        check_geometry(DISTRICTS, blocks(points), bef(named), "NV")
+    assert [b for b in sorted(points) if b in err.value.detail] == sorted(points)[:5]
+
+
 def test_check_geometry_returns_share_when_above_min_share():
     named = {**NAMED, "320010001001003": "01"}
     # 3 of 4 points in the named district
     assert check_geometry(DISTRICTS, blocks(POINTS), bef(named), "NV", min_share=0.7) == 0.75
+
+
+def test_check_geometry_accepts_a_share_equal_to_min_share():
+    named = {**NAMED, "320010001001003": "01"}                             # 3 of 4 points confirmed
+    assert check_geometry(DISTRICTS, blocks(POINTS), bef(named), "NV", min_share=0.75) == 0.75
 
 
 def test_check_geometry_counts_a_block_without_point_as_a_miss():
