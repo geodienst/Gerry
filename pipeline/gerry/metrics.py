@@ -140,3 +140,13 @@ def pmf_position(pmf, value: int) -> dict:
     if not 0 <= value < p.size:
         raise ValueError(f"value {value} outside 0..{p.size - 1}")
     return _position(float(p[:value].sum()), float(p[value]), float(p[value + 1:].sum()))
+
+
+def effects(proportional: int, median: int, enacted: int) -> dict:
+    """Geographic effect = median - proportional; drawing effect = enacted - median."""
+    return {"geographic": int(median - proportional), "drawing": int(enacted - median)}
+
+
+def outside_band(enacted: int, p5: int, p95: int) -> bool:
+    """True when enacted lies below the 5th or above the 95th percentile."""
+    return bool(enacted < p5 or enacted > p95)

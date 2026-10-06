@@ -215,3 +215,21 @@ def test_pmf_position_from_counts():
 def test_pmf_position_rejects_value_outside_range():
     with pytest.raises(ValueError):
         m.pmf_position([1, 3, 4, 2], 4)
+
+
+# Task 2.6: effects and outside_band
+
+def test_effects_geographic_and_drawing():
+    # California: proportional 34, median 45, enacted 48
+    # geographic = 45 - 34 = 11; drawing = 48 - 45 = 3
+    assert m.effects(34, 45, 48) == {"geographic": 11, "drawing": 3}
+    # Texas: proportional 18, median 17, enacted 11 -> geographic -1, drawing -6
+    assert m.effects(18, 17, 11) == {"geographic": -1, "drawing": -6}
+
+
+def test_outside_band():
+    # Texas band 15..20: 11 is below it; 15 and 20 are on the edges and count as inside; 21 is above
+    assert m.outside_band(11, 15, 20) is True
+    assert m.outside_band(15, 15, 20) is False
+    assert m.outside_band(20, 15, 20) is False
+    assert m.outside_band(21, 15, 20) is True
