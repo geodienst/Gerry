@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
 
+import geopandas as gpd
 import pandas as pd
 
 from gerry.config import Config
@@ -303,3 +304,38 @@ def check_geoids(block_ids: pd.Series, fips: str, state: str) -> None:
                                           f"e.g. {ids[~ok].iloc[0]}")
     if not ids.is_unique:
         raise CheckError("geoids", state, f"block id {ids[ids.duplicated()].iloc[0]} occurs twice")
+
+
+def check_geometry(districts, blocks, district_of, state, min_share: float = 0.999) -> float:
+    """Geometry and block file describe the same map.
+
+    districts: GeoDataFrame from geometry.load_districts (id, state, geometry).
+    blocks: read_pl_blocks table (block_id, lat, lon, ...). district_of: read_bef series.
+    Returns the share of blocks whose internal point lies in the district the block file names.
+    """
+    mine = districts[districts["state"] == state]
+    named = district_of[district_of != "ZZ"]
+    if named.empty:
+        raise CheckError("geometry_codes", state, "the block file has no blocks outside ZZ")
+    geo_codes = sorted(set(mine["id"].str[2:]))
+    bef_codes = sorted(set(named))
+    if geo_codes != bef_codes:
+        raise CheckError("geometry_codes", state, f"geometry has districts {geo_codes}, block file {bef_codes}")
+
+    pts = blocks.loc[blocks["block_id"].isin(named.index), ["block_id", "lat", "lon"]]
+    points = gpd.GeoDataFrame(
+        {"block_id": pts["block_id"].to_numpy(), "named": named.reindex(pts["block_id"]).to_numpy()},
+        geometry=gpd.points_from_xy(pts["lon"], pts["lat"]),
+        crs=mine.crs,   # P.L. points are NAD83; next to EPSG:4326 the shift is under 2 m
+    )
+    polygons = gpd.GeoDataFrame({"found": mine["id"].str[2:].to_numpy()},
+                                geometry=mine.geometry.to_numpy(), crs=mine.crs)
+    hits = gpd.sjoin(points, polygons, how="inner", predicate="within")
+    confirmed = set(hits.loc[hits["found"] == hits["named"], "block_id"])
+    share = len(confirmed) / len(named)
+    if share < min_share:
+        misses = sorted(set(named.index) - confirmed)[:5]
+        raise CheckError("geometry_points", state,
+                         f"{len(confirmed):,} of {len(named):,} block points ({share:.4%}) lie in the district "
+                         f"the block file names, minimum {min_share:.1%}; first misses: {misses}")
+    return share
