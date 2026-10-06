@@ -1,3 +1,4 @@
+import dataclasses
 import json
 from datetime import date
 
@@ -280,3 +281,95 @@ def test_build_results_stops_when_blocked_map_is_missing():
     with pytest.raises(CheckError) as err:
         build_results(metrics, toy_results_config(), "2026-10-06")
     assert (err.value.check, err.value.state) == ("export_blocked_map", "MO")
+
+
+# Ordering, vote basis, status and guards
+
+def test_states_sorted_by_postal_even_when_config_lists_them_otherwise():
+    cfg = toy_config(
+        [state("MO", "Missouri", "29", 2, notes=["blocked_map"], extra_maps=[HB1]), state("HI", "Hawaii", "15", 2)],
+        ens_notes={"MO": ("vra_constraint",)},
+    )
+    results = build_results(toy_metrics(), cfg, "2026-10-06")
+    assert list(results["states"]) == ["HI", "MO"]
+
+
+@pytest.mark.parametrize("only_2020", ["HI", "MO"])
+def test_vote_basis_is_the_union_over_states(only_2020):
+    cfg = toy_results_config()
+    narrowed = dataclasses.replace(cfg.states[only_2020], elections=("pre_20",))
+    cfg = dataclasses.replace(cfg, states={**cfg.states, only_2020: narrowed})
+    results = build_results(toy_metrics(), cfg, "2026-10-06")
+    assert results["meta"]["vote_basis"] == ["pre_16", "pre_20"]
+
+
+def test_state_status_is_passed_through():
+    cfg = toy_results_config()
+    challenged = dataclasses.replace(cfg.states["HI"], status="Challenged")
+    cfg = dataclasses.replace(cfg, states={**cfg.states, "HI": challenged})
+    results = build_results(toy_metrics(), cfg, "2026-10-06")
+    assert results["states"]["HI"]["status"] == "Challenged"
+
+
+def test_stops_when_metrics_has_a_blocked_map_the_config_lacks():
+    metrics = toy_metrics()
+    metrics["states"]["HI"]["blocked_map"] = metrics["states"]["MO"]["blocked_map"]
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert (err.value.check, err.value.state) == ("export_blocked_map", "HI")
+
+
+def test_stops_on_two_blocked_maps_in_the_config():
+    cfg = toy_results_config()
+    two = dataclasses.replace(cfg.states["MO"], extra_maps=(HB1, dataclasses.replace(HB1, id="mo_hb2")))
+    cfg = dataclasses.replace(cfg, states={**cfg.states, "MO": two})
+    with pytest.raises(CheckError) as err:
+        build_results(toy_metrics(), cfg, "2026-10-06")
+    assert (err.value.check, err.value.state) == ("export_blocked_map", "MO")
+
+
+def test_stops_on_an_extra_map_that_is_not_blocked():
+    cfg = toy_results_config()
+    odd = dataclasses.replace(cfg.states["MO"], extra_maps=(HB1, dataclasses.replace(HB1, id="mo_x", status="Challenged")))
+    cfg = dataclasses.replace(cfg, states={**cfg.states, "MO": odd})
+    with pytest.raises(CheckError) as err:
+        build_results(toy_metrics(), cfg, "2026-10-06")
+    assert (err.value.check, err.value.state) == ("export_blocked_map", "MO")
+
+
+def test_stops_when_metrics_has_a_state_the_config_lacks():
+    metrics = toy_metrics()
+    metrics["states"]["TX"] = toy_state_metrics("48")
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert err.value.check == "export_states"
+
+
+@pytest.mark.parametrize("wrong", [3, 5])
+def test_stops_when_national_seats_differ_in_either_direction(wrong):
+    metrics = toy_metrics()
+    metrics["national"]["seats"] = wrong
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert err.value.check == "export_seats"
+
+
+def test_national_and_state_checks_use_state_us():
+    metrics = toy_metrics()
+    metrics["national"]["seats"] = 5
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert err.value.state == "US"
+    metrics = toy_metrics()
+    del metrics["states"]["HI"]
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert err.value.state == "US"
+
+
+def test_blocked_map_district_ids_are_checked_too():
+    metrics = toy_metrics()
+    metrics["states"]["MO"]["blocked_map"]["districts"][1]["id"] = "2903"
+    with pytest.raises(CheckError) as err:
+        build_results(metrics, toy_results_config(), "2026-10-06")
+    assert (err.value.check, err.value.state) == ("export_districts", "MO")
