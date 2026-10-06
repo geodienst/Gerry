@@ -197,25 +197,31 @@ def check_units_linked(units: pd.DataFrame, unit_of: pd.Series, district_of: pd.
                          f"{len(bad)} units with votes have no block outside ZZ, e.g. {bad.iloc[0]}")
 
 
-def check_vap(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, state: str) -> None:
-    """Block VAP (P0030001) summed per unit equals the VAP in the unit file."""
-    unit_ids = blocks["block_id"].map(unit_of)
-    unmapped = blocks.loc[unit_ids.isna() & (blocks["vap"] > 0), "block_id"]
-    if len(unmapped):
-        raise CheckError("vap", state, f"{len(unmapped)} blocks with VAP belong to no unit, "
-                                       f"e.g. {unmapped.iloc[0]}")
-    by_unit = blocks["vap"].groupby(unit_ids.to_numpy()).sum()
-    expected = units.set_index("unit_id")["vap"]
-    got = by_unit.reindex(expected.index, fill_value=0)
-    bad = expected.index[(got != expected).to_numpy()]
-    if len(bad):
-        first = bad[0]
-        raise CheckError("vap", state, f"{len(bad)} units differ, e.g. {first}: unit file {int(expected[first])}, "
-                                       f"blocks {int(got[first])}")
-    outside = by_unit[~by_unit.index.isin(expected.index) & (by_unit > 0).to_numpy()]
-    if len(outside):
-        raise CheckError("vap", state, f"{len(outside)} block units with VAP are not in the unit file, "
-                                       f"e.g. {outside.index[0]} ({int(outside.iloc[0])})")
+def check_vap_pop(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, state: str) -> tuple[int, int]:
+    """Per unit, block VAP (P0030001) and POP100 add up to vap and pop of map.rds. Blocks whose key
+    (unit_of) is not a unit must have VAP 0 and POP100 0. Returns (number of those blocks, of their keys)."""
+    keys = blocks["block_id"].map(unit_of)
+    if keys.isna().any():
+        raise CheckError("vap_pop", state, f"{int(keys.isna().sum())} blocks have no key, "
+                                           f"e.g. {blocks.loc[keys.isna(), 'block_id'].iloc[0]}")
+    known = keys.isin(units["unit_id"]).to_numpy()
+    outside = blocks[~known]
+    people = outside[(outside["vap"] > 0) | (outside["pop"] > 0)]
+    if len(people):
+        first = people.iloc[0]
+        raise CheckError("vap_pop", state, f"{len(people)} blocks with VAP or population belong to no unit, "
+                                           f"e.g. {first['block_id']} (VAP {int(first['vap'])}, "
+                                           f"population {int(first['pop'])})")
+    sums = blocks[known].groupby(keys[known].to_numpy())[["vap", "pop"]].sum()
+    expected = units.set_index("unit_id")
+    for col in ("vap", "pop"):
+        got = sums[col].reindex(expected.index, fill_value=0)
+        bad = expected.index[(got != expected[col]).to_numpy()]
+        if len(bad):
+            first = bad[0]
+            raise CheckError("vap_pop", state, f"{col}: {len(bad)} units differ, e.g. {first}: "
+                                               f"map {int(expected.at[first, col])}, blocks {int(got[first])}")
+    return int((~known).sum()), int(keys[~known].nunique())
 
 
 def check_conservation(units: pd.DataFrame, district_totals: pd.DataFrame, vote_cols: Sequence[str],

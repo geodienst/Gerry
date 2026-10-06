@@ -2,17 +2,17 @@ import pandas as pd
 import pytest
 
 from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
-                          check_geoids, check_units_linked, check_vap)
+                          check_geoids, check_units_linked, check_vap_pop)
 
 
 def units_table():
-    return pd.DataFrame({"unit_id": ["U1", "U2", "U3"], "vap": [30, 0, 5],
+    return pd.DataFrame({"unit_id": ["U1", "U2", "U3"], "vap": [30, 0, 5], "pop": [40, 2, 6],
                          "d_pre_20": [30.0, 6.0, 0.0], "r_pre_20": [60.0, 0.0, 0.0],
                          "d": [30.0, 6.0, 0.0], "r": [60.0, 0.0, 0.0]})
 
 
 def blocks_table():
-    return pd.DataFrame({"block_id": ["b1", "b2", "b3", "b4"], "vap": [10, 20, 0, 5]})
+    return pd.DataFrame({"block_id": ["b1", "b2", "b3", "b4"], "vap": [10, 20, 0, 5], "pop": [12, 28, 2, 6]})
 
 
 UNIT_OF = pd.Series(["U1", "U1", "U2", "U3"], index=["b1", "b2", "b3", "b4"])
@@ -41,30 +41,51 @@ def test_units_linked_fails_for_a_unit_with_votes_without_blocks():
         check_units_linked(units, UNIT_OF, DISTRICT_OF, "NV")
 
 
-# ---- check_vap ----
+# ---- check_vap_pop ----
 
-def test_vap_passes_when_blocks_add_up_to_units():
-    check_vap(units_table(), blocks_table(), UNIT_OF, "NV")
+def with_water(vap=(0, 0), pop=(0, 0)):
+    """Blocks b5 and b6 whose key W1 is not a unit, as the water VTDs that ALARM left out in MI and OH."""
+    blocks = pd.concat([blocks_table(), pd.DataFrame({"block_id": ["b5", "b6"], "vap": list(vap), "pop": list(pop)})],
+                       ignore_index=True)
+    unit_of = pd.concat([UNIT_OF, pd.Series(["W1", "W1"], index=["b5", "b6"])])
+    return blocks, unit_of
 
 
-def test_vap_fails_when_a_unit_differs():
+def test_vap_pop_passes_when_blocks_add_up_to_units():
+    assert check_vap_pop(units_table(), blocks_table(), UNIT_OF, "NV") == (0, 0)
+
+
+def test_vap_pop_fails_when_the_vap_of_a_unit_differs():
     blocks = blocks_table()
     blocks.loc[1, "vap"] = 21
-    with pytest.raises(CheckError, match="vap failed for NV.*U1.*30.*31"):
-        check_vap(units_table(), blocks, UNIT_OF, "NV")
+    with pytest.raises(CheckError, match="vap_pop failed for NV: vap: 1 units differ, e.g. U1: map 30, blocks 31"):
+        check_vap_pop(units_table(), blocks, UNIT_OF, "NV")
 
 
-def test_vap_fails_for_block_vap_outside_the_unit_file():
-    blocks = pd.concat([blocks_table(), pd.DataFrame({"block_id": ["b5"], "vap": [3]})], ignore_index=True)
-    unit_of = pd.concat([UNIT_OF, pd.Series(["U9"], index=["b5"])])
-    with pytest.raises(CheckError, match="U9"):
-        check_vap(units_table(), blocks, unit_of, "NV")
+def test_vap_pop_fails_when_the_population_of_a_unit_differs():
+    blocks = blocks_table()
+    blocks.loc[2, "pop"] = 3
+    with pytest.raises(CheckError, match="pop: 1 units differ, e.g. U2: map 2, blocks 3"):
+        check_vap_pop(units_table(), blocks, UNIT_OF, "NV")
 
 
-def test_vap_fails_for_block_vap_without_a_unit():
-    blocks = pd.concat([blocks_table(), pd.DataFrame({"block_id": ["b5"], "vap": [3]})], ignore_index=True)
-    with pytest.raises(CheckError, match="vap failed for NV.*b5"):
-        check_vap(units_table(), blocks, UNIT_OF, "NV")
+def test_vap_pop_counts_empty_blocks_without_a_unit():
+    blocks, unit_of = with_water()
+    # two blocks, one key
+    assert check_vap_pop(units_table(), blocks, unit_of, "NV") == (2, 1)
+
+
+@pytest.mark.parametrize("vap, pop", [((0, 3), (0, 4)), ((0, 0), (0, 1))])
+def test_vap_pop_fails_for_people_in_blocks_without_a_unit(vap, pop):
+    blocks, unit_of = with_water(vap, pop)
+    with pytest.raises(CheckError, match="vap_pop failed for NV: 1 blocks with VAP or population.*b6"):
+        check_vap_pop(units_table(), blocks, unit_of, "NV")
+
+
+def test_vap_pop_fails_for_a_block_without_a_key():
+    blocks, _ = with_water()
+    with pytest.raises(CheckError, match="b5"):
+        check_vap_pop(units_table(), blocks, UNIT_OF, "NV")
 
 
 # ---- check_conservation ----
