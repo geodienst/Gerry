@@ -239,3 +239,37 @@ def test_outside_band():
     assert m.outside_band(15, 15, 20) is False
     assert m.outside_band(20, 15, 20) is False
     assert m.outside_band(21, 15, 20) is True
+
+
+# Task 2.7: efficiency_gap
+
+def test_efficiency_gap_five_districts():
+    # district  D   R   T    winner  wasted D       wasted R
+    # 1         80  20  100  D       80 - 50 = 30   20
+    # 2         55  45  100  D       55 - 50 = 5    45
+    # 3         30  70  100  R       30             70 - 50 = 20
+    # 4         48  72  120  R       48             72 - 60 = 12
+    # 5         35  45   80  R       35             45 - 40 = 5
+    # wasted D = 148, wasted R = 102, all votes = 500
+    # EG = (148 - 102) / 500 = 0.092, positive: more Democratic votes wasted, favors Republicans
+    d = [80, 55, 30, 48, 35]
+    r = [20, 45, 70, 72, 45]
+    assert m.efficiency_gap(d, r, m.dem_wins(d, r)) == pytest.approx(0.092)
+
+
+def test_efficiency_gap_mirror_favors_democrats():
+    # swap the parties of the five-district example: wasted D 102, wasted R 148
+    # EG = (102 - 148) / 500 = -0.092
+    d = [20, 45, 70, 72, 45]
+    r = [80, 55, 30, 48, 35]
+    assert m.efficiency_gap(d, r, m.dem_wins(d, r)) == pytest.approx(-0.092)
+
+
+def test_efficiency_gap_uses_given_winners():
+    # district 1 is 50-50; district 2 is D 30, R 70 (R wins: wasted D 30, wasted R 70 - 50 = 20)
+    # D declared winner of district 1: wasted D 50 - 50 = 0, wasted R 50
+    #   EG = ((0 + 30) - (50 + 20)) / 200 = -0.2
+    # R declared winner of district 1: wasted D 50, wasted R 0
+    #   EG = ((50 + 30) - (0 + 20)) / 200 = 0.3
+    assert m.efficiency_gap([50, 30], [50, 70], [True, False]) == pytest.approx(-0.2)
+    assert m.efficiency_gap([50, 30], [50, 70], [False, False]) == pytest.approx(0.3)

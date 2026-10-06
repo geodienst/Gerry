@@ -150,3 +150,15 @@ def effects(proportional: int, median: int, enacted: int) -> dict:
 def outside_band(enacted: int, p5: int, p95: int) -> bool:
     """True when enacted lies below the 5th or above the 95th percentile."""
     return bool(enacted < p5 or enacted > p95)
+
+
+def efficiency_gap(d, r, dem_win) -> float:
+    """(wasted D - wasted R) / all votes. The winner wastes votes above T/2, the loser
+    all votes. Positive favors Republicans. dem_win comes from dem_wins()."""
+    d = np.asarray(d, dtype=float)
+    r = np.asarray(r, dtype=float)
+    win = np.asarray(dem_win, dtype=bool)
+    half = (d + r) / 2
+    wasted_d = np.where(win, d - half, d)
+    wasted_r = np.where(win, r, r - half)
+    return float((wasted_d.sum() - wasted_r.sum()) / (d + r).sum())
