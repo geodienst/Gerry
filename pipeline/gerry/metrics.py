@@ -171,3 +171,20 @@ def mean_median(shares) -> float | None:
     if values.size < 3:
         return None
     return float(np.mean(values) - np.median(values))
+
+
+def linear_band(values) -> dict:
+    """Median, 5th and 95th percentile with linear interpolation (EG and MM context)."""
+    data = np.asarray(values, dtype=float)
+    if data.size == 0:
+        raise ValueError("no values")
+    p5, p50, p95 = np.percentile(data, [5, 50, 95])
+    return {"median": float(p50), "p5": float(p5), "p95": float(p95)}
+
+
+def sorted_band(share_matrix: np.ndarray) -> dict:
+    """Rows are plans, columns districts. Sort each plan's shares from low to high, then
+    take the 5th, 50th and 95th percentile per position (linear interpolation)."""
+    ordered = np.sort(np.asarray(share_matrix, dtype=float), axis=1)
+    p5, p50, p95 = np.percentile(ordered, [5, 50, 95], axis=0)
+    return {"p5": p5.tolist(), "p50": p50.tolist(), "p95": p95.tolist()}

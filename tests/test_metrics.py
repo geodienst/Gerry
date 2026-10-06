@@ -296,3 +296,29 @@ def test_mean_median_even_count_averages_the_middle_two():
 
 def test_mean_median_none_for_two_districts():
     assert m.mean_median([0.3, 0.6]) is None
+
+
+# Task 2.9: linear_band and sorted_band
+
+def test_linear_band_interpolates():
+    # five values 0.10 .. 0.50; numpy's linear rule puts q at position (n - 1) * q / 100
+    # p5: 4 * 0.05 = 0.2 -> 0.10 + 0.2 * (0.20 - 0.10) = 0.12
+    # median: position 2 -> 0.30
+    # p95: 4 * 0.95 = 3.8 -> 0.40 + 0.8 * (0.50 - 0.40) = 0.48
+    band = m.linear_band([0.50, 0.10, 0.40, 0.20, 0.30])
+    assert band == pytest.approx({"median": 0.30, "p5": 0.12, "p95": 0.48})
+
+
+def test_sorted_band_sorts_each_plan_first():
+    # plan A: 0.6, 0.4 -> sorted 0.4, 0.6
+    # plan B: 0.3, 0.5 -> 0.3, 0.5
+    # plan C: 0.7, 0.2 -> 0.2, 0.7
+    # lowest district: 0.2, 0.3, 0.4; position (3 - 1) * q / 100
+    #   p5: 0.1 -> 0.2 + 0.1 * 0.1 = 0.21; p50: 0.3; p95: 1.9 -> 0.3 + 0.9 * 0.1 = 0.39
+    # highest district: 0.5, 0.6, 0.7
+    #   p5: 0.5 + 0.1 * 0.1 = 0.51; p50: 0.6; p95: 0.6 + 0.9 * 0.1 = 0.69
+    band = m.sorted_band(np.array([[0.6, 0.4], [0.3, 0.5], [0.7, 0.2]]))
+    assert band["p5"] == pytest.approx([0.21, 0.51])
+    assert band["p50"] == pytest.approx([0.3, 0.6])
+    assert band["p95"] == pytest.approx([0.39, 0.69])
+    assert isinstance(band["p50"], list)
