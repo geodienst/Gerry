@@ -1,13 +1,28 @@
 {
+  "alarm/AL_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392004",
+    "size": 936432,
+    "sha256": "de19a3ce33ea5cdb8f5bba272121627443568ef81cf1e388c5a7f3bc6ec72f96"
+  },
   "alarm/AL_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392640?format=original",
     "size": 12350384,
     "sha256": "96c145c3a4a58a285e9ead4517534ecb9897c26338372f9d2d3fab409065d7f7"
   },
+  "alarm/AR_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6401159",
+    "size": 905112,
+    "sha256": "6f3cc9865ebb9283941eb0eb2542e2700b3d5b48bc892c1ac0ad7e47e59158f2"
+  },
   "alarm/AR_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6401158?format=original",
     "size": 7117573,
     "sha256": "a9a0e3300aad89fbd12ed7c5de38728acbf356417c0f143af61cef3310f673dc"
+  },
+  "alarm/AZ_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380315",
+    "size": 601572,
+    "sha256": "e6218f214735cfd5791c6c1366b3d3e5582a55ae2603d652fdf5bba407d01d4e"
   },
   "alarm/AZ_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392646?format=original",
@@ -24,195 +39,390 @@
     "size": 75228117,
     "sha256": "02a84748a89f229170fb549ef3660fa5555cdc85d52c476d35a7221db59ecba5"
   },
+  "alarm/CO_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380398",
+    "size": 870724,
+    "sha256": "79ee6747ebdb382e75079eae92d33708a6609ed3c5ebdf23b8197761f719f67e"
+  },
   "alarm/CO_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392660?format=original",
     "size": 14314605,
     "sha256": "5c3e0fea4e4220917a7e808de5a6761d77da596845bd924d17550bcd6e75b75f"
+  },
+  "alarm/CT_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6390801",
+    "size": 215760,
+    "sha256": "28db6782fb4556b2021f77892a0d5beb901c70217b3f059109f644ec80d94ed6"
   },
   "alarm/CT_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392663?format=original",
     "size": 8771802,
     "sha256": "7be37c613f2745a0f94bbc98a037d86119d49a2c97f0df56a5c8fa1b8223323c"
   },
+  "alarm/FL_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6391914",
+    "size": 1880452,
+    "sha256": "5797ff5010d260bdcc99b770b6827c6955bf34c8e4fb93aa292e411ee88eca31"
+  },
   "alarm/FL_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392665?format=original",
     "size": 59831709,
     "sha256": "fe21166738cddc539d774fd08acbc7976ef0970bf75e1ebebc7b77e6f94fabb1"
+  },
+  "alarm/GA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6894596",
+    "size": 1156076,
+    "sha256": "c2ab47ce8b882e090def03f0a74629a21b42f07e693bb27a7ac51c79180f699f"
   },
   "alarm/GA_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/7104088?format=original",
     "size": 27045537,
     "sha256": "fad2917d5943b0af8bcc804e4d8fbddb79daf617a7a1254d790b12723ede294d"
   },
+  "alarm/HI_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380403",
+    "size": 123664,
+    "sha256": "57d37fa8d9ee096e2bc1853b5c39051f20ddb519acf47cab3c28fb14b785f98e"
+  },
   "alarm/HI_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392669?format=original",
     "size": 3008883,
     "sha256": "aceb3fbce56eb395bd9380544361958c7e3e85ac7487a8abb13377d5091b8daa"
+  },
+  "alarm/IA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380310",
+    "size": 162316,
+    "sha256": "15570364d7817b7dd62e13ced9ad920cf8574ac49ed9ca74968fec30139bc24a"
   },
   "alarm/IA_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392677?format=original",
     "size": 7437634,
     "sha256": "a730fc18d74c0299205fab16ffd5fef4c22d06a6d4b4e1ffbe7dc505312b44c1"
   },
+  "alarm/ID_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380394",
+    "size": 440368,
+    "sha256": "03defbabbaa5efc43e209c2f148267996cb53d0e6877aa225dd32be3b54db84c"
+  },
   "alarm/ID_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392671?format=original",
     "size": 3369027,
     "sha256": "4bee1016f49bc8361915718eb8b132260c8210b1ea5650713425e63a0bfc8922"
+  },
+  "alarm/IL_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6390560",
+    "size": 1817368,
+    "sha256": "9bb6dcbdd1906cb9045e3efac377399b1d9dcc6280c20d8b4ca4b59f860aeead"
   },
   "alarm/IL_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392672?format=original",
     "size": 30630443,
     "sha256": "283b54923fd1f719f5861138d4b9115195dc163401b7c53d3119be3250099448"
   },
+  "alarm/IN_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6911530",
+    "size": 1118796,
+    "sha256": "5a6264cc0308a17f6c80e16eaef52d135e67e64adf4085e0a539cbfbdb7ea12f"
+  },
   "alarm/IN_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/7104111?format=original",
     "size": 17094101,
     "sha256": "3aa01994e01fcda3add7caf08d1e0339ba05a689e06ec528c93ba7c94496895d"
+  },
+  "alarm/KS_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380461",
+    "size": 783948,
+    "sha256": "2c44ceac7ad8e6f9a6d4528fd0b7a5f56a116f39bde91f693fa4e527f48afa62"
   },
   "alarm/KS_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392679?format=original",
     "size": 7037557,
     "sha256": "11a160e6e3d208fbcb2842b613e6af297ff375784a5c88ff8a4c40303d363303"
   },
+  "alarm/KY_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6532915",
+    "size": 1276564,
+    "sha256": "31d85301b44182af17fec0b98a94fdb26276683c1f99ef8012e0fb25faa782dc"
+  },
   "alarm/KY_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6533172?format=original",
     "size": 9385721,
     "sha256": "06c2cac1482667796c5c05044dab91d723e80f477200c21bd5154d1e7c65eba6"
+  },
+  "alarm/LA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380465",
+    "size": 1149128,
+    "sha256": "93ee37acca6370f1d18405be42bd1f6d482f2c8a3dabd50688583dd5e69e739c"
   },
   "alarm/LA_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392683?format=original",
     "size": 14640258,
     "sha256": "bdf4b882c437731f93fad8e4ee0814d5959667fb3c3c0fbc3169ef422e9166f0"
   },
+  "alarm/MA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380418",
+    "size": 490356,
+    "sha256": "b103e467f00a71dda430118cdb1314077f24b30a3470f8606b96dea77624db58"
+  },
   "alarm/MA_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392687?format=original",
     "size": 16103831,
     "sha256": "34220a38452aa86ed9dd166ae85067deeb901696ad4d2f97bc8fb1fbb216f47d"
+  },
+  "alarm/MD_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6395237",
+    "size": 750036,
+    "sha256": "bb17149b0f0412a4372b4b0eedf9a8ecb53397ab63cbff6c9e0d2ddec03d1fe2"
   },
   "alarm/MD_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6395235?format=original",
     "size": 13794471,
     "sha256": "2402b6121e4d757d079366b5a4a1c1d404bb76dd1a7e5121a44900d0df874c8a"
   },
+  "alarm/ME_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380412",
+    "size": 65504,
+    "sha256": "d76863b8ca7b13fe353d42a650630d0f579d961b4c4616b12beae69971b77cab"
+  },
   "alarm/ME_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392727?format=original",
     "size": 3118917,
     "sha256": "cba9f1d157f8c80b63a97cbac76150ea989f048957344cef69d830aeac3cf4ca"
+  },
+  "alarm/MI_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380304",
+    "size": 836836,
+    "sha256": "c455df8896ca850e8ca97e282802901f0efebfca3158db1ea2e6477bb690f514"
   },
   "alarm/MI_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392689?format=original",
     "size": 23374648,
     "sha256": "5d43c3ce7f0f7b88b40b4b47aa0d89ab5c42a8d90d3e033da32b9e2fb3571f15"
   },
+  "alarm/MN_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6390829",
+    "size": 947744,
+    "sha256": "e2cfaa8bf1e648533582e107080da0081bbb1c7966ba12007a1d1f068eb5a543"
+  },
   "alarm/MN_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392691?format=original",
     "size": 14354613,
     "sha256": "5d4319949f1c025c87735ad55137dad30e64d420221cd6a68303e9d4d2ca62f8"
+  },
+  "alarm/MO_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6402270",
+    "size": 1096320,
+    "sha256": "d541f020ce6f2ddbcc31e7961b0731b1782baf50b8e386e255547adadb41a1df"
   },
   "alarm/MO_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6402267?format=original",
     "size": 15555087,
     "sha256": "4d9a9bff18d76e6c6e83cca532baa08e5cbae6a1ea440f90ac69eb315a03a5ce"
   },
+  "alarm/MS_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380424",
+    "size": 799340,
+    "sha256": "d3c273dbf9e3b33af8854107b3c96248972ff42b986c818fa48efaf3e1aac16c"
+  },
   "alarm/MS_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392693?format=original",
     "size": 6357363,
     "sha256": "f896ad3b788ed2faef50e1e02693bec75f950222cc9497a91701cdc138936d15"
+  },
+  "alarm/MT_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380301",
+    "size": 377396,
+    "sha256": "5820c059b9faf1f5f49811cda0764af1791222467dc3e095c7df0dea8a79e265"
   },
   "alarm/MT_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392696?format=original",
     "size": 3759195,
     "sha256": "216ae25abdd16ee50227233238104b5707a9c9060e75be8f9801bef0291375ea"
   },
+  "alarm/NC_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380468",
+    "size": 1187028,
+    "sha256": "20524d958d836d06e4bd60fe9533e575b1cd42809573aab2cbd94ad9f7b7c974"
+  },
   "alarm/NC_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392710?format=original",
     "size": 28445903,
     "sha256": "d0654614f502d97cebd0abe3f23b05a93d96a13b72607d7dd0e00b998dbe0cd3"
+  },
+  "alarm/NE_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6911534",
+    "size": 321680,
+    "sha256": "1510434e55ef185fbf08f53e56da4b64e17dd4cbef456421522bb598f5f82815"
   },
   "alarm/NE_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/7104089?format=original",
     "size": 5308292,
     "sha256": "40b10c387ac03fddde1e15bcd8668727e6cb8e3ce2750cd352f0ebf795b1e06d"
   },
+  "alarm/NH_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6381257",
+    "size": 107768,
+    "sha256": "c25abdac4f1a2b69f28b0f5d34f90a2ce0da36a962b1fce8e1a3f978d8183e0c"
+  },
   "alarm/NH_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392703?format=original",
     "size": 3439041,
     "sha256": "b9a22a9494dadaa6ca0637ddc4b3e4446452593918ded05ebaf9dbbfff1c9c4f"
+  },
+  "alarm/NJ_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413620",
+    "size": 1117584,
+    "sha256": "3877d4a70dcbb0e13ba3c8a4d64269cb2cdf111b8dc84d7ab3ea20559005c60d"
   },
   "alarm/NJ_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6413614?format=original",
     "size": 19617167,
     "sha256": "a40e39ff28b295cd3175f856da9fefdb7c0cf65786d3601d62c3c6d5546cfc04"
   },
+  "alarm/NM_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413617",
+    "size": 682916,
+    "sha256": "ec11f3855c277970d57f8c8c1a817657fc87f59449d5057d287bf1de4ed164f2"
+  },
   "alarm/NM_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6413616?format=original",
     "size": 5593388,
     "sha256": "a18e913a4ed11f91f0024b7b6bd7cce71101d251a6b4c1597c1e5845732c9d94"
+  },
+  "alarm/NV_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380432",
+    "size": 427948,
+    "sha256": "17924cc4bf27bd0cd75d8d861a52d0a389fed7fa8810019aac93f484867efdaf"
   },
   "alarm/NV_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392701?format=original",
     "size": 7257601,
     "sha256": "64e22a4b718debe72d06a258a8f7b8fa918050fd9f2370273a55d6d0adcf3572"
   },
+  "alarm/NY_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6390958",
+    "size": 2161820,
+    "sha256": "41b1f7f8f77c152ec2746330e7ab4490cd59ffeaaab8e3e34ac33738d7392a0b"
+  },
   "alarm/NY_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392708?format=original",
     "size": 45155897,
     "sha256": "90225befb029133d1b1b9e3560b2a242f328512478f720448a929ce6d2680813"
+  },
+  "alarm/OH_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380290",
+    "size": 1767944,
+    "sha256": "b00f99f46a702557d40fd7a7a53533ce9e0acd4e6bf69a405d5ebec23b2f2ecb"
   },
   "alarm/OH_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392713?format=original",
     "size": 27327014,
     "sha256": "7dd84943428384c0455fa6f32965d7dfa53bc80837ecee640e800554a36a0c8e"
   },
+  "alarm/OK_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380442",
+    "size": 691780,
+    "sha256": "36ea8de05152ccc54417b10ab807067157c67149fa50a1fb72f93fdd59f52282"
+  },
   "alarm/OK_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392715?format=original",
     "size": 8971812,
     "sha256": "9af002a218f05204108448380e678d1362d9f51a9d5c1e876d21e2d44e0b69f7"
+  },
+  "alarm/OR_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/10384152",
+    "size": 545904,
+    "sha256": "7b0a49bb5115965f23c276a3d3c46671604b2ca30b9275d88b82349dcb1faf64"
   },
   "alarm/OR_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/10384154?format=original",
     "size": 11876399,
     "sha256": "c2e1aed424c1d652f5cb7155b78693a34634058c7d79257c65b318e8375f9ab7"
   },
+  "alarm/PA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413618",
+    "size": 1883556,
+    "sha256": "20bee4bf447772ab0c147615381eb7b0256b22e3f7ccc89e3ca507e3be88e64b"
+  },
   "alarm/PA_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6413613?format=original",
     "size": 29652744,
     "sha256": "484fa79a51b92b179426b27d0ee3b14c8377ac7a6c040173e45a10480fac1310"
+  },
+  "alarm/RI_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380457",
+    "size": 120580,
+    "sha256": "dc41bfd06c10d78cab979f7800444cd6f08ab17cb2d3f8719c51f127af6b7963"
   },
   "alarm/RI_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392721?format=original",
     "size": 3349008,
     "sha256": "dd9b7b3003e6fad4c3a3c6ae8473c94ebbb8ac595e2733f8a37608361a5cf49c"
   },
+  "alarm/SC_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392412",
+    "size": 831092,
+    "sha256": "7ee5a0565dac72db3a43e1530eda214cced03e9a2c4cbef9c5b0fda0c71074e1"
+  },
   "alarm/SC_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392630?format=original",
     "size": 12385391,
     "sha256": "a321198fc1fad85594a385040bdbfee6b8344da468bb6c77a314201ecfa02c0f"
+  },
+  "alarm/TN_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392403",
+    "size": 1071116,
+    "sha256": "4634edca8de8d2842980d04de77d21c91cae7a23c5eb753ebce23a987f03c5e4"
   },
   "alarm/TN_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392722?format=original",
     "size": 12322959,
     "sha256": "e0730cff009f5d704357ace255a817be0413ffe9e98b2c970ec896a988221db9"
   },
+  "alarm/TX_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6381253",
+    "size": 3134408,
+    "sha256": "25aaf67556d8ac0c74aa24e53a447d96f8a72a0a36dbb3434220c774965bf8c7"
+  },
   "alarm/TX_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392725?format=original",
     "size": 83765617,
     "sha256": "600c22189c88c601cb6f35bc11e8e8a58df0223e712914d411db6195c674fa78"
+  },
+  "alarm/UT_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6395233",
+    "size": 765000,
+    "sha256": "75afe004b2f7ecc90008afd6c40b3cf0719385cde5ccd819cf6402058e702c5e"
   },
   "alarm/UT_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/7104118?format=original",
     "size": 7457663,
     "sha256": "fcc3f839825ffaa82d2811fdc693c184752e1df2f68100a742fa91dece935264"
   },
+  "alarm/VA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413619",
+    "size": 1069268,
+    "sha256": "729b849fde5aa37629d04800bcc4decedeeb4f8989c4818b9bd82c752d9f47a8"
+  },
   "alarm/VA_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6413612?format=original",
     "size": 17921919,
     "sha256": "970b722df42043dc6d16b27980f6505fa23d6dd8b10adae042303617aaa66238"
   },
+  "alarm/WA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380284",
+    "size": 1490760,
+    "sha256": "c2fe5e469979a9994b46af6c497e9a955981187034f7c58f6b75a81351725956"
+  },
   "alarm/WA_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392733?format=original",
     "size": 19948627,
     "sha256": "76415d01e07b6def47e690d84ffb570528980ee8d02782d78411f9a4e74b4b82"
+  },
+  "alarm/WI_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380453",
+    "size": 1442220,
+    "sha256": "2bb66b131fa1ff6c244b9bfd4d4faebadbe46d3833c35d1fadc28612237d0182"
   },
   "alarm/WI_cd_2020_stats.csv": {
     "url": "https://dataverse.harvard.edu/api/access/datafile/6392734?format=original",
@@ -474,219 +684,24 @@
     "size": 249289919,
     "sha256": "fffb2f36a12302df89cf4273f2592218be055a4b8409f6aef89412210d6e8ec1"
   },
-  "census_vest/al_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/al_2020_vtd.csv",
-    "size": 387661,
-    "sha256": "75c84c3067bc77b4d4a60ffd3b8324f7613f5812626777cb40a5ebca6ef9bfb8"
-  },
-  "census_vest/ar_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ar_2020_vtd.csv",
-    "size": 534028,
-    "sha256": "021d9061af5da29c7cb68c0d74f7775748b5497f2319e2e95485c6a127de37ad"
-  },
-  "census_vest/az_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/az_2020_vtd.csv",
-    "size": 357271,
-    "sha256": "71f737803283ab9cc584d3572104cbdab83ad35ba446f55323c09f14f6b0aef7"
-  },
   "census_vest/ca_2020_block.csv": {
     "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ca_2020_block.csv",
     "size": 60691645,
     "sha256": "62ef731d31f3606fff8ac38b94ea7ffee97edd495a6ebac52ab2296330f81bf9"
-  },
-  "census_vest/co_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/co_2020_vtd.csv",
-    "size": 653302,
-    "sha256": "2d06ae79e2538d2d916ea7de69f35a537454398662ebd827f3b41bbcd708efb5"
-  },
-  "census_vest/ct_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ct_2020_vtd.csv",
-    "size": 172450,
-    "sha256": "73849a4c69dd46bb51a80e40d12404bccd6c40e31256fbb77bfda3f59b68dfb2"
-  },
-  "census_vest/fl_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/fl_2020_vtd.csv",
-    "size": 1467354,
-    "sha256": "df754c8e3482df019573b7aa000098bb41c0d130fcb3a02151100575a63ba9e0"
-  },
-  "census_vest/ga_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ga_2020_vtd.csv",
-    "size": 609244,
-    "sha256": "107f05e36b5f076b6de6139180a27801dcf4c6d00f16b56e59ac73cde1ac5b41"
   },
   "census_vest/hi_2020_block.csv": {
     "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/hi_2020_block.csv",
     "size": 1970679,
     "sha256": "91842d8bc4e918949a1a058bc9b9a694e10065b517e3f7af72858a60d002b4cf"
   },
-  "census_vest/ia_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ia_2020_vtd.csv",
-    "size": 498462,
-    "sha256": "c618141bf0b162e85c0bce4b25e6b0cb3e7cd8fa92fc7ca8fe10443ed8852d4c"
-  },
-  "census_vest/id_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/id_2020_vtd.csv",
-    "size": 193158,
-    "sha256": "b23feadcbf1a4c13b46376f54765bcc38ecb4849636f374eb542e36e080496c0"
-  },
-  "census_vest/il_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/il_2020_vtd.csv",
-    "size": 1982838,
-    "sha256": "97f57fbd99f553f86b49ad8e4c0139e4b5784eb6ba2042d98e6e7d31690a5947"
-  },
-  "census_vest/in_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/in_2020_vtd.csv",
-    "size": 1115335,
-    "sha256": "a78e1ffff6a1181d5cfc3da8bb2abc0ef9e145d96f7fd80fa91f86088d8ea860"
-  },
-  "census_vest/ks_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ks_2020_vtd.csv",
-    "size": 737714,
-    "sha256": "10af62ccea287c71e0597a842dd9a687dd0e94ac8a55024ec682fe555b6c697b"
-  },
-  "census_vest/ky_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ky_2020_vtd.csv",
-    "size": 595312,
-    "sha256": "af2ef2d33570965820f97e04b507ffe7b8e7cb994f4b545b427b43da4fb1f555"
-  },
-  "census_vest/la_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/la_2020_vtd.csv",
-    "size": 962654,
-    "sha256": "9e597f699432ae114235d7172fe09716a7c4af781f929ad417421e05256c3148"
-  },
-  "census_vest/ma_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ma_2020_vtd.csv",
-    "size": 442244,
-    "sha256": "50d6e86ea49c90d767d6fdba9b3eaca610b075c85c8194eda650c2dab1cffbcf"
-  },
-  "census_vest/md_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/md_2020_vtd.csv",
-    "size": 418043,
-    "sha256": "b1a0d44dce4d2381911e43eef3ab20592a7e1a5f63914579e6ddfc169c584093"
-  },
   "census_vest/me_2020_block.csv": {
     "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/me_2020_block.csv",
     "size": 5472083,
     "sha256": "fcf51278f33cd4099998564638fcc359baf8e272eb0e7983809b9701a77283e3"
   },
-  "census_vest/mi_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/mi_2020_vtd.csv",
-    "size": 975869,
-    "sha256": "5efd6b75e6abec2bbe5eea2801c4b5fafcd881a64966d7d929d1195652fd9351"
-  },
-  "census_vest/mn_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/mn_2020_vtd.csv",
-    "size": 810715,
-    "sha256": "54a6ee79f7a3da4f1844975ab77e1030a053ca875d6a439fce2275add739f6f1"
-  },
-  "census_vest/mo_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/mo_2020_vtd.csv",
-    "size": 1058988,
-    "sha256": "021b00f816682c1ee22f90344a342ef00f83d98fcbadfa3491ffdb9af7b2110a"
-  },
-  "census_vest/ms_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ms_2020_vtd.csv",
-    "size": 325814,
-    "sha256": "5ce382b59dd0e1e2d3d318fc6c82c3b3e9b26cba25b4aea13204537be98287ff"
-  },
-  "census_vest/mt_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/mt_2020_vtd.csv",
-    "size": 161166,
-    "sha256": "c073f93006ddb72e2bf726635ffda0f96cbd5f09b983fd7d599152c3b1def9ab"
-  },
-  "census_vest/nc_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/nc_2020_vtd.csv",
-    "size": 661438,
-    "sha256": "ade2426f6237b0c23989b40bc9200c593a49d92abb9247ad0b412ea84b1fd286"
-  },
-  "census_vest/ne_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ne_2020_vtd.csv",
-    "size": 267198,
-    "sha256": "cb2e64d919e8d0c2da1c6bd77512d30c0e9a8465f48010ea86114a295148f82f"
-  },
-  "census_vest/nh_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/nh_2020_vtd.csv",
-    "size": 71986,
-    "sha256": "9d4499843ff23512a9abadc5dffc4bf6f39b6ac2f8a0415313a91148a32f11d9"
-  },
-  "census_vest/nj_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/nj_2020_vtd.csv",
-    "size": 1077370,
-    "sha256": "32f3d69dabcad5161b47cdcd93a5dea70902244a93d6bb25bf4c20eaba9e5098"
-  },
-  "census_vest/nm_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/nm_2020_vtd.csv",
-    "size": 410177,
-    "sha256": "8ff7e354a168eebf5e95d91b4d771935474bf3004af2637c617338e7ce4fa717"
-  },
-  "census_vest/nv_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/nv_2020_vtd.csv",
-    "size": 388968,
-    "sha256": "0392f563a4e1c0e211f9a524b57ead4e870a2b8301c2ed4e876b82a974ac7d9e"
-  },
-  "census_vest/ny_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ny_2020_vtd.csv",
-    "size": 2591400,
-    "sha256": "2e042b9d211cbd48302dbf05e8e194c82d5fd018141eda7e4d94ab12b313bf5f"
-  },
-  "census_vest/oh_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/oh_2020_vtd.csv",
-    "size": 1801471,
-    "sha256": "d2c08db5bbff48c37f01b5b099e5bffd1a2b4d9defd9340aa10559756940ea85"
-  },
-  "census_vest/ok_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ok_2020_vtd.csv",
-    "size": 372756,
-    "sha256": "b371200f6532b67dbee7e7569bc2f2d3ebf7d16c0708570a9352e3bebe0ea066"
-  },
   "census_vest/or_2020_block.csv": {
     "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/or_2020_block.csv",
     "size": 20997143,
     "sha256": "ba856bc13ea54aa98faec4493f35811dda52f0a20b8b38540a39c04e340e3144"
-  },
-  "census_vest/pa_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/pa_2020_vtd.csv",
-    "size": 1795195,
-    "sha256": "159223ba2f9580fcdb4247f1f71d0c6a96fc9eb1932133818d23d60c9866438d"
-  },
-  "census_vest/ri_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ri_2020_vtd.csv",
-    "size": 89437,
-    "sha256": "5d6b1eba29f1a937ec86003825a59f9c33d7bd1148b271e508b1b7f54b3ed12f"
-  },
-  "census_vest/sc_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/sc_2020_vtd.csv",
-    "size": 478656,
-    "sha256": "0847c02a1c6160a2cfa7676e695f0ecc3805ad5524fb2b23eb00d9ce5505eb4d"
-  },
-  "census_vest/tn_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/tn_2020_vtd.csv",
-    "size": 327593,
-    "sha256": "4be5eb6953d12e65998c44d6fa681ba8b21e92ecf3226fe06cd0fe4f25781829"
-  },
-  "census_vest/tx_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/tx_2020_vtd.csv",
-    "size": 1730079,
-    "sha256": "9e722261b704fd595281165d1ab33761c540b273c6d5a2fae257cbb45a0f483f"
-  },
-  "census_vest/ut_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ut_2020_vtd.csv",
-    "size": 558000,
-    "sha256": "eac73f9948e42daf69ed24ce996ea970771f70c19df55a24e7a731c3efe81f3f"
-  },
-  "census_vest/va_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/va_2020_vtd.csv",
-    "size": 451860,
-    "sha256": "2de353fec41d2facc4e2b3b2acba7c9d9db230913a59313e829df0f1f2717840"
-  },
-  "census_vest/wa_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/wa_2020_vtd.csv",
-    "size": 1686638,
-    "sha256": "4fe9f3c8f4c3a0ec86bd9006664a4481daf90057dc460aa52784ec155202cf9c"
-  },
-  "census_vest/wi_2020_vtd.csv": {
-    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/wi_2020_vtd.csv",
-    "size": 1360381,
-    "sha256": "46914d56d2c1737eabc5dfe831369d39ddaf89bb2dd137981f932fe495e83cad"
   }
 }

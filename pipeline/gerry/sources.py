@@ -8,6 +8,7 @@ import os
 import shutil
 import time
 import urllib.request
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -47,6 +48,14 @@ class Manifest:
 
     def record(self, key: str, url: str, size: int, sha256: str) -> None:
         self._entries[key] = {"url": url, "size": int(size), "sha256": sha256}
+
+    def prune(self, keep: Iterable[str]) -> list[str]:
+        """Drop the entries whose key is not in `keep`; return the dropped keys, sorted. Call save() to write."""
+        keep = set(keep)
+        removed = sorted(key for key in self._entries if key not in keep)
+        for key in removed:
+            del self._entries[key]
+        return removed
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -189,15 +198,15 @@ def plan_downloads(cfg: Config, dv_files: dict[str, dict]) -> list[Download]:
     postals = sorted(cfg.states)
     plan = [_dataverse_download(cfg, dv_files, f"{p}_cd_2020_stats.tab", f"alarm/{p}_cd_2020_stats.csv")
             for p in postals]
-    rds_keys = {f"alarm/{p}_cd_2020_map.rds" for p in postals if cfg.states[p].unit_source == "rds_county"}
-    rds_keys |= {entry.rds for entry in cfg.align_to_alarm}
-    plan += [_dataverse_download(cfg, dv_files, key.rsplit("/", 1)[1], key) for key in sorted(rds_keys)]
+    # map.rds holds the votes per unit for all three scenarios (spec chapter 3)
+    plan += [_dataverse_download(cfg, dv_files, f"{p}_cd_2020_map.rds", f"alarm/{p}_cd_2020_map.rds")
+             for p in postals]
+    # census-vest: only the block files of CA, HI, ME and OR, as weights within a tract
     for p in postals:
-        kind = cfg.states[p].unit_source
-        if kind in ("vtd", "block"):
+        if cfg.states[p].unit_source == "block":
             st = p.lower()
-            url = src["census_vest"].format(commit=cfg.census_vest_commit, st=st, kind=kind)
-            plan.append(Download(f"census_vest/{st}_2020_{kind}.csv", url, None, None))
+            url = src["census_vest"].format(commit=cfg.census_vest_commit, st=st, kind="block")
+            plan.append(Download(f"census_vest/{st}_2020_block.csv", url, None, None))
     plan.append(Download("census/cd118.zip", src["cd118"], None, None))
     plan.append(Download("census/cd120.zip", src["cd120"], None, None))
     for p in postals:

@@ -121,6 +121,18 @@ def test_manifest_is_written_with_lf_line_endings(tmp_path):
     assert b"\r" not in path.read_bytes()
 
 
+def test_manifest_prune_drops_entries_outside_the_plan(tmp_path):
+    path = tmp_path / "manifest.json"
+    m = Manifest(path)
+    for key in ("census/cd120.zip", "census_vest/nv_2020_vtd.csv", "census_vest/al_2020_vtd.csv"):
+        m.record(key, f"https://example.org/{key}", 1, "aa")
+    removed = m.prune({"census/cd120.zip", "alarm/NV_cd_2020_map.rds"})
+    assert removed == ["census_vest/al_2020_vtd.csv", "census_vest/nv_2020_vtd.csv"]
+    assert m.get("census_vest/nv_2020_vtd.csv") is None
+    m.save()
+    assert list(json.loads(path.read_text(encoding="utf-8"))) == ["census/cd120.zip"]
+
+
 def test_fetch_downloads_and_records_sha256(tmp_path, server):
     content = b"GEOID,CDFP\n320019601001000,02\n"
     dl = publish(server, "cd.txt", content)
@@ -309,6 +321,7 @@ def small_config():
 DV_FILES = {
     "CA_cd_2020_map.rds": {"id": 6391062, "size": 2117872, "md5": "e227564fe85c6729d49aa49e90019ecf", "tabular": False},
     "CA_cd_2020_stats.tab": {"id": 6392648, "size": 75228117, "md5": "ffd1cb0dbc4f62b1c710ef6186170ea9", "tabular": True},
+    "NV_cd_2020_map.rds": {"id": 6380432, "size": 427948, "md5": "4869feb60a4933e60b5a60745df39688", "tabular": False},
     "NV_cd_2020_stats.tab": {"id": 6392701, "size": 7257601, "md5": "10f038a740da8bf18a18a5fbd33f8f2e", "tabular": True},
     "WV_cd_2020_map.rds": {"id": 6380448, "size": 17740, "md5": "40ecd77e6862f5d5605951fcb75aeb8f", "tabular": False},
     "WV_cd_2020_stats.tab": {"id": 6392761, "size": 2158565, "md5": "e4d14ea21a0130bf01c0fbea17be9806", "tabular": True},
@@ -325,12 +338,15 @@ def test_plan_downloads_follows_the_data_dir_layout():
                  7257601, "10f038a740da8bf18a18a5fbd33f8f2e"),
         Download("alarm/WV_cd_2020_stats.csv", f"{API}/access/datafile/6392761?format=original",
                  2158565, "e4d14ea21a0130bf01c0fbea17be9806"),
+        # map.rds for every state: the votes of all three scenarios come from it
         Download("alarm/CA_cd_2020_map.rds", f"{API}/access/datafile/6391062",
                  2117872, "e227564fe85c6729d49aa49e90019ecf"),
+        Download("alarm/NV_cd_2020_map.rds", f"{API}/access/datafile/6380432",
+                 427948, "4869feb60a4933e60b5a60745df39688"),
         Download("alarm/WV_cd_2020_map.rds", f"{API}/access/datafile/6380448",
                  17740, "40ecd77e6862f5d5605951fcb75aeb8f"),
+        # census-vest: only the block files of the tract states, as weights within a tract
         Download("census_vest/ca_2020_block.csv", f"{vest}/ca_2020_block.csv", None, None),
-        Download("census_vest/nv_2020_vtd.csv", f"{vest}/nv_2020_vtd.csv", None, None),
         Download("census/cd118.zip", "https://www2.census.gov/x/cd118.zip", None, None),
         Download("census/cd120.zip", "https://www2.census.gov/x/cd120.zip", None, None),
         Download("census/pl/ca2020.pl.zip", "https://www2.census.gov/pl/California/ca2020.pl.zip", None, None),
@@ -343,6 +359,6 @@ def test_plan_downloads_follows_the_data_dir_layout():
 
 
 def test_plan_downloads_names_a_missing_dataverse_file():
-    files = {k: v for k, v in DV_FILES.items() if k != "WV_cd_2020_map.rds"}
-    with pytest.raises(DownloadError, match="WV_cd_2020_map.rds"):
+    files = {k: v for k, v in DV_FILES.items() if k != "NV_cd_2020_map.rds"}
+    with pytest.raises(DownloadError, match="NV_cd_2020_map.rds"):
         sources.plan_downloads(small_config(), files)

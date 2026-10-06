@@ -56,18 +56,30 @@ def main(argv: list[str] | None = None) -> int:
     try:
         dv_files = dataverse_files(cfg.sources["dataverse_api"], cfg.ensemble.doi, cfg.ensemble.version,
                                    session=session)
-        plan = select(plan_downloads(cfg, dv_files), args.only)
+        full_plan = plan_downloads(cfg, dv_files)
     except DownloadError as exc:
         print(f"ERROR {exc}", file=sys.stderr)
         return 1
+    plan = select(full_plan, args.only)
+    manifest = Manifest(MANIFEST)
+    # against the full plan, so --only keeps the entries of the other states
+    stale = manifest.prune(dl.key for dl in full_plan)
     if args.dry_run:
         for dl in plan:
             print(f"{dl.key}  {dl.size if dl.size is not None else ''}")
         known = sum(dl.size for dl in plan if dl.size is not None)
         print(f"{len(plan)} files planned, {known:,} bytes known in advance (Dataverse)")
+        if stale:
+            print(f"{len(stale)} manifest entries are not in the plan; a run without --dry-run removes them:")
+            for key in stale:
+                print(f"  {key}")
         return 0
 
-    manifest = Manifest(MANIFEST)
+    if stale:
+        manifest.save()
+        print(f"Removed {len(stale)} manifest entries that are no longer in the plan:")
+        for key in stale:
+            print(f"  {key}")
     counts = {"downloaded": 0, "present": 0}
     total_bytes = 0
     start = time.monotonic()
