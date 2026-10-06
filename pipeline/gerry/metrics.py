@@ -42,3 +42,24 @@ def dem_wins(d, r, d20=None, r20=None) -> np.ndarray:
         pos = np.flatnonzero(double)
         raise TieError(f"D equals R in the composite and in 2020 at position(s) {pos.tolist()}", pos)
     return np.where(tied, d20 > r20, wins)
+
+
+def largest_remainder(d_votes: float, r_votes: float, seats: int) -> int:
+    """Democratic seats under largest remainder with two parties. Equal remainders
+    go to the party with more votes; equal votes as well raise TieError."""
+    total = d_votes + r_votes
+    if seats < 1 or total <= 0:
+        raise ValueError(f"need seats >= 1 and votes > 0, got seats={seats}, votes={total}")
+    quota_d = d_votes * seats / total
+    quota_r = seats - quota_d
+    floor_d = int(np.floor(quota_d))
+    floor_r = int(np.floor(quota_r))
+    if floor_d + floor_r == seats:
+        return floor_d
+    rest_d = quota_d - floor_d
+    rest_r = quota_r - floor_r
+    if rest_d != rest_r:
+        return floor_d + 1 if rest_d > rest_r else floor_d
+    if d_votes != r_votes:
+        return floor_d + 1 if d_votes > r_votes else floor_d
+    raise TieError(f"equal remainders and equal votes ({d_votes} each) for {seats} seats")
