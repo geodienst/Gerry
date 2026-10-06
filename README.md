@@ -1,0 +1,74 @@
+# US House maps: proportional, neutral and enacted seats
+
+A static map of every US congressional district. For each state with more than one seat it puts three seat counts side by side:
+
+1. Proportional. Seats in proportion to the state's two-party vote.
+2. Neutral baseline. The median and the 5th to 95th percentile of Democratic seats over 5,000 simulated maps from the ALARM Project.
+3. Enacted. The seats from the map that voters use on November 3, 2026.
+
+All three count the same votes. These are the 2016 and 2020 presidential results added together, by precinct. West Virginia uses 2020 only, by county. The difference between Proportional and Neutral baseline is the geographic effect. The difference between Neutral baseline and Enacted is the drawing effect.
+
+Alaska, Delaware, North Dakota, South Dakota, Vermont and Wyoming have one at-large seat each, so there is nothing to compare.
+
+The design is in `docs/superpowers/specs/2026-10-05-gerrymandering-map-design.md`. `data/sources.md` lists the map and legal status for each state.
+
+## Requirements
+
+- Windows with Python 3.12 and Node.js 24.
+- GNU Make, optional. Install it with `winget install ezwinports.make`. Every step also runs without Make.
+- About 2.5 GB of free disk space for the downloads.
+
+## Setup
+
+In PowerShell, from the repository root:
+
+```powershell
+py -3.12 -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+npm ci
+```
+
+## Run the pipeline
+
+Activate the environment so that `python` points to `.venv`. In PowerShell run `.venv\Scripts\Activate.ps1`, in Command Prompt `.venv\Scripts\activate.bat`. Then:
+
+```powershell
+make all
+```
+
+This runs the four steps in order. Without Make:
+
+```powershell
+$env:PYTHONUTF8=1
+python pipeline/01_download.py
+python pipeline/02_join.py
+python pipeline/03_metrics.py
+python pipeline/04_export.py
+```
+
+Downloads go to `data/raw/`. Set `GERRY_DATA_DIR` to use another folder, for example one copy shared by several worktrees. Intermediate files go to `data/interim/`. Git ignores both folders.
+
+The pipeline writes `site/data/results.json`, `site/data/map.topojson` and `docs/validation.md`. These files are in git, so the site works without running the pipeline.
+
+## Tests
+
+```powershell
+make test
+```
+
+Without Make, run `python -m pytest` and `npm test`. Tests marked `data` need the downloads. pytest skips them when the files are missing.
+
+## View the site
+
+```powershell
+make serve
+```
+
+Then open http://127.0.0.1:8000. Without Make, run `python -m http.server 8000 --bind 127.0.0.1 --directory site`.
+
+## Sources and licenses
+
+- ALARM Project, 50-State Redistricting Simulations, Harvard Dataverse, doi:10.7910/DVN/SLCD3E, version 15. CC0 1.0.
+- ALARM census-2020 files, with election data from the Voting and Election Science Team. The election data is CC BY 4.0, the census-2020 files are CC BY-SA 4.0.
+- US Census Bureau block equivalency files for the 118th and 120th Congress, P.L. 94-171 redistricting data, TIGER/Line files and cartographic boundary files. Public domain.
+- D3 and topojson-client, ISC license. Copies with their license files are in `site/vendor/`.
