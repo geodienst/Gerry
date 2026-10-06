@@ -108,6 +108,18 @@ def test_resolve_notes_stops_on_unknown_key():
         resolve_notes("HI", cfg, ["no_such_note"])
 
 
+def test_resolve_notes_uses_the_fill_of_its_own_state():
+    cfg = toy_config(
+        [state("NM", "New Mexico", "35", 3), state("LA", "Louisiana", "22", 6)],
+        ens_notes={"NM": ("core_preservation_prior_map",), "LA": ("core_preservation_prior_map",)},
+        fill={"NM": {"reference_map": "the 2021 map", "consequence": "NM consequence."},
+              "LA": {"reference_map": "the 2022 map", "consequence": "LA consequence."}},
+    )
+    text = resolve_notes("LA", cfg, [])[0]["text"]
+    assert "in the 2022 map." in text and text.endswith("LA consequence.")
+    assert "2021" not in text and "NM consequence" not in text
+
+
 def test_repo_config_note_lists_match_the_spec():
     cfg = load_config()
     if cfg.ensemble.name != "alarm_v15":
