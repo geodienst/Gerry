@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from datetime import date
 from pathlib import Path
+
+import pandas as pd
 
 from gerry.config import Config
 
@@ -175,3 +178,86 @@ def _row(header: list[str], raw: dict, heading: str, with_seats: bool) -> tuple[
             raise CheckError("sources_md", postal, f"Seats is not a whole number: {seats!r}")
         row = {"seats": int(seats), **row}
     return postal, row
+
+
+# --- data checks (phase 1) ------------------------------------------------------
+
+def _vote_columns(df: pd.DataFrame) -> list[str]:
+    return [c for c in df.columns if c in ("d", "r") or c.startswith(("d_", "r_"))]
+
+
+def check_units_linked(units: pd.DataFrame, unit_of: pd.Series, district_of: pd.Series, state: str) -> None:
+    """Every unit with votes has at least one block outside ZZ."""
+    district = district_of.reindex(unit_of.index)
+    linked = set(unit_of[district.notna() & (district != "ZZ")])
+    has_votes = (units[_vote_columns(units)] != 0).any(axis=1)
+    bad = units.loc[has_votes & ~units["unit_id"].isin(linked), "unit_id"]
+    if len(bad):
+        raise CheckError("units_linked", state,
+                         f"{len(bad)} units with votes have no block outside ZZ, e.g. {bad.iloc[0]}")
+
+
+def check_vap(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, state: str) -> None:
+    """Block VAP (P0030001) summed per unit equals the VAP in the unit file."""
+    unit_ids = blocks["block_id"].map(unit_of)
+    unmapped = blocks.loc[unit_ids.isna() & (blocks["vap"] > 0), "block_id"]
+    if len(unmapped):
+        raise CheckError("vap", state, f"{len(unmapped)} blocks with VAP belong to no unit, "
+                                       f"e.g. {unmapped.iloc[0]}")
+    by_unit = blocks["vap"].groupby(unit_ids.to_numpy()).sum()
+    expected = units.set_index("unit_id")["vap"]
+    got = by_unit.reindex(expected.index, fill_value=0)
+    bad = expected.index[(got != expected).to_numpy()]
+    if len(bad):
+        first = bad[0]
+        raise CheckError("vap", state, f"{len(bad)} units differ, e.g. {first}: unit file {int(expected[first])}, "
+                                       f"blocks {int(got[first])}")
+    outside = by_unit[~by_unit.index.isin(expected.index) & (by_unit > 0).to_numpy()]
+    if len(outside):
+        raise CheckError("vap", state, f"{len(outside)} block units with VAP are not in the unit file, "
+                                       f"e.g. {outside.index[0]} ({int(outside.iloc[0])})")
+
+
+def check_conservation(units: pd.DataFrame, district_totals: pd.DataFrame, vote_cols: Sequence[str],
+                       state: str, rel_tol: float = 1e-9) -> None:
+    """The district totals of a map add up to the unit totals, per vote column."""
+    for col in vote_cols:
+        want, got = float(units[col].sum()), float(district_totals[col].sum())
+        if abs(got - want) > rel_tol * max(abs(want), 1.0):
+            raise CheckError("conservation", state, f"{col}: districts {got:.6f}, units {want:.6f}")
+
+
+def check_ensemble_totals(ensemble: pd.DataFrame, units: pd.DataFrame, elections: Sequence[str], seats: int,
+                          state: str) -> None:
+    """Per plan and per election column: |plan total - unit total| <= 0.5 x seats (ALARM rounds per district)."""
+    limit = 0.5 * seats
+    cols = [f"{p}_{e}" for e in elections for p in ("d", "r")]
+    plan_totals = ensemble.groupby("draw")[cols].sum()
+    for col in cols:
+        want = float(units[col].sum())
+        deviation = (plan_totals[col] - want).abs()
+        worst = deviation.idxmax()
+        if deviation[worst] > limit:
+            raise CheckError("ensemble_totals", state,
+                             f"{col}: draw {worst} has {plan_totals.at[worst, col]:.1f}, units {want:.1f}, "
+                             f"difference {deviation[worst]:.1f} above {limit}")
+
+
+def check_district_count(district_totals: pd.DataFrame, seats: int, state: str) -> None:
+    """The map has exactly the districts 01..seats."""
+    got = sorted(district_totals["district"])
+    if got != [f"{k:02d}" for k in range(1, seats + 1)]:
+        raise CheckError("district_count", state, f"districts {', '.join(got)}; expected 01 to {seats:02d}")
+
+
+def check_geoids(block_ids: pd.Series, fips: str, state: str) -> None:
+    """Block GEOIDs are unique text of 15 digits that starts with the state FIPS code."""
+    ids = pd.Series(block_ids)
+    if not pd.api.types.is_string_dtype(ids):
+        raise CheckError("geoids", state, f"block ids are not text but {ids.dtype}")
+    ok = ids.str.fullmatch(r"\d{15}") & ids.str.startswith(fips)
+    if not ok.all():
+        raise CheckError("geoids", state, f"{int((~ok).sum())} block ids are not 15 digits starting with {fips}, "
+                                          f"e.g. {ids[~ok].iloc[0]}")
+    if not ids.is_unique:
+        raise CheckError("geoids", state, f"block id {ids[ids.duplicated()].iloc[0]} occurs twice")
