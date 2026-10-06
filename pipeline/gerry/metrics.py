@@ -162,3 +162,12 @@ def efficiency_gap(d, r, dem_win) -> float:
     wasted_d = np.where(win, d - half, d)
     wasted_r = np.where(win, r, r - half)
     return float((wasted_d.sum() - wasted_r.sum()) / (d + r).sum())
+
+
+def mean_median(shares) -> float | None:
+    """Unweighted mean minus median of the district D shares; None below 3 districts.
+    Positive favors Republicans."""
+    values = np.asarray(shares, dtype=float)
+    if values.size < 3:
+        return None
+    return float(np.mean(values) - np.median(values))

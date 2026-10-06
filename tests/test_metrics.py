@@ -273,3 +273,26 @@ def test_efficiency_gap_uses_given_winners():
     #   EG = ((50 + 30) - (0 + 20)) / 200 = 0.3
     assert m.efficiency_gap([50, 30], [50, 70], [True, False]) == pytest.approx(-0.2)
     assert m.efficiency_gap([50, 30], [50, 70], [False, False]) == pytest.approx(0.3)
+
+
+# Task 2.8: mean_median
+
+def test_mean_median_odd_count():
+    # shares 0.30, 0.45, 0.50, 0.60, 0.80: mean = 2.65 / 5 = 0.53, median = 0.50
+    # MM = 0.53 - 0.50 = 0.03, positive: favors Republicans
+    assert m.mean_median([0.30, 0.45, 0.50, 0.60, 0.80]) == pytest.approx(0.03)
+
+
+def test_mean_median_three_districts():
+    # 0.20, 0.50, 0.50: mean = 1.2 / 3 = 0.4, median 0.5 -> MM = -0.1, favors Democrats
+    assert m.mean_median([0.20, 0.50, 0.50]) == pytest.approx(-0.1)
+
+
+def test_mean_median_even_count_averages_the_middle_two():
+    # 0.35, 0.40, 0.55, 0.70 (given unsorted): mean = 2.0 / 4 = 0.5
+    # median = (0.40 + 0.55) / 2 = 0.475; MM = 0.5 - 0.475 = 0.025
+    assert m.mean_median([0.70, 0.35, 0.55, 0.40]) == pytest.approx(0.025)
+
+
+def test_mean_median_none_for_two_districts():
+    assert m.mean_median([0.3, 0.6]) is None
