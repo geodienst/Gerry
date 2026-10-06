@@ -66,3 +66,23 @@ def district_votes(stats: pd.DataFrame, st: StateConfig) -> tuple[pd.DataFrame, 
     if n_plans != N_PLANS:
         raise CheckError("ensemble_structure", st.postal, f"{n_plans} plans, expected {N_PLANS}")
     return ensemble, reference
+
+
+def reference_labels(stats: pd.DataFrame, map_pop: pd.Series, postal: str) -> dict[str, str]:
+    """Label of each cd_2020 district in the stats file -> label of the map.rds district with exactly the
+    same population. map_pop: population per cd_2020 label of map.rds ("01" -> int). The two files do not
+    always number the districts alike (Oregon)."""
+    ref = stats[stats["draw"].astype(str).str.strip() == REFERENCE_DRAW]
+    labels = {}
+    for label, pop in zip(_district_codes(ref["district"], postal), pd.to_numeric(ref["total_pop"])):
+        hits = list(map_pop.index[map_pop == pop])
+        if len(hits) != 1:
+            raise CheckError("reference_labels", postal, f"cd_2020 district {label} (population {int(pop)}) "
+                                                         f"matches {len(hits)} districts of map.rds")
+        labels[label] = hits[0]
+    for target in sorted(set(labels.values())):
+        sources = sorted(k for k, v in labels.items() if v == target)
+        if len(sources) > 1:
+            raise CheckError("reference_labels", postal, f"cd_2020 districts {', '.join(sources)} all match "
+                                                         f"district {target} of map.rds")
+    return labels

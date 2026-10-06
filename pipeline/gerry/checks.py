@@ -224,6 +224,42 @@ def check_vap_pop(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series,
     return int((~known).sum()), int(keys[~known].nunique())
 
 
+def check_reference_labels(labels: pd.Series, district_of: pd.Series, pop: pd.Series, state: str,
+                           min_share: float = 0.97) -> float:
+    """ALARM's reference map in map.rds against CD118, by block population, without ZZ blocks.
+
+    labels: block_id -> cd_2020 label of the block's unit (blocks without unit are left out);
+    district_of: block_id -> CD118 district; pop: block_id -> POP100. Each label must overlap most with
+    the CD118 district of the same code, without a tie, every CD118 district must be a label, and at least
+    min_share of the population must have the same code in both. Returns that share."""
+    labels = labels.dropna()
+    df = pd.DataFrame({"label": labels, "district": district_of.reindex(labels.index),
+                       "pop": pop.reindex(labels.index)})
+    if df[["district", "pop"]].isna().any().any():
+        raise CheckError("reference_labels", state, "blocks with a label are missing from CD118 or P.L. 94-171")
+    df = df[df["district"] != "ZZ"]
+    overlap = df.groupby(["label", "district"])["pop"].sum().unstack(fill_value=0)
+    missing = sorted(set(overlap.columns) - set(overlap.index))
+    extra = sorted(set(overlap.index) - set(overlap.columns))
+    if missing or extra:
+        raise CheckError("reference_labels", state, f"CD118 districts without a map.rds district: "
+                                                    f"{', '.join(missing) or 'none'}; map.rds districts not "
+                                                    f"in CD118: {', '.join(extra) or 'none'}")
+    for label, row in overlap.iterrows():
+        top = list(row.index[row == row.max()])
+        if len(top) > 1:
+            raise CheckError("reference_labels", state, f"district {label} of map.rds overlaps equally with "
+                                                        f"CD118 districts {', '.join(top)}")
+        if top[0] != label:
+            raise CheckError("reference_labels", state, f"district {label} of map.rds overlaps most with "
+                                                        f"CD118 district {top[0]}")
+    share = float(sum(overlap.at[k, k] for k in overlap.index) / overlap.to_numpy().sum())
+    if share < min_share:
+        raise CheckError("reference_labels", state, f"{share:.4f} of the population has the same district in "
+                                                    f"map.rds and CD118, below {min_share}")
+    return share
+
+
 def check_conservation(units: pd.DataFrame, district_totals: pd.DataFrame, vote_cols: Sequence[str],
                        state: str, rel_tol: float = 1e-9) -> None:
     """The district totals of a map add up to the unit totals, per vote column."""

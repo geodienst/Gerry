@@ -3,7 +3,7 @@ import pytest
 
 from gerry.checks import CheckError
 from gerry.config import StateConfig, data_dir
-from gerry.ensemble import N_PLANS, district_votes, read_stats
+from gerry.ensemble import N_PLANS, district_votes, read_stats, reference_labels
 
 
 def make_state(postal="NV", seats=2, elections=("pre_16", "pre_20")):
@@ -72,6 +72,35 @@ def test_district_votes_rejects_a_repeated_draw(tmp_path):
     stats = read_stats(write_stats(tmp_path / "s.csv", draws=[*range(1, N_PLANS + 1), 9]))
     with pytest.raises(CheckError, match="draw 9"):
         district_votes(stats, make_state())
+
+
+# ---- reference_labels (Task 1.17) ----
+
+def reference_stats(pops):
+    """cd_2020 rows with the given total_pop per district, plus one plan that must be ignored."""
+    n = len(pops)
+    return pd.DataFrame({"draw": ["cd_2020"] * n + ["1"] * n, "district": list(range(1, n + 1)) * 2,
+                         "total_pop": list(pops) + [999] * n})
+
+
+def map_pop(*pops):
+    return pd.Series(list(pops), index=[f"{k:02d}" for k in range(1, len(pops) + 1)])
+
+
+def test_reference_labels_follow_the_population():
+    # stats district 1 has the population of map.rds district 03, and so on (as in Oregon)
+    labels = reference_labels(reference_stats([300, 100, 200]), map_pop(100, 200, 300), "OR")
+    assert labels == {"01": "03", "02": "01", "03": "02"}
+
+
+@pytest.mark.parametrize("stats_pops, pops, message", [
+    ([301, 100, 200], (100, 200, 300), "cd_2020 district 01 \\(population 301\\) matches 0 districts of map.rds"),
+    ([300, 100, 100], (100, 100, 300), "cd_2020 district 02 \\(population 100\\) matches 2 districts of map.rds"),
+    ([100, 100, 300], (100, 200, 300), "cd_2020 districts 01, 02 all match district 01 of map.rds"),
+])
+def test_reference_labels_need_exactly_one_match(stats_pops, pops, message):
+    with pytest.raises(CheckError, match=f"reference_labels failed for OR: {message}"):
+        reference_labels(reference_stats(stats_pops), map_pop(*pops), "OR")
 
 
 NV_STATS = data_dir() / "alarm" / "NV_cd_2020_stats.csv"

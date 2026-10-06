@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
-                          check_geoids, check_units_linked, check_vap_pop)
+                          check_geoids, check_reference_labels, check_units_linked, check_vap_pop)
 
 
 def units_table():
@@ -146,3 +146,43 @@ def test_geoids_fail_for_bad_ids(ids):
 def test_geoids_fail_for_numbers():
     with pytest.raises(CheckError, match="text"):
         check_geoids(pd.Series([10010201001000]), "01", "AL")
+
+
+# ---- check_reference_labels (Task 1.17) ----
+
+BLOCKS = ["c1", "c2", "c3", "c4", "c5", "c6", "c7"]
+
+
+def reference_case(c5_pop=2):
+    """map.rds label and CD118 district per block, and POP100. c6 lies in ZZ; c7 belongs to no unit."""
+    labels = pd.Series(["01", "01", "02", "02", "02", "01", None], index=BLOCKS)
+    district_of = pd.Series(["01", "01", "02", "02", "01", "ZZ", "02"], index=BLOCKS)
+    pop = pd.Series([50, 48, 60, 30, c5_pop, 0, 0], index=BLOCKS)
+    return labels, district_of, pop
+
+
+def test_reference_labels_pass_and_return_the_share():
+    # label 01: 98 people, all in CD118 01. Label 02: 90 in 02, 2 in 01. Same code: 188 of 190.
+    share = check_reference_labels(*reference_case(), "NV")
+    assert share == pytest.approx(188 / 190)
+
+
+@pytest.mark.parametrize("c5_pop, message", [
+    (100, "district 02 of map.rds overlaps most with CD118 district 01"),
+    (90, "district 02 of map.rds overlaps equally with CD118 districts 01, 02"),
+])
+def test_reference_labels_need_the_same_code_in_cd118(c5_pop, message):
+    with pytest.raises(CheckError, match=f"reference_labels failed for NV: {message}"):
+        check_reference_labels(*reference_case(c5_pop), "NV")
+
+
+def test_reference_labels_need_most_people_in_the_same_district():
+    with pytest.raises(CheckError, match="0.9895 of the population .* below 0.995"):
+        check_reference_labels(*reference_case(), "NV", min_share=0.995)
+
+
+def test_reference_labels_need_a_label_for_every_cd118_district():
+    labels, district_of, pop = reference_case()
+    district_of["c4"] = "03"
+    with pytest.raises(CheckError, match="CD118 districts without a map.rds district: 03"):
+        check_reference_labels(labels, district_of, pop, "NV")
