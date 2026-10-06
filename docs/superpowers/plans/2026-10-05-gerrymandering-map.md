@@ -4,7 +4,7 @@
 
 **Goal:** Een statische kaart die per staat en landelijk Proportional, Neutral baseline en Enacted naast elkaar zet, gevoed door een reproduceerbare Python-pijplijn.
 
-**Architecture:** Vier genummerde scripts in `pipeline/` (download, join, metrics, export) rond een getest pakket `pipeline/gerry/`. Stemmen per eenheid uit ALARM's census-2020 gaan via Census-blokken naar de districten van november 2026; de neutrale band komt uit ALARM's stats-bestanden (Dataverse v15). De uitvoer is één `results.json` en één `map.topojson` voor een statische D3-site.
+**Architecture:** Vier genummerde scripts in `pipeline/` (download, join, metrics, export) rond een getest pakket `pipeline/gerry/`. Stemmen per eenheid uit ALARM's `map.rds` gaan via Census-blokken naar de districten van november 2026; de neutrale band komt uit ALARM's stats-bestanden (Dataverse v15). De uitvoer is één `results.json` en één `map.topojson` voor een statische D3-site.
 
 **Tech Stack:** Python 3.12 (pandas 3, numpy, pyarrow, geopandas, pyogrio, pyyaml, rdata, openpyxl, pytest), Node 24 (mapshaper, d3, topojson-client; JavaScript-tests met `node --test "site/js/*.test.js"`), GNU Make op Windows.
 
@@ -35,7 +35,7 @@ pipeline/
   gerry/config.py              Config laden en valideren, paden
   gerry/sources.py             Dataverse-API, downloadplan, fetch met manifest
   gerry/rds.py                 ALARM .rds-bestanden lezen met rdata
-  gerry/units.py               stemmen per eenheid, kolomkeuze, align_to_alarm, composiet
+  gerry/units.py               stemmen per eenheid uit map.rds, eenheid-ID's, kolomkeuze, blokgewichten, composiet
   gerry/blocks.py              P.L. 94-171, blokbestanden, verdelen en optellen
   gerry/ensemble.py            stats-bestanden naar stemmen per district per plan
   gerry/checks.py              CheckError en alle pijplijncontroles, sources.md-lezer
@@ -51,16 +51,16 @@ tools/compare_state_files.py   eenmalige vergelijking CD120 met bestanden van st
 tests/
   test_smoke.py                vastgepinde pakketten, pakket gerry (Task 0.1)
   test_makefile.py             vorm van de Makefile (Task 0.3)
-  test_config.py               config.py en het echte config.yaml (Task 0.4)
+  test_config.py               config.py en het echte config.yaml (Task 0.4, 1.15)
   test_checks_sources.py       CheckError en de lezer van sources.md (Task 0.5)
-  test_sources.py              downloads, manifest, Dataverse, downloadplan (Task 1.1, 1.2)
-  test_download_script.py      01_download.py (Task 1.3)
+  test_sources.py              downloads, manifest, Dataverse, downloadplan (Task 1.1, 1.2, 1.12)
+  test_download_script.py      01_download.py (Task 1.3, 1.12)
   test_rds.py                  rds.py (Task 1.4)
-  test_units.py                units.py en align_to_alarm (Task 1.5, 1.6)
-  test_blocks.py               blocks.py (Task 1.7, 1.8)
-  test_ensemble.py             ensemble.py (Task 1.9)
-  test_checks.py               datacontroles (Task 1.10)
-  test_join.py                 02_join.py (Task 1.11)
+  test_units.py                units.py (Task 1.5, 1.15)
+  test_blocks.py               blocks.py (Task 1.7, 1.8, 1.13, 1.14)
+  test_ensemble.py             ensemble.py (Task 1.9, 1.17)
+  test_checks.py               datacontroles (Task 1.10, 1.16, 1.17)
+  test_join.py                 02_join.py (Task 1.18)
   test_metrics.py              metrics.py (Task 2.1 tot en met 2.10)
   test_metrics_step.py         03_metrics.py (Task 2.11, 2.12)
   test_metrics_data.py         referentiegetallen op echte data, marker data (Task 2.11)
@@ -108,10 +108,8 @@ Dit is het contract tussen de taken. Namen, typen en kolommen hieronder zijn bin
 
 ```
 alarm/{ST}_cd_2020_stats.csv          44 staten, Dataverse v15, ?format=original
-alarm/WV_cd_2020_map.rds
-alarm/CA_cd_2020_map.rds
-census_vest/{st}_2020_vtd.csv          38 VTD-staten plus IA (st = kleine letters)
-census_vest/{st}_2020_block.csv        ca, hi, me, or
+alarm/{ST}_cd_2020_map.rds            44 staten, Dataverse v15: stemmen, VAP, bevolking en cd_2020 per eenheid
+census_vest/{st}_2020_block.csv        ca, hi, me, or (st = kleine letters): alleen gewichten binnen een tract
 census/cd118.zip
 census/cd120.zip
 census/pl/{st}2020.pl.zip              alle 44 staten
@@ -122,7 +120,9 @@ census/tiger/cb_2025_us_state_500k.zip
 state_files/                           cache van tools/compare_state_files.py (Task 3.6)
 ```
 
-`data/manifest.json`: object met per sleutel (bovenstaand relatief pad, met `/`) `{"url": str, "size": int, "sha256": str}`. Het uitgepakte `.gpkg` en `state_files/` staan er niet in.
+Het downloadplan (`plan_downloads`) telt 141 bestanden: 44 stats-bestanden, 44 keer `map.rds`, de 4 blokbestanden van census-vest, `cd118.zip`, `cd120.zip`, 44 P.L.-bestanden en 3 TIGER-bestanden. De VTD-bestanden van census-vest uit taak 1.3 mogen op schijf blijven staan; de pijplijn leest ze niet meer.
+
+`data/manifest.json`: object met per sleutel (bovenstaand relatief pad, met `/`) `{"url": str, "size": int, "sha256": str}`. Het uitgepakte `.gpkg` en `state_files/` staan er niet in. Het heeft alleen regels voor bestanden in het downloadplan; `01_download` haalt andere regels weg.
 
 `data/sources.md`: regel 1 is de titel; de eerste tekstregel eronder begint met `Status checked on YYYY-MM-DD`, en die datum is gelijk aan `status_checked` in `config.yaml`.
 
@@ -130,7 +130,7 @@ state_files/                           cache van tools/compare_state_files.py (T
 
 ```yaml
 status_checked: 2026-10-03
-census_vest_commit: 243c8a8134ecf8151777a9388c48323e274767e2
+census_vest_commit: 243c8a8134ecf8151777a9388c48323e274767e2   # alleen de blokbestanden van CA, HI, ME en OR
 ensemble:
   name: alarm_v15
   doi: doi:10.7910/DVN/SLCD3E
@@ -139,12 +139,6 @@ ensemble:
     AL: [vra_constraint, vra_filter_with_votes, alarm_rerun_unpublished]
   fill:                       # invulwaarden voor core_preservation_prior_map
     NM: {reference_map: "...", consequence: "..."}
-align_to_alarm:
-  - state: CA
-    rds: alarm/CA_cd_2020_map.rds
-    unit_column: tract        # kolom in de rds-tabel
-    unit_len: 11              # blok-GEOID[:11] = tract
-    units: ["06049000300", "06093000200"]
 sources:
   dataverse_api: https://dataverse.harvard.edu/api
   cd118: https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip
@@ -165,7 +159,7 @@ states:
     source_url: https://redistrictingdatahub.org/dataset/2022-missouri-congressional-districts-approved-plan/
     bef: cd118                         # cd120 | cd118
     elections: [pre_16, pre_20]
-    unit_source: vtd                   # vtd | block | rds_county
+    unit_kind: vtd                     # vtd | tract | county
     extra_maps:                        # optioneel
       mo_hb1: {name: HB 1 of 2025, status: Blocked, bef: cd120, source_label: "...", source_url: "..."}
     notes: [blocked_map]               # optioneel; noten van de staat zelf
@@ -173,7 +167,9 @@ at_large:
   AK: {name: Alaska, fips: "02"}
 ```
 
-`{folder}` is de staatsnaam met spaties vervangen door `_` (bijvoorbeeld `West_Virginia`). `{kind}` is `vtd` of `block`.
+`{folder}` is de staatsnaam met spaties vervangen door `_` (bijvoorbeeld `West_Virginia`). `{kind}` is altijd `block`: van census-vest haalt de pijplijn alleen de blokbestanden van CA, HI, ME en OR, als gewicht binnen een tract. `census_vest_commit` geldt alleen voor die blokbestanden.
+
+`unit_kind` volgt de eenheden van ALARM's `map.rds`: `tract` voor CA, HI, ME en OR, `county` voor IA en WV, `vtd` voor de andere 38 staten (ook NH).
 
 `extra_maps` en `notes` per staat zijn optioneel; de lader maakt van een ontbrekende waarde `()`. `ensemble.notes` noemt alleen staten met noten: gebruik `cfg.ensemble.notes.get(postal, ())`. `source_label` staat zichtbaar op de site; `check_sources_md` vergelijkt het niet met `data/sources.md`.
 
@@ -195,18 +191,15 @@ class ExtraMap: id: str; name: str; status: str; bef: str; source_label: str; so
 class StateConfig:
     postal: str; name: str; fips: str; seats: int; map_name: str; status: str
     source_label: str; source_url: str; bef: str; elections: tuple[str, ...]
-    unit_source: str; extra_maps: tuple[ExtraMap, ...]; notes: tuple[str, ...]
+    unit_kind: str; extra_maps: tuple[ExtraMap, ...]; notes: tuple[str, ...]   # unit_kind: vtd | tract | county
 @dataclass(frozen=True)
 class AtLargeState: postal: str; name: str; fips: str
 @dataclass(frozen=True)
 class EnsembleConfig: name: str; doi: str; version: int
     notes: dict[str, tuple[str, ...]]; fill: dict[str, dict[str, str]]   # notes: alleen staten met noten
 @dataclass(frozen=True)
-class AlignEntry: state: str; rds: str; unit_column: str; unit_len: int; units: tuple[str, ...]
-@dataclass(frozen=True)
 class Config:
-    status_checked: date; census_vest_commit: str; ensemble: EnsembleConfig
-    align_to_alarm: tuple[AlignEntry, ...]; sources: dict[str, str]
+    status_checked: date; census_vest_commit: str; ensemble: EnsembleConfig; sources: dict[str, str]
     states: dict[str, StateConfig]; at_large: dict[str, AtLargeState]
 def data_dir() -> Path
 def interim_dir() -> Path
@@ -222,15 +215,19 @@ class Manifest:
     def __init__(self, path: Path): ...
     def get(self, key: str) -> dict | None: ...
     def record(self, key: str, url: str, size: int, sha256: str) -> None: ...
+    def prune(self, keep: Iterable[str]) -> list[str]: ...   # haalt regels buiten keep weg, geeft hun sleutels gesorteerd; schrijft niet
     def save(self) -> None: ...
 def open_session() -> urllib.request.OpenerDirector   # opener die USER_AGENT stuurt
 # session in dataverse_files en fetch: elk object met .open(url, timeout=...); None geeft open_session()
 def dataverse_files(api_base: str, doi: str, version: int, session=None) -> dict[str, dict]
     # bestandsnaam -> {"id": int, "size": int, "md5": str, "tabular": bool}; size = originalFileSize bij tabulair, anders filesize
 def plan_downloads(cfg: Config, dv_files: dict[str, dict]) -> list[Download]
+    # 141 bestanden, in deze volgorde: stats (44), alarm/{ST}_cd_2020_map.rds (44), blokbestanden van census-vest
+    # voor CA, HI, ME en OR (4), cd118.zip, cd120.zip, P.L. 94-171 (44), TIGER (3)
 def fetch(dl: Download, root: Path, manifest: Manifest, retries: int = 3, wait: float = 5.0, session=None) -> Path
 
 # pipeline/01_download.py [--only ST ...] [--dry-run]
+# haalt manifestregels weg die niet in het volledige plan staan, ook met --only; --dry-run noemt ze zonder te schrijven
 def state_of(key: str) -> str | None             # postcode van een bestand per staat, None voor gedeelde bestanden
 def select(plan: list[Download], only: list[str]) -> list[Download]
 
@@ -238,31 +235,47 @@ def select(plan: list[Download], only: list[str]) -> list[Download]
 def read_rds_table(path: Path) -> pd.DataFrame   # alle niet-geometrische kolommen van een redist_map
 
 # gerry/units.py
+ID_LENGTH = {"vtd": 11, "tract": 11, "county": 5}   # county + VTD-code; tract-GEOID; county-FIPS
 class UnitsError(ValueError): ...
 def select_columns(columns: Iterable[str], election: str) -> tuple[str, str]   # (dem, rep)
-def load_units(st: StateConfig, root: Path) -> pd.DataFrame
-    # kolommen: unit_id (str), vap (int64), d_<e>, r_<e> (float64) per verkiezing
+def unit_ids(table: pd.DataFrame, st: StateConfig, counties: pd.DataFrame | None = None) -> pd.Series
+    # naam unit_id, in de volgorde van de tabel: GEOID; zonder GEOID de kolom tract (CA, HI) of de countynaam,
+    # opgezocht in counties (IA, kolommen county_id en name); in VTD-staten moet GEOID == GEOID[:5] + vtd
+    # UnitsError bij: geen ID-kolom, lege of dubbele ID, verkeerde lengte of FIPS, countynaam zonder precies één treffer
+def load_units(st: StateConfig, root: Path, counties: pd.DataFrame | None = None) -> pd.DataFrame
+    # uit alarm/{ST}_cd_2020_map.rds; kolommen: unit_id (str), vap, pop (int64), cd_2020 (str 2, district van
+    # ALARM's referentiekaart), d_<e>, r_<e> (float64) per verkiezing
     # .attrs["empty_vote_fields"], .attrs["empty_vote_units"]: lege stemvelden die 0 werden
-def align_to_alarm(units: pd.DataFrame, alarm_table: pd.DataFrame, entry: AlignEntry,
-                   elections: Sequence[str]) -> tuple[pd.DataFrame, pd.DataFrame]
-    # (units na schaling, verschiltabel met kolommen column, before, after)
+def read_block_votes(st: StateConfig, root: Path) -> pd.DataFrame
+    # census_vest/{st}_2020_block.csv (tractstaten): index block_id, d_<e>, r_<e> (float64); lege velden worden 0
+    # .attrs["empty_vote_fields"], .attrs["empty_vote_units"]: lege velden en de blokken waarin ze staan
 def add_composite(df: pd.DataFrame, elections: Sequence[str]) -> pd.DataFrame  # voegt d, r toe
 
 # gerry/blocks.py
-PL_GEO_FIELDS = {"SUMLEV": 2, "LOGRECNO": 7, "GEOCODE": 9, "VTD": 77, "POP100": 90, "INTPTLAT": 92, "INTPTLON": 93}
+PL_GEO_FIELDS = {"SUMLEV": 2, "LOGRECNO": 7, "GEOCODE": 9, "VTD": 77, "NAME": 87, "POP100": 90,
+                 "INTPTLAT": 92, "INTPTLON": 93}
 PL_SEG2_FIELDS = {"LOGRECNO": 4, "P0030001": 5}
 class BlocksError(ValueError): ...              # kapotte blokbestanden en fouten bij het koppelen
 def read_pl_blocks(zip_path: Path, st: str) -> pd.DataFrame
     # st = postcode, hoofd- of kleine letters ("nv" of "NV")
-    # block_id (str 15), vap (int64), vtd (str 6), lat (float64), lon (float64); controleert som vap == staatsrecord
+    # block_id (str 15), vap (int64), pop (int64, POP100), vtd (str 6), lat (float64), lon (float64)
+    # controleert som vap en som pop == staatsrecord
+def read_pl_counties(zip_path: Path, st: str) -> pd.DataFrame
+    # county_id (str 5), name (str, "Adair County"); één rij per SUMLEV 050-record
 def read_bef(zip_path: Path, kind: str, fips: str, postal: str) -> pd.Series
     # index block_id (str 15), waarde district (str 2), naam "district"
     # cd120: NationalCD120.txt wordt één keer per proces gelezen en bewaard (lru_cache)
-def unit_of_block(blocks: pd.DataFrame, unit_source: str, fips: str) -> pd.Series   # block_id -> unit_id
+def unit_of_block(blocks: pd.DataFrame, unit_kind: str, fips: str) -> pd.Series
+    # index block_id, naam unit_id, waarde de sleutel: vtd GEOCODE[:5] + VTD-code (lege VTD-code is een fout),
+    # tract GEOCODE[:11], county GEOCODE[:5]; een sleutel hoeft geen eenheid van map.rds te zijn (water)
 def block_weighted(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series,
-                   district_of: pd.Series, vote_cols: Sequence[str]) -> pd.DataFrame
-    # kolommen district + vote_cols; ZZ-blokken eerst weg; eenheid zonder VAP verdeeld naar aantal blokken
-    # .attrs: split_units, zero_vap_units, zero_vap_split_units, units_without_blocks
+                   district_of: pd.Series, vote_cols: Sequence[str],
+                   weights: pd.DataFrame | None = None) -> pd.DataFrame
+    # kolommen district + vote_cols; ZZ-blokken eerst weg; met weights per stemkolom naar het blokgewicht binnen
+    # de eenheid, is dat 0 of zonder weights naar blok-VAP, zonder VAP naar aantal blokken
+    # weights: index block_id, een kolom per stemkolom (read_block_votes); een blok zonder gewicht is een fout
+    # .attrs: split_units, zero_vap_units, zero_vap_split_units, units_without_blocks, weight_fallback_units (int),
+    #         block_count_votes (float, stemmen van gesplitste eenheden die naar aantal blokken gingen)
 def whole_unit(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series,
                district_of: pd.Series, vote_cols: Sequence[str]) -> pd.DataFrame
 
@@ -272,6 +285,9 @@ REFERENCE_DRAW = "cd_2020"                      # ALARM's referentiekaart, geen 
 def read_stats(path: Path) -> pd.DataFrame
 def district_votes(stats: pd.DataFrame, st: StateConfig) -> tuple[pd.DataFrame, pd.DataFrame]
     # (ensemble, reference); kolommen state, draw, district, d_<e>, r_<e>, d, r
+def reference_labels(stats: pd.DataFrame, map_pop: pd.Series, postal: str) -> dict[str, str]
+    # cd_2020-label in het stats-bestand -> label in map.rds met precies dezelfde bevolking (map_pop: "01" -> int)
+    # nul of meer treffers, of twee labels met dezelfde treffer: CheckError("reference_labels", postal, ...)
 
 # gerry/checks.py
 class CheckError(RuntimeError):
@@ -279,7 +295,12 @@ class CheckError(RuntimeError):
     # attributen .check, .state, .detail; str(err) == f"{check} failed for {state}: {detail}"
     # state: een postcode, "AL,MO" bij meer staten, "US" bij een controle die niet over één staat gaat
 def check_units_linked(units, unit_of, district_of, state) -> None
-def check_vap(units, blocks, unit_of, state) -> None
+def check_vap_pop(units, blocks, unit_of, state) -> tuple[int, int]
+    # controle vap_pop: per eenheid blok-VAP == vap en POP100 == pop van map.rds; blokken waarvan de sleutel
+    # geen eenheid is, hebben VAP 0 en bevolking 0; geeft (aantal van die blokken, aantal van hun sleutels)
+def check_reference_labels(labels, district_of, pop, state, min_share: float = 0.97) -> float
+    # controle reference_labels: elk label van cd_2020 in map.rds overlapt (bevolking, zonder ZZ) het meest met
+    # het CD118-district met dezelfde code; geeft het aandeel van de bevolking met dezelfde code
 def check_conservation(units, district_totals, vote_cols, state, rel_tol: float = 1e-9) -> None
 def check_ensemble_totals(ensemble, units, elections, seats, state) -> None
 def check_district_count(district_totals, seats, state) -> None
@@ -296,10 +317,13 @@ def check_sources_md(cfg: Config, path: Path) -> None
 # pipeline/02_join.py [--states ST ...]
 @dataclass
 class StateResult: units: pd.DataFrame; enacted: pd.DataFrame; ensemble: pd.DataFrame; reference: pd.DataFrame; log: dict
+    # units: unit_id, vap, pop, d_<e>, r_<e>, d, r; reference: draw cd_2020 met de districtlabels van map.rds
 def maps_of(st: StateConfig) -> list[tuple[str, str]]   # (map_id, bef): enacted, extra_maps, check_2022
 def join_state(cfg: Config, postal: str, root: Path) -> StateResult
 def replace_states(old: pd.DataFrame | None, new: pd.DataFrame, states: set[str]) -> pd.DataFrame
 def write_outputs(results: dict[str, StateResult], cfg: Config, out_dir: Path, partial: bool) -> None
+# regel per staat: <ST>: <n> units (<n> without VAP), <n> blocks, enacted map splits <n> units
+#   (<n> without VAP, <x> votes by block count), <n> plans, <t> s
 
 # gerry/metrics.py
 class TieError(ValueError):
@@ -402,11 +426,11 @@ export function seats(n)               // -> "17"
 
 ### Bestanden tussen de stappen (`data/interim/`)
 
-- `units/{ST}.parquet`: `unit_id`, `vap`, `d_<e>`, `r_<e>`, `d`, `r` (na `align_to_alarm`).
+- `units/{ST}.parquet`: `unit_id`, `vap`, `pop`, `d_<e>`, `r_<e>`, `d`, `r` (uit `map.rds`, zonder `cd_2020`).
 - `enacted_districts.parquet`: `state`, `map_id` (`enacted`, `mo_hb1`, `check_2022`), `method` (`block`, `whole_unit`), `district`, `d_<e>`/`r_<e>` voor `pre_16` en `pre_20` (leeg voor WV `pre_16`), `d`, `r`. Verplicht per staat: `check_2022` met `block` (CD118, ook voor Missouri), en voor `enacted` en elke extra kaart zowel `block` als `whole_unit`. `03_metrics` stopt met een `CheckError` als een van die rijen ontbreekt.
 - `ensemble_districts.parquet`: `state`, `draw`, `district`, dezelfde stemkolommen.
-- `alarm_reference.parquet`: `state`, `district`, dezelfde stemkolommen (rijen `draw == "cd_2020"`).
-- `join_log.json`: per staat een object met de tellingen `units`, `empty_vote_fields`, `empty_vote_units`, `blocks`, `units_zero_vap` en `plans` (int), `align_to_alarm` (lijst van `{"column": str, "before": float, "after": float}`, leeg voor staten zonder uitlijning) en `maps` (`{map_id: {"split_units", "zero_vap_units", "zero_vap_split_units", "units_without_blocks": int}}`, de tellingen van `block_weighted` per kaart).
+- `alarm_reference.parquet`: `state`, `district`, dezelfde stemkolommen (rijen `draw == "cd_2020"`, met de districtlabels van `map.rds`, gesorteerd op district).
+- `join_log.json`: per staat een object met de tellingen `units`, `empty_vote_fields`, `empty_vote_units` (lege stemvelden in `map.rds`), `empty_weight_fields` (lege velden in het blokbestand van census-vest, 0 buiten de tractstaten), `blocks`, `units_zero_vap`, `unlinked_blocks` en `unlinked_keys` (blokken en sleutels zonder eenheid in `map.rds`, uit `check_vap_pop`) en `plans` (int); `reference_share` (float, uit `check_reference_labels`); `reference_labels` (`{stats-label: map-label}`, alleen de labels die veranderen); en `maps` (`{map_id: {"split_units", "zero_vap_units", "zero_vap_split_units", "units_without_blocks", "weight_fallback_units": int, "block_count_votes": float}}`, de tellingen van `block_weighted` per kaart).
 - `metrics.json`: `{"national": {...}, "states": {ST: {...}}, "checks": {...}}`.
   - Per staat precies de numerieke velden van `results.json` uit hoofdstuk 7 van de spec (`d_share`, `proportional`, `enacted`, `neutral`, `position`, `effects`, `outside_band`, `eg`, `mm`, `districts`, `sorted`, `blocked_map` zonder `name`/`status`/`source`) plus `computed_notes` (lijst van sleutels). `districts[].d` en `.r` zijn onafgeronde kommagetallen; `mm` is `null` bij twee districten, nooit NaN.
   - `national`: `seats`, `proportional`, `enacted`, `neutral`, `position`, `effects`, `outside_band`, plus `single_seat` [{`postal`, `fips`, `name`}]. Het rapport gebruikt `single_seat`; `build_results` neemt alleen de andere zeven velden over en bouwt `single_seat` opnieuw uit `config.yaml`.
@@ -442,7 +466,7 @@ Nevada, Enacted per district (blokverdeling): 01 0,547901; 02 0,436352; 03 0,534
 ## Phases
 
 1. Fase 0: opzet (taken 0.x).
-2. Fase 1: data (taken 1.x).
+2. Fase 1: data (taken 1.1 tot en met 1.11) en fase 1b: ALARM's kaartbestand als stembron (taken 1.12 tot en met 1.18). Taak 1.18 vervangt taak 1.11.
 3. Fase 2: metrieken en controlerapport (taken 2.x).
 4. Fase 3: export en eenmalige vergelijking (taken 3.x).
 5. Fase 4: site, voor zover de spec het vastlegt (taken 4.x). Het visuele ontwerp volgt in een aparte sessie met de frontend-design skill, met een eigen plan.
@@ -2629,12 +2653,14 @@ git commit -m "Add CheckError and the sources.md consistency check"
 
 Deze fase haalt alle bronbestanden op en maakt de tussenbestanden uit het contract: stemmen per eenheid, stemmen per district voor de vastgestelde kaarten (blokverdeling en hele eenheden), de ensembles en ALARM's referentiekaart. Daarna kan `03_metrics` alles uitrekenen zonder ruwe data te lezen.
 
+De taken 1.1 tot en met 1.10 staan hieronder zoals ze zijn uitgevoerd. Fase 1b (taken 1.12 tot en met 1.18) maakt ALARM's `map.rds` de stembron voor alle 44 staten en past een deel van die taken aan; de tabel aan het begin van fase 1b zegt welke. Taak 1.11 wordt niet uitgevoerd; taak 1.18 vervangt haar. Namen als `unit_source`, `align_to_alarm`, `AlignEntry` en `check_vap` in de taken 1.1 tot en met 1.11 bestaan na fase 1b niet meer. Het contract in de plankop beschrijft de stand na fase 1b.
+
 Wat fase 0 al levert en wat deze fase aanneemt:
 
 - `.venv` met de pakketten uit `requirements.txt` (pandas 3, numpy, pyarrow, pyyaml, rdata, pytest). Fase 1 heeft geen extra pakket nodig: downloads gaan via `urllib` uit de standaardbibliotheek.
 - `pipeline/gerry/__init__.py` en `pipeline/gerry/config.py` volgens het contract, met `REPO_ROOT`, `data_dir()`, `interim_dir()`, `load_config()` en de dataclasses.
-- `pipeline/config.yaml` met alle 44 staten. `unit_source` is `vtd` voor 38 staten plus IA, `block` voor CA, HI, ME en OR, en `rds_county` voor WV. WV heeft `elections: [pre_20]`, MO heeft `bef: cd118` en `extra_maps.mo_hb1` met `bef: cd120`.
-- `pipeline/gerry/checks.py` uit taak 0.5, met `class CheckError(RuntimeError)`: `CheckError(check, state, detail)`, attributen `.check`, `.state`, `.detail`, tekst `"{check} failed for {state}: {detail}"`. Daarnaast `parse_sources_md` en `check_sources_md`. Fase 1 voegt in taak 1.10 de datacontroles aan dit bestand toe en gebruikt overal deze `CheckError`, met een postcode als staat.
+- `pipeline/config.yaml` met alle 44 staten. `unit_source` is `vtd` voor 38 staten plus IA, `block` voor CA, HI, ME en OR, en `rds_county` voor WV. WV heeft `elections: [pre_20]`, MO heeft `bef: cd118` en `extra_maps.mo_hb1` met `bef: cd120`. Taak 1.15 vervangt `unit_source` door `unit_kind`, met `vtd` voor 38 staten, `tract` voor CA, HI, ME en OR, en `county` voor IA en WV.
+- `pipeline/gerry/checks.py` uit taak 0.5, met `class CheckError(RuntimeError)`: `CheckError(check, state, detail)`, attributen `.check`, `.state`, `.detail`, tekst `"{check} failed for {state}: {detail}"`. Daarnaast `parse_sources_md` en `check_sources_md`. Fase 1 voegt in taak 1.10, 1.16 en 1.17 de datacontroles aan dit bestand toe en gebruikt overal deze `CheckError`, met een postcode als staat.
 - `pytest.ini` met `testpaths = tests`, `pythonpath = pipeline`, `--strict-markers` en de marker `data`.
 - `.gitignore` met `data/raw/` en `data/interim/`.
 
@@ -5276,6 +5302,8 @@ git commit -m "Add data checks for units, VAP, conservation and ensembles"
 
 ### Task 1.11: 02_join.py
 
+**Vervangen door taak 1.18. Niet uitvoeren.**
+
 **Files:**
 - Create: `pipeline/02_join.py`
 - Test: `tests/test_join.py`
@@ -5618,13 +5646,2825 @@ git commit -m "Add join step writing interim files for all states"
 
 `data/interim/` staat in `.gitignore` en komt niet in de commit.
 
+## Phase 1b: ALARM's kaartbestand als stembron
+
+Op 6 oktober 2026 besloot de eigenaar dat de stemmen per eenheid voor alle 44 staten uit ALARM's `{ST}_cd_2020_map.rds` komen (Dataverse doi:10.7910/DVN/SLCD3E, versie 15). In taak 1.11 stopte `check_ensemble_totals` op ME, MI en NJ, omdat de bestanden van census-vest andere stemmen hebben dan de data waarmee ALARM de stats-bestanden optelde. Met `map.rds` sluiten de staatstotalen per plan in alle 44 staten aan, en zijn VAP en bevolking per eenheid gelijk aan de som over de blokken uit P.L. 94-171. Twee onafhankelijke controles op de echte data kwamen tot dezelfde uitkomst.
+
+Wat deze fase verandert (de spec is al bijgewerkt, hoofdstuk 2 tot en met 4 en 6):
+
+- **Stembron.** `map.rds` voor alle 44 staten. De blokbestanden van census-vest (CA, HI, ME, OR) blijven, maar alleen als gewicht binnen een tract. De VTD-bestanden van census-vest gebruiken we niet meer; `01_download` haalt hun regels uit `data/manifest.json`.
+- **Soort eenheid.** `unit_kind` in `config.yaml` vervangt `unit_source`: `tract` voor CA, HI, ME en OR, `county` voor IA en WV, `vtd` voor de andere 38 (ook NH). `align_to_alarm` en `AlignEntry` verdwijnen. De stemmen per tract komen nu rechtstreeks uit ALARM, dus er valt niets meer te schalen.
+- **Eenheid-ID's.** `GEOID`; zonder `GEOID` de kolom `tract` (CA, HI) of, in Iowa, de countynaam opgezocht in de countyrecords van P.L. 94-171. In VTD-staten moet `GEOID` gelijk zijn aan `GEOID[:5]` plus de kolom `vtd`.
+- **Sleutel van een blok.** VTD: GEOCODE[:5] + VTD-code; tract: GEOCODE[:11]; county: GEOCODE[:5]. Een sleutel die bij geen eenheid hoort (water dat ALARM wegliet), moet VAP 0 en bevolking 0 hebben.
+- **Verdelen.** In VTD- en countystaten zoals voorheen naar blok-VAP, zonder VAP naar aantal blokken. In tractstaten per stemkolom naar de blokstemmen van census-vest; is hun som in een tract 0, dan de regel met VAP.
+- **Referentiekaart.** De stats-bestanden nummeren de districten van `cd_2020` niet altijd zoals `map.rds` (Oregon). De labels gaan naar die van `map.rds` op basis van gelijke bevolking, en die labels moeten passen bij CD118.
+
+Wat er met de eerdere taken gebeurt:
+
+| Eerdere taak | Wat er verandert | Waar |
+|---|---|---|
+| 1.2, 1.3 downloadplan en downloadscript | `map.rds` voor alle staten, census-vest alleen blokbestanden, manifest opruimen | 1.12 |
+| 1.7, 1.8 blokken | POP100, countynamen, sleutel per soort eenheid, gewichten binnen een tract | 1.13, 1.14 |
+| 0.4 config, 1.5 eenheden, 1.6 `align_to_alarm` | `unit_kind`, eenheden uit `map.rds`; `align_to_alarm` verdwijnt weer | 1.15 |
+| 0.3 README | de zin dat de stemmen per precinct geteld zijn | 1.15 |
+| 1.10 datacontroles | `check_vap` wordt `check_vap_pop`, nieuw `check_reference_labels` | 1.16, 1.17 |
+| 1.9 ensembles | nieuw `reference_labels` | 1.17 |
+| 1.11 `02_join.py` (niet gecommit) | opnieuw, op de nieuwe eenheden | 1.18 |
+
+Het concept van taak 1.11 staat geparkeerd in `.superpowers/sdd/2026-10-05-gerrymandering-map/wip-1.11/`. Taak 1.18 vervangt het; kopieer het niet terug.
+
+Deze fase gaat ervan uit dat de data uit taak 1.3 in `data\raw` staat (of in de map uit `$env:GERRY_DATA_DIR`) en dat `$env:PYTHONUTF8=1` gezet is. Alle commando's draaien in PowerShell vanuit de root van de worktree. De verwachte uitkomsten hieronder komen uit een proefrun van 6 oktober 2026: deze taken in deze volgorde, uitgevoerd op een kopie van de worktree met de echte data.
+
+Twee dingen horen niet bij deze fase. Tennessee overschrijdt naar verwachting de drempel van de methodecontrole (CD118 tegen ALARM's `cd_2020`, 0,699 procentpunt in CD-09, hetzelfde aantal zetels); taak 2.15 zet de verklaring in `data/validation_notes.yaml`. De beperkingen uit hoofdstuk 10 van de spec komen in de methodetoelichting van de site.
+
+De grens van `check_ensemble_totals` is inclusief: een afwijking gelijk aan 0,5 × aantal districten is toegestaan. De code doet dat al (`>` in `checks.py`), en de bestaande test `test_ensemble_totals_pass_within_half_a_vote_per_district` legt het vast met een plan dat precies op de grens zit. In de volledige run zitten HI en RI op de grens (afwijking 1,0 bij een grens van 1). Daarvoor verandert er niets.
+
+### Task 1.12: Downloadplan: map.rds voor elke staat, manifest opruimen
+
+**Files:**
+- Modify: `pipeline/gerry/sources.py` (`Manifest.prune` erbij, `plan_downloads`)
+- Modify: `pipeline/01_download.py` (`main`)
+- Modify: `tests/test_sources.py`
+- Modify: `tests/test_download_script.py`
+- Modify (gegenereerd): `data/manifest.json`
+
+**Interfaces:**
+- Consumes: `Config`, `StateConfig` (nog met `unit_source`; taak 1.15 hernoemt het), `Download`, `DownloadError`, `Manifest`, `dataverse_files`, `fetch`, `open_session` (taken 1.1 en 1.2); `select`, `state_of` (taak 1.3).
+- Produces:
+  - `Manifest.prune(keep: Iterable[str]) -> list[str]`: haalt de regels weg waarvan de sleutel niet in `keep` staat en geeft die sleutels gesorteerd terug. Schrijft niet; daarvoor is `save()`.
+  - `plan_downloads(cfg: Config, dv_files: dict[str, dict]) -> list[Download]`, in deze volgorde: 44 stats-bestanden, 44 keer `alarm/{ST}_cd_2020_map.rds`, de blokbestanden van census-vest voor CA, HI, ME en OR, `cd118.zip`, `cd120.zip`, 44 P.L.-bestanden, 3 TIGER-bestanden. Samen 141 bestanden.
+  - `pipeline/01_download.py`: haalt manifestregels weg die niet in het volledige plan staan, ook met `--only`. Met `--dry-run` noemt het die regels zonder iets te schrijven.
+
+De 39 VTD-bestanden van census-vest (38 VTD-staten plus IA) blijven op schijf staan, maar de pijplijn leest ze niet meer. Hun regels in het manifest verdwijnen bij de eerste run. Weggooien van de bestanden mag, maar hoeft niet.
+
+Het opruimen gebeurt tegen het volledige plan en niet tegen de selectie van `--only`. Anders zou `--only NV` de regels van alle andere staten weghalen.
+
+- [ ] **Step 1: Schrijf de falende tests**
+
+Vervang in `tests/test_sources.py`:
+
+```python
+    m.record("census/a.zip", "https://example.org/a.zip", 5, "aa")
+    m.save()
+    assert b"\r" not in path.read_bytes()
+```
+
+door:
+
+```python
+    m.record("census/a.zip", "https://example.org/a.zip", 5, "aa")
+    m.save()
+    assert b"\r" not in path.read_bytes()
+
+
+def test_manifest_prune_drops_entries_outside_the_plan(tmp_path):
+    path = tmp_path / "manifest.json"
+    m = Manifest(path)
+    for key in ("census/cd120.zip", "census_vest/nv_2020_vtd.csv", "census_vest/al_2020_vtd.csv"):
+        m.record(key, f"https://example.org/{key}", 1, "aa")
+    removed = m.prune({"census/cd120.zip", "alarm/NV_cd_2020_map.rds"})
+    assert removed == ["census_vest/al_2020_vtd.csv", "census_vest/nv_2020_vtd.csv"]
+    assert m.get("census_vest/nv_2020_vtd.csv") is None
+    m.save()
+    assert list(json.loads(path.read_text(encoding="utf-8"))) == ["census/cd120.zip"]
+```
+
+Vervang in `tests/test_sources.py`:
+
+```python
+    "NV_cd_2020_stats.tab": {"id": 6392701, "size": 7257601, "md5": "10f038a740da8bf18a18a5fbd33f8f2e", "tabular": True},
+    "WV_cd_2020_map.rds": {"id": 6380448, "size": 17740, "md5": "40ecd77e6862f5d5605951fcb75aeb8f", "tabular": False},
+```
+
+door:
+
+```python
+    "NV_cd_2020_map.rds": {"id": 6380432, "size": 427948, "md5": "4869feb60a4933e60b5a60745df39688", "tabular": False},
+    "NV_cd_2020_stats.tab": {"id": 6392701, "size": 7257601, "md5": "10f038a740da8bf18a18a5fbd33f8f2e", "tabular": True},
+    "WV_cd_2020_map.rds": {"id": 6380448, "size": 17740, "md5": "40ecd77e6862f5d5605951fcb75aeb8f", "tabular": False},
+```
+
+Vervang in `tests/test_sources.py`:
+
+```python
+        Download("alarm/CA_cd_2020_map.rds", f"{API}/access/datafile/6391062",
+                 2117872, "e227564fe85c6729d49aa49e90019ecf"),
+        Download("alarm/WV_cd_2020_map.rds", f"{API}/access/datafile/6380448",
+                 17740, "40ecd77e6862f5d5605951fcb75aeb8f"),
+        Download("census_vest/ca_2020_block.csv", f"{vest}/ca_2020_block.csv", None, None),
+        Download("census_vest/nv_2020_vtd.csv", f"{vest}/nv_2020_vtd.csv", None, None),
+```
+
+door:
+
+```python
+        # map.rds for every state: the votes of all three scenarios come from it
+        Download("alarm/CA_cd_2020_map.rds", f"{API}/access/datafile/6391062",
+                 2117872, "e227564fe85c6729d49aa49e90019ecf"),
+        Download("alarm/NV_cd_2020_map.rds", f"{API}/access/datafile/6380432",
+                 427948, "4869feb60a4933e60b5a60745df39688"),
+        Download("alarm/WV_cd_2020_map.rds", f"{API}/access/datafile/6380448",
+                 17740, "40ecd77e6862f5d5605951fcb75aeb8f"),
+        # census-vest: only the block files of the tract states, as weights within a tract
+        Download("census_vest/ca_2020_block.csv", f"{vest}/ca_2020_block.csv", None, None),
+```
+
+Vervang in `tests/test_sources.py`:
+
+```python
+    files = {k: v for k, v in DV_FILES.items() if k != "WV_cd_2020_map.rds"}
+    with pytest.raises(DownloadError, match="WV_cd_2020_map.rds"):
+```
+
+door:
+
+```python
+    files = {k: v for k, v in DV_FILES.items() if k != "NV_cd_2020_map.rds"}
+    with pytest.raises(DownloadError, match="NV_cd_2020_map.rds"):
+```
+
+De md5 en grootte van `NV_cd_2020_map.rds` komen uit de Dataverse-lijst van versie 15.
+
+Vervang in `tests/test_download_script.py`:
+
+```python
+import importlib.util
+import sys
+from pathlib import Path
+
+from gerry.sources import Download
+```
+
+door:
+
+```python
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+from gerry.sources import Download, Manifest
+```
+
+Voeg onderaan `tests/test_download_script.py` toe:
+
+```python
+
+
+# ---- Task 1.12: manifest entries for files that left the plan ----
+
+NEW_PLAN = [dl("alarm/NV_cd_2020_map.rds"), dl("census/cd120.zip"), dl("census/pl/wv2020.pl.zip")]
+OLD_KEYS = ["census/cd120.zip", "census/pl/wv2020.pl.zip", "census_vest/nv_2020_vtd.csv"]
+
+
+def offline_script(tmp_path, monkeypatch):
+    """The script with a manifest in tmp_path and no network: a fixed plan, fetch writes a small file."""
+    script = load_script()
+    manifest = Manifest(tmp_path / "manifest.json")
+    for key in OLD_KEYS:
+        manifest.record(key, f"https://example.org/{key}", 1, "0" * 64)
+    manifest.save()
+
+    def fake_fetch(dl, root, manifest, session=None):
+        path = Path(root) / dl.key
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"x")
+        manifest.record(dl.key, dl.url, 1, "1" * 64)
+        return path
+
+    monkeypatch.setenv("GERRY_DATA_DIR", str(tmp_path / "raw"))
+    monkeypatch.setattr(script, "MANIFEST", tmp_path / "manifest.json")
+    monkeypatch.setattr(script, "dataverse_files", lambda *args, **kwargs: {})
+    monkeypatch.setattr(script, "plan_downloads", lambda cfg, dv_files: NEW_PLAN)
+    monkeypatch.setattr(script, "fetch", fake_fetch)
+    return script
+
+
+def manifest_keys(tmp_path):
+    return list(json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8")))
+
+
+def test_download_removes_manifest_entries_that_left_the_plan(tmp_path, monkeypatch):
+    script = offline_script(tmp_path, monkeypatch)
+    # --only NV fetches only the NV and shared files, but the WV entry stays: it is still in the plan
+    assert script.main(["--only", "NV"]) == 0
+    assert manifest_keys(tmp_path) == ["alarm/NV_cd_2020_map.rds", "census/cd120.zip", "census/pl/wv2020.pl.zip"]
+
+
+def test_dry_run_leaves_the_manifest_alone(tmp_path, monkeypatch, capsys):
+    script = offline_script(tmp_path, monkeypatch)
+    assert script.main(["--dry-run"]) == 0
+    assert manifest_keys(tmp_path) == OLD_KEYS
+    assert "census_vest/nv_2020_vtd.csv" in capsys.readouterr().out
+```
+
+De scripttests draaien `main` zonder netwerk: `dataverse_files`, `plan_downloads` en `fetch` zijn vervangen, en `MANIFEST` wijst naar `tmp_path`. `load_config()` leest het echte `config.yaml`; dat is nodig voor de controle op `--only NV`.
+
+- [ ] **Step 2: Draai de tests en zie ze falen**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_sources.py tests/test_download_script.py -q
+```
+
+Verwacht: `5 failed, 20 passed`. De meldingen: `AttributeError: 'Manifest' object has no attribute 'prune'`; voor het plan `At index 4 diff: Download(key='alarm/WV_cd_2020_map.rds', ...) != Download(key='alarm/NV_cd_2020_map.rds', ...)`; `Failed: DID NOT RAISE`; en in beide scripttests staat `census_vest/nv_2020_vtd.csv` nog in het manifest of niet in de uitvoer.
+
+- [ ] **Step 3: Schrijf de code**
+
+Vervang in `pipeline/gerry/sources.py`:
+
+```python
+import urllib.request
+from dataclasses import dataclass
+```
+
+door:
+
+```python
+import urllib.request
+from collections.abc import Iterable
+from dataclasses import dataclass
+```
+
+Vervang in `pipeline/gerry/sources.py`:
+
+```python
+    def record(self, key: str, url: str, size: int, sha256: str) -> None:
+        self._entries[key] = {"url": url, "size": int(size), "sha256": sha256}
+```
+
+door:
+
+```python
+    def record(self, key: str, url: str, size: int, sha256: str) -> None:
+        self._entries[key] = {"url": url, "size": int(size), "sha256": sha256}
+
+    def prune(self, keep: Iterable[str]) -> list[str]:
+        """Drop the entries whose key is not in `keep`; return the dropped keys, sorted. Call save() to write."""
+        keep = set(keep)
+        removed = sorted(key for key in self._entries if key not in keep)
+        for key in removed:
+            del self._entries[key]
+        return removed
+```
+
+Vervang in `pipeline/gerry/sources.py`:
+
+```python
+    rds_keys = {f"alarm/{p}_cd_2020_map.rds" for p in postals if cfg.states[p].unit_source == "rds_county"}
+    rds_keys |= {entry.rds for entry in cfg.align_to_alarm}
+    plan += [_dataverse_download(cfg, dv_files, key.rsplit("/", 1)[1], key) for key in sorted(rds_keys)]
+    for p in postals:
+        kind = cfg.states[p].unit_source
+        if kind in ("vtd", "block"):
+            st = p.lower()
+            url = src["census_vest"].format(commit=cfg.census_vest_commit, st=st, kind=kind)
+            plan.append(Download(f"census_vest/{st}_2020_{kind}.csv", url, None, None))
+```
+
+door:
+
+```python
+    # map.rds holds the votes per unit for all three scenarios (spec chapter 3)
+    plan += [_dataverse_download(cfg, dv_files, f"{p}_cd_2020_map.rds", f"alarm/{p}_cd_2020_map.rds")
+             for p in postals]
+    # census-vest: only the block files of CA, HI, ME and OR, as weights within a tract
+    for p in postals:
+        if cfg.states[p].unit_source == "block":
+            st = p.lower()
+            url = src["census_vest"].format(commit=cfg.census_vest_commit, st=st, kind="block")
+            plan.append(Download(f"census_vest/{st}_2020_block.csv", url, None, None))
+```
+
+Vervang in `pipeline/01_download.py`:
+
+```python
+        plan = select(plan_downloads(cfg, dv_files), args.only)
+    except DownloadError as exc:
+        print(f"ERROR {exc}", file=sys.stderr)
+        return 1
+    if args.dry_run:
+        for dl in plan:
+            print(f"{dl.key}  {dl.size if dl.size is not None else ''}")
+        known = sum(dl.size for dl in plan if dl.size is not None)
+        print(f"{len(plan)} files planned, {known:,} bytes known in advance (Dataverse)")
+        return 0
+
+    manifest = Manifest(MANIFEST)
+    counts = {"downloaded": 0, "present": 0}
+```
+
+door:
+
+```python
+        full_plan = plan_downloads(cfg, dv_files)
+    except DownloadError as exc:
+        print(f"ERROR {exc}", file=sys.stderr)
+        return 1
+    plan = select(full_plan, args.only)
+    manifest = Manifest(MANIFEST)
+    # against the full plan, so --only keeps the entries of the other states
+    stale = manifest.prune(dl.key for dl in full_plan)
+    if args.dry_run:
+        for dl in plan:
+            print(f"{dl.key}  {dl.size if dl.size is not None else ''}")
+        known = sum(dl.size for dl in plan if dl.size is not None)
+        print(f"{len(plan)} files planned, {known:,} bytes known in advance (Dataverse)")
+        if stale:
+            print(f"{len(stale)} manifest entries are not in the plan; a run without --dry-run removes them:")
+            for key in stale:
+                print(f"  {key}")
+        return 0
+
+    if stale:
+        manifest.save()
+        print(f"Removed {len(stale)} manifest entries that are no longer in the plan:")
+        for key in stale:
+            print(f"  {key}")
+    counts = {"downloaded": 0, "present": 0}
+```
+
+- [ ] **Step 4: Draai de tests opnieuw**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_sources.py tests/test_download_script.py -q
+```
+
+Verwacht: `25 passed`.
+
+- [ ] **Step 5: Bekijk het plan zonder te downloaden**
+
+```powershell
+.venv\Scripts\python pipeline/01_download.py --dry-run
+```
+
+Verwacht: eerst `Data directory: ...`, dan 141 regels (44 stats-bestanden, dan `alarm/AL_cd_2020_map.rds  936432` tot `alarm/WV_cd_2020_map.rds  17740`, dan `census_vest/ca_2020_block.csv`, `hi`, `me` en `or`, dan Census), en daarna:
+
+```
+141 files planned, 819,185,545 bytes known in advance (Dataverse)
+39 manifest entries are not in the plan; a run without --dry-run removes them:
+  census_vest/al_2020_vtd.csv
+  ...
+  census_vest/wi_2020_vtd.csv
+```
+
+De 39 regels zijn de VTD-bestanden van de 38 VTD-staten plus `ia`. Het manifest is nog onveranderd (`git status --short` toont `data/manifest.json` niet).
+
+- [ ] **Step 6: Download de 42 nieuwe kaartbestanden**
+
+```powershell
+.venv\Scripts\python pipeline/01_download.py
+```
+
+Verwacht: eerst `Removed 39 manifest entries that are no longer in the plan:` met de 39 regels uit stap 5. Dan per bestand een regel. De 42 `map.rds`-bestanden die er nog niet waren eindigen op `downloaded`, alle andere op `present`. Aan het eind, met een ander aantal minuten:
+
+```
+141 files: 42 downloaded, 99 present, 2,519,952,066 bytes, 1.2 min
+Manifest ...\data\manifest.json has entries for 141 of these files
+```
+
+Staan de kaartbestanden er al (bijvoorbeeld uit een andere worktree), dan is het `0 downloaded, 141 present`; de controle op md5 en grootte uit Dataverse geldt dan net zo. Stopt de run met `md5 ..., expected ...`, dan is een bestand bij Dataverse anders dan in versie 15: niets weggooien, de melding aan de eigenaar voorleggen.
+
+- [ ] **Step 7: Controleer aantallen en groottes**
+
+```powershell
+$root = if ($env:GERRY_DATA_DIR) { $env:GERRY_DATA_DIR } else { "data\raw" }
+Get-ChildItem $root -Recurse -File | Group-Object { $_.Directory.Name } | ForEach-Object { "{0} {1} {2}" -f $_.Name, $_.Count, ($_.Group | Measure-Object Length -Sum).Sum }
+(Get-ChildItem "$root\census_vest" -Filter *_block.csv | Measure-Object Length -Sum).Sum
+(Get-Content data\manifest.json -Raw | ConvertFrom-Json).PSObject.Properties.Name.Count
+```
+
+Verwacht (de volgorde van de eerste vijf regels kan verschillen):
+
+```
+alarm 88 819185545
+census 2 83169131
+pl 44 1275194689
+tiger 3 253271151
+census_vest 43 119711775
+89131550
+141
+```
+
+`census_vest 43` telt de 39 VTD-bestanden mee die nog op schijf staan; de vier blokbestanden zijn samen 89.131.550 bytes. De vijf getallen van het plan (alarm, census, pl, tiger en de blokbestanden) tellen op tot 2.519.952.066.
+
+- [ ] **Step 8: Draai alle tests**
+
+```powershell
+.venv\Scripts\python -m pytest -q
+```
+
+Verwacht: `165 passed`.
+
+- [ ] **Step 9: Commit**
+
+```powershell
+git status --short
+git add pipeline/gerry/sources.py pipeline/01_download.py tests/test_sources.py tests/test_download_script.py data/manifest.json
+git commit -m "Download ALARM's map.rds for every state and drop stale manifest entries"
+```
+
+`git status --short` mag geen bestanden onder `data/raw/` tonen. Het manifest krijgt 42 bestanden erbij en verliest er 39: `git diff --stat data/manifest.json` vóór de commit toont `210 insertions(+), 195 deletions(-)` (vijf tekstregels per bestand).
+
+### Task 1.13: P.L. 94-171: bevolking, countynamen en de sleutel van een blok
+
+**Files:**
+- Modify: `pipeline/gerry/blocks.py` (`PL_GEO_FIELDS`, `read_pl_blocks`, nieuw `read_pl_counties`, `unit_of_block`)
+- Modify: `tests/test_blocks.py`
+
+**Interfaces:**
+- Consumes: `BlocksError`, `_read_pipe` (taak 1.7).
+- Produces:
+  - `PL_GEO_FIELDS` krijgt `"NAME": 87`.
+  - `read_pl_blocks(zip_path: Path, st: str) -> pd.DataFrame`: kolommen `block_id` (str 15), `vap`, `pop` (int64, POP100), `vtd` (str), `lat`, `lon` (float64). Controleert ook dat de som van POP100 gelijk is aan het staatsrecord.
+  - `read_pl_counties(zip_path: Path, st: str) -> pd.DataFrame`: kolommen `county_id` (str 5) en `name` (str, bijvoorbeeld `"Adair County"`), één rij per SUMLEV 050-record.
+  - `unit_of_block(blocks: pd.DataFrame, unit_kind: str, fips: str) -> pd.Series`: index `block_id`, naam `unit_id`, waarde de sleutel van de eenheid: `vtd` GEOCODE[:5] + VTD-code (een lege VTD-code is een `BlocksError`), `tract` GEOCODE[:11], `county` GEOCODE[:5]. Elke andere soort is een `BlocksError`. Een sleutel hoeft geen eenheid van `map.rds` te zijn; taak 1.16 controleert die blokken.
+
+`pop` is nodig voor de controle per eenheid (taak 1.16) en voor de controle van ALARM's referentiekaart tegen CD118 (taak 1.17). De countynamen zijn nodig voor Iowa, waar `map.rds` alleen de naam van de county heeft (taak 1.15). Het veld NAME staat op positie 87; de test-fixture schreef daar al een naam.
+
+- [ ] **Step 1: Schrijf de falende tests**
+
+Vervang in `tests/test_blocks.py`:
+
+```python
+from gerry.blocks import (PL_GEO_FIELDS, BlocksError, block_weighted, read_bef, read_pl_blocks, unit_of_block,
+                          whole_unit)
+```
+
+door:
+
+```python
+from gerry.blocks import (PL_GEO_FIELDS, BlocksError, block_weighted, read_bef, read_pl_blocks, read_pl_counties,
+                          unit_of_block, whole_unit)
+```
+
+Vervang in `tests/test_blocks.py`:
+
+```python
+    fields[87] = name
+```
+
+door:
+
+```python
+    fields[PL_GEO_FIELDS["NAME"]] = name
+```
+
+Vervang in `tests/test_blocks.py`:
+
+```python
+    assert list(blocks.columns) == ["block_id", "vap", "vtd", "lat", "lon"]
+    assert blocks["block_id"].tolist() == ["320010001001000", "320010001001001"]
+    assert blocks["vap"].dtype == np.int64 and blocks["vap"].tolist() == [8, 0]
+```
+
+door:
+
+```python
+    assert list(blocks.columns) == ["block_id", "vap", "pop", "vtd", "lat", "lon"]
+    assert blocks["block_id"].tolist() == ["320010001001000", "320010001001001"]
+    assert blocks["vap"].dtype == np.int64 and blocks["vap"].tolist() == [8, 0]
+    assert blocks["pop"].dtype == np.int64 and blocks["pop"].tolist() == [10, 0]
+```
+
+Vervang in `tests/test_blocks.py`:
+
+```python
+def test_read_pl_blocks_checks_the_state_record(tmp_path):
+```
+
+door:
+
+```python
+def test_read_pl_counties_returns_fips_and_name(tmp_path):
+    counties = read_pl_counties(make_pl_zip(tmp_path / "nv2020.pl.zip"), "NV")
+    # the county name holds a Latin-1 byte, as in the real files
+    assert counties.to_dict("records") == [{"county_id": "32001", "name": "Doña Ana County"}]
+
+
+def test_read_pl_blocks_checks_the_state_record(tmp_path):
+```
+
+Vervang in `tests/test_blocks.py`:
+
+```python
+def test_read_pl_blocks_rejects_vap_above_population(tmp_path):
+```
+
+door:
+
+```python
+def test_read_pl_blocks_checks_the_state_population(tmp_path):
+    # block POP100 adds up to 10 + 3 = 13; the state record says 10
+    with pytest.raises(BlocksError, match="POP100 adds up to 13, state record says 10"):
+        read_pl_blocks(make_pl_zip(tmp_path / "nv2020.pl.zip", block2_pop="3"), "nv")
+
+
+def test_read_pl_blocks_rejects_vap_above_population(tmp_path):
+```
+
+De parameter `block2_pop` van `make_pl_zip` bestaat al; het tweede blok houdt VAP 0, dus alleen de controle op POP100 slaat aan.
+
+Vervang in `tests/test_blocks.py`:
+
+```python
+    assert len(blocks) == 57409
+    assert blocks["vap"].sum() == 2413326
+```
+
+door:
+
+```python
+    assert len(blocks) == 57409
+    assert blocks["vap"].sum() == 2413326
+    assert blocks["pop"].sum() == 3104614
+```
+
+Vervang in `tests/test_blocks.py`:
+
+```python
+def test_unit_of_block_for_block_states_is_the_block():
+    blocks = pl_blocks(["060014001001000"])
+    assert unit_of_block(blocks, "block", "06").to_dict() == {"060014001001000": "060014001001000"}
+
+
+def test_unit_of_block_for_county_units_is_the_county():
+    blocks = pl_blocks(["540630001001000", "540370001001000"])
+    assert unit_of_block(blocks, "rds_county", "54").tolist() == ["54063", "54037"]
+
+
+def test_unit_of_block_rejects_blocks_of_another_state():
+    with pytest.raises(BlocksError, match="32"):
+        unit_of_block(pl_blocks(["060014001001000"]), "block", "32")
+```
+
+door:
+
+```python
+def test_unit_of_block_for_tract_states_is_the_tract():
+    blocks = pl_blocks(["060014001001000", "060014001002003"])
+    assert unit_of_block(blocks, "tract", "06").tolist() == ["06001400100", "06001400100"]
+
+
+def test_unit_of_block_for_county_units_is_the_county():
+    blocks = pl_blocks(["540630001001000", "540370001001000"])
+    assert unit_of_block(blocks, "county", "54").tolist() == ["54063", "54037"]
+
+
+def test_unit_of_block_rejects_an_unknown_kind():
+    with pytest.raises(BlocksError, match="'block'"):
+        unit_of_block(pl_blocks(["060014001001000"]), "block", "06")
+
+
+def test_unit_of_block_rejects_blocks_of_another_state():
+    with pytest.raises(BlocksError, match="32"):
+        unit_of_block(pl_blocks(["060014001001000"]), "tract", "32")
+```
+
+De bevolking van Nevada volgens de census van 2020 is 3.104.614.
+
+- [ ] **Step 2: Draai de tests en zie ze falen**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_blocks.py -q
+```
+
+Verwacht: `ERROR tests/test_blocks.py` met `ImportError: cannot import name 'read_pl_counties' from 'gerry.blocks'`.
+
+- [ ] **Step 3: Schrijf de code**
+
+Vervang in `pipeline/gerry/blocks.py`:
+
+```python
+"""Census blocks: P.L. 94-171 (VAP, VTD code, interior point) and the block equivalency files."""
+```
+
+door:
+
+```python
+"""Census blocks: P.L. 94-171 (VAP, population, VTD code, interior point, county names) and the block
+equivalency files; the unit of each block and the votes per district."""
+```
+
+Vervang in `pipeline/gerry/blocks.py`:
+
+```python
+PL_GEO_FIELDS = {"SUMLEV": 2, "LOGRECNO": 7, "GEOCODE": 9, "VTD": 77, "POP100": 90, "INTPTLAT": 92, "INTPTLON": 93}
+PL_SEG2_FIELDS = {"LOGRECNO": 4, "P0030001": 5}
+```
+
+door:
+
+```python
+PL_GEO_FIELDS = {"SUMLEV": 2, "LOGRECNO": 7, "GEOCODE": 9, "VTD": 77, "NAME": 87, "POP100": 90,
+                 "INTPTLAT": 92, "INTPTLON": 93}
+PL_SEG2_FIELDS = {"LOGRECNO": 4, "P0030001": 5}
+_BLOCK_FIELDS = ("SUMLEV", "LOGRECNO", "GEOCODE", "VTD", "POP100", "INTPTLAT", "INTPTLON")
+_COUNTY_FIELDS = ("SUMLEV", "GEOCODE", "NAME")
+```
+
+Vervang in `pipeline/gerry/blocks.py`:
+
+```python
+def read_pl_blocks(zip_path: Path, st: str) -> pd.DataFrame:
+    """block_id (str 15), vap (int64), vtd (str), lat, lon (float64) for every block (SUMLEV 750).
+
+    Read from the zip without extracting. The block VAP must add up to the state record (SUMLEV 040)."""
+    st = st.lower()
+    with zipfile.ZipFile(zip_path) as zf:
+        geo = _read_pipe(zf, f"{st}geo2020.pl", PL_GEO_FIELDS)
+```
+
+door:
+
+```python
+def _fields(names: Sequence[str]) -> dict[str, int]:
+    return {name: PL_GEO_FIELDS[name] for name in names}
+
+
+def read_pl_blocks(zip_path: Path, st: str) -> pd.DataFrame:
+    """block_id (str 15), vap, pop (int64), vtd (str), lat, lon (float64) for every block (SUMLEV 750).
+
+    Read from the zip without extracting. The block VAP and POP100 must add up to the state record (SUMLEV 040)."""
+    st = st.lower()
+    with zipfile.ZipFile(zip_path) as zf:
+        geo = _read_pipe(zf, f"{st}geo2020.pl", _fields(_BLOCK_FIELDS))
+```
+
+Vervang in `pipeline/gerry/blocks.py`:
+
+```python
+    out = pd.DataFrame({
+        "block_id": blocks["GEOCODE"].to_numpy(),
+        "vap": vap.astype("int64").to_numpy(),
+        "vtd": blocks["VTD"].to_numpy(),
+        "lat": pd.to_numeric(blocks["INTPTLAT"]).to_numpy(),
+        "lon": pd.to_numeric(blocks["INTPTLON"]).to_numpy(),
+    })
+    pop = pd.to_numeric(blocks["POP100"]).to_numpy()
+    if not out["block_id"].str.len().eq(15).all() or not out["block_id"].is_unique:
+        raise BlocksError(f"{st}: block GEOCODE is not a unique 15-character code")
+    if (out["vap"].to_numpy() > pop).any():
+        raise BlocksError(f"{st}: VAP above POP100 in {int((out['vap'].to_numpy() > pop).sum())} blocks; "
+                          "check PL_GEO_FIELDS and PL_SEG2_FIELDS")
+    state_vap = int(vap_of[state["LOGRECNO"].iloc[0]])
+    if int(out["vap"].sum()) != state_vap:
+        raise BlocksError(f"{st}: block VAP adds up to {int(out['vap'].sum())}, state record says {state_vap}")
+    return out
+```
+
+door:
+
+```python
+    pop = pd.to_numeric(blocks["POP100"], errors="coerce")
+    if pop.isna().any():
+        raise BlocksError(f"{st}: {int(pop.isna().sum())} blocks have no POP100")
+    out = pd.DataFrame({
+        "block_id": blocks["GEOCODE"].to_numpy(),
+        "vap": vap.astype("int64").to_numpy(),
+        "pop": pop.astype("int64").to_numpy(),
+        "vtd": blocks["VTD"].to_numpy(),
+        "lat": pd.to_numeric(blocks["INTPTLAT"]).to_numpy(),
+        "lon": pd.to_numeric(blocks["INTPTLON"]).to_numpy(),
+    })
+    if not out["block_id"].str.len().eq(15).all() or not out["block_id"].is_unique:
+        raise BlocksError(f"{st}: block GEOCODE is not a unique 15-character code")
+    if (out["vap"] > out["pop"]).any():
+        raise BlocksError(f"{st}: VAP above POP100 in {int((out['vap'] > out['pop']).sum())} blocks; "
+                          "check PL_GEO_FIELDS and PL_SEG2_FIELDS")
+    state_vap = int(vap_of[state["LOGRECNO"].iloc[0]])
+    if int(out["vap"].sum()) != state_vap:
+        raise BlocksError(f"{st}: block VAP adds up to {int(out['vap'].sum())}, state record says {state_vap}")
+    state_pop = int(state["POP100"].iloc[0])
+    if int(out["pop"].sum()) != state_pop:
+        raise BlocksError(f"{st}: block POP100 adds up to {int(out['pop'].sum())}, state record says {state_pop}")
+    return out
+
+
+def read_pl_counties(zip_path: Path, st: str) -> pd.DataFrame:
+    """county_id (str 5) and name (str, e.g. "Adair County") of every county record (SUMLEV 050)."""
+    with zipfile.ZipFile(zip_path) as zf:
+        geo = _read_pipe(zf, f"{st.lower()}geo2020.pl", _fields(_COUNTY_FIELDS))
+    counties = geo[geo["SUMLEV"] == "050"]
+    out = pd.DataFrame({"county_id": counties["GEOCODE"].to_numpy(), "name": counties["NAME"].to_numpy()})
+    if out.empty or not out["county_id"].str.len().eq(5).all() or not out["county_id"].is_unique:
+        raise BlocksError(f"{st}: county records are missing or their GEOCODE is not a unique 5-character code")
+    return out
+```
+
+Vervang in `pipeline/gerry/blocks.py`:
+
+```python
+def unit_of_block(blocks: pd.DataFrame, unit_source: str, fips: str) -> pd.Series:
+    """block_id -> unit_id. vtd: county GEOID + VTD code; block: the block; rds_county: the county."""
+    ids = blocks["block_id"]
+    if not ids.str.startswith(fips).all():
+        raise BlocksError(f"blocks that do not start with FIPS {fips}, e.g. {ids[~ids.str.startswith(fips)].iloc[0]}")
+    if unit_source == "vtd":
+        blank = blocks["vtd"].str.strip() == ""
+        if blank.any():
+            raise BlocksError(f"{fips}: {int(blank.sum())} blocks without VTD code, e.g. {ids[blank].iloc[0]}")
+        units = ids.str[:5] + blocks["vtd"]
+    elif unit_source == "block":
+        units = ids
+    elif unit_source == "rds_county":
+        units = ids.str[:5]
+    else:
+        raise BlocksError(f"unknown unit_source {unit_source!r}")
+```
+
+door:
+
+```python
+def unit_of_block(blocks: pd.DataFrame, unit_kind: str, fips: str) -> pd.Series:
+    """block_id -> key of the unit the block lies in: vtd: county (GEOCODE[:5]) + VTD code;
+    tract: GEOCODE[:11]; county: GEOCODE[:5]. A key need not be a unit of map.rds (water)."""
+    ids = blocks["block_id"]
+    if not ids.str.startswith(fips).all():
+        raise BlocksError(f"blocks that do not start with FIPS {fips}, e.g. {ids[~ids.str.startswith(fips)].iloc[0]}")
+    if unit_kind == "vtd":
+        blank = blocks["vtd"].str.strip() == ""
+        if blank.any():
+            raise BlocksError(f"{fips}: {int(blank.sum())} blocks without VTD code, e.g. {ids[blank].iloc[0]}")
+        units = ids.str[:5] + blocks["vtd"]
+    elif unit_kind == "tract":
+        units = ids.str[:11]
+    elif unit_kind == "county":
+        units = ids.str[:5]
+    else:
+        raise BlocksError(f"unknown unit_kind {unit_kind!r}")
+```
+
+De test `test_read_pl_blocks_rejects_vap_above_population` blijft slagen: hij vervangt `|10|` door `|5|`, en dan valt eerst de controle VAP boven POP100.
+
+- [ ] **Step 4: Draai de tests opnieuw**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_blocks.py -q
+```
+
+Verwacht: `22 passed`. Zonder data: `20 passed, 2 skipped`.
+
+- [ ] **Step 5: Draai alle tests**
+
+```powershell
+.venv\Scripts\python -m pytest -q
+```
+
+Verwacht: `168 passed`.
+
+- [ ] **Step 6: Commit**
+
+```powershell
+git add pipeline/gerry/blocks.py tests/test_blocks.py
+git commit -m "Read block population and county names, and key blocks by VTD, tract or county"
+```
+
+### Task 1.14: Verdelen binnen een tract
+
+**Files:**
+- Modify: `pipeline/gerry/blocks.py` (`block_weighted`)
+- Modify: `tests/test_blocks.py`
+
+**Interfaces:**
+- Consumes: `_linked_blocks`, `BlocksError` (taak 1.8).
+- Produces: `block_weighted(units, blocks, unit_of, district_of, vote_cols, weights: pd.DataFrame | None = None) -> pd.DataFrame`. `weights`: index `block_id`, een kolom per stemkolom in `vote_cols` (de blokstemmen van census-vest, uit `read_block_votes` van taak 1.15). Zonder `weights` werkt de functie als voorheen. `.attrs` krijgt twee tellingen erbij:
+  - `block_count_votes` (float): de stemmen van gesplitste eenheden die naar aantal blokken zijn verdeeld, opgeteld over `vote_cols`.
+  - `weight_fallback_units` (int): eenheden met stemmen in een kolom waarvan de gewichten in die kolom samen 0 zijn, zodat de regel met VAP geldt. Zonder `weights` 0.
+
+De regel per blok en per stemkolom komt uit hoofdstuk 4 van de spec. Met `weights` krijgt een blok zijn deel van het gewicht van de eenheid in die kolom, over de blokken buiten `ZZ`. Is dat totaal 0, of zijn er geen `weights`, dan zijn deel van de VAP van de eenheid. Heeft de eenheid geen VAP, dan krijgt elk blok hetzelfde deel. Een blok zonder gewicht is een fout: de blokbestanden van census-vest dekken alle blokken uit P.L. 94-171.
+
+`whole_unit` verandert niet. Die wijst elke eenheid in haar geheel toe op VAP en aantal blokken; gewichten spelen daar geen rol.
+
+De aanroeper geeft alleen de stemkolommen per verkiezing mee en telt de composiet daarna op de districten op (taak 1.18). Zou de composiet zelf over blokken verdeeld worden met de som van de blokgewichten, dan klopt `d` per district niet meer met `d_pre_16 + d_pre_20`.
+
+- [ ] **Step 1: Schrijf de falende tests**
+
+Vervang in `tests/test_blocks.py`:
+
+```python
+    assert out["r"].tolist() == pytest.approx([20.0, 50.0])
+    assert out.attrs == {"split_units": 2, "zero_vap_units": 1, "zero_vap_split_units": 1,
+                         "units_without_blocks": 0}
+```
+
+door:
+
+```python
+    assert out["r"].tolist() == pytest.approx([20.0, 50.0])
+    # U2 is split and its 6 + 0 votes went by block count
+    assert out.attrs == {"split_units": 2, "zero_vap_units": 1, "zero_vap_split_units": 1,
+                         "units_without_blocks": 0, "block_count_votes": 6.0, "weight_fallback_units": 0}
+
+
+def tract_case():
+    # T1: VAP 40 over t1 (01), t2 (02) and t3 (ZZ). T2: no VAP, t4 (01) and t5 (02).
+    blocks = pl_blocks(["t1", "t2", "t3", "t4", "t5"], vaps=[10, 30, 0, 0, 0])
+    unit_of = pd.Series(["T1", "T1", "T1", "T2", "T2"], index=blocks["block_id"])
+    district_of = pd.Series(["01", "02", "ZZ", "01", "02"], index=blocks["block_id"])
+    units = pd.DataFrame({"unit_id": ["T1", "T2"], "vap": [40, 0], "d": [100.0, 8.0], "r": [50.0, 4.0]})
+    # census-vest block votes: the weight of a block within its tract, per column
+    weights = pd.DataFrame({"d": [3.0, 1.0, 96.0, 0.0, 0.0], "r": [0.0, 0.0, 5.0, 0.0, 0.0]},
+                           index=pd.Index(["t1", "t2", "t3", "t4", "t5"], name="block_id"))
+    return units, blocks, unit_of, district_of, weights
+
+
+def test_block_weighted_uses_block_weights_per_column():
+    units, blocks, unit_of, district_of, weights = tract_case()
+    out = block_weighted(units, blocks, unit_of, district_of, VOTES, weights=weights)
+    # T1 d: weights 3 and 1 outside ZZ (t3 goes first): 75 to 01, 25 to 02.
+    # T1 r: weights add up to 0 outside ZZ, so VAP: 10/40 = 12.5 to 01, 30/40 = 37.5 to 02.
+    # T2: no weight and no VAP, so block count: d 4 and 4, r 2 and 2.
+    assert out["d"].tolist() == pytest.approx([79.0, 29.0])
+    assert out["r"].tolist() == pytest.approx([14.5, 39.5])
+    # T1 (r) and T2 (d, r) have votes but no weight; T2's 8 + 4 votes went by block count
+    assert out.attrs["weight_fallback_units"] == 2
+    assert out.attrs["block_count_votes"] == pytest.approx(12.0)
+
+
+def test_block_weighted_needs_a_weight_for_every_block():
+    units, blocks, unit_of, district_of, weights = tract_case()
+    with pytest.raises(BlocksError, match="t4"):
+        block_weighted(units, blocks, unit_of, district_of, VOTES, weights=weights.drop("t4"))
+```
+
+In `tract_case` heeft blok `t3` in `ZZ` het grootste gewicht (96 van 100). Telt het mee, dan gaan de stemmen van T1 grotendeels verloren; de test laat zien dat ZZ-blokken eerst wegvallen, ook voor het gewicht.
+
+- [ ] **Step 2: Draai de tests en zie ze falen**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_blocks.py -q
+```
+
+Verwacht: `3 failed, 21 passed`. Eén keer `AssertionError` op `.attrs` (`Right contains 2 more items`) en twee keer `TypeError: block_weighted() got an unexpected keyword argument 'weights'`.
+
+- [ ] **Step 3: Schrijf de code**
+
+Vervang in `pipeline/gerry/blocks.py`:
+
+```python
+def block_weighted(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, district_of: pd.Series,
+                   vote_cols: Sequence[str]) -> pd.DataFrame:
+    """Votes per district: each unit's votes go to its blocks by block VAP, or by block count
+    if the unit has no VAP. Counts for the log are in .attrs."""
+    b, votes, districts, without_blocks = _linked_blocks(units, blocks, unit_of, district_of, vote_cols)
+    per_unit = b.groupby("unit_id").agg(unit_vap=("vap", "sum"), n_blocks=("vap", "size"))
+    b = b.join(per_unit, on="unit_id")
+    has_vap = (b["unit_vap"] > 0).to_numpy()
+    weight = np.where(has_vap, b["vap"].to_numpy() / np.where(has_vap, b["unit_vap"].to_numpy(), 1),
+                      1.0 / b["n_blocks"].to_numpy())
+    block_votes = votes.loc[b["unit_id"]].to_numpy() * weight[:, None]
+    totals = (pd.DataFrame(block_votes, columns=list(vote_cols)).groupby(b["district"].to_numpy()).sum()
+              .reindex(districts, fill_value=0.0))
+    out = totals.rename_axis("district").reset_index()
+    n_districts = b.groupby("unit_id")["district"].nunique()
+    split = n_districts.index[n_districts > 1]
+    zero_vap = per_unit.index[per_unit["unit_vap"] == 0]
+    out.attrs = {"split_units": len(split), "zero_vap_units": len(zero_vap),
+                 "zero_vap_split_units": int(split.isin(zero_vap).sum()), "units_without_blocks": without_blocks}
+    return out
+```
+
+door:
+
+```python
+def block_weighted(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, district_of: pd.Series,
+                   vote_cols: Sequence[str], weights: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Votes per district: each unit's votes go to its blocks outside ZZ.
+
+    With `weights` (tract states: census-vest block votes, index block_id, a column per vote column) a block
+    gets its share of the unit's weight in that column. Where those weights add up to 0, and without
+    `weights`, a block gets its share of the unit's VAP; in a unit without VAP every block gets the same
+    share. Counts for the log are in .attrs; block_count_votes sums the votes of split units that went by
+    block count, over vote_cols."""
+    b, votes, districts, without_blocks = _linked_blocks(units, blocks, unit_of, district_of, vote_cols)
+    per_unit = b.groupby("unit_id").agg(unit_vap=("vap", "sum"), n_blocks=("vap", "size"))
+    b = b.join(per_unit, on="unit_id")
+    has_vap = (b["unit_vap"] > 0).to_numpy()
+    by_vap = np.where(has_vap, b["vap"].to_numpy() / np.where(has_vap, b["unit_vap"].to_numpy(), 1),
+                      1.0 / b["n_blocks"].to_numpy())
+    unit_votes = votes.loc[b["unit_id"]].to_numpy()
+    by_count = np.repeat(~has_vap[:, None], len(vote_cols), axis=1)   # block x column: weight from block count
+    weight = np.repeat(by_vap[:, None], len(vote_cols), axis=1)
+    fallback_units = set()
+    if weights is not None:
+        own = weights.reindex(b["block_id"].to_numpy())[list(vote_cols)]
+        missing = own.isna().any(axis=1).to_numpy()
+        if missing.any():
+            first = b["block_id"].iloc[missing.argmax()]
+            raise BlocksError(f"{int(missing.sum())} blocks have no weight, e.g. {first}")
+        own = own.to_numpy()
+        unit_total = pd.DataFrame(own).groupby(b["unit_id"].to_numpy()).transform("sum").to_numpy()
+        usable = unit_total > 0
+        weight = np.where(usable, own / np.where(usable, unit_total, 1), weight)
+        by_count &= ~usable
+        no_weight = ~usable & (unit_votes != 0)
+        fallback_units = set(b["unit_id"].to_numpy()[no_weight.any(axis=1)])
+    block_votes = unit_votes * weight
+    totals = (pd.DataFrame(block_votes, columns=list(vote_cols)).groupby(b["district"].to_numpy()).sum()
+              .reindex(districts, fill_value=0.0))
+    out = totals.rename_axis("district").reset_index()
+    n_districts = b.groupby("unit_id")["district"].nunique()
+    split = n_districts.index[n_districts > 1]
+    zero_vap = per_unit.index[per_unit["unit_vap"] == 0]
+    in_split = b["unit_id"].isin(split).to_numpy()[:, None]
+    out.attrs = {"split_units": len(split), "zero_vap_units": len(zero_vap),
+                 "zero_vap_split_units": int(split.isin(zero_vap).sum()), "units_without_blocks": without_blocks,
+                 "block_count_votes": float(block_votes[by_count & in_split].sum()),
+                 "weight_fallback_units": len(fallback_units)}
+    return out
+```
+
+`by_count` is per blok en per kolom `True` als de stemmen naar aantal blokken gaan. Alle blokken van een eenheid delen die waarde, dus de som van `block_votes` over die cellen is gelijk aan de stemmen van die eenheden.
+
+- [ ] **Step 4: Draai de tests opnieuw**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_blocks.py -q
+```
+
+Verwacht: `24 passed`.
+
+- [ ] **Step 5: Draai alle tests**
+
+```powershell
+.venv\Scripts\python -m pytest -q
+```
+
+Verwacht: `170 passed`.
+
+- [ ] **Step 6: Commit**
+
+```powershell
+git add pipeline/gerry/blocks.py tests/test_blocks.py
+git commit -m "Spread tract votes over blocks by census-vest block votes"
+```
+
+### Task 1.15: unit_kind in config.yaml en stemmen per eenheid uit map.rds
+
+**Files:**
+- Modify: `pipeline/gerry/config.py` (`unit_kind`, `AlignEntry` en `align_to_alarm` eruit)
+- Modify: `pipeline/config.yaml`
+- Modify: `pipeline/gerry/sources.py` (één regel)
+- Modify: `pipeline/gerry/units.py` (nieuwe inhoud)
+- Modify: `tests/test_config.py`
+- Modify: `tests/test_units.py` (nieuwe inhoud)
+- Modify: `tests/test_sources.py`, `tests/test_ensemble.py` (hulpfuncties)
+- Modify: `tests/test_rds.py` (één commentaarregel)
+- Modify: `README.md` (één zin over de stembasis)
+
+**Interfaces:**
+- Consumes: `read_rds_table` (taak 1.4); `read_pl_counties` (taak 1.13, alleen in de datatest); `select_columns`, `add_composite`, `UnitsError` (taak 1.5, ongewijzigd).
+- Produces:
+  - `StateConfig.unit_kind: str`, één van `vtd`, `tract`, `county`. Het veld `unit_source` bestaat niet meer.
+  - `Config` heeft geen veld `align_to_alarm` meer; `AlignEntry` bestaat niet meer. In `config.yaml` zijn de sleutels `align_to_alarm` en `unit_source` nu onbekend en geven ze een `ConfigError`.
+  - `units.ID_LENGTH = {"vtd": 11, "tract": 11, "county": 5}`.
+  - `unit_ids(table: pd.DataFrame, st: StateConfig, counties: pd.DataFrame | None = None) -> pd.Series`: de ID's (str, naam `unit_id`) in de volgorde van de tabel. `GEOID` als die kolom er is, anders `tract` (tractstaten) of de countynaam opgezocht in `counties` (countystaten, kolommen `county_id` en `name`). Fout (`UnitsError`) bij: geen ID-kolom, lege ID, ID niet van de goede lengte of niet beginnend met de FIPS-code, dubbele ID, een countynaam met nul of meer dan één treffer, en in VTD-staten een `GEOID` die niet gelijk is aan `GEOID[:5]` + `vtd`.
+  - `load_units(st: StateConfig, root: Path, counties: pd.DataFrame | None = None) -> pd.DataFrame`: uit `alarm/{ST}_cd_2020_map.rds` de kolommen `unit_id` (str), `vap`, `pop` (int64), `cd_2020` (str, `"01"`, het district van ALARM's referentiekaart) en per verkiezing `d_<e>`, `r_<e>` (float64). `.attrs["empty_vote_fields"]` en `.attrs["empty_vote_units"]` zoals voorheen.
+  - `read_block_votes(st: StateConfig, root: Path) -> pd.DataFrame`: uit `census_vest/{st}_2020_block.csv` de index `block_id` en per verkiezing `d_<e>`, `r_<e>` (float64). Lege velden worden 0; `.attrs["empty_vote_fields"]` en `.attrs["empty_vote_units"]` tellen velden en blokken.
+  - `align_to_alarm` bestaat niet meer.
+
+De regels voor de ID's komen uit hoofdstuk 4 van de spec. In de 44 bestanden van versie 15 levert dat `GEOID` op in de 38 VTD-staten en in ME, OR en WV, `tract` in CA en HI, en de countynaam in IA. Maine heeft ook een kolom `tract`, maar die bevat alleen de tractcode van 6 tekens. Kiest de code per ongeluk die kolom, dan faalt de controle op 11 tekens.
+
+`cd_2020` gaat mee in `load_units` omdat taak 1.17 de bevolking per district van ALARM's referentiekaart nodig heeft. `02_join` laat de kolom weg in `units/{ST}.parquet` (taak 1.18).
+
+`st.unit_kind` bepaalt ook welke blokbestanden `plan_downloads` plant; daarom verandert in `sources.py` één regel mee.
+
+- [ ] **Step 1: Pas de tests van config.py aan**
+
+Vervang in `tests/test_config.py`:
+
+```python
+        "align_to_alarm": [],
+        "sources": {key: f"https://example.org/{key}" for key in SOURCE_KEYS},
+        "states": {
+            "MO": {
+                "name": "Missouri", "fips": "29", "seats": 8, "map_name": "HB 2909 of 2022",
+                "status": "In effect", "source_label": "Redistricting Data Hub",
+                "source_url": "https://example.org/mo-2022", "bef": "cd118",
+                "elections": ["pre_16", "pre_20"], "unit_source": "vtd",
+```
+
+door:
+
+```python
+        "sources": {key: f"https://example.org/{key}" for key in SOURCE_KEYS},
+        "states": {
+            "MO": {
+                "name": "Missouri", "fips": "29", "seats": 8, "map_name": "HB 2909 of 2022",
+                "status": "In effect", "source_label": "Redistricting Data Hub",
+                "source_url": "https://example.org/mo-2022", "bef": "cd118",
+                "elections": ["pre_16", "pre_20"], "unit_kind": "vtd",
+```
+
+Vervang in `tests/test_config.py`:
+
+```python
+                "source_url": "https://example.org/nm", "bef": "cd120",
+                "elections": ["pre_16", "pre_20"], "unit_source": "vtd",
+            },
+```
+
+door:
+
+```python
+                "source_url": "https://example.org/nm", "bef": "cd120",
+                "elections": ["pre_16", "pre_20"], "unit_kind": "tract",
+            },
+```
+
+Vervang in `tests/test_config.py`:
+
+```python
+    assert mo.elections == ("pre_16", "pre_20")
+    assert mo.notes == ("blocked_map",)
+```
+
+door:
+
+```python
+    assert mo.elections == ("pre_16", "pre_20")
+    assert (mo.unit_kind, cfg.states["NM"].unit_kind) == ("vtd", "tract")
+    assert mo.notes == ("blocked_map",)
+```
+
+Vervang in `tests/test_config.py`:
+
+```python
+    assert cfg.at_large["VT"].fips == "50"
+    assert cfg.align_to_alarm == ()
+```
+
+door:
+
+```python
+    assert cfg.at_large["VT"].fips == "50"
+```
+
+Vervang in `tests/test_config.py`:
+
+```python
+    ("states.NM.unit_source", "tract", "unit_source"),
+```
+
+door:
+
+```python
+    ("states.NM.unit_kind", "block", "unit_kind"),
+    ("states.NM.unit_source", "vtd", "unknown keys"),     # the key before unit_kind
+    ("align_to_alarm", [], "unknown keys"),               # replaced by the weights within a tract
+```
+
+Vervang in `tests/test_config.py`:
+
+```python
+@pytest.mark.parametrize("units, message", [
+    (["0604900030"], "length 11"),        # ten characters
+    (["06049000300"], "starting with 35"),  # California tract in a New Mexico entry
+])
+def test_align_entry_units_are_checked(tmp_path, units, message):
+    raw = minimal()
+    raw["align_to_alarm"] = [{"state": "NM", "rds": "alarm/NM_cd_2020_map.rds",
+                              "unit_column": "tract", "unit_len": 11, "units": units}]
+    with pytest.raises(ConfigError, match=message):
+        load_config(write(tmp_path, raw))
+
+
+def test_repo_root_holds_the_pipeline():
+```
+
+door:
+
+```python
+def test_repo_root_holds_the_pipeline():
+```
+
+Vervang in `tests/test_config.py`:
+
+```python
+BLOCK_STATES = {"CA", "HI", "ME", "OR"}
+```
+
+door:
+
+```python
+TRACT_STATES = {"CA", "HI", "ME", "OR"}
+```
+
+Vervang in `tests/test_config.py`:
+
+```python
+def test_real_config_bef_and_unit_source(cfg):
+    assert {p for p, s in cfg.states.items() if s.bef == "cd118"} == {"MO"}
+    assert {s.bef for s in cfg.states.values()} == {"cd120", "cd118"}
+    assert {p for p, s in cfg.states.items() if s.unit_source == "block"} == BLOCK_STATES
+    assert {p for p, s in cfg.states.items() if s.unit_source == "rds_county"} == {"WV"}
+    vtd = {p for p, s in cfg.states.items() if s.unit_source == "vtd"}
+    assert len(vtd) == 39 and "IA" in vtd
+```
+
+door:
+
+```python
+def test_real_config_bef_and_unit_kind(cfg):
+    assert {p for p, s in cfg.states.items() if s.bef == "cd118"} == {"MO"}
+    assert {s.bef for s in cfg.states.values()} == {"cd120", "cd118"}
+    # the units of ALARM's map.rds (spec chapter 3)
+    assert {p for p, s in cfg.states.items() if s.unit_kind == "tract"} == TRACT_STATES
+    assert {p for p, s in cfg.states.items() if s.unit_kind == "county"} == {"IA", "WV"}
+    vtd = {p for p, s in cfg.states.items() if s.unit_kind == "vtd"}
+    assert len(vtd) == 38 and "NH" in vtd
+```
+
+Vervang in `tests/test_config.py`:
+
+```python
+    assert cfg.ensemble.name == "alarm_v15" and cfg.ensemble.version == 15
+    assert [(a.state, a.unit_column, a.units) for a in cfg.align_to_alarm] == [
+        ("CA", "tract", ("06049000300", "06093000200"))]
+```
+
+door:
+
+```python
+    assert cfg.ensemble.name == "alarm_v15" and cfg.ensemble.version == 15
+```
+
+- [ ] **Step 2: Schrijf de tests van units.py**
+
+Nieuwe inhoud van `tests/test_units.py`:
+
+```python
+import logging
+
+import numpy as np
+import pandas as pd
+import pytest
+import rdata
+
+from gerry.blocks import read_pl_counties
+from gerry.config import StateConfig, data_dir
+from gerry.units import UnitsError, add_composite, load_units, read_block_votes, select_columns, unit_ids
+
+
+def make_state(postal, fips, unit_kind, elections=("pre_16", "pre_20")):
+    return StateConfig(postal=postal, name="Test", fips=fips, seats=2, map_name="m", status="In effect",
+                       source_label="s", source_url="https://example.org/", bef="cd120",
+                       elections=tuple(elections), unit_kind=unit_kind, extra_maps=(), notes=())
+
+
+def write(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+
+
+# ---- select_columns ----
+
+def test_select_columns_returns_the_dem_and_rep_column():
+    cols = ["GEOID20", "pre_16_rep_tru", "pre_16_dem_cli", "uss_16_dem_cor", "pre_20_dem_bid", "pre_20_rep_tru"]
+    assert select_columns(cols, "pre_16") == ("pre_16_dem_cli", "pre_16_rep_tru")
+
+
+def test_select_columns_matches_only_at_the_start():
+    cols = ["pre_20_dem_bid", "pre_20_rep_tru", "xpre_20_dem_a", "sos_r20_rep_b"]
+    assert select_columns(cols, "pre_20") == ("pre_20_dem_bid", "pre_20_rep_tru")
+
+
+def test_select_columns_without_a_match_fails():
+    with pytest.raises(UnitsError, match="pre_16"):
+        select_columns(["pre_20_dem_bid", "pre_20_rep_tru"], "pre_16")
+
+
+def test_select_columns_with_two_matches_fails():
+    with pytest.raises(UnitsError, match="pre_16_dem_cli, pre_16_dem_oth"):
+        select_columns(["pre_16_dem_cli", "pre_16_dem_oth", "pre_16_rep_tru"], "pre_16")
+
+
+# ---- unit_ids (spec chapter 4, "Eenheid-ID's in map.rds") ----
+
+NV = make_state("NV", "32", "vtd")
+CA = make_state("CA", "06", "tract")
+ME = make_state("ME", "23", "tract")
+IA = make_state("IA", "19", "county")
+
+
+def test_unit_ids_of_a_vtd_state_are_geoid():
+    # VTD codes can hold letters and dashes, as in New Hampshire (ALTO01) and Alabama (008-03)
+    table = pd.DataFrame({"GEOID": ["32001000001", "32003ALTO01", "32003008-03"],
+                          "vtd": ["000001", "ALTO01", "008-03"]})
+    assert unit_ids(table, NV).tolist() == ["32001000001", "32003ALTO01", "32003008-03"]
+
+
+def test_unit_ids_of_a_vtd_state_must_be_county_plus_vtd():
+    table = pd.DataFrame({"GEOID": ["32001000001", "32001000002"], "vtd": ["000001", "000003"]})
+    with pytest.raises(UnitsError, match="32001000002"):
+        unit_ids(table, NV)
+
+
+def test_unit_ids_of_ca_and_hi_come_from_the_tract_column():
+    # CA and HI have no GEOID column; tract holds the 11-character tract GEOID
+    table = pd.DataFrame({"tract": ["06001400100", "06049000300"], "county": ["Alameda County", "Modoc County"]})
+    assert unit_ids(table, CA).tolist() == ["06001400100", "06049000300"]
+
+
+def test_unit_ids_prefer_geoid_over_a_short_tract_column():
+    # Maine: GEOID is the tract GEOID, tract only the 6-digit tract code
+    table = pd.DataFrame({"GEOID": ["23019000500"], "tract": ["000500"]})
+    assert unit_ids(table, ME).tolist() == ["23019000500"]
+
+
+COUNTIES = pd.DataFrame({"county_id": ["19001", "19003", "19005"],
+                         "name": ["Adair County", "Adams County", "Allamakee County"]})
+
+
+def test_unit_ids_of_iowa_come_from_the_county_names():
+    table = pd.DataFrame({"county": ["Adams County", "Adair County"]})
+    assert unit_ids(table, IA, COUNTIES).tolist() == ["19003", "19001"]
+
+
+def test_unit_ids_of_iowa_need_a_matching_county_name():
+    table = pd.DataFrame({"county": ["Adair County", "Adair"]})
+    with pytest.raises(UnitsError, match="'Adair' \\(0 matches\\)"):
+        unit_ids(table, IA, COUNTIES)
+
+
+def test_unit_ids_of_iowa_need_a_unique_county_name():
+    counties = pd.concat([COUNTIES, pd.DataFrame({"county_id": ["19007"], "name": ["Adams County"]})])
+    table = pd.DataFrame({"county": ["Adair County", "Adams County"]})
+    with pytest.raises(UnitsError, match="'Adams County' \\(2 matches\\)"):
+        unit_ids(table, IA, counties)
+
+
+def test_unit_ids_of_iowa_need_the_county_records():
+    with pytest.raises(UnitsError, match="county records"):
+        unit_ids(pd.DataFrame({"county": ["Adair County"]}), IA)
+
+
+@pytest.mark.parametrize("ids, message", [
+    (["0600140010", "06001400200"], "11 characters"),      # ten characters
+    (["32001400100", "06001400200"], "starting with 06"),  # another state
+    (["06001400100", "06001400100"], "duplicate"),
+    (["06001400100", None], "without id"),
+])
+def test_unit_ids_are_checked(ids, message):
+    table = pd.DataFrame({"tract": pd.array(ids, dtype="str")})
+    with pytest.raises(UnitsError, match=message):
+        unit_ids(table, CA)
+
+
+def test_unit_ids_need_an_id_column():
+    with pytest.raises(UnitsError, match="no id column"):
+        unit_ids(pd.DataFrame({"vtd": ["000001"]}), NV)
+
+
+# ---- load_units ----
+
+def write_map(path, **columns):
+    """A small map.rds: the given columns plus a list column, as in ALARM's redist_map."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    n = len(next(iter(columns.values())))
+    columns["adj"] = [np.array([0], dtype=np.int32)] * n
+    rdata.write_rds(path, columns)
+
+
+def nv_map(tmp_path, vap=(1334.0, 8.0), d16=(164.7, np.nan)):
+    write_map(tmp_path / "alarm" / "NV_cd_2020_map.rds",
+              GEOID=np.array(["32001000001", "32003008-03"], dtype=object),
+              vtd=np.array(["000001", "008-03"], dtype=object),
+              cd_2020=np.array([2, 1], dtype=np.int32),
+              pop=np.array([1741.0, 10.0]), vap=np.array(vap),
+              pre_16_dem_cli=np.array(d16), pre_16_rep_tru=np.array([529.2, 2.5]),
+              uss_16_dem_cor=np.array([1.0, 2.0]),
+              pre_20_dem_bid=np.array([172.8, 3.0]), pre_20_rep_tru=np.array([510.4, 4.0]))
+
+
+def test_load_units_reads_the_alarm_map(tmp_path, caplog):
+    nv_map(tmp_path)
+    with caplog.at_level(logging.INFO, logger="gerry.units"):
+        units = load_units(NV, tmp_path)
+    assert list(units.columns) == ["unit_id", "vap", "pop", "cd_2020", "d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]
+    assert units["unit_id"].tolist() == ["32001000001", "32003008-03"]
+    assert units["vap"].dtype == np.int64 and units["vap"].tolist() == [1334, 8]
+    assert units["pop"].dtype == np.int64 and units["pop"].tolist() == [1741, 10]
+    assert units["cd_2020"].tolist() == ["02", "01"]
+    assert units["d_pre_16"].tolist() == [164.7, 0.0]          # the empty field became 0
+    assert units["r_pre_20"].dtype == np.float64 and units["r_pre_20"].tolist() == [510.4, 4.0]
+    assert units.attrs == {"empty_vote_fields": 1, "empty_vote_units": 1}
+    assert "NV: 1 empty vote fields in 1 units set to 0" in caplog.text
+
+
+def test_load_units_rejects_fractional_vap(tmp_path):
+    nv_map(tmp_path, vap=(1334.5, 8.0))
+    with pytest.raises(UnitsError, match="vap"):
+        load_units(NV, tmp_path)
+
+
+def test_load_units_with_one_election_and_county_geoids(tmp_path):
+    write_map(tmp_path / "alarm" / "WV_cd_2020_map.rds",
+              GEOID=np.array(["54063", "54037"], dtype=object), county=np.array(["063", "037"], dtype=object),
+              cd_2020=np.array([1, 2], dtype=np.int32), pop=np.array([12376.0, 57701.0]),
+              vap=np.array([9895.0, 44965.0]),
+              pre_20_rep_tru=np.array([5068.0, 15033.0]), pre_20_dem_bid=np.array([1345.0, 12127.0]))
+    units = load_units(make_state("WV", "54", "county", elections=("pre_20",)), tmp_path)
+    assert list(units.columns) == ["unit_id", "vap", "pop", "cd_2020", "d_pre_20", "r_pre_20"]
+    assert units["unit_id"].tolist() == ["54063", "54037"]
+    assert units["d_pre_20"].tolist() == [1345.0, 12127.0]
+
+
+# ---- read_block_votes (census-vest, tract states only) ----
+
+BLOCK_CSV = """GEOID20,state,county,pop,vap,pre_16_dem_cli,pre_16_rep_tru,pre_20_dem_bid,pre_20_rep_tru,arv_16
+060014001001000,CA,Alameda County,0,0,0,0,0,0,NA
+060490003001452,CA,Modoc County,0,0,NA,NA,NA,NA,NA
+060014001001001,CA,Alameda County,12,10,2.5,1.25,3,1,0
+"""
+
+
+def test_read_block_votes_sets_empty_fields_to_zero(tmp_path, caplog):
+    write(tmp_path / "census_vest" / "ca_2020_block.csv", BLOCK_CSV)
+    with caplog.at_level(logging.INFO, logger="gerry.units"):
+        votes = read_block_votes(CA, tmp_path)
+    assert votes.index.name == "block_id"
+    assert votes.index.tolist() == ["060014001001000", "060490003001452", "060014001001001"]
+    assert list(votes.columns) == ["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]
+    assert votes.loc["060490003001452"].tolist() == [0.0, 0.0, 0.0, 0.0]
+    assert votes.loc["060014001001001"].tolist() == [2.5, 1.25, 3.0, 1.0]
+    assert votes.attrs == {"empty_vote_fields": 4, "empty_vote_units": 1}
+    assert "CA: 4 empty vote fields in 1 census-vest blocks set to 0" in caplog.text
+
+
+# ---- add_composite ----
+
+def test_add_composite_sums_two_elections():
+    df = pd.DataFrame({"unit_id": ["a"], "d_pre_16": [10.0], "r_pre_16": [20.0], "d_pre_20": [1.5], "r_pre_20": [2.5]})
+    out = add_composite(df, ["pre_16", "pre_20"])
+    # d = 10 + 1.5, r = 20 + 2.5
+    assert (out.loc[0, "d"], out.loc[0, "r"]) == (11.5, 22.5)
+    assert "d" not in df.columns
+
+
+def test_add_composite_with_one_election_copies_it():
+    df = pd.DataFrame({"unit_id": ["a"], "d_pre_20": [1345.0], "r_pre_20": [5068.0]})
+    out = add_composite(df, ["pre_20"])
+    assert (out.loc[0, "d"], out.loc[0, "r"]) == (1345.0, 5068.0)
+
+
+# ---- the real map.rds files ----
+
+IA_MAP = data_dir() / "alarm" / "IA_cd_2020_map.rds"
+IA_PL = data_dir() / "census" / "pl" / "ia2020.pl.zip"
+CA_MAP = data_dir() / "alarm" / "CA_cd_2020_map.rds"
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not (IA_MAP.exists() and IA_PL.exists()), reason="needs the Iowa map.rds and P.L. 94-171 files")
+def test_iowa_counties_match_the_census_names():
+    units = load_units(make_state("IA", "19", "county"), data_dir(), read_pl_counties(IA_PL, "IA"))
+    assert len(units) == 99
+    assert units["unit_id"].str.startswith("19").all() and units["unit_id"].is_unique
+    assert units.loc[0, ["unit_id", "vap", "cd_2020"]].tolist() == ["19001", 5834, "03"]   # Adair County
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not CA_MAP.exists(), reason="needs alarm/CA_cd_2020_map.rds")
+def test_california_tracts_follow_alarm():
+    units = load_units(make_state("CA", "06", "tract"), data_dir())
+    assert len(units) == 9129
+    # spec chapter 10: two tracts in Modoc and Siskiyou County have no votes in ALARM's map.rds
+    two = units[units["unit_id"].isin(["06049000300", "06093000200"])]
+    assert two[["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20"]].to_numpy().sum() == 0.0
+```
+
+De kleine `.rds`-bestanden schrijft `rdata.write_rds` uit een dict, zoals in de tests van taak 1.4. De kolom `adj` is een lijstkolom, zoals in ALARM's bestanden; `read_rds_table` slaat hem over. `np.nan` in `pre_16_dem_cli` wordt in R een lege waarde.
+
+- [ ] **Step 3: Pas de hulpfuncties en een commentaar in de andere tests aan**
+
+Vervang in `tests/test_sources.py`:
+
+```python
+from gerry.config import AlignEntry, Config, EnsembleConfig, StateConfig
+```
+
+door:
+
+```python
+from gerry.config import Config, EnsembleConfig, StateConfig
+```
+
+Vervang in `tests/test_sources.py`:
+
+```python
+def make_state(postal, name, fips, seats, unit_source, elections=("pre_16", "pre_20")):
+    return StateConfig(postal=postal, name=name, fips=fips, seats=seats, map_name="m", status="In effect",
+                       source_label="s", source_url="https://example.org/", bef="cd120",
+                       elections=tuple(elections), unit_source=unit_source, extra_maps=(), notes=())
+```
+
+door:
+
+```python
+def make_state(postal, name, fips, seats, unit_kind, elections=("pre_16", "pre_20")):
+    return StateConfig(postal=postal, name=name, fips=fips, seats=seats, map_name="m", status="In effect",
+                       source_label="s", source_url="https://example.org/", bef="cd120",
+                       elections=tuple(elections), unit_kind=unit_kind, extra_maps=(), notes=())
+```
+
+Vervang in `tests/test_sources.py`:
+
+```python
+        ensemble=EnsembleConfig(name="alarm_v15", doi=DOI, version=15, notes={}, fill={}),
+        align_to_alarm=(AlignEntry(state="CA", rds="alarm/CA_cd_2020_map.rds", unit_column="tract",
+                                   unit_len=11, units=("06049000300", "06093000200")),),
+        sources=SOURCES,
+        states={"NV": make_state("NV", "Nevada", "32", 4, "vtd"),
+                "CA": make_state("CA", "California", "06", 52, "block"),
+                "WV": make_state("WV", "West Virginia", "54", 2, "rds_county", elections=("pre_20",))},
+```
+
+door:
+
+```python
+        ensemble=EnsembleConfig(name="alarm_v15", doi=DOI, version=15, notes={}, fill={}),
+        sources=SOURCES,
+        states={"NV": make_state("NV", "Nevada", "32", 4, "vtd"),
+                "CA": make_state("CA", "California", "06", 52, "tract"),
+                "WV": make_state("WV", "West Virginia", "54", 2, "county", elections=("pre_20",))},
+```
+
+Vervang in `tests/test_ensemble.py`:
+
+```python
+                       elections=tuple(elections), unit_source="vtd", extra_maps=(), notes=())
+```
+
+door:
+
+```python
+                       elections=tuple(elections), unit_kind="vtd", extra_maps=(), notes=())
+```
+
+Vervang in `tests/test_rds.py`:
+
+```python
+    # The two tracts of align_to_alarm: ALARM's tract data has no votes there.
+```
+
+door:
+
+```python
+    # Two tracts without votes in ALARM's map.rds (spec chapter 10).
+```
+
+De test zelf blijft gelijk; alleen het commentaar noemde nog `align_to_alarm`.
+
+- [ ] **Step 4: Draai de tests en zie ze falen**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_units.py -q
+.venv\Scripts\python -m pytest -q --ignore=tests/test_units.py
+```
+
+Verwacht: het eerste commando geeft `ERROR tests/test_units.py` met `ImportError: cannot import name 'read_block_votes' from 'gerry.units'`. Het tweede geeft `32 failed, 121 passed`. In `test_config.py` meldt de oude lader eerst `ConfigError: config.yaml: missing keys ['align_to_alarm']`; daardoor faalt `test_minimal_config_loads_with_types`, en 22 gevallen van `test_invalid_config_raises` falen met `Regex pattern did not match`. `test_real_config_bef_and_unit_kind` faalt met `AttributeError: 'StateConfig' object has no attribute 'unit_kind'`. De 8 tests in `test_sources.py` en `test_ensemble.py` die een `StateConfig` bouwen, falen met `TypeError: StateConfig.__init__() got an unexpected keyword argument 'unit_kind'`.
+
+- [ ] **Step 5: Pas config.py aan**
+
+Vervang in `pipeline/gerry/config.py`:
+
+```python
+_UNIT_SOURCES = ("vtd", "block", "rds_county")
+```
+
+door:
+
+```python
+_UNIT_KINDS = ("vtd", "tract", "county")
+```
+
+Vervang in `pipeline/gerry/config.py`:
+
+```python
+    "status_checked", "census_vest_commit", "ensemble", "align_to_alarm",
+    "sources", "states", "at_large",
+```
+
+door:
+
+```python
+    "status_checked", "census_vest_commit", "ensemble", "sources", "states", "at_large",
+```
+
+Vervang in `pipeline/gerry/config.py`:
+
+```python
+    "bef", "elections", "unit_source",
+```
+
+door:
+
+```python
+    "bef", "elections", "unit_kind",
+```
+
+Vervang in `pipeline/gerry/config.py`:
+
+```python
+    unit_source: str
+    extra_maps: tuple[ExtraMap, ...]
+```
+
+door:
+
+```python
+    unit_kind: str
+    extra_maps: tuple[ExtraMap, ...]
+```
+
+Vervang in `pipeline/gerry/config.py`:
+
+```python
+@dataclass(frozen=True)
+class AlignEntry:
+    state: str
+    rds: str
+    unit_column: str
+    unit_len: int
+    units: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Config:
+    status_checked: date
+    census_vest_commit: str
+    ensemble: EnsembleConfig
+    align_to_alarm: tuple[AlignEntry, ...]
+    sources: dict[str, str]
+```
+
+door:
+
+```python
+@dataclass(frozen=True)
+class Config:
+    status_checked: date
+    census_vest_commit: str
+    ensemble: EnsembleConfig
+    sources: dict[str, str]
+```
+
+Vervang in `pipeline/gerry/config.py`:
+
+```python
+        ensemble=_ensemble(raw["ensemble"], states),
+        align_to_alarm=_align(raw["align_to_alarm"], states),
+        sources=_sources(raw["sources"]),
+```
+
+door:
+
+```python
+        ensemble=_ensemble(raw["ensemble"], states),
+        sources=_sources(raw["sources"]),
+```
+
+Vervang in `pipeline/gerry/config.py`:
+
+```python
+        unit_source=_choice(raw, "unit_source", where, _UNIT_SOURCES),
+```
+
+door:
+
+```python
+        unit_kind=_choice(raw, "unit_kind", where, _UNIT_KINDS),
+```
+
+Vervang in `pipeline/gerry/config.py`:
+
+```python
+def _align(raw: Any, states: dict[str, StateConfig]) -> tuple[AlignEntry, ...]:
+    if raw is None:
+        return ()
+    if not isinstance(raw, list):
+        raise ConfigError("align_to_alarm: expected a list")
+    entries = []
+    keys = ("state", "rds", "unit_column", "unit_len", "units")
+    for i, item in enumerate(raw):
+        where = f"align_to_alarm[{i}]"
+        _mapping(item, where)
+        _only_keys(item, keys, where, required=keys)
+        postal = _text(item, "state", where)
+        if postal not in states:
+            raise ConfigError(f"{where}.state: {postal!r} is not in states")
+        unit_len = _int(item["unit_len"], f"{where}.unit_len", 1)
+        units = item["units"]
+        if not isinstance(units, list) or not units:
+            raise ConfigError(f"{where}.units: expected a non-empty list")
+        for unit in units:
+            if (not isinstance(unit, str) or len(unit) != unit_len
+                    or not unit.startswith(states[postal].fips)):
+                raise ConfigError(
+                    f"{where}.units: {unit!r} must be quoted text of length {unit_len} "
+                    f"starting with {states[postal].fips}"
+                )
+        entries.append(AlignEntry(
+            state=postal,
+            rds=_text(item, "rds", where),
+            unit_column=_text(item, "unit_column", where),
+            unit_len=unit_len,
+            units=tuple(units),
+        ))
+    return tuple(entries)
+
+
+def _sources(raw: Any) -> dict[str, str]:
+```
+
+door:
+
+```python
+def _sources(raw: Any) -> dict[str, str]:
+```
+
+- [ ] **Step 6: Pas config.yaml aan**
+
+Vervang overal in `pipeline/config.yaml` (39 regels: de 38 VTD-staten en IA, dat hieronder `county` wordt):
+
+```yaml
+    unit_source: vtd
+```
+
+door:
+
+```yaml
+    unit_kind: vtd
+```
+
+Vervang overal in `pipeline/config.yaml` (CA, HI, ME en OR):
+
+```yaml
+    unit_source: block
+```
+
+door:
+
+```yaml
+    unit_kind: tract
+```
+
+Vervang in `pipeline/config.yaml` (WV):
+
+```yaml
+    unit_source: rds_county
+```
+
+door:
+
+```yaml
+    unit_kind: county
+```
+
+Vervang in `pipeline/config.yaml` (IA, de regel na `elections` onder Iowa):
+
+```yaml
+    source_url: https://services2.arcgis.com/KhKjlwEBlPJd6v51/arcgis/rest/services/RedistrictingPlan2/FeatureServer
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_kind: vtd
+```
+
+door:
+
+```yaml
+    source_url: https://services2.arcgis.com/KhKjlwEBlPJd6v51/arcgis/rest/services/RedistrictingPlan2/FeatureServer
+    bef: cd120
+    elections: [pre_16, pre_20]
+    unit_kind: county
+```
+
+Vervang in `pipeline/config.yaml`:
+
+```yaml
+# Units whose votes in the unit file differ from the data ALARM summed for the
+# ensembles. units.py scales the block votes in these tracts to ALARM's totals.
+align_to_alarm:
+  - state: CA
+    rds: alarm/CA_cd_2020_map.rds
+    unit_column: tract
+    unit_len: 11
+    units: ["06049000300", "06093000200"]
+
+sources:
+```
+
+door:
+
+```yaml
+sources:
+```
+
+Vervang in `pipeline/config.yaml`:
+
+```yaml
+status_checked: 2026-10-03
+census_vest_commit: 243c8a8134ecf8151777a9388c48323e274767e2
+```
+
+door:
+
+```yaml
+status_checked: 2026-10-03
+# census-vest block files of CA, HI, ME and OR: only weights within a tract.
+# The votes per unit come from ALARM's map.rds (unit_kind per state below).
+census_vest_commit: 243c8a8134ecf8151777a9388c48323e274767e2
+```
+
+Staat `status_checked` intussen op een latere datum, laat die datum dan staan en voeg alleen de twee commentaarregels toe. De URL `census_vest` onder `sources` blijft gelijk; `{kind}` is voortaan altijd `block`.
+
+- [ ] **Step 7: Schrijf units.py**
+
+Nieuwe inhoud van `pipeline/gerry/units.py`:
+
+```python
+"""Votes per unit from ALARM's map.rds (VTD, tract or county): unit ids, column choice, loading,
+the census-vest block votes that weigh blocks within a tract, and the composite."""
+from __future__ import annotations
+
+import logging
+import re
+from collections.abc import Iterable, Sequence
+from pathlib import Path
+
+import pandas as pd
+
+from gerry.config import StateConfig
+from gerry.rds import read_rds_table
+
+log = logging.getLogger(__name__)
+
+ID_LENGTH = {"vtd": 11, "tract": 11, "county": 5}   # county (5) + VTD code (6); tract GEOID; county FIPS
+
+
+class UnitsError(ValueError):
+    pass
+
+
+def select_columns(columns: Iterable[str], election: str) -> tuple[str, str]:
+    """(dem, rep): the one column matching ^<election>_dem_ and the one matching ^<election>_rep_."""
+    columns = list(columns)
+    found = []
+    for party in ("dem", "rep"):
+        pattern = re.compile(rf"^{re.escape(election)}_{party}_")
+        hits = [c for c in columns if pattern.match(c)]
+        if len(hits) != 1:
+            raise UnitsError(f"{election}: expected one column matching ^{election}_{party}_, "
+                             f"found {len(hits)}: {', '.join(hits) or 'none'}")
+        found.append(hits[0])
+    return found[0], found[1]
+
+
+def _county_fips(names: pd.Series, counties: pd.DataFrame | None, st: StateConfig) -> pd.Series:
+    """County names such as "Adair County" -> FIPS codes, through the P.L. 94-171 county records."""
+    if counties is None:
+        raise UnitsError(f"{st.postal}: the map has no GEOID column; its county names need the "
+                         "P.L. 94-171 county records")
+    matches = names.map(counties["name"].value_counts()).fillna(0).astype("int64")
+    bad = names[matches != 1]
+    if len(bad):
+        raise UnitsError(f"{st.postal}: {len(bad)} county names do not match exactly one P.L. 94-171 county, "
+                         f"e.g. {bad.iloc[0]!r} ({int(matches[bad.index[0]])} matches)")
+    return names.map(counties.drop_duplicates("name", keep=False).set_index("name")["county_id"])
+
+
+def unit_ids(table: pd.DataFrame, st: StateConfig, counties: pd.DataFrame | None = None) -> pd.Series:
+    """Text id of every unit in a map.rds table (spec chapter 4): GEOID; without GEOID the column tract
+    (CA, HI) or the county name looked up in `counties` (IA, columns county_id and name)."""
+    if "GEOID" in table.columns:
+        ids, source = table["GEOID"], "GEOID"
+    elif st.unit_kind == "tract" and "tract" in table.columns:
+        ids, source = table["tract"], "tract"
+    elif st.unit_kind == "county" and "county" in table.columns:
+        ids, source = _county_fips(table["county"], counties, st), "county"
+    else:
+        raise UnitsError(f"{st.postal}: no id column for {st.unit_kind} units")
+    if ids.isna().any():
+        raise UnitsError(f"{st.postal}: {int(ids.isna().sum())} units without id in column {source}")
+    if not pd.api.types.is_string_dtype(ids):
+        raise UnitsError(f"{st.postal}: column {source} is not text but {ids.dtype}")
+    length = ID_LENGTH[st.unit_kind]
+    bad = ids[(ids.str.len() != length) | ~ids.str.startswith(st.fips)]
+    if len(bad):
+        raise UnitsError(f"{st.postal}: {len(bad)} ids in column {source} are not {length} characters "
+                         f"starting with {st.fips}, e.g. {bad.iloc[0]}")
+    dup = ids[ids.duplicated()]
+    if len(dup):
+        raise UnitsError(f"{st.postal}: duplicate unit ids: {', '.join(dup.head(5))}")
+    if st.unit_kind == "vtd":
+        if "vtd" not in table.columns:
+            raise UnitsError(f"{st.postal}: the map has no vtd column")
+        off = (ids != ids.str[:5] + table["vtd"]).to_numpy()
+        if off.any():
+            raise UnitsError(f"{st.postal}: {int(off.sum())} GEOIDs are not county + vtd, e.g. "
+                             f"{ids[off].iloc[0]} with vtd {table['vtd'][off].iloc[0]}")
+    return ids.astype(str).reset_index(drop=True).rename("unit_id")
+
+
+def _whole(values: pd.Series, name: str, st: StateConfig) -> pd.Series:
+    numbers = pd.to_numeric(values)
+    if numbers.isna().any() or (numbers % 1 != 0).any():
+        raise UnitsError(f"{st.postal}: {name} is missing or not a whole number in some units")
+    return numbers.astype("int64")
+
+
+def _zero_empty(df: pd.DataFrame, cols: list[str]) -> tuple[int, int]:
+    """Set empty vote fields to 0 in place; return (fields, rows) that were empty."""
+    empty = df[cols].isna()
+    n_fields, n_rows = int(empty.sum().sum()), int(empty.any(axis=1).sum())
+    df[cols] = df[cols].fillna(0.0)
+    return n_fields, n_rows
+
+
+def load_units(st: StateConfig, root: Path, counties: pd.DataFrame | None = None) -> pd.DataFrame:
+    """unit_id (str), vap and pop (int64), cd_2020 (district of ALARM's reference map, str "01") and
+    d_<e>, r_<e> (float64) per election, from alarm/{ST}_cd_2020_map.rds.
+
+    `counties` (from read_pl_counties) is needed for a county map without GEOID (Iowa).
+    Empty vote fields become 0; their number is in .attrs["empty_vote_fields"] and
+    .attrs["empty_vote_units"], and in the log."""
+    table = read_rds_table(Path(root) / "alarm" / f"{st.postal}_cd_2020_map.rds")
+    missing = [c for c in ("vap", "pop", "cd_2020") if c not in table.columns]
+    if missing:
+        raise UnitsError(f"{st.postal}: map.rds has no column {', '.join(missing)}")
+    out = pd.DataFrame({"unit_id": unit_ids(table, st, counties)})
+    out["vap"] = _whole(table["vap"], "vap", st).to_numpy()
+    out["pop"] = _whole(table["pop"], "pop", st).to_numpy()
+    out["cd_2020"] = _whole(table["cd_2020"], "cd_2020", st).map("{:02d}".format).to_numpy()
+    for e in st.elections:
+        dem, rep = select_columns(table.columns, e)
+        out[f"d_{e}"] = pd.to_numeric(table[dem]).astype("float64").to_numpy()
+        out[f"r_{e}"] = pd.to_numeric(table[rep]).astype("float64").to_numpy()
+    n_fields, n_units = _zero_empty(out, [f"{p}_{e}" for e in st.elections for p in ("d", "r")])
+    if n_fields:
+        log.info("%s: %d empty vote fields in %d units set to 0", st.postal, n_fields, n_units)
+    out.attrs = {"empty_vote_fields": n_fields, "empty_vote_units": n_units}
+    return out
+
+
+def read_block_votes(st: StateConfig, root: Path) -> pd.DataFrame:
+    """Votes per census block from census-vest/{st}_2020_block.csv (tract states): index block_id,
+    columns d_<e>, r_<e> (float64). They only weigh the blocks within a tract (spec chapter 4).
+    Empty fields become 0; counted in .attrs as in load_units, and logged."""
+    path = Path(root) / "census_vest" / f"{st.postal.lower()}_2020_block.csv"
+    header = pd.read_csv(path, nrows=0, encoding="utf-8").columns
+    names = {}
+    for e in st.elections:
+        dem, rep = select_columns(header, e)
+        names[dem], names[rep] = f"d_{e}", f"r_{e}"
+    table = pd.read_csv(path, usecols=["GEOID20", *names], dtype={"GEOID20": str}, encoding="utf-8")
+    ids = table["GEOID20"]
+    if ids.isna().any() or not ids.str.len().eq(15).all() or not ids.is_unique:
+        raise UnitsError(f"{st.postal}: GEOID20 in {path.name} is not a unique 15-character block code")
+    out = table.rename(columns=names).set_index("GEOID20").rename_axis("block_id")[list(names.values())]
+    out = out.astype("float64")
+    n_fields, n_blocks = _zero_empty(out, list(names.values()))
+    if n_fields:
+        log.info("%s: %d empty vote fields in %d census-vest blocks set to 0", st.postal, n_fields, n_blocks)
+    out.attrs = {"empty_vote_fields": n_fields, "empty_vote_units": n_blocks}
+    return out
+
+
+def add_composite(df: pd.DataFrame, elections: Sequence[str]) -> pd.DataFrame:
+    """Copy of df with d = sum of d_<e> and r = sum of r_<e> over the elections."""
+    out = df.copy()
+    out.attrs = dict(df.attrs)
+    out["d"] = out[[f"d_{e}" for e in elections]].sum(axis=1)
+    out["r"] = out[[f"r_{e}" for e in elections]].sum(axis=1)
+    return out
+```
+
+- [ ] **Step 8: Pas sources.py en README.md aan**
+
+Vervang in `pipeline/gerry/sources.py`:
+
+```python
+        if cfg.states[p].unit_source == "block":
+```
+
+door:
+
+```python
+        if cfg.states[p].unit_kind == "tract":
+```
+
+De README zei dat de stemmen per precinct geteld zijn. Met `map.rds` klopt dat niet meer voor de tract- en countystaten (spec hoofdstuk 2, afwijking 5).
+
+Vervang in `README.md`:
+
+```markdown
+All three count the same votes. These are the 2016 and 2020 presidential results added together, by precinct. West Virginia uses 2020 only, by county.
+```
+
+door:
+
+```markdown
+All three count the same votes. These are the 2016 and 2020 presidential results added together, per voting district, from the ALARM Project's data. California, Hawaii, Maine and Oregon have them per census tract, Iowa and West Virginia per county. West Virginia uses 2020 only.
+```
+
+- [ ] **Step 9: Draai de tests opnieuw**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_config.py tests/test_units.py tests/test_sources.py tests/test_ensemble.py -q
+(Select-String -Path pipeline\config.yaml -Pattern "unit_source|align_to_alarm").Count
+.venv\Scripts\python -m pytest -q
+```
+
+Verwacht: `91 passed`, dan `0`, dan `178 passed`. De twee datatests van `test_units.py` vinden in Iowa 99 county's (de eerste is Adair County, `19001`, VAP 5.834, district 03 van ALARM's referentiekaart) en in California 9.129 tracts, waarvan de twee tracts in Modoc en Siskiyou County geen stemmen hebben.
+
+- [ ] **Step 10: Commit**
+
+```powershell
+git add README.md pipeline/config.yaml pipeline/gerry/config.py pipeline/gerry/sources.py pipeline/gerry/units.py tests/test_config.py tests/test_ensemble.py tests/test_rds.py tests/test_sources.py tests/test_units.py
+git commit -m "Load votes per unit from ALARM's map.rds and replace unit_source with unit_kind"
+```
+
+### Task 1.16: Controle: VAP en bevolking per eenheid
+
+**Files:**
+- Modify: `pipeline/gerry/checks.py` (`check_vap` wordt `check_vap_pop`)
+- Modify: `tests/test_checks.py`
+
+**Interfaces:**
+- Consumes: `CheckError` (taak 0.5); de `units` van `load_units` (taak 1.15, kolommen `unit_id`, `vap`, `pop`); de `blocks` van `read_pl_blocks` en de sleutels van `unit_of_block` (taak 1.13).
+- Produces: `check_vap_pop(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, state: str) -> tuple[int, int]`. Per eenheid moet de som van blok-VAP gelijk zijn aan `vap` en de som van POP100 aan `pop`. Blokken waarvan de sleutel geen eenheid is, moeten VAP 0 en bevolking 0 hebben; de functie geeft hun aantal en het aantal van hun sleutels terug. Een blok zonder sleutel is een fout. Faalt iets, dan `CheckError("vap_pop", state, ...)`. `check_vap` bestaat niet meer.
+
+Op de echte data zijn er zulke lege blokken in drie staten: 631 blokken in 38 VTD's in MI, 63 blokken in 4 VTD's in OH en 112 blokken in 6 tracts in ME. Het gaat steeds om water dat ALARM niet in `map.rds` opnam. In MI hebben die 38 VTD's bij census-vest samen 17.272 stemmen; ALARM telt ze niet mee, en wij dus ook niet (spec, hoofdstuk 10).
+
+- [ ] **Step 1: Schrijf de falende tests**
+
+Vervang in `tests/test_checks.py`:
+
+```python
+from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
+                          check_geoids, check_units_linked, check_vap)
+
+
+def units_table():
+    return pd.DataFrame({"unit_id": ["U1", "U2", "U3"], "vap": [30, 0, 5],
+                         "d_pre_20": [30.0, 6.0, 0.0], "r_pre_20": [60.0, 0.0, 0.0],
+                         "d": [30.0, 6.0, 0.0], "r": [60.0, 0.0, 0.0]})
+
+
+def blocks_table():
+    return pd.DataFrame({"block_id": ["b1", "b2", "b3", "b4"], "vap": [10, 20, 0, 5]})
+```
+
+door:
+
+```python
+from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
+                          check_geoids, check_units_linked, check_vap_pop)
+
+
+def units_table():
+    return pd.DataFrame({"unit_id": ["U1", "U2", "U3"], "vap": [30, 0, 5], "pop": [40, 2, 6],
+                         "d_pre_20": [30.0, 6.0, 0.0], "r_pre_20": [60.0, 0.0, 0.0],
+                         "d": [30.0, 6.0, 0.0], "r": [60.0, 0.0, 0.0]})
+
+
+def blocks_table():
+    return pd.DataFrame({"block_id": ["b1", "b2", "b3", "b4"], "vap": [10, 20, 0, 5], "pop": [12, 28, 2, 6]})
+```
+
+Vervang in `tests/test_checks.py`:
+
+```python
+# ---- check_vap ----
+
+def test_vap_passes_when_blocks_add_up_to_units():
+    check_vap(units_table(), blocks_table(), UNIT_OF, "NV")
+
+
+def test_vap_fails_when_a_unit_differs():
+    blocks = blocks_table()
+    blocks.loc[1, "vap"] = 21
+    with pytest.raises(CheckError, match="vap failed for NV.*U1.*30.*31"):
+        check_vap(units_table(), blocks, UNIT_OF, "NV")
+
+
+def test_vap_fails_for_block_vap_outside_the_unit_file():
+    blocks = pd.concat([blocks_table(), pd.DataFrame({"block_id": ["b5"], "vap": [3]})], ignore_index=True)
+    unit_of = pd.concat([UNIT_OF, pd.Series(["U9"], index=["b5"])])
+    with pytest.raises(CheckError, match="U9"):
+        check_vap(units_table(), blocks, unit_of, "NV")
+
+
+def test_vap_fails_for_block_vap_without_a_unit():
+    blocks = pd.concat([blocks_table(), pd.DataFrame({"block_id": ["b5"], "vap": [3]})], ignore_index=True)
+    with pytest.raises(CheckError, match="vap failed for NV.*b5"):
+        check_vap(units_table(), blocks, UNIT_OF, "NV")
+```
+
+door:
+
+```python
+# ---- check_vap_pop ----
+
+def with_water(vap=(0, 0), pop=(0, 0)):
+    """Blocks b5 and b6 whose key W1 is not a unit, as the water VTDs that ALARM left out in MI and OH."""
+    blocks = pd.concat([blocks_table(), pd.DataFrame({"block_id": ["b5", "b6"], "vap": list(vap), "pop": list(pop)})],
+                       ignore_index=True)
+    unit_of = pd.concat([UNIT_OF, pd.Series(["W1", "W1"], index=["b5", "b6"])])
+    return blocks, unit_of
+
+
+def test_vap_pop_passes_when_blocks_add_up_to_units():
+    assert check_vap_pop(units_table(), blocks_table(), UNIT_OF, "NV") == (0, 0)
+
+
+def test_vap_pop_fails_when_the_vap_of_a_unit_differs():
+    blocks = blocks_table()
+    blocks.loc[1, "vap"] = 21
+    with pytest.raises(CheckError, match="vap_pop failed for NV: vap: 1 units differ, e.g. U1: map 30, blocks 31"):
+        check_vap_pop(units_table(), blocks, UNIT_OF, "NV")
+
+
+def test_vap_pop_fails_when_the_population_of_a_unit_differs():
+    blocks = blocks_table()
+    blocks.loc[2, "pop"] = 3
+    with pytest.raises(CheckError, match="pop: 1 units differ, e.g. U2: map 2, blocks 3"):
+        check_vap_pop(units_table(), blocks, UNIT_OF, "NV")
+
+
+def test_vap_pop_counts_empty_blocks_without_a_unit():
+    blocks, unit_of = with_water()
+    # two blocks, one key
+    assert check_vap_pop(units_table(), blocks, unit_of, "NV") == (2, 1)
+
+
+@pytest.mark.parametrize("vap, pop", [((0, 3), (0, 4)), ((0, 0), (0, 1))])
+def test_vap_pop_fails_for_people_in_blocks_without_a_unit(vap, pop):
+    blocks, unit_of = with_water(vap, pop)
+    with pytest.raises(CheckError, match="vap_pop failed for NV: 1 blocks with VAP or population.*b6"):
+        check_vap_pop(units_table(), blocks, unit_of, "NV")
+
+
+def test_vap_pop_fails_for_a_block_without_a_key():
+    blocks, _ = with_water()
+    with pytest.raises(CheckError, match="b5"):
+        check_vap_pop(units_table(), blocks, UNIT_OF, "NV")
+```
+
+De andere controles in dit bestand gebruiken `units_table()` en `blocks_table()` ook; de kolom `pop` verandert hun uitkomst niet.
+
+- [ ] **Step 2: Draai de tests en zie ze falen**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_checks.py -q
+```
+
+Verwacht: `ERROR tests/test_checks.py` met `ImportError: cannot import name 'check_vap_pop' from 'gerry.checks'`.
+
+- [ ] **Step 3: Schrijf de code**
+
+Vervang in `pipeline/gerry/checks.py`:
+
+```python
+def check_vap(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, state: str) -> None:
+    """Block VAP (P0030001) summed per unit equals the VAP in the unit file."""
+    unit_ids = blocks["block_id"].map(unit_of)
+    unmapped = blocks.loc[unit_ids.isna() & (blocks["vap"] > 0), "block_id"]
+    if len(unmapped):
+        raise CheckError("vap", state, f"{len(unmapped)} blocks with VAP belong to no unit, "
+                                       f"e.g. {unmapped.iloc[0]}")
+    by_unit = blocks["vap"].groupby(unit_ids.to_numpy()).sum()
+    expected = units.set_index("unit_id")["vap"]
+    got = by_unit.reindex(expected.index, fill_value=0)
+    bad = expected.index[(got != expected).to_numpy()]
+    if len(bad):
+        first = bad[0]
+        raise CheckError("vap", state, f"{len(bad)} units differ, e.g. {first}: unit file {int(expected[first])}, "
+                                       f"blocks {int(got[first])}")
+    outside = by_unit[~by_unit.index.isin(expected.index) & (by_unit > 0).to_numpy()]
+    if len(outside):
+        raise CheckError("vap", state, f"{len(outside)} block units with VAP are not in the unit file, "
+                                       f"e.g. {outside.index[0]} ({int(outside.iloc[0])})")
+```
+
+door:
+
+```python
+def check_vap_pop(units: pd.DataFrame, blocks: pd.DataFrame, unit_of: pd.Series, state: str) -> tuple[int, int]:
+    """Per unit, block VAP (P0030001) and POP100 add up to vap and pop of map.rds. Blocks whose key
+    (unit_of) is not a unit must have VAP 0 and POP100 0. Returns (number of those blocks, of their keys)."""
+    keys = blocks["block_id"].map(unit_of)
+    if keys.isna().any():
+        raise CheckError("vap_pop", state, f"{int(keys.isna().sum())} blocks have no key, "
+                                           f"e.g. {blocks.loc[keys.isna(), 'block_id'].iloc[0]}")
+    known = keys.isin(units["unit_id"]).to_numpy()
+    outside = blocks[~known]
+    people = outside[(outside["vap"] > 0) | (outside["pop"] > 0)]
+    if len(people):
+        first = people.iloc[0]
+        raise CheckError("vap_pop", state, f"{len(people)} blocks with VAP or population belong to no unit, "
+                                           f"e.g. {first['block_id']} (VAP {int(first['vap'])}, "
+                                           f"population {int(first['pop'])})")
+    sums = blocks[known].groupby(keys[known].to_numpy())[["vap", "pop"]].sum()
+    expected = units.set_index("unit_id")
+    for col in ("vap", "pop"):
+        got = sums[col].reindex(expected.index, fill_value=0)
+        bad = expected.index[(got != expected[col]).to_numpy()]
+        if len(bad):
+            first = bad[0]
+            raise CheckError("vap_pop", state, f"{col}: {len(bad)} units differ, e.g. {first}: "
+                                               f"map {int(expected.at[first, col])}, blocks {int(got[first])}")
+    return int((~known).sum()), int(keys[~known].nunique())
+```
+
+- [ ] **Step 4: Draai de tests opnieuw**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_checks.py -q
+.venv\Scripts\python -m pytest -q
+```
+
+Verwacht: `22 passed`, dan `181 passed`.
+
+- [ ] **Step 5: Commit**
+
+```powershell
+git add pipeline/gerry/checks.py tests/test_checks.py
+git commit -m "Check VAP and population per unit, and that blocks without a unit are empty"
+```
+
+### Task 1.17: ALARM's referentiekaart: labels uit map.rds en controle tegen CD118
+
+**Files:**
+- Modify: `pipeline/gerry/ensemble.py` (nieuw `reference_labels`)
+- Modify: `pipeline/gerry/checks.py` (nieuw `check_reference_labels`)
+- Modify: `tests/test_ensemble.py`
+- Modify: `tests/test_checks.py`
+
+**Interfaces:**
+- Consumes: `REFERENCE_DRAW`, `_district_codes`, `read_stats` (taak 1.9); `CheckError` (taak 0.5).
+- Produces:
+  - `reference_labels(stats: pd.DataFrame, map_pop: pd.Series, postal: str) -> dict[str, str]`: voor elk district van `cd_2020` in het stats-bestand het label van het district in `map.rds` met precies dezelfde bevolking (`total_pop` tegen `map_pop`). `map_pop`: bevolking per label van `cd_2020` in `map.rds`, index `"01"`, `"02"`, ... Een district met nul of meer treffers, of twee districten met dezelfde treffer, geven `CheckError("reference_labels", postal, ...)`.
+  - `check_reference_labels(labels: pd.Series, district_of: pd.Series, pop: pd.Series, state: str, min_share: float = 0.97) -> float`: `labels` is per blok het label van `cd_2020` van zijn eenheid in `map.rds` (blokken zonder eenheid hebben geen label en vallen weg), `district_of` het CD118-district, `pop` de POP100. Zonder ZZ-blokken. Elk label moet de grootste bevolkingsoverlap hebben met het CD118-district met dezelfde code, zonder gelijke stand; elk CD118-district moet een label zijn; en minstens `min_share` van de bevolking moet in beide dezelfde code hebben. Geeft dat aandeel terug. Anders `CheckError("reference_labels", state, ...)`.
+
+`reference_labels` staat in `ensemble.py`. Dat bestand leest het stats-bestand en kent `REFERENCE_DRAW`, dus de nummering van ALARM's referentiekaart hoort daar. Het is een pure functie die met een paar regels test-data te testen is. De vergelijking met CD118 is een controle die de pijplijn stopt; die staat bij de andere controles in `checks.py`. `02_join.py` (taak 1.18) koppelt ze, want alleen daar zijn `map.rds`, de blokken uit P.L. 94-171 en CD118 tegelijk geladen.
+
+Op de echte data nummert alleen Oregon anders (stats 1 wordt 02, 2 wordt 04, 3 wordt 05, 4 wordt 06, 5 wordt 03, 6 wordt 01). In alle 44 staten past elk label van `map.rds` bij het CD118-district met dezelfde code. De grens van 97% geldt voor de hele staat: het laagste aandeel is 0,9794 (AZ). Per label zou de grens niet werken: in CA liggen 7 districten onder 97% (district 48 heeft maar 93,9% van zijn bevolking in CD118-district 48), in AZ en MA 2 en in FL 1. Dat komt doordat ALARM hele eenheden toewijst en CD118 eenheden splitst.
+
+- [ ] **Step 1: Schrijf de falende tests**
+
+Vervang in `tests/test_ensemble.py`:
+
+```python
+from gerry.ensemble import N_PLANS, district_votes, read_stats
+```
+
+door:
+
+```python
+from gerry.ensemble import N_PLANS, district_votes, read_stats, reference_labels
+```
+
+Vervang in `tests/test_ensemble.py`:
+
+```python
+NV_STATS = data_dir() / "alarm" / "NV_cd_2020_stats.csv"
+```
+
+door:
+
+```python
+# ---- reference_labels (Task 1.17) ----
+
+def reference_stats(pops):
+    """cd_2020 rows with the given total_pop per district, plus one plan that must be ignored."""
+    n = len(pops)
+    return pd.DataFrame({"draw": ["cd_2020"] * n + ["1"] * n, "district": list(range(1, n + 1)) * 2,
+                         "total_pop": list(pops) + [999] * n})
+
+
+def map_pop(*pops):
+    return pd.Series(list(pops), index=[f"{k:02d}" for k in range(1, len(pops) + 1)])
+
+
+def test_reference_labels_follow_the_population():
+    # stats district 1 has the population of map.rds district 03, and so on (as in Oregon)
+    labels = reference_labels(reference_stats([300, 100, 200]), map_pop(100, 200, 300), "OR")
+    assert labels == {"01": "03", "02": "01", "03": "02"}
+
+
+@pytest.mark.parametrize("stats_pops, pops, message", [
+    ([301, 100, 200], (100, 200, 300), "cd_2020 district 01 \\(population 301\\) matches 0 districts of map.rds"),
+    ([300, 100, 100], (100, 100, 300), "cd_2020 district 02 \\(population 100\\) matches 2 districts of map.rds"),
+    ([100, 100, 300], (100, 200, 300), "cd_2020 districts 01, 02 all match district 01 of map.rds"),
+])
+def test_reference_labels_need_exactly_one_match(stats_pops, pops, message):
+    with pytest.raises(CheckError, match=f"reference_labels failed for OR: {message}"):
+        reference_labels(reference_stats(stats_pops), map_pop(*pops), "OR")
+
+
+NV_STATS = data_dir() / "alarm" / "NV_cd_2020_stats.csv"
+```
+
+Vervang in `tests/test_checks.py`:
+
+```python
+from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
+                          check_geoids, check_units_linked, check_vap_pop)
+```
+
+door:
+
+```python
+from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
+                          check_geoids, check_reference_labels, check_units_linked, check_vap_pop)
+```
+
+Voeg onderaan `tests/test_checks.py` toe:
+
+```python
+
+
+# ---- check_reference_labels (Task 1.17) ----
+
+BLOCKS = ["c1", "c2", "c3", "c4", "c5", "c6", "c7"]
+
+
+def reference_case(c5_pop=2):
+    """map.rds label and CD118 district per block, and POP100. c6 lies in ZZ; c7 belongs to no unit."""
+    labels = pd.Series(["01", "01", "02", "02", "02", "01", None], index=BLOCKS)
+    district_of = pd.Series(["01", "01", "02", "02", "01", "ZZ", "02"], index=BLOCKS)
+    pop = pd.Series([50, 48, 60, 30, c5_pop, 0, 0], index=BLOCKS)
+    return labels, district_of, pop
+
+
+def test_reference_labels_pass_and_return_the_share():
+    # label 01: 98 people, all in CD118 01. Label 02: 90 in 02, 2 in 01. Same code: 188 of 190.
+    share = check_reference_labels(*reference_case(), "NV")
+    assert share == pytest.approx(188 / 190)
+
+
+@pytest.mark.parametrize("c5_pop, message", [
+    (100, "district 02 of map.rds overlaps most with CD118 district 01"),
+    (90, "district 02 of map.rds overlaps equally with CD118 districts 01, 02"),
+])
+def test_reference_labels_need_the_same_code_in_cd118(c5_pop, message):
+    with pytest.raises(CheckError, match=f"reference_labels failed for NV: {message}"):
+        check_reference_labels(*reference_case(c5_pop), "NV")
+
+
+def test_reference_labels_need_most_people_in_the_same_district():
+    with pytest.raises(CheckError, match="0.9895 of the population .* below 0.995"):
+        check_reference_labels(*reference_case(), "NV", min_share=0.995)
+
+
+def test_reference_labels_need_a_label_for_every_cd118_district():
+    labels, district_of, pop = reference_case()
+    district_of["c4"] = "03"
+    with pytest.raises(CheckError, match="CD118 districts without a map.rds district: 03"):
+        check_reference_labels(labels, district_of, pop, "NV")
+```
+
+- [ ] **Step 2: Draai de tests en zie ze falen**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_checks.py tests/test_ensemble.py -q
+```
+
+Verwacht: `2 errors during collection`: `ImportError: cannot import name 'check_reference_labels' from 'gerry.checks'` en `ImportError: cannot import name 'reference_labels' from 'gerry.ensemble'`.
+
+- [ ] **Step 3: Schrijf de code**
+
+Vervang in `pipeline/gerry/ensemble.py`:
+
+```python
+    n_plans = ensemble["draw"].nunique()
+    if n_plans != N_PLANS:
+        raise CheckError("ensemble_structure", st.postal, f"{n_plans} plans, expected {N_PLANS}")
+    return ensemble, reference
+```
+
+door:
+
+```python
+    n_plans = ensemble["draw"].nunique()
+    if n_plans != N_PLANS:
+        raise CheckError("ensemble_structure", st.postal, f"{n_plans} plans, expected {N_PLANS}")
+    return ensemble, reference
+
+
+def reference_labels(stats: pd.DataFrame, map_pop: pd.Series, postal: str) -> dict[str, str]:
+    """Label of each cd_2020 district in the stats file -> label of the map.rds district with exactly the
+    same population. map_pop: population per cd_2020 label of map.rds ("01" -> int). The two files do not
+    always number the districts alike (Oregon)."""
+    ref = stats[stats["draw"].astype(str).str.strip() == REFERENCE_DRAW]
+    labels = {}
+    for label, pop in zip(_district_codes(ref["district"], postal), pd.to_numeric(ref["total_pop"])):
+        hits = list(map_pop.index[map_pop == pop])
+        if len(hits) != 1:
+            raise CheckError("reference_labels", postal, f"cd_2020 district {label} (population {int(pop)}) "
+                                                         f"matches {len(hits)} districts of map.rds")
+        labels[label] = hits[0]
+    for target in sorted(set(labels.values())):
+        sources = sorted(k for k, v in labels.items() if v == target)
+        if len(sources) > 1:
+            raise CheckError("reference_labels", postal, f"cd_2020 districts {', '.join(sources)} all match "
+                                                         f"district {target} of map.rds")
+    return labels
+```
+
+Vervang in `pipeline/gerry/checks.py`:
+
+```python
+def check_conservation(units: pd.DataFrame, district_totals: pd.DataFrame, vote_cols: Sequence[str],
+```
+
+door:
+
+```python
+def check_reference_labels(labels: pd.Series, district_of: pd.Series, pop: pd.Series, state: str,
+                           min_share: float = 0.97) -> float:
+    """ALARM's reference map in map.rds against CD118, by block population, without ZZ blocks.
+
+    labels: block_id -> cd_2020 label of the block's unit (blocks without unit are left out);
+    district_of: block_id -> CD118 district; pop: block_id -> POP100. Each label must overlap most with
+    the CD118 district of the same code, without a tie, every CD118 district must be a label, and at least
+    min_share of the population must have the same code in both. Returns that share."""
+    labels = labels.dropna()
+    df = pd.DataFrame({"label": labels, "district": district_of.reindex(labels.index),
+                       "pop": pop.reindex(labels.index)})
+    if df[["district", "pop"]].isna().any().any():
+        raise CheckError("reference_labels", state, "blocks with a label are missing from CD118 or P.L. 94-171")
+    df = df[df["district"] != "ZZ"]
+    overlap = df.groupby(["label", "district"])["pop"].sum().unstack(fill_value=0)
+    missing = sorted(set(overlap.columns) - set(overlap.index))
+    extra = sorted(set(overlap.index) - set(overlap.columns))
+    if missing or extra:
+        raise CheckError("reference_labels", state, f"CD118 districts without a map.rds district: "
+                                                    f"{', '.join(missing) or 'none'}; map.rds districts not "
+                                                    f"in CD118: {', '.join(extra) or 'none'}")
+    for label, row in overlap.iterrows():
+        top = list(row.index[row == row.max()])
+        if len(top) > 1:
+            raise CheckError("reference_labels", state, f"district {label} of map.rds overlaps equally with "
+                                                        f"CD118 districts {', '.join(top)}")
+        if top[0] != label:
+            raise CheckError("reference_labels", state, f"district {label} of map.rds overlaps most with "
+                                                        f"CD118 district {top[0]}")
+    share = float(sum(overlap.at[k, k] for k in overlap.index) / overlap.to_numpy().sum())
+    if share < min_share:
+        raise CheckError("reference_labels", state, f"{share:.4f} of the population has the same district in "
+                                                    f"map.rds and CD118, below {min_share}")
+    return share
+
+
+def check_conservation(units: pd.DataFrame, district_totals: pd.DataFrame, vote_cols: Sequence[str],
+```
+
+- [ ] **Step 4: Draai de tests opnieuw**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_checks.py tests/test_ensemble.py -q
+.venv\Scripts\python -m pytest -q
+```
+
+Verwacht: `38 passed`, dan `190 passed`.
+
+- [ ] **Step 5: Commit**
+
+```powershell
+git add pipeline/gerry/ensemble.py pipeline/gerry/checks.py tests/test_ensemble.py tests/test_checks.py
+git commit -m "Match ALARM's reference districts to map.rds by population and check them against CD118"
+```
+
+### Task 1.18: 02_join.py (maakt het werk van taak 1.11 af)
+
+**Files:**
+- Create: `pipeline/02_join.py`
+- Create: `tests/test_join.py`
+- Create (gegenereerd, niet in git): `data/interim/units/{ST}.parquet`, `enacted_districts.parquet`, `ensemble_districts.parquet`, `alarm_reference.parquet`, `join_log.json`
+
+**Interfaces:**
+- Consumes: `load_units`, `read_block_votes`, `add_composite`, `UnitsError` (taak 1.15); `read_pl_blocks`, `read_pl_counties`, `unit_of_block`, `read_bef`, `block_weighted`, `whole_unit`, `BlocksError` (taken 1.7, 1.8, 1.13, 1.14); `read_stats`, `district_votes`, `reference_labels` (taken 1.9, 1.17); `check_geoids`, `check_vap_pop`, `check_units_linked`, `check_conservation`, `check_district_count`, `check_reference_labels`, `check_ensemble_totals`, `CheckError` (taken 1.10, 1.16, 1.17); `load_config()`, `data_dir()`, `interim_dir()` (taak 0.4).
+- Produces: `pipeline/02_join.py [--states ST ...]` met `maps_of(st) -> list[tuple[str, str]]`, `join_state(cfg, postal, root) -> StateResult`, `replace_states(old, new, states) -> pd.DataFrame` en `write_outputs(results, cfg, out_dir, partial) -> None`, en de tussenbestanden:
+  - `units/{ST}.parquet`: `unit_id`, `vap`, `pop`, `d_<e>`, `r_<e>`, `d`, `r` (uit `map.rds`; zonder `cd_2020`).
+  - `enacted_districts.parquet`: `state`, `map_id` (`enacted`, `mo_hb1`, `check_2022`), `method` (`block`, `whole_unit`), `district`, `d_pre_16`, `r_pre_16`, `d_pre_20`, `r_pre_20`, `d`, `r`. Voor WV zijn de `pre_16`-kolommen leeg.
+  - `ensemble_districts.parquet`: `state`, `draw`, `district`, dezelfde stemkolommen.
+  - `alarm_reference.parquet`: `state`, `district`, dezelfde stemkolommen; de rijen met `draw == "cd_2020"`, met de labels van `map.rds`, gesorteerd op district.
+  - `join_log.json`, per staat: `units`, `empty_vote_fields`, `empty_vote_units` (lege stemvelden in `map.rds`), `empty_weight_fields` (lege velden in het blokbestand van census-vest, 0 buiten de tractstaten), `blocks`, `units_zero_vap`, `unlinked_blocks`, `unlinked_keys` (blokken en sleutels zonder eenheid, uit `check_vap_pop`), `maps` (per `map_id` de `.attrs` van `block_weighted`: `split_units`, `zero_vap_units`, `zero_vap_split_units`, `units_without_blocks`, `block_count_votes`, `weight_fallback_units`), `reference_share` (uit `check_reference_labels`), `reference_labels` (alleen de labels die veranderen, `{stats: map.rds}`) en `plans`. `align_to_alarm` bestaat niet meer.
+
+Per staat doet `join_state`: voor IA en WV de countyrecords uit P.L. 94-171, eenheden uit `map.rds` met composiet, voor tractstaten de blokstemmen van census-vest als gewicht, blokken lezen, `check_geoids`, sleutel per blok, `check_vap_pop`. Dan per kaart (`enacted` uit `bef`, de `extra_maps`, en `check_2022` uit CD118): `check_units_linked`, de verdeling over blokken en de hele-eenheidstoewijzing, beide alleen met de stemkolommen per verkiezing en daarna de composiet op de districten, met `check_conservation` en `check_district_count`. Bij `check_2022` ook `check_reference_labels`. Tot slot de ensembles: nieuwe labels voor de referentiekaart uit `reference_labels`, en `check_ensemble_totals` op de plannen en op de referentiekaart.
+
+Zonder `--states` schrijft het script alle bestanden opnieuw. Met `--states` vervangt het alleen de rijen van die staten. Faalt een controle, dan schrijft het niets, meldt `ERROR <ST>: <check> failed for <ST>: ...` en stopt met code 1. Een ontbrekend bestand geeft `ERROR <ST>: missing <pad>; run pipeline/01_download.py first`.
+
+- [ ] **Step 1: Schrijf de falende tests**
+
+Nieuwe inhoud van `tests/test_join.py`:
+
+```python
+import importlib.util
+import sys
+from pathlib import Path
+
+import pandas as pd
+import pytest
+
+from gerry.config import data_dir, load_config
+
+SCRIPT = Path(__file__).resolve().parents[1] / "pipeline" / "02_join.py"
+
+
+def load_script():
+    """Import pipeline/02_join.py (its name starts with a digit, so no normal import)."""
+    spec = importlib.util.spec_from_file_location("join_script", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module      # dataclasses look the module up here
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_replace_states_keeps_other_states_and_column_order():
+    old = pd.DataFrame({"state": ["AL", "NV", "NV"], "district": ["01", "01", "02"], "d": [1.0, 2.0, 3.0]})
+    new = pd.DataFrame({"state": ["NV"], "district": ["01"], "d": [9.0]})
+    out = load_script().replace_states(old, new, {"NV"})
+    assert out.to_dict("records") == [{"state": "AL", "district": "01", "d": 1.0},
+                                      {"state": "NV", "district": "01", "d": 9.0}]
+
+
+def test_replace_states_without_old_file():
+    new = pd.DataFrame({"state": ["NV"], "district": ["01"], "d": [9.0]})
+    assert load_script().replace_states(None, new, {"NV"}).equals(new)
+
+
+def test_maps_of_lists_enacted_extra_and_check_map():
+    cfg = load_config()
+    join = load_script()
+    assert join.maps_of(cfg.states["NV"]) == [("enacted", "cd120"), ("check_2022", "cd118")]
+    assert join.maps_of(cfg.states["MO"]) == [("enacted", "cd118"), ("mo_hb1", "cd120"), ("check_2022", "cd118")]
+
+
+def files_of(postal, *extra):
+    st = postal.lower()
+    return [data_dir() / p for p in (f"alarm/{postal}_cd_2020_map.rds", f"alarm/{postal}_cd_2020_stats.csv",
+                                     f"census/pl/{st}2020.pl.zip", "census/cd120.zip", "census/cd118.zip", *extra)]
+
+
+def shares(frame):
+    frame = frame.set_index("district")
+    return frame["d"] / (frame["d"] + frame["r"])
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not all(p.exists() for p in files_of("NV")), reason="needs the Nevada files")
+def test_nevada_join_reproduces_the_reference_numbers():
+    result = load_script().join_state(load_config(), "NV", data_dir())
+    enacted = result.enacted
+    pick = lambda map_id, method: enacted[(enacted["map_id"] == map_id) & (enacted["method"] == method)]
+    block = shares(pick("enacted", "block"))
+    # plan skeleton, "Referentiegetallen": Nevada, Enacted per district (block method)
+    assert block.round(6).to_dict() == {"01": 0.547901, "02": 0.436352, "03": 0.534711, "04": 0.548082}
+    whole = shares(pick("enacted", "whole_unit"))
+    assert ((whole > 0.5) == (block > 0.5)).all()
+    # CD118 against ALARM's cd_2020: largest difference 0.00042
+    reference = shares(result.reference)
+    assert round(float((shares(pick("check_2022", "block")) - reference).abs().max()), 5) == 0.00042
+    log = result.log
+    assert (log["units"], log["blocks"], log["unlinked_blocks"], log["plans"]) == (2102, 57409, 0, 5000)
+    assert log["reference_labels"] == {}
+    # one split VTD without VAP holds votes: 32003001906, 20.3 votes by block count
+    assert log["maps"]["enacted"]["split_units"] == 40
+    assert round(log["maps"]["enacted"]["block_count_votes"], 1) == 20.3
+    assert len(result.ensemble) == 20000 and result.ensemble["draw"].nunique() == 5000
+    assert list(result.units.columns) == ["unit_id", "vap", "pop", "d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20",
+                                          "d", "r"]
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not all(p.exists() for p in files_of("OR", "census_vest/or_2020_block.csv")),
+                    reason="needs the Oregon files")
+def test_oregon_join_relabels_alarms_reference_map():
+    result = load_script().join_state(load_config(), "OR", data_dir())
+    # spec chapter 4: the stats file numbers Oregon's cd_2020 districts differently from map.rds
+    assert result.log["reference_labels"] == {"01": "02", "02": "04", "03": "05", "04": "06", "05": "03", "06": "01"}
+    assert result.reference["district"].tolist() == ["01", "02", "03", "04", "05", "06"]
+    assert (result.log["units"], result.log["unlinked_blocks"]) == (1001, 0)
+    # after the new labels each district of ALARM's reference map lies within 0.5 points of CD118
+    enacted = result.enacted
+    check = enacted[(enacted["map_id"] == "check_2022") & (enacted["method"] == "block")]
+    assert (shares(check) - shares(result.reference)).abs().max() < 0.005
+```
+
+De Nevada-test controleert dezelfde referentiegetallen als in de plankop: `map.rds` heeft in Nevada dezelfde VTD's en stemmen als census-vest. De test voor Oregon controleert de nieuwe labels van ALARM's referentiekaart; zonder die labels zou de methodecontrole in Oregon districten vergelijken die niet bij elkaar horen.
+
+- [ ] **Step 2: Draai de tests en zie ze falen**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_join.py -q
+```
+
+Verwacht: `5 failed`, met `FileNotFoundError: [Errno 2] No such file or directory: '...\\pipeline\\02_join.py'`.
+
+- [ ] **Step 3: Schrijf het script**
+
+Nieuwe inhoud van `pipeline/02_join.py`:
+
+```python
+"""Step 2: votes per unit -> blocks -> districts, plus ALARM's plans; writes data/interim/ (spec chapter 4).
+
+Usage: python pipeline/02_join.py [--states ST [ST ...]]
+
+Without --states all states are joined and the interim files are rewritten. With --states only those
+states are joined and their rows replace the earlier rows in the interim files.
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import sys
+import time
+from dataclasses import dataclass
+from pathlib import Path
+
+import pandas as pd
+
+from gerry.blocks import (BlocksError, block_weighted, read_bef, read_pl_blocks, read_pl_counties, unit_of_block,
+                          whole_unit)
+from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
+                          check_geoids, check_reference_labels, check_units_linked, check_vap_pop)
+from gerry.config import data_dir, interim_dir, load_config
+from gerry.ensemble import district_votes, read_stats, reference_labels
+from gerry.units import UnitsError, add_composite, load_units, read_block_votes
+
+log = logging.getLogger("join")
+
+
+@dataclass
+class StateResult:
+    units: pd.DataFrame       # unit_id, vap, pop, d_<e>, r_<e>, d, r
+    enacted: pd.DataFrame     # state, map_id, method, district, vote columns
+    ensemble: pd.DataFrame    # state, draw, district, vote columns
+    reference: pd.DataFrame   # state, district, vote columns (draw cd_2020, with the labels of map.rds)
+    log: dict
+
+
+def maps_of(st) -> list[tuple[str, str]]:
+    """(map_id, block equivalency file): the enacted map, extra maps, and the 2022 map for the check."""
+    return [("enacted", st.bef), *((m.id, m.bef) for m in st.extra_maps), ("check_2022", "cd118")]
+
+
+def join_state(cfg, postal: str, root: Path) -> StateResult:
+    st = cfg.states[postal]
+    parts = [f"{p}_{e}" for e in st.elections for p in ("d", "r")]
+    vote_cols = parts + ["d", "r"]
+    pl_zip = root / "census" / "pl" / f"{postal.lower()}2020.pl.zip"
+    counties = read_pl_counties(pl_zip, postal) if st.unit_kind == "county" else None
+    units = add_composite(load_units(st, root, counties), st.elections)
+    weights = read_block_votes(st, root) if st.unit_kind == "tract" else None
+    info = {"units": len(units), "empty_vote_fields": units.attrs["empty_vote_fields"],
+            "empty_vote_units": units.attrs["empty_vote_units"],
+            "empty_weight_fields": weights.attrs["empty_vote_fields"] if weights is not None else 0}
+
+    blocks = read_pl_blocks(pl_zip, postal)
+    check_geoids(blocks["block_id"], st.fips, postal)
+    unit_of = unit_of_block(blocks, st.unit_kind, st.fips)
+    unlinked_blocks, unlinked_keys = check_vap_pop(units, blocks, unit_of, postal)
+    if unlinked_blocks:
+        log.info("%s: %d blocks in %d keys are not in map.rds; all have VAP 0 and population 0",
+                 postal, unlinked_blocks, unlinked_keys)
+    info.update({"blocks": len(blocks), "units_zero_vap": int((units["vap"] == 0).sum()),
+                 "unlinked_blocks": unlinked_blocks, "unlinked_keys": unlinked_keys, "maps": {}})
+
+    rows = []
+    for map_id, bef in maps_of(st):
+        district_of = read_bef(root / "census" / f"{bef}.zip", bef, st.fips, postal)
+        check_units_linked(units, unit_of, district_of, postal)
+        # distribute the votes per election; the composite follows from the distributed parts
+        block = block_weighted(units, blocks, unit_of, district_of, parts, weights)
+        info["maps"][map_id] = dict(block.attrs)
+        whole = whole_unit(units, blocks, unit_of, district_of, parts)
+        for method, totals in (("block", block), ("whole_unit", whole)):
+            totals = add_composite(totals, st.elections)
+            check_conservation(units, totals, vote_cols, postal)
+            check_district_count(totals, st.seats, postal)
+            rows.append(totals.assign(state=postal, map_id=map_id, method=method))
+        if map_id == "check_2022":
+            labels = unit_of.map(units.set_index("unit_id")["cd_2020"])
+            info["reference_share"] = check_reference_labels(labels, district_of,
+                                                             blocks.set_index("block_id")["pop"], postal)
+    enacted = pd.concat(rows, ignore_index=True)
+
+    stats = read_stats(root / "alarm" / f"{postal}_cd_2020_stats.csv")
+    ensemble, reference = district_votes(stats, st)
+    labels = reference_labels(stats, units.groupby("cd_2020")["pop"].sum(), postal)
+    reference = (reference.assign(district=reference["district"].map(labels))
+                 .sort_values("district", ignore_index=True))
+    info["reference_labels"] = {k: v for k, v in labels.items() if k != v}
+    if info["reference_labels"]:
+        log.info("%s: ALARM's cd_2020 districts get the labels of map.rds: %s", postal,
+                 ", ".join(f"{k} -> {v}" for k, v in info["reference_labels"].items()))
+    check_ensemble_totals(ensemble, units, st.elections, st.seats, postal)
+    check_ensemble_totals(reference, units, st.elections, st.seats, postal)
+    info["plans"] = int(ensemble["draw"].nunique())
+    return StateResult(units.drop(columns="cd_2020"), enacted, ensemble, reference.drop(columns="draw"), info)
+
+
+def replace_states(old: pd.DataFrame | None, new: pd.DataFrame, states: set[str]) -> pd.DataFrame:
+    """Rows of `old` for other states, then the rows of `new`, sorted by state (stable)."""
+    if old is None:
+        return new
+    combined = pd.concat([old[~old["state"].isin(states)], new], ignore_index=True)
+    return combined.sort_values("state", kind="stable").reset_index(drop=True)
+
+
+def _ordered(frames: list[pd.DataFrame], key_cols: list[str], vote_cols: list[str]) -> pd.DataFrame:
+    return pd.concat(frames, ignore_index=True).reindex(columns=key_cols + vote_cols)
+
+
+def write_outputs(results: dict[str, StateResult], cfg, out_dir: Path, partial: bool) -> None:
+    elections = list(dict.fromkeys(e for st in cfg.states.values() for e in st.elections))
+    vote_cols = [f"{p}_{e}" for e in elections for p in ("d", "r")] + ["d", "r"]
+    (out_dir / "units").mkdir(parents=True, exist_ok=True)
+    for postal, res in results.items():
+        res.units.to_parquet(out_dir / "units" / f"{postal}.parquet", index=False)
+    tables = {
+        "enacted_districts.parquet": _ordered([r.enacted for r in results.values()],
+                                              ["state", "map_id", "method", "district"], vote_cols),
+        "ensemble_districts.parquet": _ordered([r.ensemble for r in results.values()],
+                                               ["state", "draw", "district"], vote_cols),
+        "alarm_reference.parquet": _ordered([r.reference for r in results.values()], ["state", "district"], vote_cols),
+    }
+    states = set(results)
+    for name, table in tables.items():
+        path = out_dir / name
+        old = pd.read_parquet(path) if partial and path.exists() else None
+        replace_states(old, table, states).to_parquet(path, index=False)
+    log_path = out_dir / "join_log.json"
+    previous = json.loads(log_path.read_text(encoding="utf-8")) if partial and log_path.exists() else {}
+    previous.update({postal: res.log for postal, res in results.items()})
+    log_path.write_text(json.dumps(dict(sorted(previous.items())), indent=2) + "\n", encoding="utf-8")
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--states", nargs="+", default=[], metavar="ST", help="postal codes, e.g. NV WV")
+    args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="  %(message)s", stream=sys.stdout)
+    cfg = load_config()
+    states = [s.upper() for s in args.states] or sorted(cfg.states)
+    unknown = sorted(set(states) - set(cfg.states))
+    if unknown:
+        parser.error(f"not a multi-seat state in config.yaml: {', '.join(unknown)}")
+    root = data_dir()
+    results = {}
+    for postal in states:
+        start = time.monotonic()
+        try:
+            res = join_state(cfg, postal, root)
+        except (CheckError, UnitsError, BlocksError) as exc:
+            print(f"ERROR {postal}: {exc}", file=sys.stderr)
+            return 1
+        except FileNotFoundError as exc:
+            print(f"ERROR {postal}: missing {exc.filename}; run pipeline/01_download.py first", file=sys.stderr)
+            return 1
+        results[postal] = res
+        enacted = res.log["maps"]["enacted"]
+        print(f"{postal}: {res.log['units']} units ({res.log['units_zero_vap']} without VAP), "
+              f"{res.log['blocks']} blocks, enacted map splits {enacted['split_units']} units "
+              f"({enacted['zero_vap_split_units']} without VAP, {enacted['block_count_votes']:.1f} votes "
+              f"by block count), {res.log['plans']} plans, {time.monotonic() - start:.1f} s", flush=True)
+    write_outputs(results, cfg, interim_dir(), partial=bool(args.states))
+    print(f"Wrote {len(results)} states to {interim_dir()}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+- [ ] **Step 4: Draai de tests opnieuw**
+
+```powershell
+.venv\Scripts\python -m pytest tests/test_join.py -q
+```
+
+Verwacht: `5 passed`, in ongeveer 20 seconden.
+
+- [ ] **Step 5: Draai de join voor alle 44 staten**
+
+```powershell
+.venv\Scripts\python pipeline/02_join.py
+```
+
+Dit duurt ongeveer vijf minuten. Verwacht precies deze regels, in deze volgorde (alleen de tijden aan het eind van elke staatsregel verschillen), en als laatste `Wrote 44 states to ...\data\interim`:
+
+```
+AL: 1837 units (0 without VAP), 185976 blocks, enacted map splits 11 units (0 without VAP, 0.0 votes by block count), 5000 plans, 11.2 s
+AR: 2747 units (21 without VAP), 136422 blocks, enacted map splits 0 units (0 without VAP, 0.0 votes by block count), 5000 plans, 4.3 s
+AZ: 1538 units (8 without VAP), 155444 blocks, enacted map splits 138 units (0 without VAP, 0.0 votes by block count), 5000 plans, 4.3 s
+  CA: 8 empty vote fields in 2 census-vest blocks set to 0
+CA: 9129 units (32 without VAP), 519723 blocks, enacted map splits 1074 units (9 without VAP, 0.0 votes by block count), 5000 plans, 22.0 s
+CO: 3108 units (9 without VAP), 140345 blocks, enacted map splits 96 units (2 without VAP, 0.0 votes by block count), 5000 plans, 6.0 s
+CT: 766 units (2 without VAP), 49926 blocks, enacted map splits 16 units (0 without VAP, 0.0 votes by block count), 5000 plans, 2.6 s
+FL: 7211 units (336 without VAP), 390066 blocks, enacted map splits 261 units (7 without VAP, 3576.1 votes by block count), 5000 plans, 13.2 s
+GA: 2698 units (13 without VAP), 232717 blocks, enacted map splits 42 units (0 without VAP, 0.0 votes by block count), 5000 plans, 6.7 s
+HI: 461 units (29 without VAP), 14732 blocks, enacted map splits 6 units (2 without VAP, 0.0 votes by block count), 5000 plans, 0.7 s
+IA: 99 units (0 without VAP), 175199 blocks, enacted map splits 0 units (0 without VAP, 0.0 votes by block count), 5000 plans, 6.1 s
+ID: 931 units (0 without VAP), 81879 blocks, enacted map splits 6 units (0 without VAP, 0.0 votes by block count), 5000 plans, 3.1 s
+IL: 10084 units (3 without VAP), 369978 blocks, enacted map splits 478 units (1 without VAP, 157.7 votes by block count), 5000 plans, 16.9 s
+IN: 5159 units (49 without VAP), 204568 blocks, enacted map splits 20 units (0 without VAP, 0.0 votes by block count), 5000 plans, 6.0 s
+KS: 4240 units (578 without VAP), 172529 blocks, enacted map splits 19 units (4 without VAP, 42.1 votes by block count), 5000 plans, 4.8 s
+KY: 3693 units (47 without VAP), 132662 blocks, enacted map splits 27 units (0 without VAP, 0.0 votes by block count), 5000 plans, 4.1 s
+LA: 3540 units (9 without VAP), 142874 blocks, enacted map splits 10 units (0 without VAP, 0.0 votes by block count), 5000 plans, 4.4 s
+MA: 2157 units (6 without VAP), 107278 blocks, enacted map splits 19 units (1 without VAP, 311.2 votes by block count), 5000 plans, 3.0 s
+MD: 2042 units (38 without VAP), 83827 blocks, enacted map splits 64 units (0 without VAP, 0.0 votes by block count), 5000 plans, 2.7 s
+  ME: 112 blocks in 6 keys are not in map.rds; all have VAP 0 and population 0
+ME: 401 units (1 without VAP), 47138 blocks, enacted map splits 1 units (0 without VAP, 0.0 votes by block count), 5000 plans, 1.2 s
+  MI: 631 blocks in 38 keys are not in map.rds; all have VAP 0 and population 0
+MI: 4767 units (7 without VAP), 254730 blocks, enacted map splits 31 units (0 without VAP, 0.0 votes by block count), 5000 plans, 7.1 s
+MN: 4110 units (33 without VAP), 198705 blocks, enacted map splits 26 units (0 without VAP, 0.0 votes by block count), 5000 plans, 5.2 s
+MO: 4604 units (223 without VAP), 253632 blocks, enacted map splits 58 units (1 without VAP, 121.7 votes by block count), 5000 plans, 7.2 s
+MS: 1834 units (5 without VAP), 112241 blocks, enacted map splits 7 units (0 without VAP, 0.0 votes by block count), 5000 plans, 2.8 s
+MT: 666 units (1 without VAP), 88417 blocks, enacted map splits 1 units (0 without VAP, 0.0 votes by block count), 5000 plans, 1.9 s
+NC: 2666 units (0 without VAP), 236638 blocks, enacted map splits 21 units (0 without VAP, 0.0 votes by block count), 5000 plans, 5.6 s
+NE: 1402 units (2 without VAP), 119103 blocks, enacted map splits 8 units (0 without VAP, 0.0 votes by block count), 5000 plans, 2.6 s
+NH: 326 units (17 without VAP), 31948 blocks, enacted map splits 2 units (0 without VAP, 0.0 votes by block count), 5000 plans, 0.8 s
+NJ: 6361 units (7 without VAP), 137972 blocks, enacted map splits 89 units (0 without VAP, 0.0 votes by block count), 5000 plans, 5.2 s
+NM: 1977 units (1 without VAP), 107215 blocks, enacted map splits 13 units (0 without VAP, 0.0 votes by block count), 5000 plans, 2.6 s
+NV: 2102 units (295 without VAP), 57409 blocks, enacted map splits 40 units (3 without VAP, 20.3 votes by block count), 5000 plans, 1.9 s
+NY: 14191 units (214 without VAP), 288819 blocks, enacted map splits 176 units (1 without VAP, 274.6 votes by block count), 5000 plans, 12.4 s
+  OH: 63 blocks in 4 keys are not in map.rds; all have VAP 0 and population 0
+OH: 8937 units (4 without VAP), 276428 blocks, enacted map splits 51 units (0 without VAP, 0.0 votes by block count), 5000 plans, 10.1 s
+OK: 1947 units (10 without VAP), 180154 blocks, enacted map splits 37 units (1 without VAP, 3.6 votes by block count), 5000 plans, 3.9 s
+  OR: 16 empty vote fields in 4 census-vest blocks set to 0
+  OR: ALARM's cd_2020 districts get the labels of map.rds: 01 -> 02, 02 -> 04, 03 -> 05, 04 -> 06, 05 -> 03, 06 -> 01
+OR: 1001 units (8 without VAP), 130807 blocks, enacted map splits 79 units (0 without VAP, 0.0 votes by block count), 5000 plans, 3.0 s
+PA: 9178 units (3 without VAP), 336985 blocks, enacted map splits 14 units (0 without VAP, 0.0 votes by block count), 5000 plans, 10.3 s
+RI: 423 units (1 without VAP), 25649 blocks, enacted map splits 11 units (0 without VAP, 0.0 votes by block count), 5000 plans, 0.8 s
+SC: 2268 units (2 without VAP), 146844 blocks, enacted map splits 13 units (0 without VAP, 0.0 votes by block count), 5000 plans, 3.7 s
+TN: 1965 units (5 without VAP), 179717 blocks, enacted map splits 82 units (0 without VAP, 0.0 votes by block count), 5000 plans, 4.1 s
+TX: 9007 units (240 without VAP), 668757 blocks, enacted map splits 360 units (1 without VAP, 0.0 votes by block count), 5000 plans, 17.8 s
+UT: 2745 units (151 without VAP), 71207 blocks, enacted map splits 7 units (0 without VAP, 0.0 votes by block count), 5000 plans, 2.5 s
+VA: 2465 units (1 without VAP), 163491 blocks, enacted map splits 41 units (0 without VAP, 0.0 votes by block count), 5000 plans, 4.2 s
+WA: 7434 units (97 without VAP), 158093 blocks, enacted map splits 80 units (1 without VAP, 0.0 votes by block count), 5000 plans, 6.3 s
+WI: 7059 units (327 without VAP), 203059 blocks, enacted map splits 31 units (0 without VAP, 0.0 votes by block count), 5000 plans, 7.0 s
+WV: 55 units (0 without VAP), 72558 blocks, enacted map splits 0 units (0 without VAP, 0.0 votes by block count), 5000 plans, 2.2 s
+```
+
+Het aantal blokken per staat is gelijk aan de tabel in taak 1.11. Stemmen die naar aantal blokken gaan, vallen op de kaarten van 2026 in acht VTD-staten, samen 4.507,3 stemmen (FL, IL, KS, MA, MO, NV, NY en OK); dat is de beperking uit hoofdstuk 10 van de spec. In de tractstaten gaan de stemmen van een tract zonder VAP naar de blokstemmen van census-vest, dus daar staat 0,0.
+
+Stopt een staat met een fout, pas dan geen code of drempel aan om de controle te laten slagen. Noteer de melding en vraag de eigenaar (CLAUDE.md: twijfel over een databron, stop en vraag).
+
+- [ ] **Step 6: Controleer de tussenbestanden**
+
+```powershell
+.venv\Scripts\python -c "import pandas as pd; d='data/interim/'; print(len(pd.read_parquet(d+'enacted_districts.parquet')), len(pd.read_parquet(d+'ensemble_districts.parquet')), len(pd.read_parquet(d+'alarm_reference.parquet')))"
+(Get-ChildItem data\interim\units\*.parquet).Count
+.venv\Scripts\python -c "import json; log = json.load(open('data/interim/join_log.json', encoding='utf-8')); print({k: (v['unlinked_blocks'], v['unlinked_keys']) for k, v in log.items() if v['unlinked_blocks']}); print(round(sum(v['maps']['enacted']['block_count_votes'] for v in log.values()), 1)); print({k: v['reference_labels'] for k, v in log.items() if v['reference_labels']}); print(min((round(v['reference_share'], 4), k) for k, v in log.items())); print({k: v['empty_weight_fields'] for k, v in log.items() if v['empty_weight_fields']})"
+```
+
+Verwacht:
+
+```
+1732 2145000 429
+44
+{'ME': (112, 6), 'MI': (631, 38), 'OH': (63, 4)}
+4507.3
+{'OR': {'01': '02', '02': '04', '03': '05', '04': '06', '05': '03', '06': '01'}}
+(0.9794, 'AZ')
+{'CA': 8, 'OR': 16}
+```
+
+Enacted: (enacted plus check_2022) × 2 methoden × 429 districten = 1.716 rijen, plus 2 × 8 voor `mo_hb1`. Ensembles: 429 × 5.000.
+
+Met deze tussenbestanden blijven de referentiegetallen uit de plankop gelijk: voor NV, TX, CA, IA, WV, UT, NC en LA dezelfde Proportional, Enacted en verdeling over de 5.000 plannen. In de methodecontrole (CD118 tegen ALARM's `cd_2020`, taak 2.11) is het grootste verschil 0,6989 procentpunt in TN-09, bij hetzelfde aantal zetels; daarna CA 0,4334, TX 0,3929 en AZ 0,3563. Tennessee krijgt in taak 2.15 een verklaring.
+
+- [ ] **Step 7: Draai alle tests**
+
+```powershell
+.venv\Scripts\python -m pytest -q
+```
+
+Verwacht: `195 passed`. Zonder data: `186 passed, 9 skipped`.
+
+- [ ] **Step 8: Commit**
+
+```powershell
+git status --short
+git add pipeline/02_join.py tests/test_join.py
+git commit -m "Add join step writing interim files for all states"
+```
+
+`data/interim/` staat in `.gitignore` en komt niet in de commit.
+
 ## Phase 2: metrieken en controlerapport
 
 Deze fase bouwt de rekenregels uit hoofdstuk 5 van de spec in `pipeline/gerry/metrics.py`, het script `pipeline/03_metrics.py` dat ze per staat en landelijk toepast, en het controlerapport `docs/validation.md` via `pipeline/gerry/validation.py`. Daarna volgen de kruiscontroles met PlanScore en Dave's Redistricting App (DRA) en een volledige run waarin elke overschrijding een verklaring krijgt.
 
 Vooraf:
 
-- Fase 0 en 1 zijn af. Nodig zijn `gerry/config.py`, `gerry/checks.py` (`CheckError`), `pytest.ini` met de marker `data`, en vanaf Taak 2.11 stap 6 een gevulde `data/interim/` uit `pipeline/02_join.py` voor alle 44 staten.
+- Fase 0, 1 en 1b zijn af. Nodig zijn `gerry/config.py`, `gerry/checks.py` (`CheckError`), `pytest.ini` met de marker `data`, en vanaf Taak 2.11 stap 6 een gevulde `data/interim/` uit `pipeline/02_join.py` (taak 1.18) voor alle 44 staten.
 - Zet in elke nieuwe PowerShell-sessie eerst `$env:PYTHONUTF8=1`. Alle commando's draaien vanuit de root van de worktree.
 - Tekens: effecten tellen in Democratische zetels, positief is meer Democratische zetels. Efficiency gap (EG) en mean-median (MM) zijn positief als de kaart gunstig is voor Republikeinen.
 - `tests/test_metrics.py` importeert `from gerry import metrics as m`. Zo blijft de importregel gelijk tussen de taken; een functie die nog ontbreekt geeft een `AttributeError`.
@@ -6623,7 +9463,7 @@ _SPEC.loader.exec_module(step)
 XX = StateConfig(
     postal="XX", name="Example", fips="99", seats=3, map_name="Plan A", status="In effect",
     source_label="Example source", source_url="https://example.org", bef="cd120",
-    elections=("pre_16", "pre_20"), unit_source="vtd",
+    elections=("pre_16", "pre_20"), unit_kind="vtd",
     extra_maps=(ExtraMap(id="xx_new", name="Plan B", status="Blocked", bef="cd120",
                          source_label="Example source", source_url="https://example.org/b"),),
     notes=())
@@ -7141,7 +9981,7 @@ def test_national_totals(metrics):
 
 - [ ] **Step 6: Run 03_metrics on the real data**
 
-`data/interim/` moet gevuld zijn door `pipeline/02_join.py` (Fase 1) voor alle 44 staten. Is dat nog niet zo, draai eerst `.venv\Scripts\python pipeline/02_join.py`.
+`data/interim/` moet gevuld zijn door `pipeline/02_join.py` (taak 1.18) voor alle 44 staten. Is dat nog niet zo, draai eerst `.venv\Scripts\python pipeline/02_join.py`.
 
 Run:
 
@@ -7201,7 +10041,7 @@ git commit -m "Add 03_metrics: per-state and national metrics"
   - `load_notes(path) -> dict[tuple[str, str], str]`, `read_crosscheck(path, columns) -> pd.DataFrame | None` (None als het bestand nog niet bestaat), `planscore_comparison(df) -> list[dict]` (per staat en verkiezing: `state`, `election`, `url`, `accessed`, `same_map`, `planscore`, `tolerance`, `reproduced`, `equal_turnout`), `equal_turnout_gap(d, r, dem_win) -> float`.
   - `03_metrics.py` schrijft na `metrics.json` ook `docs/validation.md`.
 
-Het rapport heeft deze onderdelen, in deze volgorde: samenvatting met het aantal open en wachtende punten, zetels landelijk, CD118 tegen ALARM `cd_2020`, hele eenheden tegen blokverdeling, plannen en gelijke standen, `align_to_alarm`, het koppellog, PlanScore, DRA, CD120 tegen de bestanden van staten, en de gebruikte en ongebruikte verklaringen.
+Het rapport heeft deze onderdelen, in deze volgorde: samenvatting met het aantal open en wachtende punten, zetels landelijk, CD118 tegen ALARM `cd_2020`, hele eenheden tegen blokverdeling, plannen en gelijke standen, het koppellog (met de blokken zonder eenheid, de stemmen die naar aantal blokken gingen en de nieuwe labels van ALARM's referentiekaart), PlanScore, DRA, CD120 tegen de bestanden van staten, en de gebruikte en ongebruikte verklaringen.
 
 Regels voor de status per regel:
 
@@ -7272,15 +10112,22 @@ METRICS = {
                    {"map_id": "enacted", "district": "02", "block": 0.51, "whole": 0.51, "block_dem": True, "whole_dem": True}],
         },
         "pre_20": {"AA": {"01": 0.40, "02": 0.62, "03": 0.55}, "BB": {"01": 0.45, "02": 0.51}},
-        # same shape as 02_join.py writes: counts, align_to_alarm rows, counts per map
-        "join_log": {"AA": {"units": 30, "units_zero_vap": 3,
-                            "align_to_alarm": [{"column": "d_pre_16", "before": 100.0, "after": 90.0}],
-                            "maps": {"enacted": {"split_units": 7, "zero_vap_split_units": 1},
-                                     "check_2022": {"split_units": 5, "zero_vap_split_units": 0}},
+        # same shape as 02_join.py writes: counts, counts per map, ALARM's reference map
+        "join_log": {"AA": {"units": 30, "empty_weight_fields": 4, "units_zero_vap": 3,
+                            "unlinked_blocks": 5, "unlinked_keys": 2,
+                            "maps": {"enacted": {"split_units": 7, "zero_vap_split_units": 1,
+                                                 "block_count_votes": 20.3, "weight_fallback_units": 0},
+                                     "check_2022": {"split_units": 5, "zero_vap_split_units": 0,
+                                                    "block_count_votes": 0.0, "weight_fallback_units": 0}},
+                            "reference_share": 0.9812, "reference_labels": {"01": "02", "02": "01"},
                             "plans": 5000},
-                     "BB": {"units": 12, "units_zero_vap": 0, "align_to_alarm": [],
-                            "maps": {"enacted": {"split_units": 1, "zero_vap_split_units": 0},
-                                     "check_2022": {"split_units": 1, "zero_vap_split_units": 0}},
+                     "BB": {"units": 12, "empty_weight_fields": 0, "units_zero_vap": 0,
+                            "unlinked_blocks": 0, "unlinked_keys": 0,
+                            "maps": {"enacted": {"split_units": 1, "zero_vap_split_units": 0,
+                                                 "block_count_votes": 0.0, "weight_fallback_units": 2},
+                                     "check_2022": {"split_units": 1, "zero_vap_split_units": 0,
+                                                    "block_count_votes": 0.0, "weight_fallback_units": 2}},
+                            "reference_share": 1.0, "reference_labels": {},
                             "plans": 4999}},
         "totals": {"district_seats": 5, "at_large": 1},
     },
@@ -7346,12 +10193,17 @@ def test_report_lists_explanations_and_unused_notes(crosscheck, notes):
 
 def test_report_tables_for_logs(crosscheck, notes):
     report = v.build_report(METRICS, crosscheck, notes)
-    assert "| AA | d_pre_16 | 100.0 | 90.0 | -10.0 |" in report
-    # counts: units, units_zero_vap, plans; then per map: split_units, zero_vap_split_units
-    assert "| State | units | units_zero_vap | plans |" in report
-    assert "| AA | 30 | 3 | 5000 |" in report
-    assert "| AA | enacted | 7 | 1 |" in report
-    assert "| BB | check_2022 | 1 | 0 |" in report
+    # counts per state: the whole-number fields in log order, then reference_share as a percentage
+    assert ("| State | units | empty_weight_fields | units_zero_vap | unlinked_blocks | unlinked_keys | plans | "
+            "reference_share |") in report
+    assert "| AA | 30 | 4 | 3 | 5 | 2 | 5000 | 98.12% |" in report
+    assert "| BB | 12 | 0 | 0 | 0 | 0 | 4999 | 100.00% |" in report
+    # per map: split_units, zero_vap_split_units, block_count_votes (votes, one decimal), weight_fallback_units
+    assert "| AA | enacted | 7 | 1 | 20.3 | 0 |" in report
+    assert "| BB | check_2022 | 1 | 0 | 0.0 | 2 |" in report
+    # only states whose cd_2020 districts take another label from map.rds
+    assert "- AA: 01 -> 02, 02 -> 01" in report
+    assert "- BB:" not in report
     assert "| AA | 5000 | 2 | 0 | ok |" in report
 
 
@@ -7685,26 +10537,38 @@ def _plans_and_ties(metrics: dict, ledger: _Ledger) -> str:
     ])
 
 
+def _log_value(value) -> str:
+    """A join-log count as table text: votes (floats) with one decimal, whole numbers as they are."""
+    return f"{value:.1f}" if isinstance(value, float) else str(value)
+
+
 def _join_log(metrics: dict) -> str:
     log = metrics["checks"]["join_log"]
-    align_rows = [(state, a["column"], f"{a['before']:.1f}", f"{a['after']:.1f}", f"{a['after'] - a['before']:.1f}")
-                  for state, entry in sorted(log.items()) for a in entry.get("align_to_alarm", [])]
+    # counts per state: every whole-number field (units, blocks, unlinked_blocks, plans, ...)
     keys = list(dict.fromkeys(k for entry in log.values() for k, val in entry.items()
-                              if isinstance(val, (int, float, str, bool))))
-    rows = [(state, *[entry.get(k, "") for k in keys]) for state, entry in sorted(log.items())]
-    # per-map counts: {"maps": {map_id: {count: value}}}
+                              if isinstance(val, int) and not isinstance(val, bool)))
+    rows = [(state, *[entry.get(k, "") for k in keys],
+             _pct(entry["reference_share"]) if "reference_share" in entry else "")
+            for state, entry in sorted(log.items())]
+    # per-map counts: {"maps": {map_id: {count: value}}}; block_count_votes is a number of votes
     map_keys = list(dict.fromkeys(k for entry in log.values() for counts in entry.get("maps", {}).values()
                                   for k in counts))
-    map_rows = [(state, map_id, *[counts.get(k, "") for k in map_keys])
+    map_rows = [(state, map_id, *[_log_value(counts.get(k, "")) for k in map_keys])
                 for state, entry in sorted(log.items()) for map_id, counts in entry.get("maps", {}).items()]
-    parts = ["## align_to_alarm",
-             _table(["State", "Column", "Before", "After", "Change"], align_rows) if align_rows
-             else "No state uses align_to_alarm.",
-             "## Join log", "Counts from 02_join.py."]
+    relabeled = [f"- {state}: " + ", ".join(f"{k} -> {v}" for k, v in sorted(entry["reference_labels"].items()))
+                 for state, entry in sorted(log.items()) if entry.get("reference_labels")]
+    parts = ["## Join log",
+             "Counts from 02_join.py. `unlinked_blocks` are census blocks whose unit is not in ALARM's map.rds "
+             "(water); they have no voting-age population and no people. `reference_share` is the share of the "
+             "population with the same district on ALARM's reference plan and on the 2022 map (Census CD118)."]
     if keys:
-        parts.append(_table(["State", *keys], rows))
+        parts.append(_table(["State", *keys, "reference_share"], rows))
     if map_rows:
-        parts += ["Counts per map (block allocation).", _table(["State", "Map", *map_keys], map_rows)]
+        parts += ["Counts per map (block allocation). `block_count_votes` are the votes of split units without "
+                  "voting-age population, spread over their blocks by block count.",
+                  _table(["State", "Map", *map_keys], map_rows)]
+    parts += ["ALARM's `cd_2020` districts that take the label of the matching district in map.rds:",
+              "\n".join(relabeled) if relabeled else "None."]
     return "\n\n".join(parts)
 
 
@@ -8106,11 +10970,11 @@ Welke staten, en waarom. Elk van deze zes test een ander deel van de pijplijn. N
 | NC | SL 2025-95 (SB 249) | Hertekening in 2025 waarin alleen districten 1 en 3 veranderden; CD120 voor een gedeeltelijke wijziging |
 | TX | PLANC2333 (HB 4) | 38 districten en veel gesplitste VTD's; in de haalbaarheidscontrole tot 0,57 punt verschil tussen blokverdeling en hele eenheden (TX-11) |
 | OH | Ohio Redistricting Commission plan (2025) | Nieuwe kaart die niet in de haalbaarheidscontrole zat |
-| UT | Court-adopted Map 1 | Eenheden zonder VAP maar met stemmen (0,67% van de stemmen), verdeeld naar aantal blokken |
-| CA | AB 604 (Proposition 50) | Blokken als eenheid, en de twee tracts van `align_to_alarm` |
+| FL | EOGPCRP2026 (HB 1-D) | Eenheden zonder VAP maar met stemmen, verdeeld naar aantal blokken: op deze kaart 7 gesplitste eenheden met samen 3.576 stemmen (taak 1.18) |
+| CA | AB 604 (Proposition 50) | Tracts als eenheid, stemmen uit ALARM's `map.rds`, binnen een tract verdeeld naar de blokstemmen van census-vest |
 | MO | HB 2909 of 2022 | De kaart van 2022 uit CD118, niet HB 1 uit CD120 |
 
-DRA gebruikt voor 2020 ook VEST-uitslagen per precinct, met een eigen verdeling over blokken. Kleine verschillen zijn dus te verwachten; de drempel is 0,5 procentpunt per district.
+DRA gebruikt voor 2020 VEST-uitslagen per precinct, met een eigen verdeling over blokken. Onze stemmen komen uit ALARM's `map.rds`, per VTD, tract of county (spec hoofdstuk 3). Kleine verschillen zijn dus te verwachten; de drempel is 0,5 procentpunt per district.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -8219,7 +11083,7 @@ $env:PYTHONUTF8=1
 .venv\Scripts\python pipeline/03_metrics.py
 ```
 
-Expected: 44 staatsregels, een regel `US: ...`, en als laatste `Wrote ...\docs\validation.md: Open items: N. Pending: 1.`
+Expected: 44 staatsregels, een regel `US: ...`, en als laatste `Wrote ...\docs\validation.md: Open items: N. Pending: 1.` N is minstens 1, want Tennessee overschrijdt in `cd118_vs_alarm` de drempel (stap 3).
 
 - [ ] **Step 2: Run all tests**
 
@@ -8231,6 +11095,20 @@ Expected: alle tests slagen.
 Lees `docs/validation.md` van boven naar beneden. Werk de lijst onder "Open items" af. Per soort:
 
 - `cd118_vs_alarm`: kijk in "Districts above the threshold" welke districten afwijken. Gangbare oorzaak tot 0,4 punt: ALARM wijst gesplitste eenheden in hun geheel toe (CA, TX). Boven 0,5 punt of bij een ander aantal zetels: controleer of ALARM's `cd_2020` dezelfde kaart is als CD118 (lees `XX_cd_2020_doc.html` van ALARM; in een paar staten veranderde de kaart in de loop van 2022). Schrijf de verklaring alleen op als de oorzaak is aangetoond, met getallen en bron.
+
+  Verwacht: alleen Tennessee staat hier open, met district 09 op 0,699 punt (0,6989 procentpunt) en hetzelfde aantal zetels (taak 1.18, stap 6; spec hoofdstuk 6). De vergelijking is CD118 tegen ALARM's `cd_2020`. De oorzaak is aangetoond: ALARM's referentiekaart wijst hele VTD's toe, terwijl CD118 rond Memphis 21 VTD's splitst. Ook een verdeling naar bevolking in plaats van VAP blijft boven de drempel. Komen de getallen overeen, zet dan deze verklaring in `data/validation_notes.yaml`:
+
+  ```yaml
+  TN:
+    cd118_vs_alarm: >
+      District 09 differs by 0.699 points, with the same number of Democratic seats.
+      ALARM's reference plan cd_2020 assigns every VTD whole to one district, while the
+      2022 map (Census CD118) splits 21 VTDs around Memphis. Spreading the votes of those
+      VTDs by population instead of voting-age population also stays above 0.5 points.
+      Source: our join of ALARM's TN_cd_2020_map.rds with Census CD118.
+  ```
+
+  Staat er een andere staat boven de drempel, of wijkt Tennessee af van deze getallen, schrijf dan niets op en vraag de eigenaar.
 - `whole_unit`: hoofdstuk 6 van de spec vraagt voor elk district met een andere winnaar een verklaring; tot die er is, blijft het punt open. Zo'n district ligt dicht bij 50%. Zoek de aandelen op:
 
   ```powershell
@@ -8248,6 +11126,8 @@ Lees `docs/validation.md` van boven naar beneden. Werk de lijst onder "Open item
   ```
 - `plans`: hoort niet voor te komen, want `02_join.py` controleert het aantal plannen. Stop en zoek de oorzaak met systematic-debugging.
 - `planscore_reproduction`, `planscore`, `dra`: zie Taken 2.13 en 2.14.
+
+Geen open punt, wel om te controleren: de sectie "Join log" noemt `unlinked_blocks` alleen bij ME (112 blokken in 6 tracts), MI (631 blokken in 38 VTD's) en OH (63 blokken in 4 VTD's). Dat is water dat ALARM niet in `map.rds` opnam; `check_vap_pop` heeft in `02_join.py` al gecontroleerd dat die blokken geen VAP en geen bevolking hebben (spec hoofdstuk 6 en 10). Ze hebben geen verklaring nodig. Onder de tabellen van die sectie staat alleen OR met nieuwe labels voor ALARM's referentiekaart (taak 1.17). Wijkt een van beide af, stop dan en vraag de eigenaar.
 
 Is een oorzaak niet duidelijk, schrijf dan geen verklaring. Stop en vraag de eigenaar.
 
@@ -8331,7 +11211,7 @@ def state(postal, name, fips, seats, notes=(), extra_maps=()):
     return StateConfig(
         postal=postal, name=name, fips=fips, seats=seats, map_name=f"{name} map", status="In effect",
         source_label=f"{name} source", source_url=f"https://example.org/{postal.lower()}", bef="cd120",
-        elections=("pre_16", "pre_20"), unit_source="vtd", extra_maps=tuple(extra_maps), notes=tuple(notes),
+        elections=("pre_16", "pre_20"), unit_kind="vtd", extra_maps=tuple(extra_maps), notes=tuple(notes),
     )
 
 
@@ -8342,7 +11222,6 @@ def toy_config(states, ens_notes=None, fill=None):
         census_vest_commit="243c8a8134ecf8151777a9388c48323e274767e2",
         ensemble=EnsembleConfig(name="alarm_v15", doi="doi:10.7910/DVN/SLCD3E", version=15,
                                 notes=ens_notes or {}, fill=fill or {}),
-        align_to_alarm=(),
         sources={},
         states={s.postal: s for s in states},
         at_large={"DE": AtLargeState(postal="DE", name="Delaware", fips="10"),
@@ -9237,7 +12116,7 @@ git commit -m "Load 2026 district geometry and build TopoJSON with mapshaper"
 - Create: `tests/test_check_geometry.py`
 
 **Interfaces:**
-- Consumes: `load_districts` (taak 3.3); `read_pl_blocks(zip_path, st)` met kolommen `block_id`, `vap`, `vtd`, `lat`, `lon` en `read_bef(zip_path, kind, fips, postal)` met index `block_id` en waarde `district` (taak 1.7).
+- Consumes: `load_districts` (taak 3.3); `read_pl_blocks(zip_path, st)` met kolommen `block_id`, `vap`, `pop`, `vtd`, `lat`, `lon` (taak 1.7 en 1.13) en `read_bef(zip_path, kind, fips, postal)` met index `block_id` en waarde `district` (taak 1.7).
 - Produces: `check_geometry(districts, blocks, district_of, state, min_share: float = 0.999) -> float`. Geeft het aandeel blokken waarvan het interne punt in het district ligt dat het blokbestand noemt. Blokken met `ZZ` tellen niet mee. Een blok uit het blokbestand zonder punt in P.L. 94-171 telt als misser. Fouten: `CheckError("geometry_codes", state, ...)` als de districtscodes verschillen, `CheckError("geometry_points", state, ...)` onder `min_share`, met de eerste vijf missers.
 
 De punten uit P.L. 94-171 zijn NAD83, de districten EPSG:4326. Het verschil is kleiner dan 2 meter; de functie zet beide in hetzelfde stelsel zonder omrekening.
@@ -10798,8 +13677,12 @@ Wat de ontwerpsessie moet beslissen:
 7. Interactie: aanwijzen, klikken, tikken en toetsenbord voor kaart en paneel; de knop tussen de twee kaartweergaven; openen en sluiten van het staatspaneel; of de gekozen staat in de URL komt (bijvoorbeeld `#TX`).
 8. Hoe een effect met teken eruitziet (`+11`, `−1`, of in woorden) en de zin onder de landelijke zetelas die het geografische effect en het tekeneffect noemt.
 9. De methodetoelichting: de zes punten uit hoofdstuk 8 (stedelijk effect in twee of drie zinnen zonder oordeel; VRA en Callais; stembasis; kernbehoud in KS, LA, NE, NM en UT; de landelijke band en waarom de landelijke effecten niet de som van de staateffecten zijn; ALARM-versie, datum van de statuscontrole en licenties), met bronverwijzingen. Daarnaast de beperkingen uit hoofdstuk 10 die geen noot per staat hebben:
-   - in California volgen twee tracts in Modoc en Siskiyou County de tractcijfers van ALARM (`align_to_alarm`), samen ongeveer 4.100 stemmen minder over de vier stemkolommen, zodat de drie scenario's één stembasis houden;
-   - het blokbestand van Maine bij ALARM is van oktober 2025, nieuwer dan de stats-bestanden;
+   - de eenheden van de stemmen: VTD's (ongeveer precincten) in 38 staten, tracts in CA, HI, ME en OR, county's in IA en WV, zoals in ALARM's `map.rds`;
+   - in California hebben twee tracts in Modoc en Siskiyou County in ALARM's `map.rds` geen stemmen; in het blokbestand van census-vest hebben ze samen ongeveer 4.100 stemmen over de vier stemkolommen. We volgen ALARM, zodat de drie scenario's één stembasis houden;
+   - in Michigan staan 38 watereenheden niet in ALARM's `map.rds`; bij census-vest hebben ze samen 17.272 stemmen, die bij ons niet meetellen. In Ohio ontbreken 4 watereenheden, zonder stemmen;
+   - het blokbestand van census-vest voor Maine is van oktober 2025 en verdeelt de stemmen anders over de tracts dan `map.rds`; we gebruiken het alleen voor de verdeling binnen een tract, de stemmen per tract komen uit `map.rds`;
+   - de `map.rds` van New Jersey heeft voor 2020 de cijfers van vóór ALARM's herziening van het census-vest-bestand van die staat; we volgen `map.rds`;
+   - heeft een eenheid geen VAP, dan gaan haar stemmen in gelijke delen naar haar blokken; op de kaarten van 2026 liggen zulke eenheden in acht VTD-staten over een districtsgrens, met samen ongeveer 4.500 stemmen;
    - we toetsen de vastgestelde kaarten niet op gelijke bevolking; NV en CA tellen gevangenen bij herindeling anders mee dan de census;
    - een districtsnummer kan op een andere kaart een heel ander gebied zijn, zoals in Utah, dus nummers zijn niet te vergelijken tussen kaarten;
    - op onze stembasis blijven onder meer TX-15, TX-28 en TX-34 Democratisch;
@@ -10949,6 +13832,7 @@ Open `http://127.0.0.1:8000` in Chrome of Edge. In DevTools:
    Expected: `[]`. De console toont geen fouten.
 3. Device toolbar op 375 x 812 en daarna op 1280 x 800. Controleer bij beide breedtes: de kaart past zonder horizontaal scrollen; het paneel staat naast de kaart op desktop en eronder op mobiel; tikken of klikken op Texas opent het paneel met de drie getallen; beide kaartweergaven werken; Wyoming toont "One at-large seat. No districts, so nothing to compare."; Missouri toont de extra rij voor HB 1; Hawaii toont bij MM "Not defined for two districts".
 4. Alleen met het toetsenbord: Tab naar de kaart, kies een staat met Enter, sluit het paneel. De focus is steeds zichtbaar.
+5. Lees de methodetoelichting. Ze noemt de beperkingen uit hoofdstuk 10 van de spec die geen noot per staat hebben (Task 4.3, punt 9), waaronder de eenheden uit ALARM's `map.rds`, de twee tracts in California zonder stemmen, de watereenheden van MI en OH, het blokbestand van Maine, de cijfers van New Jersey en de regel voor eenheden zonder VAP.
 
 Herhaal punt 1 en 2 met de device toolbar op 375 x 812.
 
