@@ -512,7 +512,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "vra_filter_with_votes",
@@ -762,7 +762,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "competitiveness_rule",
@@ -928,7 +928,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "alarm_method_update_pending",
@@ -1839,7 +1839,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "alarm_method_update_pending",
@@ -2218,7 +2218,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     }
    ],
    "d_share": 0.4888520578713317,
@@ -3339,7 +3339,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "core_preservation_prior_map",
@@ -3868,7 +3868,11 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+    },
+    {
+     "key": "vra_filter_minority_majority",
+     "text": "ALARM kept only neutral maps for this state with at least two districts where more than half of voting-age adults belong to a minority group."
     },
     {
      "key": "alarm_rerun_unpublished",
@@ -4224,7 +4228,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "vra_filter_bvap",
@@ -4448,7 +4452,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "alarm_rerun_unpublished",
@@ -4643,7 +4647,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "alarm_rerun_unpublished",
@@ -5789,7 +5793,11 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+    },
+    {
+     "key": "vra_fixed_district",
+     "text": "Every neutral map for this state has a district in Cuyahoga County, which includes Cleveland, where more than 40% of voting-age adults are Black. ALARM drew that district first and the rest of the state around it."
     },
     {
      "key": "alarm_rerun_unpublished",
@@ -6517,7 +6525,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "narrow_ensemble",
@@ -6601,7 +6609,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "vra_filter_with_votes",
@@ -6910,8 +6918,8 @@
    },
    "notes": [
     {
-     "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "key": "vra_constraint_cvap",
+     "text": "ALARM's neutral maps for this state favor districts with a large Hispanic or Black share of adult citizens, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "alarm_method_update_pending",
@@ -7690,7 +7698,7 @@
    "notes": [
     {
      "key": "vra_constraint",
-     "text": "ALARM's neutral maps for this state aim for about as many districts with a large minority share of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
+     "text": "ALARM's neutral maps for this state favor districts with a large minority share of voting-age adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they can look like packing, which means putting many voters of one party into a few districts."
     },
     {
      "key": "alarm_rerun_unpublished",

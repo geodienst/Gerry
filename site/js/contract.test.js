@@ -18,9 +18,9 @@ const skip = missing.length > 0
 const SINGLE_SEAT = ['AK', 'DE', 'ND', 'SD', 'VT', 'WY'];
 const PLANS = 5000;
 const NOTE_KEYS = [
-  'vra_constraint', 'core_preservation_prior_map', 'core_preservation_2010',
-  'competitiveness_rule', 'vra_filter_with_votes', 'vra_filter_bvap',
-  'alarm_rerun_unpublished', 'alarm_method_update_pending', 'narrow_ensemble',
+  'vra_constraint', 'vra_constraint_cvap', 'core_preservation_prior_map', 'core_preservation_2010',
+  'competitiveness_rule', 'vra_filter_with_votes', 'vra_filter_bvap', 'vra_filter_minority_majority',
+  'vra_fixed_district', 'alarm_rerun_unpublished', 'alarm_method_update_pending', 'narrow_ensemble',
   'adopted_after_2024_election', 'composite_2020_only', 'blocked_map',
 ];
 const STATE_FIELDS = [

@@ -147,12 +147,15 @@ AT_LARGE = {"AK", "DE", "ND", "SD", "VT", "WY"}
 TRACT_STATES = {"CA", "HI", "ME", "OR"}
 # Spec chapter 5, notes table: which states get which note.
 ENSEMBLE_NOTES = {
-    "vra_constraint": {"AL", "AZ", "CA", "FL", "GA", "LA", "MI", "MO", "MS", "NC", "OH", "RI", "SC", "TX", "WA"},
+    "vra_constraint": {"AL", "AZ", "CA", "FL", "GA", "LA", "MI", "MO", "MS", "NC", "OH", "RI", "SC", "WA"},
+    "vra_constraint_cvap": {"TX"},
     "core_preservation_prior_map": {"LA", "NM", "UT"},
     "core_preservation_2010": {"KS", "NE"},
     "competitiveness_rule": {"AZ", "CO"},
     "vra_filter_with_votes": {"AL", "SC"},
     "vra_filter_bvap": {"MO"},
+    "vra_filter_minority_majority": {"MI"},
+    "vra_fixed_district": {"OH"},
     "alarm_rerun_unpublished": {"AL", "CO", "KS", "MI", "MS", "NC", "NY", "OH", "PA", "SC", "WA"},
     "alarm_method_update_pending": {"CA", "FL", "TX"},
 }

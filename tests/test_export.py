@@ -138,6 +138,22 @@ def test_repo_config_note_lists_match_the_spec():
     assert cfg.ensemble.fill == fill
 
 
+def test_repo_config_notes_for_texas_michigan_and_ohio_resolve_in_order():
+    cfg = load_config()
+    if cfg.ensemble.name != "alarm_v15":
+        pytest.skip("the note lists in the spec describe alarm_v15")
+    # the ensemble notes in the order of config.yaml, then the notes of the state itself
+    expected = {
+        "TX": ["vra_constraint_cvap", "alarm_method_update_pending", "adopted_after_2024_election"],
+        "MI": ["vra_constraint", "vra_filter_minority_majority", "alarm_rerun_unpublished"],
+        "OH": ["vra_constraint", "vra_fixed_district", "alarm_rerun_unpublished", "adopted_after_2024_election"],
+    }
+    for postal, keys in expected.items():
+        notes = resolve_notes(postal, cfg, [])
+        assert [n["key"] for n in notes] == keys, postal
+        assert [n["text"] for n in notes] == [NOTE_TEXTS[key] for key in keys], postal
+
+
 # --- build_results -------------------------------------------------------------------------------
 
 def toy_state_metrics(fips, computed_notes=()):

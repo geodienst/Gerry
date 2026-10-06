@@ -14,9 +14,9 @@ REPO_ROOT: Path = Path(__file__).resolve().parents[2]
 
 STATUS_VALUES = ("In effect", "Challenged", "Blocked", "At-large")
 ENSEMBLE_NOTE_KEYS = (
-    "vra_constraint", "core_preservation_prior_map", "core_preservation_2010",
-    "competitiveness_rule", "vra_filter_with_votes", "vra_filter_bvap",
-    "alarm_rerun_unpublished", "alarm_method_update_pending",
+    "vra_constraint", "vra_constraint_cvap", "core_preservation_prior_map", "core_preservation_2010",
+    "competitiveness_rule", "vra_filter_with_votes", "vra_filter_bvap", "vra_filter_minority_majority",
+    "vra_fixed_district", "alarm_rerun_unpublished", "alarm_method_update_pending",
 )
 STATE_NOTE_KEYS = ("adopted_after_2024_election", "composite_2020_only", "blocked_map")
 COMPUTED_NOTE_KEYS = ("narrow_ensemble",)

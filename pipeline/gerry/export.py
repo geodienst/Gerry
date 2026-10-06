@@ -15,10 +15,16 @@ STATE_FIELDS = ("d_share", "proportional", "enacted", "neutral", "position", "ef
 # Change a text in both places; tests/test_export.py compares them.
 NOTE_TEXTS: dict[str, str] = {
     "vra_constraint": (
-        "ALARM's neutral maps for this state aim for about as many districts with a large minority share "
-        "of voting-age adults as the 2022 map had. This follows the Voting Rights Act as courts applied it "
-        "before Louisiana v. Callais (April 2026). The law can require such districts. In seat counts they "
-        "can look like packing, which means putting many voters of one party into a few districts."
+        "ALARM's neutral maps for this state favor districts with a large minority share of voting-age "
+        "adults, following the Voting Rights Act as courts applied it before Louisiana v. Callais "
+        "(April 2026). The law can require such districts. In seat counts they can look like packing, "
+        "which means putting many voters of one party into a few districts."
+    ),
+    "vra_constraint_cvap": (
+        "ALARM's neutral maps for this state favor districts with a large Hispanic or Black share of "
+        "adult citizens, following the Voting Rights Act as courts applied it before Louisiana v. Callais "
+        "(April 2026). The law can require such districts. In seat counts they can look like packing, "
+        "which means putting many voters of one party into a few districts."
     ),
     "core_preservation_prior_map": (
         "ALARM's neutral maps for this state keep the core of each district in {reference_map}. So they "
@@ -39,6 +45,15 @@ NOTE_TEXTS: dict[str, str] = {
     "vra_filter_bvap": (
         "ALARM filtered the neutral maps for this state to follow the Voting Rights Act. It kept only maps "
         "with at least one district where more than 30% of voting-age adults are Black."
+    ),
+    "vra_filter_minority_majority": (
+        "ALARM kept only neutral maps for this state with at least two districts where more than half of "
+        "voting-age adults belong to a minority group."
+    ),
+    "vra_fixed_district": (
+        "Every neutral map for this state has a district in Cuyahoga County, which includes Cleveland, "
+        "where more than 40% of voting-age adults are Black. ALARM drew that district first and the rest "
+        "of the state around it."
     ),
     "alarm_rerun_unpublished": (
         "ALARM has rerun the simulations for this state because the version 15 run did not meet its current "
