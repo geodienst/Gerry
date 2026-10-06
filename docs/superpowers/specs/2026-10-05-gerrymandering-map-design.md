@@ -149,7 +149,7 @@ Alle ID's zijn tekst. Districten zijn twee tekens met voorloopnul (`"09"`); ALAR
 - Lege stemvelden worden 0 en komen in het log (in California twee blokken zonder bevolking).
 - Blokken met CDFP `ZZ` (water in CT, IL en NH) vallen weg vóór het verdelen. Een eenheid met stemmen zonder overgebleven blokken is een fout; een eenheid zonder stemmen en zonder overgebleven blokken komt in het log.
 - Blokverdeling: de stemmen van een eenheid gaan naar haar blokken naar verhouding van de blok-VAP. Heeft de eenheid geen VAP, dan naar verhouding van het aantal blokken; dat komt in het log.
-- Hele-eenheidstoewijzing (controle): een eenheid gaat in haar geheel naar het district met de meeste blok-VAP binnen de eenheid; zonder VAP naar het district met de meeste blokken; bij gelijke stand naar het laagste districtnummer.
+- Hele-eenheidstoewijzing (controle): een eenheid gaat in haar geheel naar het district met de meeste blok-VAP binnen de eenheid; bij gelijke VAP, of zonder VAP, naar het district met de meeste blokken; blijft het gelijk, dan naar het laagste districtnummer.
 - Plannen: elke draw behalve `cd_2020` moet precies `seats` rijen hebben met districten 1 tot en met `seats`, en elke draw komt één keer voor. Het aantal plannen moet 5.000 zijn.
 
 ## 5. Rekenregels
