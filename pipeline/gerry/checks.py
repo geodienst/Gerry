@@ -25,6 +25,7 @@ class CheckError(RuntimeError):
 # --- data/sources.md ---------------------------------------------------------
 
 _SECTIONS = {"multi": "Multi-seat states", "blocked": "Blocked maps", "at_large": "At-large states"}
+_ADOPTION = "Adoption and control"   # column of "Multi-seat states": "<adopted_by>, <control>. <record>"
 _DATE_LINE = re.compile(r"Status checked on (\d{4}-\d{2}-\d{2})\b")
 _LINK = re.compile(r"\[([^\]]+)\]\(([^()\s]+)\)")
 _AT_LARGE_ROW = {"seats": 1, "map_name": "At large", "url": None, "status": "At-large", "pipeline_file": "CD120"}
@@ -35,7 +36,8 @@ def parse_sources_md(path: Path) -> dict:
 
     Returns {"status_checked": date, "multi": {ST: row}, "blocked": {ST: [row, ...]},
     "at_large": {ST: row}}. A row is {"map_name", "url", "status", "pipeline_file"}
-    plus "seats" (int) in "multi" and "at_large". "url" is None when the map cell has no link.
+    plus "seats" (int) in "multi" and "at_large", and "adoption" (the text of the column
+    "Adoption and control") in "multi". "url" is None when the map cell has no link.
     """
     lines = Path(path).read_text(encoding="utf-8").splitlines()
     body = [line for line in lines if line.strip() and not line.startswith("#")]
@@ -47,6 +49,10 @@ def parse_sources_md(path: Path) -> dict:
     for key, heading in _SECTIONS.items():
         header, cells = _table(lines, heading)
         rows = [_row(header, raw, heading, with_seats=key != "blocked") for raw in cells]
+        if key == "multi":
+            # extensions design, chapter 4: who adopted the map, under whose control, with the sources
+            rows = [(postal, {**row, "adoption": _column(header, raw, _ADOPTION, heading)})
+                    for (postal, row), raw in zip(rows, cells)]
         if key == "blocked":
             grouped: dict[str, list[dict]] = {}
             for postal, row in rows:
@@ -82,6 +88,11 @@ def check_sources_md(cfg: Config, path: Path) -> None:
             expected = {"seats": st.seats, "map_name": st.map_name, "url": st.source_url,
                         "status": st.status, "pipeline_file": st.bef.upper()}
             problems += _compare(postal, multi[postal], expected)
+            start = f"{st.adopted_by}, {st.control}."
+            cell = multi[postal]["adoption"]
+            if cell != start and not cell.startswith(start + " "):
+                problems.append((postal, f"adoption: sources.md starts with {cell[:40]!r}, "
+                                         f"config.yaml has {start!r}"))
 
     blocked = parsed["blocked"]
     for postal in sorted(set(blocked) | {p for p, s in cfg.states.items() if s.extra_maps}):

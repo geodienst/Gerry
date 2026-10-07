@@ -87,6 +87,8 @@ def test_parse_real_sources_md():
     assert tx["url"] == "https://data.capitol.texas.gov/dataset/planc2333"
     assert tx["pipeline_file"] == "CD120"
     assert tx["status"] in {"In effect", "Challenged"}
+    # extensions design, chapter 4: the new column starts with adopted_by and control (Texas is its example)
+    assert tx["adoption"].startswith("Legislature, Republican.")
     assert parsed["multi"]["MO"]["pipeline_file"] == "CD118"
     [hb1] = parsed["blocked"]["MO"]
     assert hb1["map_name"] == "HB 1 of 2025"
@@ -130,6 +132,10 @@ MISMATCHES = [
      "MO", "pipeline_file"),
     ("Multi-seat states", "AL", "Map", lambda v: v.replace("](", " changed](", 1), "AL", "map_name"),
     ("Multi-seat states", "TX", "Map", lambda v: v[:-1] + "x)", "TX", "url"),
+    ("Multi-seat states", "TX", "Adoption and control", lambda v: v.replace("Republican", "Democratic", 1),
+     "TX", "adoption"),
+    ("Multi-seat states", "AZ", "Adoption and control", lambda v: v.replace("Commission", "Court", 1),
+     "AZ", "adoption"),
     ("Blocked maps", "MO", "Status", lambda v: "In effect", "MO", "status"),
     ("Blocked maps", "MO", "Map", lambda v: v.replace("](", " changed](", 1), "MO", "extra_maps"),
     ("At-large states", "VT", "Status", lambda v: "In effect", "VT", "status"),
@@ -170,6 +176,21 @@ def test_missing_heading_raises(tmp_path):
     text = real_text().replace("## Blocked maps", "## Blocked plans")
     with pytest.raises(CheckError, match="Blocked maps"):
         parse_sources_md(write(tmp_path, text))
+
+
+def test_multi_seat_table_needs_the_adoption_column(tmp_path):
+    text = real_text().replace("| Adoption and control |", "| Adoption |", 1)
+    with pytest.raises(CheckError, match="Adoption and control"):
+        parse_sources_md(write(tmp_path, text))
+
+
+def test_adoption_cell_must_start_with_both_values_and_a_full_stop(tmp_path):
+    # "Legislature, Republicans ..." is not "Legislature, Republican."
+    text = change_cell(real_text(), "Multi-seat states", "TX", "Adoption and control",
+                       lambda v: v.replace("Republican.", "Republicans,", 1))
+    with pytest.raises(CheckError) as info:
+        check_sources_md(load_config(), write(tmp_path, text))
+    assert info.value.state == "TX" and "adoption" in info.value.detail
 
 
 def test_map_cell_with_link_and_text_raises(tmp_path):
