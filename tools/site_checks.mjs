@@ -454,7 +454,7 @@ async function senate(t) {
 // --- Owner decision of October 7, 2026: working title, lede, keyline sentence, "How to read this" ---
 async function explainer(t) {
   await t.load();
-  t.check('the title and the heading read "House of cards"', await t.js("document.title === 'House of cards' && document.querySelector('header h1').textContent === 'House of cards'"));
+  t.check('the title and the heading read "Some votes are more equal than others"', await t.js("document.title === 'Some votes are more equal than others' && document.querySelector('header h1').textContent === 'Some votes are more equal than others'"));
   t.check('the lede asks the question and names the three ways',
     (await t.text('header .lede')).startsWith('How many U.S. House seats would Democrats win with the same votes on different maps?'));
   t.check('the meta description is the lede', await t.js("document.querySelector('meta[name=description]').content === document.querySelector('header .lede').textContent"));
