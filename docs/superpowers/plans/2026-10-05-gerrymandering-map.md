@@ -13083,6 +13083,8 @@ Alle commando's draaien in PowerShell vanuit de worktree-root `C:\projects\Gerry
 
 ### Task 4.1: site/js/format.js
 
+Superseded: Task 6.1 of docs/superpowers/plans/2026-10-07-site.md changed the `advantage` texts to direction words ("points toward Republicans"); the Interfaces block above is current.
+
 **Files:**
 - Create: `site/js/format.test.js`
 - Create: `site/js/format.js`

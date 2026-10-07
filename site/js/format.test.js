@@ -146,12 +146,14 @@ test('effectWords: seats toward a party, one seat in the singular', () => {
   assert.equal(effectWords(-1), '1 seat toward Republicans');
   assert.equal(effectWords(1), '1 seat toward Democrats');
   assert.equal(effectWords(0), 'no difference');
+  assert.equal(effectWords(-0), 'no difference');
 });
 
 test('effectLine: notation and words joined by a middle dot', () => {
   assert.equal(effectLine(-6), 'R+6 · 6 seats toward Republicans');
   assert.equal(effectLine(3), 'D+3 · 3 seats toward Democrats');
   assert.equal(effectLine(0), '0 · no difference');
+  assert.equal(effectLine(-0), '0 · no difference');
 });
 
 test('effect, effectWords and effectLine reject fractions and text', () => {
@@ -171,7 +173,8 @@ test('count: whole numbers with thousands separators', () => {
 });
 
 test('count rejects fractions, negatives and text', () => {
-  for (const bad of [2.5, -1, '5000', Number.NaN, null]) {
+  // Infinity, 2 ** 53 and 1e21 are above Number.MAX_SAFE_INTEGER
+  for (const bad of [2.5, -1, '5000', Number.NaN, null, Infinity, 2 ** 53, 1e21]) {
     assert.throws(() => count(bad), TypeError, String(bad));
   }
 });
@@ -196,10 +199,32 @@ test('longDate: month name, day without a leading zero, year', () => {
   assert.equal(longDate('2026-11-03'), 'November 3, 2026');
   assert.equal(longDate('2025-01-31'), 'January 31, 2025');
   assert.equal(longDate('2024-02-29'), 'February 29, 2024'); // leap year
+  const names = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  names.forEach((name, i) => {
+    const month = String(i + 1).padStart(2, '0');
+    assert.equal(longDate(`2026-${month}-15`), `${name} 15, 2026`);
+  });
+  // does not depend on the time zone of the machine
+  const saved = process.env.TZ;
+  try {
+    for (const tz of ['Pacific/Kiritimati', 'UTC', 'Pacific/Pago_Pago']) { // UTC+14, UTC, UTC-11
+      process.env.TZ = tz;
+      assert.equal(longDate('2026-10-03'), 'October 3, 2026', tz);
+      assert.equal(longDate('2026-12-31'), 'December 31, 2026', tz);
+      assert.equal(longDate('2026-01-01'), 'January 1, 2026', tz);
+    }
+  } finally {
+    if (saved === undefined) delete process.env.TZ; else process.env.TZ = saved;
+  }
 });
 
 test('longDate rejects other forms and impossible dates', () => {
   for (const bad of ['2026-10-3', '03-10-2026', '2026-13-01', '2026-00-10', '2026-02-29', '2026-10-03T00:00', 20261003, null]) {
     assert.throws(() => longDate(bad), TypeError, String(bad));
+  }
+  // text around a date
+  for (const bad of [' 2026-10-03', '12026-10-03', '2026-10-03 ', '2026-10-03\n']) {
+    assert.throws(() => longDate(bad), TypeError, JSON.stringify(bad));
   }
 });
