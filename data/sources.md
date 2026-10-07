@@ -91,6 +91,8 @@ The 44 states hold 429 seats.
 | VT | 1 | At large | At-large | CD120 | Not part of the comparison |
 | WY | 1 | At large | At-large | CD120 | Not part of the comparison |
 
+The Senate block takes the 2016 and 2020 presidential votes of these six states from the MIT Election Data and Science Lab, [U.S. President 1976-2024](https://doi.org/10.7910/DVN/42MVDX), version 10.1, doi:10.7910/DVN/42MVDX, file `1976-2024-president.csv`, CC0 1.0. We checked Delaware 2020 against the [official results](https://web.archive.org/web/20260919030702/https://elections.delaware.gov/reports/GE2020.html) of the Delaware Department of Elections: Biden 296,268 and Trump 200,603, as in the MIT file. The governor's certificate of ascertainment has 335 and 276 fewer votes.
+
 ## Block assignment files
 
 | File | Covers | Date |

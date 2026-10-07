@@ -104,7 +104,7 @@ Op 7 oktober 2026, bij de open punten van het implementatieplan (`docs/superpowe
 
 **Geen gerrymandering.** De Senaat heeft geen districten. Het verschil met het stemaandeel komt doordat elke staat twee senatoren heeft, groot of klein. De site zet dit blok daarom apart van de kaarten en zegt dat in één zin.
 
-**Stemmen per staat.** Voor de 44 staten met districten het tweepartijenaandeel over de staat uit onze stembasis (de som van de districtsstemmen; West Virginia alleen 2020). Voor de zes staten met één zetel (AK, DE, ND, SD, VT, WY) de officiële uitslagen per staat van 2016 en 2020, opgeteld, uit een nieuwe databron: MIT Election Data and Science Lab, "U.S. President 1976–2020" (Harvard Dataverse, doi:10.7910/DVN/42MVDX). Het implementatieplan legt versie, bestand, licentie en controle vast; wijken de cijfers af van de officiële uitslagen van die staten, dan stoppen en vragen.
+**Stemmen per staat.** Voor de 44 staten met districten het tweepartijenaandeel over de staat uit onze stembasis (de som van de districtsstemmen; West Virginia alleen 2020). Voor de zes staten met één zetel (AK, DE, ND, SD, VT, WY) de officiële uitslagen per staat van 2016 en 2020, opgeteld, uit een nieuwe databron: MIT Election Data and Science Lab, "U.S. President 1976-2024" (Harvard Dataverse, doi:10.7910/DVN/42MVDX). Het implementatieplan legt versie, bestand, licentie en controle vast; wijken de cijfers af van de officiële uitslagen van die staten, dan stoppen en vragen.
 
 **Meerderheid.** 51 van de 100 zetels. Bij 50 tegen 50 beslist de vicepresident; die is sinds januari 2025 Republikein. Omdat elke staat hier twee zetels aan één partij geeft, hebben Democraten 26 staten nodig.
 

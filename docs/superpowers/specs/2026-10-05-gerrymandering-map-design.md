@@ -82,6 +82,7 @@ pipeline/
   gerry/               gedeelde code, getest
     config.py          laden en valideren van config.yaml; repo-root uit __file__
     sources.py         downloads, checksums, manifest
+    rds.py             de attribuuttabel van ALARM's map.rds lezen in Python, zonder R
     units.py           stemmen per eenheid uit map.rds, eenheid-ID's, kolomkeuze, composiet
     blocks.py          P.L. 94-171 lezen, verdelen over blokken, optellen per district
     ensemble.py        stemmen per district per plan uit de stats-bestanden
