@@ -1,6 +1,6 @@
 // Texts and view models for the extensions (docs/superpowers/specs/2026-10-06-extensions-design.md,
 // chapters 1 to 4 and 7), from the results.json fields of Phase 5. Pure, like model.js.
-import { share, seats, count, effectLine } from './format.js';
+import { share, seats, count, effect, effectLine } from './format.js';
 
 // --- Majority threshold (Task 6.10) -------------------------------------------------------------
 
@@ -71,7 +71,11 @@ export function stateRedraw(state) {
 /** The lines the extensions add to a state's sheet: under the heading, and after "Districts, sorted". */
 export function stateExtras(results, postal) {
   const s = results.states[postal];
-  return { head: [], body: [competitiveText(s.competitive, 'map'), stateRedraw(s)] };
+  const adopted = adoptedLine(s.adopted);
+  return {
+    head: [adopted.line, adopted.note].filter(Boolean),
+    body: [competitiveText(s.competitive, 'map'), stateRedraw(s)],
+  };
 }
 
 // --- Competitive districts (Task 6.12) ----------------------------------------------------------
@@ -80,4 +84,30 @@ export function stateExtras(results, postal) {
 export function competitiveText(c, maps) {
   const band = c.p5 === c.p95 ? '' : ` (${count(c.p5)} to ${count(c.p95)})`;
   return `Competitive districts (45 to 55%): ${count(c.enacted)} on the enacted ${maps}, ${count(c.median)} on neutral maps${band}.`;
+}
+
+// --- Who adopted the map (Task 6.13) ------------------------------------------------------------
+
+export const CONTROL_LABELS = {
+  Republican: 'Republican control', Democratic: 'Democratic control', Bipartisan: 'Bipartisan', Nonpartisan: 'Nonpartisan',
+};
+
+/** "Adopted by: Legislature (Republican control)." with the optional note. */
+export function adoptedLine(adopted) {
+  const control = adopted.control === 'Republican' || adopted.control === 'Democratic'
+    ? CONTROL_LABELS[adopted.control] : adopted.control.toLowerCase();
+  return { line: `Adopted by: ${adopted.by} (${control}).`, note: adopted.note ?? '' };
+}
+
+/** The two tables: per political control and per body, with states, seats and the summed drawing effect. */
+export function controlTables(results) {
+  const rows = (entries, label) => Object.entries(entries).map(([key, v]) => ({
+    key, label: label(key), states: count(v.states), seats: seats(v.seats), drawing: effect(v.drawing),
+  }));
+  return {
+    byControl: rows(results.national.by_control, (key) => CONTROL_LABELS[key]),
+    byBody: rows(results.national.by_body, (key) => key),
+    note: 'In these tables the drawing effect is the sum of the drawing effects of the states in a row. The national '
+      + 'drawing effect uses the national neutral baseline instead, so the two can differ.',
+  };
 }

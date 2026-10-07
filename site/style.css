@@ -159,3 +159,10 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
 /* Extensions in the sheet: a rule sets the lines on competitive districts and the redraw apart from the
    caption of "Districts, sorted" (Task 6.12). */
 .extras { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+
+/* Extensions: the tables by political control (Task 6.13) */
+#control table { border-collapse: collapse; font-size: 0.87rem; width: 100%; }
+#control caption { text-align: left; font-weight: 600; padding-bottom: 0.3rem; }
+#control th, #control td { text-align: left; padding: 0.25rem 1rem 0.25rem 0; border-bottom: 1px solid var(--rule); font-weight: 400; }
+#control thead th { color: var(--muted); }
+#control .num { text-align: right; font-variant-numeric: tabular-nums; }

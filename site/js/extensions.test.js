@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { results } from './testdata.js';
 import {
-  majorityView, extensionFills, redrawView, stateRedraw, stateExtras, competitiveText,
+  majorityView, extensionFills, redrawView, stateRedraw, stateExtras, competitiveText, adoptedLine, controlTables,
 } from './extensions.js';
 
 /** testdata.js with the Phase 5 fields; all numbers made up, with 7 states and 429 seats nationally. */
@@ -98,16 +98,19 @@ test('stateRedraw: fewer, more, the same number, and an unchanged map', () => {
   assert.equal(stateRedraw(r.states.MO), 'Map unchanged since 2024.');
 });
 
-test('stateExtras: competitive districts and the redraw after the chart', () => {
+test('stateExtras: the adopted line under the heading, competitive districts and the redraw after the chart', () => {
   const r = extended();
+  r.states.TX.adopted = { by: 'Legislature', control: 'Republican', note: null };
   r.states.TX.competitive = { enacted: 1, median: 2, p5: 1, p95: 3, neutral_dist: [0, 600, 3900, 500, 0] };
   assert.deepEqual(stateExtras(r, 'TX'), {
-    head: [],
+    head: ['Adopted by: Legislature (Republican control).'],
     body: [
       'Competitive districts (45 to 55%): 1 on the enacted map, 2 on neutral maps (1 to 3).',
       '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).',
     ],
   });
+  r.states.TX.adopted.note = 'A made-up note.';
+  assert.deepEqual(stateExtras(r, 'TX').head, ['Adopted by: Legislature (Republican control).', 'A made-up note.']);
 });
 
 // --- competitive districts (Task 6.12) ---
@@ -119,4 +122,24 @@ test('competitiveText: per state and for the nation, without a band of one value
     'Competitive districts (45 to 55%): 81 on the enacted maps, 96 on neutral maps (87 to 105).');
   assert.equal(competitiveText({ enacted: 0, median: 0, p5: 0, p95: 0 }, 'map'),
     'Competitive districts (45 to 55%): 0 on the enacted map, 0 on neutral maps.');
+});
+
+// --- who adopted the map (Task 6.13) ---
+
+test('adoptedLine: body and control, with the note', () => {
+  assert.deepEqual(adoptedLine({ by: 'Legislature', control: 'Republican', note: null }),
+    { line: 'Adopted by: Legislature (Republican control).', note: '' });
+  assert.equal(adoptedLine({ by: 'Legislature', control: 'Democratic', note: null }).line, 'Adopted by: Legislature (Democratic control).');
+  assert.deepEqual(adoptedLine({ by: 'Commission', control: 'Bipartisan', note: 'A made-up note.' }),
+    { line: 'Adopted by: Commission (bipartisan).', note: 'A made-up note.' });
+  assert.equal(adoptedLine({ by: 'Court', control: 'Nonpartisan', note: null }).line, 'Adopted by: Court (nonpartisan).');
+});
+
+test('controlTables: every value in order, with states, seats and the summed drawing effect', () => {
+  const tables = controlTables(extended());
+  assert.deepEqual(tables.byControl.map((r) => [r.label, r.states, r.seats, r.drawing]), [
+    ['Republican control', '2', '6', 'R+6'], ['Democratic control', '2', '4', 'D+4'],
+    ['Bipartisan', '1', '2', '0'], ['Nonpartisan', '2', '14', '0'],
+  ]);
+  assert.deepEqual(tables.byBody.map((r) => [r.label, r.drawing]), [['Legislature', 'R+2'], ['Commission', '0'], ['Court', '0']]);
 });

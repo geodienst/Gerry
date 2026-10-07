@@ -6,10 +6,12 @@ import { makeColors } from './colors.js';
 import {
   indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, methodFills,
 } from './model.js';
-import { majorityView, extensionFills, redrawView, stateExtras, competitiveText } from './extensions.js';
+import {
+  majorityView, extensionFills, redrawView, stateExtras, competitiveText, controlTables,
+} from './extensions.js';
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState } from './sheet.js';
-import { renderKeyline, renderNational, renderMajority, renderRedraws } from './national.js';
+import { renderKeyline, renderNational, renderMajority, renderRedraws, renderControl } from './national.js';
 
 const { d3 } = globalThis;
 const $ = (id) => document.getElementById(id);
@@ -140,6 +142,7 @@ async function main() {
   renderMajority($('majority'), majority);
   renderRedraws($('redraws'), redrawView(results));
   $('competitive-text').textContent = competitiveText(results.national.competitive, 'maps');
+  renderControl($('control'), controlTables(results));
   const fills = { ...methodFills(results), ...extensionFills(results) };
   for (const el of document.querySelectorAll('[data-fill]')) {
     if (Object.hasOwn(fills, el.dataset.fill)) el.textContent = fills[el.dataset.fill];

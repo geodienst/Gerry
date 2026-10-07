@@ -55,3 +55,17 @@ export function renderRedraws(el, view) {
     item.append('span').attr('class', 'v').text(row.text);
   }
 }
+
+/** The two tables by political control and by body (Task 6.13). */
+export function renderControl(el, tables) {
+  const root = d3.select(el);
+  for (const [id, rows] of [['#by-control', tables.byControl], ['#by-body', tables.byBody]]) {
+    const body = root.select(id).html('');
+    for (const row of rows) {
+      const tr = body.append('tr');
+      tr.append('th').attr('scope', 'row').text(row.label);
+      for (const value of [row.states, row.seats, row.drawing]) tr.append('td').attr('class', 'num').text(value);
+    }
+  }
+  root.select('#control-note').text(tables.note);
+}

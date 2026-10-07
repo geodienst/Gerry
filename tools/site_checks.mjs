@@ -388,6 +388,16 @@ async function competitive(t) {
   t.check('the Texas sheet has the line on competitive districts', /Competitive districts \(45 to 55%\): \d+ on the enacted map, \d+ on neutral maps/.test(await t.text('#sheet')));
 }
 
+// --- Task 6.13: who adopted the maps -------------------------------------------------------------
+async function control(t) {
+  await t.load('#TX');
+  t.check('the table by control has four rows and the one by body three', await t.js("document.querySelectorAll('#by-control tr').length === 4 && document.querySelectorAll('#by-body tr').length === 3"));
+  t.check('the drawing effects in the tables show their direction', await t.js("[...document.querySelectorAll('#control tbody td:last-child')].every((td) => /^(0|[RD]\\+\\d+)$/.test(td.textContent))"));
+  t.check('the national strip links to the tables', await t.js("document.querySelector('#national a[href=\"#control\"]') !== null"));
+  await t.until(`${HEADING} === 'Texas'`);
+  t.check('the Texas sheet says who adopted the map', /Adopted by: (Legislature|Commission|Court) \((Republican control|Democratic control|bipartisan|nonpartisan)\)\./.test(await t.text('#sheet')));
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
   { name: 'list', run: list },
@@ -398,4 +408,5 @@ export const GROUPS = [
   { name: 'majority', run: majority },
   { name: 'redraws', run: redraws },
   { name: 'competitive', run: competitive },
+  { name: 'control', run: control },
 ];
