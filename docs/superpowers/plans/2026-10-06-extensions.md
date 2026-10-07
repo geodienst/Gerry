@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** De vier goedgekeurde uitbreidingen in de pijplijn tot en met `results.json`: de meerderheidsdrempel, de hertekeningen sinds de verkiezing van 2024, concurrerende districten, en wie de kaart aannam en onder welke politieke controle. De weergave op de site hoort bij het siteontwerp (taak 4.3 van het hoofdplan) en valt buiten dit plan.
+**Goal:** De vier goedgekeurde uitbreidingen in de pijplijn tot en met `results.json`: de meerderheidsdrempel, de hertekeningen sinds de verkiezing van 2024, concurrerende districten, en wie de kaart aannam en onder welke politieke controle. Daarbij het blok over de Senaat op dezelfde stemmen (besluit 7 van de eigenaar, 7 oktober 2026). De weergave op de site hoort bij het siteontwerp (taak 4.3 van het hoofdplan) en valt buiten dit plan.
 
-**Architecture:** Census CD119 (de kaarten van de verkiezing van 2024) gaat als vierde kaart `map_2024` door `02_join`. Nieuwe pure functies in `gerry/metrics.py` (concurrerende districten, zetels bij een uniforme verschuiving, drempels op een raster van 0,01 procentpunt met bisectie) worden in `03_metrics.py` per staat en landelijk toegepast. Twee nieuwe velden per staat in `config.yaml` komen uit webonderzoek; `check_sources_md` houdt ze gelijk met een nieuwe kolom in `data/sources.md`. `build_results` neemt alles over in `results.json` en de contracttest controleert de samenhang.
+**Architecture:** Census CD119 (de kaarten van de verkiezing van 2024) gaat als vierde kaart `map_2024` door `02_join`. Nieuwe pure functies in `gerry/metrics.py` (concurrerende districten, zetels bij een uniforme verschuiving, drempels op een raster van 0,01 procentpunt met bisectie) worden in `03_metrics.py` per staat en landelijk toegepast. Twee nieuwe velden per staat in `config.yaml` komen uit webonderzoek; `check_sources_md` houdt ze gelijk met een nieuwe kolom in `data/sources.md`. `build_results` neemt alles over in `results.json` en de contracttest controleert de samenhang. Voor de Senaat haalt `01_download` de presidentsuitslagen per staat van het MIT Election Data and Science Lab op; `02_join` schrijft daaruit de stemmen van de zes staten met één zetel naar een tussenbestand, en `03_metrics` zet die met de 44 staten van de stembasis in `national.senate`.
 
 **Tech Stack:** zoals in het hoofdplan: Python 3.12 uit `.venv` (pandas 3, numpy, pytest), Node 24 voor `node --test`.
 
@@ -31,24 +31,32 @@ Ontwerp: `docs/superpowers/specs/2026-10-06-extensions-design.md` (hierna "het u
 | 5.6 | `03_metrics`: `competitive` en `redraw` per staat | 5.3, 5.4 |
 | 5.7 | `03_metrics`: `majority`, `competitive` en `redraw` landelijk, met de grens van 5 punten | 5.5, 5.6 |
 | 5.8 | `docs/validation.md`: `map_2024` in de hele-eenheidscontrole en een regel per staat | 5.7, 2.13 |
-| 5.9 | Onderzoek: wie nam elke kaart aan, onder welke controle (geen code) | besluiten 1 tot en met 4 hieronder |
+| 5.9 | Onderzoek: wie nam elke kaart aan, onder welke controle (geen code) | de besluiten van 7 oktober (hieronder) |
 | 5.10 | `config.yaml` en `gerry/config.py`: `adopted_by`, `control`, `adopted_note` | 5.9 |
 | 5.11 | `check_sources_md` vergelijkt de nieuwe kolom van `data/sources.md` met `config.yaml` | 5.10 |
 | 5.12 | `03_metrics`: `by_control` en `by_body` | 5.7, 5.10 |
 | 5.13 | `results.json` en de contracttest | 5.8, 5.11, 5.12 |
 | 5.14 | De spec verwijst naar de nieuwe velden | 5.13 |
+| 5.15 | Het MIT-bestand met de presidentsuitslagen per staat in het downloadplan en het manifest | 5.14 |
+| 5.16 | `gerry/president.py`: de stemmen van de zes staten met één zetel, gecontroleerd op de officiële uitslagen | 5.15 |
+| 5.17 | `02_join`: `single_seat_votes.parquet` | 5.16 |
+| 5.18 | `metrics.py`: de drempel voor de Senaat | 5.14 |
+| 5.19 | `03_metrics`: `national.senate` | 5.17, 5.18 |
+| 5.20 | `results.json` en de contracttest voor de Senaat | 5.19 |
+| 5.21 | De spec verwijst naar de Senaat | 5.20 |
 
 Afwijkingen van de voorgestelde indeling in acht taken, met reden:
 
 - De join (voorstel 4) is gesplitst in 5.2 en 5.3. `02_join` kan CD119 pas lezen als `gerry/blocks.py` het kan, en die module heeft eigen tests.
 - De pure functies (voorstel 5) zijn gesplitst in 5.4 en 5.5, en de koppeling in `03_metrics` (voorstel 6) in 5.6, 5.7, 5.8 en 5.12. Zo blijft elke taak zo groot als de taken van fase 2 in het hoofdplan.
-- Het onderzoek (5.9) komt vóór de configuratievelden (5.10). De velden zijn verplicht, dus `config.yaml` kan pas geldig blijven als de waarden bekend zijn. Het onderzoek heeft geen code en kan beginnen zodra de eigenaar open punt 1 tot en met 4 heeft beslist, parallel aan 5.1 tot en met 5.8.
-- Taak 5.11 is nieuw: `check_sources_md` vergelijkt de nieuwe kolom van `data/sources.md` met `config.yaml`, zoals nu al voor status, kaartnaam en bron (spec, hoofdstuk 6). Zie open punt 5.
+- Het onderzoek (5.9) komt vóór de configuratievelden (5.10). De velden zijn verplicht, dus `config.yaml` kan pas geldig blijven als de waarden bekend zijn. Het onderzoek heeft geen code. De eigenaar besliste de beslisregels op 7 oktober 2026, dus het kan meteen beginnen, parallel aan 5.1 tot en met 5.8.
+- Taak 5.11 is nieuw: `check_sources_md` vergelijkt de nieuwe kolom van `data/sources.md` met `config.yaml`, zoals nu al voor status, kaartnaam en bron (spec, hoofdstuk 6). Zie punt 5 van de besluiten van de eigenaar.
 - `by_control` en `by_body` (5.12) staan apart, omdat ze `control` en `adopted_by` uit `config.yaml` nodig hebben.
+- De Senaat (besluit 7, hoofdstuk 7 van het uitbreidingsontwerp) kwam er op 7 oktober bij, in zeven taken na 5.14: de databron (5.15), de lezer met de controle op de officiële uitslagen (5.16), het tussenbestand (5.17), de pure functie (5.18), de koppeling in `03_metrics` (5.19), de export (5.20) en de spec (5.21). Ze beginnen na 5.14, omdat hun verwachte uitkomsten (aantallen tests, de volgorde van de velden in `results.json`) de stand na 5.14 aannemen. Inhoudelijk hangt 5.18 alleen van 5.4 af.
 
 ## Keuzes in dit plan
 
-Geen open punten, wel om na te gaan bij de review:
+Om na te gaan bij de review. De open punten van de Senaat staan in een eigen hoofdstuk verderop.
 
 1. `map_changed` vergelijkt CD119 met het blokbestand van de vastgestelde kaart (`bef` van de staat: CD120, voor Missouri CD118). CD120 bevat voor Missouri HB 1, terwijl het uitbreidingsontwerp zegt dat de kaart van 2024 in Missouri de huidige kaart is. Met deze vergelijking heeft Missouri 0 verplaatste blokken. Negen staten hebben een andere kaart dan in 2024: AL, CA, FL, LA, NC, OH, TN, TX en UT.
 2. `cd119.zip` bevat `NationalCD119.txt` (kop `GEOID,CDFP`, 8.174.955 blokken, alle staten plus DC en PR) en losse bestanden voor AL, GA, LA, NY en NC. Die vijf zijn blok voor blok gelijk aan het landelijke bestand (nagegaan in de proefrun). `read_bef` leest het landelijke bestand, één keer per proces, zoals CD120. De cache houdt nu twee landelijke bestanden vast.
@@ -59,6 +67,15 @@ Geen open punten, wel om na te gaan bij de review:
 7. De grens van 5 punten: `CheckError("majority_threshold", "US", ...)` als de exacte drempel voor Enacted meer dan 0,05 van *V0* ligt, of als het raster van -0,05 tot +0,05 geen drempel heeft. Ligt een rasterdrempel op precies -5 punten, dan stopt de pijplijn ook; dat ligt ver van de verwachte waarden.
 8. `by_control` en `by_body` noemen elke waarde uit de tabellen van het uitbreidingsontwerp, in die volgorde, ook met 0 staten. De site kiest wat ze toont.
 9. De som van `drawing` per waarde is de som van de tekeneffecten van de staten. Die is niet het landelijke tekeneffect, dat de landelijke mediaan gebruikt (spec, hoofdstuk 5). In de proefrun zijn ze toevallig gelijk (beide -10), omdat de som van de mediaan per staat (223) gelijk is aan de landelijke mediaan. De contracttest vergelijkt daarom met de som over de staten, niet met `national.effects.drawing`.
+
+De Senaat (taak 5.15 tot en met 5.21):
+
+10. Het MIT-bestand komt binnen via een directe link naar één Dataverse-bestand (`api/access/datafile/13887042`), niet via een tweede bestandslijst zoals bij ALARM. Het is één bestand, en een bestands-id van Dataverse wijst altijd naar dezelfde inhoud: een nieuwe versie met een ander bestand krijgt een nieuw id. Het manifest legt grootte en sha256 vast, zoals bij Census. Taak 5.15 vergelijkt de md5 één keer met de waarde die Dataverse publiceert. Zo blijven `plan_downloads(cfg, dv_files)` en `01_download.py` ongewijzigd.
+11. Welke rijen tellen (taak 5.16): per staat en jaar alle rijen van de kandidaat van de partij, op elke partijlijn, zonder de rijen met `writein` waar. Zo vraagt het codeboek het voor tweepartijtotalen. De kandidaten staan als vaste namen in de code. De lezer stopt als een kandidaat niet precies één rij heeft op de lijn `DEMOCRAT` of `REPUBLICAN`, of als `writein` iets anders is dan TRUE of FALSE. In de zes staten heeft elke kandidaat precies één rij, zonder write-in-rij; de officiële uitslagen bevestigen de getallen.
+12. De stemmen van de zes staten gaan via `02_join` naar `data/interim/single_seat_votes.parquet`, zodat `03_metrics` alleen tussenresultaten leest, zoals nu. `02_join` leest het MIT-bestand vóór de 44 staten en `03_metrics` het tussenbestand vóór de lus over de staten: een ontbrekend bestand stopt meteen.
+13. De drempel voor de Senaat gebruikt dezelfde grens als Enacted: een staat precies op 50% telt niet, en bij de drempel zelf staat de 26e staat op 50%. `senate_majority` gebruikt daarom `enacted_threshold` en `seats_at_swing` uit taak 5.4. `tipping` loopt van hoog naar laag aandeel; bij een gelijk aandeel gaat de postcode voor (komt in de echte data niet voor).
+14. Geen grens van 5 punten voor de Senaat. Bij het Huis beschermt die grens de vaste uitslag van de zes staten met één zetel; in het blok over de Senaat verschuiven die staten mee met de andere.
+15. `results.json` heeft geen stemmen van de zes staten. De contracttest kan *V50* daarom niet narekenen en controleert de samenhang: de drempel volgt uit het aandeel van de 26e staat, de aandelen in `tipping` passen bij `d_share` en bij `states_at_base`. De getallen zelf staan vast in de datatest van taak 5.19.
 
 ## Proefrun
 
@@ -110,24 +127,50 @@ Tekeneffect per staat (uit `metrics.json`, nodig om `by_control` en `by_body` in
 
 Wat opvalt, en waarom het toch klopt:
 
-- Proportional heeft minder dan 50% nodig. Largest remainder per staat geeft de Democraten bij *V0* 224 zetels, terwijl 429 maal *V0* 222,2 is: de afronding per staat levert nu ongeveer twee zetels extra op. Bij een verschuiving van -0,0201 krijgen IN en NY tegelijk een zetel (van 214 naar 216). Dat volgt uit de definitie in hoofdstuk 1 van het uitbreidingsontwerp. De zin op de site moet dit niet verbergen; zie open punt 7.
+- Proportional heeft minder dan 50% nodig. Largest remainder per staat geeft de Democraten bij *V0* 224 zetels, terwijl 429 maal *V0* 222,2 is: de afronding per staat levert nu ongeveer twee zetels extra op. Bij een verschuiving van -0,0201 krijgen IN en NY tegelijk een zetel (van 214 naar 216). Dat volgt uit de definitie in hoofdstuk 1 van het uitbreidingsontwerp. De zin op de site moet dit niet verbergen; zie punt 7 van de besluiten van de eigenaar.
 - Florida heeft op de vastgestelde kaart 14 concurrerende districten en neutraal 7. De kaart is na de verkiezing van 2024 getekend; op onze stembasis (president 2016 en 2020) liggen 14 van de 28 districten tussen 45% en 55%. De noot `adopted_after_2024_election` legt het verschil in stembasis al uit.
 - De drempel voor Enacted (52,30%) ligt boven *V0* (51,80%), omdat Enacted bij *V0* 213 zetels geeft. Bij de neutrale kaarten haalt 98,5% van de uitkomsten bij *V0* de meerderheid, zodat hun drempel (51,16%) eronder ligt.
 
 Geen getal is onverklaard. De grens van 5 punten ligt ruim buiten alle drempels (de grootste verschuiving is -0,0201).
 
-## Open punten voor de eigenaar
+### Senaat
 
-Punt 1 tot en met 4 moeten beslist zijn voordat taak 5.9 conclusies trekt. De andere punten blokkeren geen taak.
+Op 7 oktober 2026 draaide de code van taak 5.15 tot en met 5.21 in een nieuwe kopie van de repo, met de code van taak 5.1 tot en met 5.14 uit de proefrun hierboven, de echte datamap (alleen gelezen) en een eigen kopie van het MIT-bestand. `02_join` en `03_metrics` liepen helemaal; `results.json` kwam uit `build_results` zonder de stappen voor de geometrie, die niet veranderen. Alle tests uit dit plan slaagden daar: pytest 493 passed en 2 skipped (de twee tests van mapshaper; de kopie had geen `node_modules`), `node --test` 32 passed. De mutaties van `national.senate` die de contracttest moet vangen (een andere drempel, `states_at_base`, `seats_at_base`, `states_needed`, twee staten in `tipping` verwisseld, een aandeel in `tipping` 1e-9 verschoven, een staat in `tipping` weg) faalden alle zeven.
 
-1. **Overlap in de definitie van `control`.** Het uitbreidingsontwerp noemt een kaart `Republican` als één partij beide kamers en de gouverneur had, en `Bipartisan` als beide partijen ervoor stemden. Bij een parlement van één partij waar ook de andere partij voorstemde gelden beide. Kandidaten, na te gaan in taak 5.9: Iowa 2021 en New York 2024. Aanbeveling: de stemming gaat voor. "Beide partijen stemden ervoor" betekent dan: in elke kamer die stemde, stemde een meerderheid van de aanwezige leden van elke partij voor. Dan `Bipartisan`; anders bepaalt de controle over het besluit de waarde.
-2. **Geen veto van de gouverneur.** In North Carolina heeft de gouverneur geen veto over een herindelingswet. In 2025 hadden de Republikeinen een meerderheid in beide kamers, maar niet de gouverneur; of die meerderheid een veto had kunnen breken, gaat taak 5.9 na. De letterlijke voorwaarden van het ontwerp passen dan niet, de bedoeling ("één partij kon de kaart alleen aannemen") wel. Aanbeveling: een partij die de kaart zonder de gouverneur kan aannemen, kon haar alleen aannemen; North Carolina wordt `Republican` met een `adopted_note`.
-3. **Welke commissie is onafhankelijk.** `Nonpartisan` geldt voor "een onafhankelijke commissie". Aanbeveling: onafhankelijk zijn commissies van burgers, zonder gekozen politici, met leden zonder partij die de doorslag kunnen geven: AZ, CO en MI. De andere commissies (HI, ID, MT, NJ, OH, WA) beoordelen we op de stemming: `Bipartisan` als leden van beide partijen voorstemden of als geen partij alleen een meerderheid had; de naam van een partij als haar leden de meerderheid vormden en de andere partij tegenstemde. Een voorzitter of beslissend lid zonder partij (te verwachten in NJ en MT; taak 5.9 gaat het na) telt niet als partij, dus zulke kaarten worden `Bipartisan`, met een `adopted_note` over wie de doorslag gaf. Wil de eigenaar liever de partij noemen waarvoor dat lid koos, dan geldt dat voor elke zulke staat.
-4. **Gemengde routes.** Een commissieplan dat een rechter goedkeurde (CO), een commissieplan dat het parlement wijzigde (WA), een rechterlijk plan met een kleine wetswijziging (MN), een parlement onder een rechterlijk bevel (GA) en een parlement met goedkeuring door de kiezers (CA). Aanbeveling: `adopted_by` is het orgaan dat de geldende districtsgrenzen vaststelde; de andere stappen gaan in `adopted_note`. Zo wordt WA `Commission` en MN `Court`, tenzij het onderzoek laat zien dat de wijziging meer was dan een correctie.
-5. **Eén nieuwe kolom in `data/sources.md`.** Het uitbreidingsontwerp vraagt één nieuwe kolom met orgaan, stemming of uitspraak, samenstelling en bronnen. Dit plan noemt die kolom "Adoption and control" en laat elke cel beginnen met `<adopted_by>, <control>.`, bijvoorbeeld `Legislature, Republican. HB 4 passed ...`. Zo kan `check_sources_md` de kolom met `config.yaml` vergelijken (taak 5.11). Aanbeveling: zo houden. Het alternatief is twee kolommen (`Control` los van de toelichting).
-6. **`drawn_by` in het uitbreidingsontwerp.** Hoofdstuk 5 noemt "het overzicht per `drawn_by`". Bedoeld is het overzicht per `control` en per `adopted_by` (`by_control` en `by_body`). Aanbeveling: de eigenaar verbetert dat woord; dit plan raakt het goedgekeurde ontwerp niet aan.
-7. **Proportional onder 50%.** De drempel voor Proportional is 49,79% (zie de proefrun). De voorbeeldzin in het uitbreidingsontwerp noemt 50,0%. Aanbeveling: het siteontwerp (taak 4.3) legt in één zin uit dat de afronding per staat dit veroorzaakt.
-8. **De vaste uitslag van de zes staten in `results.json`.** De site moet kunnen uitleggen waarom 216 van de 429 districten een meerderheid is. `results.json` noemt de zes staten (`national.single_seat`) maar niet hun vaste partij. Aanbeveling: in het siteontwerp beslissen of die regel als vaste tekst op de site komt of als veld in `results.json` (dan een kleine extra taak na 5.13).
+MIT Election Data and Science Lab, "U.S. President 1976-2024", versie 10.1 van 4 september 2026, `1976-2024-president.csv`: 514.108 bytes, md5 `405af83db7625cb35d8c19a5ebe029ff` (gelijk aan de waarde van Dataverse), sha256 `9936410a6dd4ecc8be7fe202c6dff5b5f8fee59d88f35ab542ed12879941dcb7`, licentie CC0 1.0. De 24 getallen van de zes staten zijn gelijk aan de officiële uitslagen (taak 5.16), op één bron na in Delaware (open punt 2 bij de Senaat).
+
+| Getal | Waarde |
+|---|---|
+| *V50*, Democratisch tweepartijenaandeel over de 50 staten | 0,5169609 (51,70%) |
+| Drempel: het 26e hoogste staatsaandeel is 0,4878762 (FL) | 0,5290847 (52,91%), verschuiving +0,0121238 |
+| Bij *V50* | 22 staten, 44 zetels |
+| De 24e tot en met de 28e staat | AZ 0,4929715, GA 0,4888521, FL 0,4878762, NC 0,4876063, TX 0,4635184 |
+
+De zes staten met één zetel: VT 0,6694452 (plaats 1), DE 0,5796321 (11), AK 0,4333627 (32), SD 0,3540789 (45), ND 0,3156498 (48), WY 0,2602595 (50). De 22 staten met een Democratische meerderheid zijn de 20 die de Democraten in 2016 en in 2020 wonnen, plus MI (0,5073) en PA (0,5014). De 23e staat is WI, met 0,4998024 net onder 50%. *V50* ligt 0,1 punt onder *V0* (0,5179747): de zes staten met één zetel stemden samen voor 44,8% Democratisch (1.829.549 tegen 2.256.272).
+
+Een eerste schatting uit losse uitslagen gaf dezelfde getallen (*V50* 0,5170, drempel 0,5291, 22 staten, FL op plaats 26, GA op 25). Die noemde WI tot en met NC als de staten rond de drempel; dat zijn de plaatsen 23 tot en met 27. Volgens het uitbreidingsontwerp zijn het de plaatsen 24 tot en met 28, dus AZ tot en met TX.
+
+## Besluiten van de eigenaar
+
+Op 7 oktober 2026 besliste de eigenaar over de acht open punten van dit plan (uitbreidingsontwerp, hoofdstuk 6, besluit 5 en 6). De nummers hieronder zijn die van de vroegere open punten; taak 5.9 noemt ze "punt 1" tot en met "punt 8". "Besluit N" blijft in dit plan de nummering van hoofdstuk 6 van het uitbreidingsontwerp volgen.
+
+1. **Overlap in de definitie van `control`.** De stemming gaat voor. Stemde in elke kamer die stemde een meerderheid van de aanwezige leden van elke partij voor, dan is de kaart `Bipartisan`; anders bepaalt de controle over het besluit de waarde. Taak 5.9 gaat dit in elk geval na voor Iowa 2021 en New York 2024.
+2. **Geen veto van de gouverneur.** Een partij die de kaart zonder de gouverneur kan aannemen, kon haar alleen aannemen. North Carolina wordt `Republican`, met een `adopted_note`.
+3. **Welke commissie is onafhankelijk.** `Nonpartisan` zijn de commissies van burgers zonder gekozen politici, met leden zonder partij die de doorslag kunnen geven: AZ, CO en MI. De andere commissies (HI, ID, MT, NJ, OH, WA) gaan op de stemming: `Bipartisan` als leden van beide partijen voorstemden of als geen partij alleen een meerderheid had, de naam van een partij als haar leden de meerderheid vormden en de andere partij tegenstemde. Een lid zonder partij dat de doorslag gaf (te verwachten in NJ en MT), telt niet als partij (besluit 5). Zulke kaarten worden `Bipartisan`, met een `adopted_note` die zegt wie de doorslag gaf en voor welk voorstel.
+4. **Gemengde routes.** `adopted_by` is het orgaan dat de geldende districtsgrenzen vaststelde; de andere stappen (goedkeuring door een rechter of door de kiezers, een wijziging door het parlement, een bevel van een rechter) gaan in `adopted_note`. WA wordt zo `Commission` en MN `Court`, tenzij het onderzoek laat zien dat de wijziging meer was dan een correctie. Dan stopt taak 5.9 en vraagt de eigenaar.
+5. **Eén nieuwe kolom in `data/sources.md`.** De kolom heet "Adoption and control" en elke cel begint met `<adopted_by>, <control>.`, zodat `check_sources_md` haar met `config.yaml` kan vergelijken (taak 5.11).
+6. **`drawn_by` in het uitbreidingsontwerp.** Bedoeld was het overzicht per `control` en per `adopted_by`. Hoofdstuk 5 van het uitbreidingsontwerp zegt dat nu zo.
+7. **Proportional onder 50%.** Geen wijziging in de pijplijn. Het siteontwerp (taak 4.3 van het hoofdplan) kiest de zin die uitlegt dat de afronding per staat de drempel onder 50% brengt.
+8. **De vaste partij van de zes staten met één zetel.** Die komt als vaste tekst op de site, niet als veld in `results.json`. `national.single_seat` blijft zoals het is; er komt geen extra taak.
+
+Besluit 7 voegt de Senaat toe als apart blok (hoofdstuk 7 van het uitbreidingsontwerp): taak 5.15 tot en met 5.21.
+
+## Open punten bij de Senaat
+
+Ontstaan bij het uitwerken van besluit 7. Ze blokkeren geen taak: de taken volgen de aanbeveling, en een ander besluit verandert alleen de bronvermelding of een commentaar.
+
+1. **Titel en versie van de databron.** Het uitbreidingsontwerp noemt "U.S. President 1976-2020". Dezelfde dataset (doi:10.7910/DVN/42MVDX) heet sinds versie 9.0 (11 mei 2026) "U.S. President 1976-2024", met 2024 erbij. De huidige versie is 10.1 (4 september 2026), met het bestand `1976-2024-president.csv`. De rijen van 2016 en 2020 zijn in de proefrun vergeleken met die van versie 8.0, de laatste met de oude titel: alle 892 rijen zijn gelijk, op drie lege velden `writein` in Maryland 2020 na, die versie 8.0 als `NA` schrijft. Aanbeveling: versie 10.1 gebruiken en noemen met de huidige titel. Het alternatief is versie 8.0 (`1976-2020-president.tab`, via `?format=original`), met dezelfde getallen.
+2. **Delaware 2020 heeft twee officiële getallen.** De officiële uitslag van de Department of Elections van Delaware geeft Biden 296.268 en Trump 200.603, net als de FEC en het MIT-bestand. Het Certificate of Ascertainment van de gouverneur (National Archives) noemt voor de kiesmannen 295.933 en 200.327: 335 en 276 stemmen minder. De andere 22 getallen van de zes staten zijn in alle bronnen gelijk. Aanbeveling: de officiële uitslag van de verkiezingsdienst is de referentie, zoals in de test van taak 5.16. Met de getallen van het certificaat daalt *V50* met 0,00000007 en de drempel ook; geen staat verandert van plaats.
 
 ## Interfaces
 
@@ -136,16 +179,20 @@ Dit hoofdstuk vult "Interfaces" van het hoofdplan aan. Namen, typen en kolommen 
 ### Datamap
 
 ```
-census/cd119.zip     Census 119th Congress block equivalency file, NationalCD119.txt (GEOID,CDFP)
+census/cd119.zip                 Census 119th Congress block equivalency file, NationalCD119.txt (GEOID,CDFP)
+medsl/1976-2024-president.csv    MIT Election Data and Science Lab, U.S. President 1976-2024, versie 10.1 (Senaat)
 ```
 
 Het downloadplan telt 142 bestanden: na `census/cd118.zip` komt `census/cd119.zip`, daarna `census/cd120.zip`. `data/manifest.json` krijgt de regel `census/cd119.zip` met grootte 22959130 en sha256 `1433feb5178dc7b4188ee30f5f7f715851f4400740b8fe1ce606a876c6294bd6`.
+
+Na taak 5.15 telt het downloadplan 143 bestanden, met `medsl/1976-2024-president.csv` als laatste. `data/manifest.json` krijgt daarvoor de regel met grootte 514108 en sha256 `9936410a6dd4ecc8be7fe202c6dff5b5f8fee59d88f35ab542ed12879941dcb7`.
 
 ### config.yaml
 
 ```yaml
 sources:
   cd119: https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip
+  medsl_president: https://dataverse.harvard.edu/api/access/datafile/13887042    # taak 5.15
 states:
   TX:
     # ... de bestaande velden
@@ -219,22 +266,59 @@ STATE_FIELDS = (..., "sorted", "competitive", "redraw")
 # en per staat "adopted": {"by", "control", "note"} uit config.yaml
 ```
 
+De Senaat (taak 5.15 tot en met 5.20):
+
+```python
+# gerry/config.py
+# sources: ook "medsl_president"
+
+# gerry/president.py (nieuw)
+ELECTIONS = {"pre_16": "2016", "pre_20": "2020"}
+NOMINEES = {"2016": {"d": "CLINTON, HILLARY", "r": "TRUMP, DONALD J."},
+            "2020": {"d": "BIDEN, JOSEPH R. JR", "r": "TRUMP, DONALD J."}}
+PARTY_LINES = {"d": "DEMOCRAT", "r": "REPUBLICAN"}
+class PresidentError(ValueError): ...
+def read_president(path: Path) -> pd.DataFrame
+    # year, state_po, candidate, party_detailed, writein als tekst; candidatevotes als int64
+def two_party_votes(table: pd.DataFrame, postals: Iterable[str]) -> pd.DataFrame
+    # state, d_pre_16, r_pre_16, d_pre_20, r_pre_20, d, r; een rij per postcode, in de gegeven volgorde
+
+# pipeline/02_join.py
+def single_seat_votes(cfg, root: Path) -> pd.DataFrame   # two_party_votes voor sorted(cfg.at_large)
+
+# gerry/metrics.py
+def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, around: int = 2) -> dict
+    # {"base_share", "states_needed", "share", "states_at_base", "seats_at_base",
+    #  "tipping": [{"postal", "share"}, ...]}; tipping: plaats needed - around tot en met needed + around
+
+# pipeline/03_metrics.py
+SENATE_STATES = 50
+SENATE_STATES_NEEDED = 26
+def read_single_seat_votes(idir, at_large) -> dict[str, tuple[float, float]]
+def national_senate(votes: Mapping[str, tuple[float, float]]) -> dict
+# nieuwe CheckError-controle: senate_states; interim_files ook bij een ontbrekende single_seat_votes.parquet
+
+# gerry/export.py
+NATIONAL_FIELDS = (..., "by_control", "by_body", "senate")
+```
+
 ### Bestanden tussen de stappen (`data/interim/`)
 
 - `enacted_districts.parquet`: `map_id` kan ook `map_2024` zijn, met `block` en `whole_unit` voor elke staat. Samen 2.590 rijen (was 1.732).
 - `join_log.json`: per staat ook `map_2024_changed_blocks` (int, verplaatste blokken tussen CD119 en het blokbestand van de vastgestelde kaart), en onder `maps` ook `map_2024`.
+- `single_seat_votes.parquet` (nieuw, taak 5.17): `state`, `d_pre_16`, `r_pre_16`, `d_pre_20`, `r_pre_20`, `d`, `r` (gehele getallen) voor de zes staten met één zetel, gesorteerd op postcode.
 - `metrics.json`:
   - per staat ook `competitive` {`enacted`, `median`, `p5`, `p95`, `neutral_dist`: aantal plannen per aantal concurrerende districten, 0 tot `seats`} en `redraw` {`seats_2024`, `change`, `map_changed`};
-  - `national` ook `majority` {`seats_needed`, `base_share`, `enacted` {`share`, `seats_at_base`}, `neutral` {`share`, `low`, `high`, `probability_at_base`}, `proportional` {`share`}}, `competitive` (zelfde vorm als per staat, `neutral_dist` met 430 kansen), `redraw` {`seats_2024`, `change`}, `by_control` en `by_body` (per waarde {`states`, `seats`, `drawing`});
+  - `national` ook `majority` {`seats_needed`, `base_share`, `enacted` {`share`, `seats_at_base`}, `neutral` {`share`, `low`, `high`, `probability_at_base`}, `proportional` {`share`}}, `competitive` (zelfde vorm als per staat, `neutral_dist` met 430 kansen), `redraw` {`seats_2024`, `change`}, `by_control` en `by_body` (per waarde {`states`, `seats`, `drawing`}), en vanaf taak 5.19 `senate` {`base_share`, `states_needed`, `share`, `states_at_base`, `seats_at_base`, `tipping`: lijst van {`postal`, `share`}};
   - `checks` ook `map_2024` {ST: {`districts`, `changed_blocks`, `seats_2024`, `seats_enacted`}}; `whole_unit` heeft ook regels met `map_id` `map_2024`.
 
 ### Uitvoer voor de site
 
-`site/data/results.json` krijgt de velden uit hoofdstuk 5 van het uitbreidingsontwerp: `national.majority`, `national.competitive`, `national.redraw`, `national.by_control`, `national.by_body`, en per staat `adopted` {`by`, `control`, `note`}, `competitive` en `redraw`. Volgorde in `national`: de zeven bestaande velden, dan `majority`, `competitive`, `redraw`, `by_control`, `by_body`, dan `single_seat`. Per staat staat `adopted` direct na `source`. Aandelen blijven ruwe fracties.
+`site/data/results.json` krijgt de velden uit hoofdstuk 5 van het uitbreidingsontwerp: `national.majority`, `national.competitive`, `national.redraw`, `national.by_control`, `national.by_body`, en per staat `adopted` {`by`, `control`, `note`}, `competitive` en `redraw`. Uit hoofdstuk 7 komt `national.senate` erbij, met de velden van `metrics.json`. Volgorde in `national`: de zeven bestaande velden, dan `majority`, `competitive`, `redraw`, `by_control`, `by_body`, `senate`, dan `single_seat`. Per staat staat `adopted` direct na `source`. Aandelen blijven ruwe fracties.
 
 ## Phase 5: uitbreidingen
 
-Na deze fase heeft `results.json` de velden van hoofdstuk 5 van het uitbreidingsontwerp, met dezelfde stembasis en dezelfde plannen als de rest, en controleert de contracttest hun samenhang.
+Na deze fase heeft `results.json` de velden van hoofdstuk 5 van het uitbreidingsontwerp en `national.senate` uit hoofdstuk 7, met dezelfde stembasis en dezelfde plannen als de rest, en controleert de contracttest hun samenhang.
 
 ### Task 5.1: CD119 in het downloadplan
 
@@ -1741,13 +1825,13 @@ git commit -m "Report the 2024 maps in the validation report"
 
 ### Task 5.9: onderzoek, wie nam elke kaart aan en onder welke controle
 
-Deze taak heeft geen code. Hij levert per staat `adopted_by` en `control` met officiële bronnen, de teksten voor `adopted_note`, en de beslissing van de eigenaar over elk twijfelgeval. Begin zodra de eigenaar open punt 1 tot en met 4 heeft beslist; de taak loopt parallel aan 5.1 tot en met 5.8.
+Deze taak heeft geen code. Hij levert per staat `adopted_by` en `control` met officiële bronnen, de teksten voor `adopted_note`, en de beslissing van de eigenaar over elk twijfelgeval dat de beslisregels niet beslechten. De eigenaar besliste de beslisregels op 7 oktober 2026 ("Besluiten van de eigenaar", punt 1 tot en met 5). De taak kan meteen beginnen en loopt parallel aan 5.1 tot en met 5.8.
 
 **Files:**
 - Modify: `data/sources.md` (nieuwe kolom "Adoption and control" in de tabel "Multi-seat states", een alinea met de beslisregels, nieuwe open punten)
 
 **Interfaces:**
-- Consumes: de definities in hoofdstuk 4 van het uitbreidingsontwerp; de besluiten van de eigenaar over open punt 1 tot en met 4; de kolommen "Adopted" en "By" van `data/sources.md` als startpunt.
+- Consumes: de definities in hoofdstuk 4 van het uitbreidingsontwerp; de besluiten van de eigenaar van 7 oktober 2026, punt 1 tot en met 5; de kolommen "Adopted" en "By" van `data/sources.md` als startpunt.
 - Produces: in de tabel "Multi-seat states", direct na de kolom "By", de kolom `Adoption and control`. Elke cel begint met `<adopted_by>, <control>.` (bijvoorbeeld `Legislature, Republican.`), gevolgd door de stemming of de uitspraak, de samenstelling op de datum van aanneming en de bronnen als Markdown-links. Taak 5.10 neemt de twee waarden over in `config.yaml`; taak 5.11 controleert dat ze gelijk blijven. Daarnaast goedgekeurde Engelse teksten voor `adopted_note`.
 
 Regels voor de cel, zodat `parse_sources_md` en de controle van taak 5.11 hem kunnen lezen:
@@ -1763,13 +1847,21 @@ Vorm van de cel, met verzonnen getallen:
 Legislature, Republican. HB 99 passed the House 80-60 on 2025-08-20 (R 80-0, D 0-60) and the Senate 19-11 on 2025-08-23 (R 19-0, D 0-11); signed 2025-08-29. At adoption: House 88 R, 62 D; Senate 19 R, 11 D; Governor Jane Doe (R). Sources: [Bill page](https://...), [House journal](https://...), [Senate journal](https://...)
 ```
 
-- [ ] **Step 1: Get the owner's decision on open points 1 to 4**
+- [ ] **Step 1: Write the decision rules into data/sources.md**
 
-Leg de vier punten uit het hoofdstuk "Open punten voor de eigenaar" één voor één voor, met de aanbeveling. Schrijf de besluiten met datum als gewone alinea in het inleidende deel van `data/sources.md`, direct vóór de kop `## Multi-seat states`. Gebruik geen nieuwe kop: `parse_sources_md` zoekt zijn tabellen onder vaste koppen. Voorbeeld:
+De eigenaar besliste de regels op 7 oktober 2026 ("Besluiten van de eigenaar", punt 1 tot en met 5); vraag ze niet opnieuw. Zet ze in het inleidende deel van `data/sources.md`, direct vóór de kop `## Multi-seat states`, als alinea met een genummerde lijst. Gebruik geen nieuwe kop: `parse_sources_md` zoekt zijn tabellen onder vaste koppen. Haal de tekst door de unslop-skill:
 
 ```
-Adoption and control: who adopted the map in force and under whose control, as defined in docs/superpowers/specs/2026-10-06-extensions-design.md, chapter 4. Decision rules approved by the owner on YYYY-MM-DD: (1) ..., (2) ..., (3) ..., (4) ...
+Adoption and control. This column says which body adopted the map in force and whether one party could adopt it alone, as defined in chapter 4 of docs/superpowers/specs/2026-10-06-extensions-design.md. The owner approved these rules on 2026-10-07:
+
+1. The vote comes first. A map is Bipartisan if, in every chamber that voted, a majority of the members present from each party voted for it. Otherwise the control over the decision sets the value.
+2. A party that could adopt the map without the governor could adopt it alone.
+3. Commissions of citizens without elected officials, where members from neither party can cast the deciding vote, are Nonpartisan. These are Arizona, Colorado and Michigan. Other commissions follow their vote. A map is Bipartisan if members of both parties voted for it or if no party held a majority alone. It carries the name of a party if that party's members formed the majority and the other party voted against. A member from neither party who cast the deciding vote does not count as a party. Such maps are Bipartisan, and their note says who cast the deciding vote and for which plan.
+4. The adopting body is the one that set the district lines in force. Other steps, such as approval by a court or by voters, go in the note.
+5. Each cell of the column starts with the body, a comma, the control value and a full stop, as in "Legislature, Republican."
 ```
+
+Taak 5.11 leest alleen de tabel; de alinea en de lijst staan erbuiten.
 
 - [ ] **Step 2: Collect the facts per state**
 
@@ -1793,33 +1885,33 @@ Startpunt per staat, uit de kolommen "Adopted" en "By" van `data/sources.md`, me
 | AZ | 2021-12-22, Commission | Voorbeeld in het ontwerp: Commission, Nonpartisan. Stemming van de commissie als bron |
 | AR | 2021-10-13, Legislature | Stemming per partij; tekende de gouverneur of werd de wet zonder handtekening van kracht |
 | CA | 2025-08-21, Legislature and ballot measure | Voorbeeld in het ontwerp: Legislature, Democratic. Stemming over AB 604; Proposition 50 voor `adopted_note` |
-| CO | 2021-11-01, Commission, approved by the Colorado Supreme Court | Samenstelling en stemming van de commissie (open punt 3); de goedkeuring door de rechter voor `adopted_note` (open punt 4) |
+| CO | 2021-11-01, Commission, approved by the Colorado Supreme Court | Samenstelling en stemming van de commissie (punt 3); de goedkeuring door de rechter voor `adopted_note` (punt 4) |
 | CT | 2022-02-10, Court | Bevel van het Connecticut Supreme Court en de rol van de special master |
 | FL | 2026-05-04, Legislature | Stemming per partij; tekende de gouverneur |
-| GA | 2023-12-08, Legislature, court-ordered remedy | Stemming per partij; het bevel van de rechter voor `adopted_note` (open punt 4) |
-| HI | 2022-01-28, Commission | Samenstelling (wie benoemde de leden) en stemming (open punt 3) |
-| ID | 2021-11-10, Commission | Samenstelling en stemming (open punt 3) |
+| GA | 2023-12-08, Legislature, court-ordered remedy | Stemming per partij; het bevel van de rechter voor `adopted_note` (punt 4) |
+| HI | 2022-01-28, Commission | Samenstelling (wie benoemde de leden) en stemming (punt 3) |
+| ID | 2021-11-10, Commission | Samenstelling en stemming (punt 3) |
 | IL | 2021-11-23, Legislature | Voorbeeld in het ontwerp: Legislature, Democratic. Stemming als bron |
 | IN | 2021-10-04, Legislature | Stemming per partij |
-| IA | 2021-11-04, Legislature, nonpartisan staff plan | Stemming per partij (open punt 1); het plan van de staf voor `adopted_note` |
+| IA | 2021-11-04, Legislature, nonpartisan staff plan | Stemming per partij (punt 1); het plan van de staf voor `adopted_note` |
 | KS | 2022-02-09, Legislature, veto overridden | Stemmingen over het veto; meerderheid voor het breken van een veto |
 | KY | 2022-01-20, Legislature, veto overridden | Idem |
 | LA | 2026-05-29, Legislature | Stemming per partij over SB 121; tekende de gouverneur |
 | ME | 2021-09-29, Legislature | Stemming per partij; de vereiste meerderheid van twee derde |
 | MD | 2022-04-04, Legislature | Stemming per partij over SB 1012; wat deed de gouverneur (andere partij) |
 | MA | 2021-11-22, Legislature | Stemming per partij; wat deed de gouverneur (andere partij) |
-| MI | 2021-12-28, Commission | Samenstelling en stemming van de commissie van burgers (open punt 3) |
-| MN | 2022-02-15, fix 2022-06-02, Court panel, small legislative fix | Wie stelde de correctie van juni 2022 vast (open punt 4) |
+| MI | 2021-12-28, Commission | Samenstelling en stemming van de commissie van burgers (punt 3) |
+| MN | 2022-02-15, fix 2022-06-02, Court panel, small legislative fix | Wie stelde de correctie van juni 2022 vast (punt 4) |
 | MS | 2022-01-24, Legislature | Stemming per partij |
 | MO | 2022-05-18, Legislature | Stemming per partij over HB 2909 |
-| MT | 2021-11-12, Commission | Samenstelling, wie benoemde de voorzitter, stemming (open punt 3) |
+| MT | 2021-11-12, Commission | Samenstelling, wie benoemde de voorzitter, stemming; gaf de voorzitter zonder partij de doorslag, dan `Bipartisan` met een `adopted_note` over wie de doorslag gaf en voor welk voorstel (punt 3) |
 | NE | 2021-09-30, Legislature | Het parlement is officieel zonder partijen: partij van de leden volgens de officiële registratie; meerderheid nodig om een filibuster te breken |
 | NV | 2021-11-16, Legislature | Stemming per partij |
 | NH | 2022-05-31, Court | Uitspraak van het New Hampshire Supreme Court |
-| NJ | 2021-12-22, Commission | Samenstelling, de doorslaggevende stem van het onafhankelijke lid (open punt 3) |
+| NJ | 2021-12-22, Commission | Samenstelling, de doorslaggevende stem van het onafhankelijke lid; dan `Bipartisan` met een `adopted_note` over wie de doorslag gaf en voor welk voorstel (punt 3) |
 | NM | 2021-12-17, Legislature | Stemming per partij |
-| NY | 2024-02-28, Legislature | Stemming per partij (open punt 1) |
-| NC | 2025-10-22, Legislature | Stemming per partij; geen veto van de gouverneur (open punt 2) |
+| NY | 2024-02-28, Legislature | Stemming per partij (punt 1) |
+| NC | 2025-10-22, Legislature | Stemming per partij; geen veto van de gouverneur, dus `Republican` met een `adopted_note` als de Republikeinen beide kamers hadden (punt 2) |
 | OH | 2025-10-31, Commission | Samenstelling en stemming van de Ohio Redistricting Commission |
 | OK | 2021-11-22, Legislature | Stemming per partij |
 | OR | 2021-09-27, Legislature | Stemming per partij |
@@ -1830,7 +1922,7 @@ Startpunt per staat, uit de kolommen "Adopted" en "By" van `data/sources.md`, me
 | TX | 2025-08-29, Legislature | Voorbeeld in het ontwerp: Legislature, Republican. Stemming als bron |
 | UT | 2025-11-10, Court | Voorbeeld in het ontwerp: Court, Nonpartisan. Uitspraak als bron |
 | VA | 2021-12-28, Court | Uitspraak van het Supreme Court of Virginia en de special masters |
-| WA | 2022-02-08, Commission, amended by the Legislature | Stemming van de commissie; aard en stemming van de wijziging (open punt 3 en 4) |
+| WA | 2022-02-08, Commission, amended by the Legislature | Stemming van de commissie; aard en stemming van de wijziging (punt 3 en 4) |
 | WV | 2021-10-22, Legislature | Stemming per partij |
 | WI | 2022-03-03, Court | Uitspraak van het Wisconsin Supreme Court (Johnson v. WEC), en wiens kaart het werd |
 
@@ -1856,7 +1948,7 @@ Expected: alles slaagt. De lezer van `data/sources.md` negeert de nieuwe kolom t
 
 - [ ] **Step 5: Draft the adopted_note texts**
 
-Schrijf een korte Engelse tekst voor elke staat waar het orgaan of de controle uitleg nodig heeft, zoals het ontwerp voor Iowa noemt: in elk geval de gevallen van open punt 2 tot en met 4 en de staten waar een regel uit stap 1 de doorslag gaf. Eén of twee zinnen, feitelijk, zonder oordeel en zonder em-dashes. Haal ze door de unslop-skill. Voorbeeld van de vorm (verzonnen): `Nonpartisan legislative staff drew the plan; the legislature could accept or reject it without amendments.`
+Schrijf een korte Engelse tekst voor elke staat waar het orgaan of de controle uitleg nodig heeft, zoals het ontwerp voor Iowa noemt: in elk geval de gevallen van punt 2 tot en met 4 van de besluiten (bij een lid zonder partij met de doorslag: wie de doorslag gaf en voor welk voorstel) en de staten waar een regel uit stap 1 de doorslag gaf. Eén of twee zinnen, feitelijk, zonder oordeel en zonder em-dashes. Haal ze door de unslop-skill. Voorbeeld van de vorm (verzonnen): `Nonpartisan legislative staff drew the plan; the legislature could accept or reject it without amendments.`
 
 - [ ] **Step 6: Get the owner's approval**
 
@@ -2707,12 +2799,1124 @@ git add docs/superpowers/specs/2026-10-05-gerrymandering-map-design.md
 git commit -m "Point the spec to the extensions design"
 ```
 
+### Task 5.15: het MIT-bestand in het downloadplan
+
+Begin na taak 5.14. De verwachte uitkomsten van taak 5.15 tot en met 5.21 (aantallen tests, de volgorde van de velden in `results.json`) gaan uit van de stand na taak 5.14. De aantallen `passed` komen uit de proefrun, met precies de tests uit dit plan. Bij de uitvoering van de eerdere taken kregen enkele testbestanden extra tests (onder meer `tests/test_metrics.py`, `tests/test_metrics_step.py`, `tests/test_config.py` en `tests/test_join.py`); tel die bij `passed` op. Het aantal falende tests en hun namen moeten wel kloppen.
+
+**Files:**
+- Modify: `pipeline/config.yaml` (bron `medsl_president`)
+- Modify: `pipeline/gerry/config.py` (`_SOURCE_KEYS`)
+- Modify: `pipeline/gerry/sources.py` (`plan_downloads`)
+- Modify: `tests/test_config.py`, `tests/test_sources.py`, `tests/test_download_script.py`
+- Modify (na de download): `data/manifest.json`
+
+**Interfaces:**
+- Consumes: `plan_downloads(cfg, dv_files)` en `fetch` (hoofdplan, taak 1.1, 1.2, 1.12); `load_config()` (taak 0.4).
+- Produces: bron `cfg.sources["medsl_president"]`; een downloadplan van 143 bestanden met `medsl/1976-2024-president.csv` als laatste; een regel voor dat bestand in `data/manifest.json`.
+
+De databron (uitbreidingsontwerp, hoofdstuk 7): MIT Election Data and Science Lab, "U.S. President 1976-2024", Harvard Dataverse doi:10.7910/DVN/42MVDX, versie 10.1 van 4 september 2026. Het bestand `1976-2024-president.csv` is een CSV die Dataverse niet heeft ingelezen: 514.108 bytes, md5 `405af83db7625cb35d8c19a5ebe029ff`, bestands-id 13887042. Licentie CC0 1.0. De bestandslijst van die versie: `https://dataverse.harvard.edu/api/datasets/:persistentId/versions/10.1/files?persistentId=doi:10.7910/DVN/42MVDX`. Waarom een directe link: "Keuzes in dit plan", punt 10. Over de titel: open punt 1 bij de Senaat.
+
+- [ ] **Step 1: Write the failing tests**
+
+Zet in `tests/test_config.py` `medsl_president` in de lijst van bronnen:
+
+```python
+SOURCE_KEYS = ("dataverse_api", "cd118", "cd119", "cd120", "pl94171", "census_vest",
+               "tiger_gpkg", "tiger_mo_cd119", "cb_states", "medsl_president")
+```
+
+Voeg onderaan `tests/test_config.py` toe:
+
+```python
+
+
+def test_real_config_has_the_statewide_presidential_votes(cfg):
+    # extensions design, chapter 7: MIT Election Data and Science Lab, U.S. President 1976-2024,
+    # doi:10.7910/DVN/42MVDX, version 10.1, file 1976-2024-president.csv (Dataverse file 13887042)
+    assert cfg.sources["medsl_president"] == "https://dataverse.harvard.edu/api/access/datafile/13887042"
+```
+
+Zet in `tests/test_sources.py` in het woordenboek `SOURCES` na de regel van `cb_states`:
+
+```python
+    "medsl_president": "https://dataverse.harvard.edu/api/access/datafile/13887042",
+```
+
+en in `test_plan_downloads_follows_the_data_dir_layout` na de verwachte download van `cb_2025_us_state_500k.zip`, als laatste:
+
+```python
+        # statewide presidential votes for the Senate block (extensions design, chapter 7)
+        Download("medsl/1976-2024-president.csv", SOURCES["medsl_president"], None, None),
+```
+
+Voeg in `tests/test_download_script.py`, in `test_state_of_reads_the_postal_code_from_the_key`, na `assert script.state_of("census/cd120.zip") is None` toe:
+
+```python
+    # one file for all states: --only keeps it (Senate block, extensions design chapter 7)
+    assert script.state_of("medsl/1976-2024-president.csv") is None
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_config.py tests/test_sources.py tests/test_download_script.py -q`
+Expected: `4 failed, 72 passed`: `test_minimal_config_loads_with_types` (`ConfigError: sources: unknown keys ['medsl_president']`), `test_invalid_config_raises[sources.cd120-None-missing keys]` (dezelfde melding in plaats van `missing keys`), `test_real_config_has_the_statewide_presidential_votes` (`KeyError: 'medsl_president'`) en `test_plan_downloads_follows_the_data_dir_layout` (de download van het MIT-bestand ontbreekt). De nieuwe regel in `tests/test_download_script.py` slaagt al: `state_of` geeft `None` voor elke map die niet per staat is. Hij legt vast dat `--only` het bestand meeneemt.
+
+- [ ] **Step 3: Write minimal implementation**
+
+In `pipeline/gerry/config.py`:
+
+```python
+_SOURCE_KEYS = (
+    "dataverse_api", "cd118", "cd119", "cd120", "pl94171", "census_vest",
+    "tiger_gpkg", "tiger_mo_cd119", "cb_states", "medsl_president",
+)
+```
+
+In `pipeline/config.yaml`, onder `sources:` direct na de regel van `cb_states`:
+
+```yaml
+  # Senate block (extensions design, chapter 7): statewide presidential votes of the six single-seat states.
+  # MIT Election Data and Science Lab, "U.S. President 1976-2024", doi:10.7910/DVN/42MVDX, version 10.1,
+  # file 1976-2024-president.csv, CC0 1.0. A Dataverse file id always serves the same file.
+  medsl_president: https://dataverse.harvard.edu/api/access/datafile/13887042
+```
+
+In `pipeline/gerry/sources.py`, in `plan_downloads`, direct na de lus over `("tiger_gpkg", "tiger_mo_cd119", "cb_states")`:
+
+```python
+    # statewide presidential votes for the Senate block (extensions design, chapter 7): one Dataverse file,
+    # checked against data/manifest.json like the Census files
+    plan.append(Download("medsl/1976-2024-president.csv", src["medsl_president"], None, None))
+```
+
+`01_download.py` verandert niet: `state_of` rekent de map `medsl/` tot de bestanden van alle staten.
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_config.py tests/test_sources.py tests/test_download_script.py -q`
+Expected: `76 passed`.
+
+- [ ] **Step 5: Download the file**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python pipeline/01_download.py`
+
+Het script controleert de checksum van elk bestand dat er al is (enkele minuten) en haalt alleen het MIT-bestand op. Dataverse stuurt de aanvraag door naar Amazon S3; `fetch` volgt de doorverwijzing. Expected: als laatste bestand `[143/143] medsl/1976-2024-president.csv downloaded (0.5 MB)`, alle andere regels `present`, en als slot `143 files: 1 downloaded, 142 present, 2,543,425,304 bytes, ...` en `Manifest ...\data\manifest.json has entries for 143 of these files`.
+
+Run: `git diff data/manifest.json`
+Expected: één nieuwe vermelding, als laatste (na de regel van de vorige laatste vermelding komt een komma):
+
+```json
+  "medsl/1976-2024-president.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/13887042",
+    "size": 514108,
+    "sha256": "9936410a6dd4ecc8be7fe202c6dff5b5f8fee59d88f35ab542ed12879941dcb7"
+  }
+```
+
+- [ ] **Step 6: Compare with the md5 that Dataverse publishes**
+
+Run: `.venv\Scripts\python -c "import hashlib, sys; sys.path.insert(0, 'pipeline'); from gerry.config import data_dir; print(hashlib.md5((data_dir() / 'medsl' / '1976-2024-president.csv').read_bytes()).hexdigest())"`
+Expected: `405af83db7625cb35d8c19a5ebe029ff`.
+
+Is de grootte, de sha256 of de md5 anders, stop dan: achter bestands-id 13887042 staat niet meer het bestand van versie 10.1. Vraag de eigenaar voordat je verdergaat.
+
+- [ ] **Step 7: Commit**
+
+```powershell
+git add pipeline/config.yaml pipeline/gerry/config.py pipeline/gerry/sources.py tests/test_config.py tests/test_sources.py tests/test_download_script.py data/manifest.json
+git commit -m "Download the statewide presidential results of the MIT Election Data and Science Lab"
+```
+
+### Task 5.16: de stemmen van de zes staten met één zetel
+
+**Files:**
+- Create: `pipeline/gerry/president.py`
+- Create: `tests/test_president.py`
+
+**Interfaces:**
+- Consumes: `data_dir()` (taak 0.4); `medsl/1976-2024-president.csv` (taak 5.15).
+- Produces: `ELECTIONS`, `NOMINEES`, `PARTY_LINES`, `class PresidentError(ValueError)`; `read_president(path) -> pd.DataFrame` met `year`, `state_po`, `candidate`, `party_detailed` en `writein` als tekst en `candidatevotes` als geheel getal; `two_party_votes(table, postals) -> pd.DataFrame` met een rij per postcode, in de gegeven volgorde, en de kolommen `state`, `d_pre_16`, `r_pre_16`, `d_pre_20`, `r_pre_20`, `d` en `r` (gehele getallen).
+
+Welke rijen tellen. Het codeboek van de dataset (`codebook-us-president-1976-2020.md`) zegt: een kandidaat op meer partijlijnen heeft een rij per lijn, en voor tweepartijtotalen tel je die rijen op; rijen met `writein` waar zijn stemmen voor write-in-kandidaten. Daaruit volgt:
+
+- Democratisch zijn alle rijen van de Democratische kandidaat van dat jaar, op elke partijlijn: 2016 `CLINTON, HILLARY`, 2020 `BIDEN, JOSEPH R. JR`. Republikeins idem: `TRUMP, DONALD J.` in beide jaren. De namen staan in de code zoals in het bestand.
+- Rijen met `writein` waar tellen nooit mee, ook niet als ze de naam van een kandidaat dragen (in het bestand: Maryland 2016). Rijen voor andere kandidaten en voor blanco, ongeldige, over- en ondervotes (`BLANK VOTE`, `OVERVOTES` en dergelijke) tellen niet mee.
+- De lezer stopt met `PresidentError` als een kandidaat niet precies één rij heeft op de lijn van zijn partij (`DEMOCRAT` of `REPUBLICAN`), als een staat in een van beide jaren geen rijen heeft, of als `writein` in een rij van de staat iets anders is dan TRUE of FALSE (hoofdletters maken niet uit; versie 10.1 schrijft `True` en `False`).
+
+In de zes staten heeft elke kandidaat in beide jaren precies één rij, op de lijn van zijn partij, zonder write-in-rij. Andere partijlijnen komen alleen elders voor (New York 2016).
+
+De controle. De getallen moeten gelijk zijn aan de officiële uitslagen van de staten:
+
+| Staat | 2016 Clinton | 2016 Trump | 2020 Biden | 2020 Trump |
+|---|---|---|---|---|
+| AK | 116.454 | 163.387 | 153.778 | 189.951 |
+| DE | 235.603 | 185.127 | 296.268 | 200.603 |
+| ND | 93.758 | 216.794 | 114.902 | 235.595 |
+| SD | 117.458 | 227.721 | 150.471 | 261.043 |
+| VT | 178.573 | 95.369 | 242.820 | 112.704 |
+| WY | 55.973 | 174.419 | 73.491 | 193.559 |
+
+Bronnen, nagegaan op 7 oktober 2026:
+
+- FEC, "Federal Elections 2016", tabel "2016 Presidential General Election Results" (`https://www.fec.gov/resources/cms-content/documents/federalelections2016.pdf`), en FEC, "Official 2020 Presidential General Election Results" (`https://www.fec.gov/resources/cms-content/documents/2020presgeresults.pdf`). De FEC neemt de officiële uitslagen over van de verkiezingsdiensten van de staten. Alle 24 getallen zijn gelijk.
+- De Certificates of Ascertainment van de staten, bij de National Archives: `https://www.archives.gov/files/electoral-college/2016/ascertainment-alaska.pdf`, en zo verder met `delaware`, `north-dakota`, `south-dakota`, `vermont` en `wyoming`, en voor 2020 met `2020` in het pad. Gelijk, behalve Delaware 2020: dat certificaat noemt 295.933 en 200.327 (open punt 2 bij de Senaat).
+- Delaware Department of Elections, "2020 General Election Report", Official Results (`https://elections.delaware.gov/reports/GE2020.html`; de site weigert aanvragen van buiten de VS, kopie in het Internet Archive: `https://web.archive.org/web/20260919030702/https://elections.delaware.gov/reports/GE2020.html`): Biden 296.268, Trump 200.603.
+- Wyoming Secretary of State, "Statewide Candidates Official Summary" (`https://sos.wyo.gov/Elections/Docs/2016/Results/General/2016_General_Statewide_Candidates_Summary.pdf` en `https://sos.wyo.gov/Elections/Docs/2020/Results/General/2020_General_Statewide_Candidates_Summary.pdf`): gelijk.
+
+- [ ] **Step 1: Write the failing test**
+
+Maak `tests/test_president.py`:
+
+```python
+"""Tests for gerry.president: statewide presidential votes from the MIT Election Data and Science Lab."""
+import pytest
+
+from gerry.config import data_dir
+from gerry.president import PresidentError, read_president, two_party_votes
+
+HEADER = ("year,state,state_po,state_fips,state_cen,state_ic,office,candidate,party_detailed,writein,"
+          "candidatevotes,totalvotes,version,notes,party_simplified\n")
+
+
+def row(year, postal, candidate, party, writein, votes):
+    """One line of the MIT file; the columns the reader does not use get placeholder values."""
+    return f'{year},STATE,{postal},99,99,99.0,US PRESIDENT,"{candidate}",{party},{writein},{votes},0,20210113,,OTHER\n'
+
+
+def write(tmp_path, rows):
+    path = tmp_path / "1976-2024-president.csv"
+    path.write_text(HEADER + "".join(rows), encoding="utf-8")
+    return path
+
+
+AA = [
+    # 2016: Clinton on two party lines and Trump on two, as in New York in the real file
+    row(2016, "AA", "CLINTON, HILLARY", "DEMOCRAT", "False", 100),
+    row(2016, "AA", "CLINTON, HILLARY", "WORKING FAMILIES", "False", 10),
+    row(2016, "AA", "TRUMP, DONALD J.", "REPUBLICAN", "False", 90),
+    row(2016, "AA", "TRUMP, DONALD J.", "CONSERVATIVE", "False", 5),
+    # not counted: another candidate, blank ballots, the write-in total
+    row(2016, "AA", "JOHNSON, GARY", "LIBERTARIAN", "False", 20),
+    row(2016, "AA", "BLANK VOTE", "", "False", 3),
+    row(2016, "AA", "", "", "True", 7),
+    row(2020, "AA", "BIDEN, JOSEPH R. JR", "DEMOCRAT", "False", 120),
+    row(2020, "AA", "TRUMP, DONALD J.", "REPUBLICAN", "False", 80),
+    # a write-in row with a nominee's name does not count either (Maryland 2016 in the real file)
+    row(2020, "AA", "BIDEN, JOSEPH R. JR", "DEMOCRAT", "True", 9),
+    # other years and other states are not read
+    row(2012, "AA", "OBAMA, BARACK H.", "DEMOCRAT", "False", 999),
+    row(2020, "BB", "BIDEN, JOSEPH R. JR", "DEMOCRAT", "False", 50),
+]
+
+
+def test_two_party_votes_adds_up_the_party_lines_of_each_nominee(tmp_path):
+    votes = two_party_votes(read_president(write(tmp_path, AA)), ["AA"])
+    # 2016: Clinton 100 + 10 = 110, Trump 90 + 5 = 95; 2020: Biden 120, Trump 80
+    # d = 110 + 120 = 230, r = 95 + 80 = 175
+    assert votes.to_dict("records") == [{"state": "AA", "d_pre_16": 110, "r_pre_16": 95, "d_pre_20": 120,
+                                         "r_pre_20": 80, "d": 230, "r": 175}]
+
+
+def test_two_party_votes_reads_writein_in_capitals_too(tmp_path):
+    # the codebook writes TRUE and FALSE; version 10.1 of the file writes True and False
+    rows = [line.replace(",False,", ",FALSE,").replace(",True,", ",TRUE,") for line in AA]
+    assert two_party_votes(read_president(write(tmp_path, rows)), ["AA"])["d"].tolist() == [230]
+
+
+def test_two_party_votes_keeps_the_order_of_the_states(tmp_path):
+    bb = [row(2016, "BB", "CLINTON, HILLARY", "DEMOCRAT", "False", 1),
+          row(2016, "BB", "TRUMP, DONALD J.", "REPUBLICAN", "False", 2),
+          row(2020, "BB", "TRUMP, DONALD J.", "REPUBLICAN", "False", 4)]
+    votes = two_party_votes(read_president(write(tmp_path, AA + bb)), ["BB", "AA"])
+    # BB: 1 + 50 Democratic, 2 + 4 Republican
+    assert votes[["state", "d", "r"]].values.tolist() == [["BB", 51, 6], ["AA", 230, 175]]
+
+
+def test_two_party_votes_needs_both_elections(tmp_path):
+    rows = [line for line in AA if not line.startswith("2016,")]
+    with pytest.raises(PresidentError, match="AA 2016"):
+        two_party_votes(read_president(write(tmp_path, rows)), ["AA"])
+
+
+def test_two_party_votes_needs_the_nominee_on_the_party_line(tmp_path):
+    # Biden only on another line: the reader does not guess which row is the Democratic one
+    rows = [line.replace('"BIDEN, JOSEPH R. JR",DEMOCRAT,False', '"BIDEN, JOSEPH R. JR",DEMOCRATIC-NPL,False')
+            for line in AA]
+    with pytest.raises(PresidentError, match="AA 2020: BIDEN, JOSEPH R. JR has 0 rows on the DEMOCRAT line"):
+        two_party_votes(read_president(write(tmp_path, rows)), ["AA"])
+
+
+def test_two_party_votes_stops_on_a_second_row_on_the_party_line(tmp_path):
+    rows = AA + [row(2020, "AA", "TRUMP, DONALD J.", "REPUBLICAN", "False", 1)]
+    with pytest.raises(PresidentError, match="TRUMP, DONALD J. has 2 rows on the REPUBLICAN line"):
+        two_party_votes(read_president(write(tmp_path, rows)), ["AA"])
+
+
+def test_two_party_votes_needs_a_known_writein_value(tmp_path):
+    # Maryland 2020 has three rows with an empty writein; in a state the Senate block reads, the reader stops
+    rows = AA + [row(2020, "AA", "RALEY, ALBERT", "", "", 32)]
+    with pytest.raises(PresidentError, match="writein"):
+        two_party_votes(read_president(write(tmp_path, rows)), ["AA"])
+
+
+PRESIDENT_FILE = data_dir() / "medsl" / "1976-2024-president.csv"
+# Official results, Democratic and Republican votes: 2016 (Clinton, Trump) and 2020 (Biden, Trump).
+# FEC, Federal Elections 2016 and Official 2020 Presidential General Election Results, both compiled from the
+# state election offices; the same numbers as the states' certificates of ascertainment (National Archives),
+# except Delaware 2020, see the plan of the extensions, open points of the Senate block.
+OFFICIAL = {
+    "AK": (116454, 163387, 153778, 189951),
+    "DE": (235603, 185127, 296268, 200603),
+    "ND": (93758, 216794, 114902, 235595),
+    "SD": (117458, 227721, 150471, 261043),
+    "VT": (178573, 95369, 242820, 112704),
+    "WY": (55973, 174419, 73491, 193559),
+}
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not PRESIDENT_FILE.exists(), reason="needs medsl/1976-2024-president.csv")
+def test_single_seat_states_match_the_official_results():
+    votes = two_party_votes(read_president(PRESIDENT_FILE), sorted(OFFICIAL)).set_index("state")
+    for postal, (d16, r16, d20, r20) in OFFICIAL.items():
+        got = votes.loc[postal]
+        assert (got["d_pre_16"], got["r_pre_16"], got["d_pre_20"], got["r_pre_20"]) == (d16, r16, d20, r20), postal
+        assert (got["d"], got["r"]) == (d16 + d20, r16 + r20), postal
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_president.py -q`
+Expected: collection error `ModuleNotFoundError: No module named 'gerry.president'`.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Maak `pipeline/gerry/president.py`:
+
+```python
+"""Statewide presidential votes from the MIT Election Data and Science Lab, "U.S. President 1976-2024"
+(Harvard Dataverse, doi:10.7910/DVN/42MVDX, version 10.1). The Senate block (extensions design, chapter 7)
+takes the votes of the six single-seat states from it."""
+from __future__ import annotations
+
+from collections.abc import Iterable
+from pathlib import Path
+
+import pandas as pd
+
+# The elections of the vote basis (config.yaml: pre_16, pre_20) and each party's nominee, named as in the file.
+ELECTIONS = {"pre_16": "2016", "pre_20": "2020"}
+NOMINEES = {
+    "2016": {"d": "CLINTON, HILLARY", "r": "TRUMP, DONALD J."},
+    "2020": {"d": "BIDEN, JOSEPH R. JR", "r": "TRUMP, DONALD J."},
+}
+PARTY_LINES = {"d": "DEMOCRAT", "r": "REPUBLICAN"}
+COLUMNS = ["year", "state_po", "candidate", "party_detailed", "writein", "candidatevotes"]
+
+
+class PresidentError(ValueError):
+    """The file lacks the rows the Senate block needs for a state and an election."""
+
+
+def read_president(path: Path) -> pd.DataFrame:
+    """The columns of the MIT file that the Senate block uses, as text; candidatevotes as integers."""
+    table = pd.read_csv(path, usecols=COLUMNS, dtype=str, keep_default_na=False, engine="c")
+    table["candidatevotes"] = table["candidatevotes"].astype("int64")
+    return table
+
+
+def two_party_votes(table: pd.DataFrame, postals: Iterable[str]) -> pd.DataFrame:
+    """Democratic and Republican votes per state, in the order of `postals`: columns state, d_pre_16, r_pre_16,
+    d_pre_20, r_pre_20, d and r. A party's votes are the rows of its nominee that are not write-ins, on every
+    party line: the codebook gives a candidate one row per party line, to be added up for two-party totals.
+    Write-in rows hold votes for write-in candidates and never count. The nominee must have exactly one row
+    on the party's own line (DEMOCRAT or REPUBLICAN); otherwise PresidentError."""
+    rows = []
+    for postal in postals:
+        out = {"state": postal}
+        for election, year in ELECTIONS.items():
+            part = table[(table["state_po"] == postal) & (table["year"] == year)]
+            if part.empty:
+                raise PresidentError(f"{postal} {year}: no rows in the file")
+            writein = part["writein"].str.upper()
+            if not writein.isin(["TRUE", "FALSE"]).all():
+                raise PresidentError(f"{postal} {year}: writein must be TRUE or FALSE in every row")
+            ballot = part[writein == "FALSE"]
+            for party, nominee in NOMINEES[year].items():
+                mine = ballot[ballot["candidate"] == nominee]
+                own_line = int((mine["party_detailed"] == PARTY_LINES[party]).sum())
+                if own_line != 1:
+                    raise PresidentError(f"{postal} {year}: {nominee} has {own_line} rows on the "
+                                         f"{PARTY_LINES[party]} line, expected 1")
+                out[f"{party}_{election}"] = int(mine["candidatevotes"].sum())
+        out["d"] = sum(out[f"d_{election}"] for election in ELECTIONS)
+        out["r"] = sum(out[f"r_{election}"] for election in ELECTIONS)
+        rows.append(out)
+    columns = ["state", *(f"{party}_{election}" for election in ELECTIONS for party in ("d", "r")), "d", "r"]
+    return pd.DataFrame(rows, columns=columns)
+```
+
+`read_president` gebruikt de C-engine van pandas met `dtype=str`, zoals de andere lezers.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_president.py -q`
+Expected: `8 passed` (zonder datamap `7 passed, 1 skipped`).
+
+Faalt `test_single_seat_states_match_the_official_results`, verander dan nooit de verwachte getallen. Noteer welke staat, welk jaar en welk getal afwijkt, en vraag de eigenaar.
+
+- [ ] **Step 5: Run all tests**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest -q`
+Expected: alle tests slagen.
+
+- [ ] **Step 6: Commit**
+
+```powershell
+git add pipeline/gerry/president.py tests/test_president.py
+git commit -m "Read the 2016 and 2020 presidential votes of the single-seat states"
+```
+
+### Task 5.17: 02_join schrijft de stemmen van de zes staten
+
+**Files:**
+- Modify: `pipeline/02_join.py`
+- Modify: `tests/test_join.py`
+- Create (gegenereerd, niet in git): `data/interim/single_seat_votes.parquet`
+
+**Interfaces:**
+- Consumes: `read_president`, `two_party_votes`, `PresidentError` (taak 5.16); `cfg.at_large` (hoofdplan, taak 0.4).
+- Produces: in `02_join.py` `single_seat_votes(cfg, root) -> pd.DataFrame` (de uitvoer van `two_party_votes` voor de staten met één zetel, gesorteerd op postcode); `data/interim/single_seat_votes.parquet` met de kolommen `state`, `d_pre_16`, `r_pre_16`, `d_pre_20`, `r_pre_20`, `d` en `r`. `02_join` leest het MIT-bestand vóór de 44 staten en schrijft het tussenbestand bij elke run, ook met `--states`.
+
+- [ ] **Step 1: Write the failing test**
+
+Zet in `tests/test_join.py` bij de imports, na `from pathlib import Path`:
+
+```python
+from types import SimpleNamespace
+```
+
+en vervang `from gerry.config import data_dir, load_config` door:
+
+```python
+from gerry.config import AtLargeState, data_dir, load_config
+```
+
+Voeg direct vóór `def files_of(postal, *extra):` toe:
+
+```python
+# Senate block (extensions design, chapter 7): two single-seat states in the layout of the MIT file
+MEDSL = """year,state,state_po,state_fips,state_cen,state_ic,office,candidate,party_detailed,writein,candidatevotes,totalvotes,version,notes,party_simplified
+2016,WYOMING,WY,56,83,68.0,US PRESIDENT,"CLINTON, HILLARY",DEMOCRAT,False,10,0,20210113,,DEMOCRAT
+2016,WYOMING,WY,56,83,68.0,US PRESIDENT,"TRUMP, DONALD J.",REPUBLICAN,False,30,0,20210113,,REPUBLICAN
+2020,WYOMING,WY,56,83,68.0,US PRESIDENT,"BIDEN, JOSEPH R. JR",DEMOCRAT,False,20,0,20210113,,DEMOCRAT
+2020,WYOMING,WY,56,83,68.0,US PRESIDENT,"TRUMP, DONALD J.",REPUBLICAN,False,40,0,20210113,,REPUBLICAN
+2016,DELAWARE,DE,10,51,11.0,US PRESIDENT,"CLINTON, HILLARY",DEMOCRAT,False,50,0,20210113,,DEMOCRAT
+2016,DELAWARE,DE,10,51,11.0,US PRESIDENT,"TRUMP, DONALD J.",REPUBLICAN,False,40,0,20210113,,REPUBLICAN
+2020,DELAWARE,DE,10,51,11.0,US PRESIDENT,"BIDEN, JOSEPH R. JR",DEMOCRAT,False,60,0,20210113,,DEMOCRAT
+2020,DELAWARE,DE,10,51,11.0,US PRESIDENT,"TRUMP, DONALD J.",REPUBLICAN,False,30,0,20210113,,REPUBLICAN
+"""
+
+
+def test_single_seat_votes_reads_the_single_seat_states_in_order(tmp_path):
+    (tmp_path / "medsl").mkdir()
+    (tmp_path / "medsl" / "1976-2024-president.csv").write_text(MEDSL, encoding="utf-8")
+    cfg = SimpleNamespace(at_large={"WY": AtLargeState("WY", "Wyoming", "56"),
+                                    "DE": AtLargeState("DE", "Delaware", "10")})
+    votes = load_script().single_seat_votes(cfg, tmp_path)
+    # sorted by postal code: DE 50 + 60 Democratic, 40 + 30 Republican; WY 10 + 20 and 30 + 40
+    assert votes[["state", "d", "r"]].values.tolist() == [["DE", 110, 70], ["WY", 30, 70]]
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_join.py -q`
+Expected: `1 failed, 6 passed`, met `AttributeError: module 'join_script' has no attribute 'single_seat_votes'`. De drie tests op echte data (NV, AL, OR) duren samen ongeveer een minuut; zonder datamap: `1 failed, 3 passed, 3 skipped`.
+
+- [ ] **Step 3: Write minimal implementation**
+
+In `pipeline/02_join.py`, vervang de laatste zin van de docstring:
+
+```python
+Without --states all states are joined and the interim files are rewritten. With --states only those
+states are joined and their rows replace the earlier rows in the interim files. Both rewrite the votes
+of the single-seat states for the Senate block (extensions design, chapter 7).
+"""
+```
+
+Voeg na de import uit `gerry.ensemble` toe:
+
+```python
+from gerry.president import PresidentError, read_president, two_party_votes
+```
+
+Voeg direct vóór `write_outputs` toe:
+
+```python
+def single_seat_votes(cfg, root: Path) -> pd.DataFrame:
+    """Democratic and Republican votes of 2016 and 2020 in the single-seat states, sorted by postal code, from
+    the statewide file of the MIT Election Data and Science Lab (Senate block, extensions design chapter 7)."""
+    return two_party_votes(read_president(root / "medsl" / "1976-2024-president.csv"), sorted(cfg.at_large))
+```
+
+In `main`, vervang
+
+```python
+    root = data_dir()
+    results = {}
+```
+
+door:
+
+```python
+    root = data_dir()
+    try:
+        single = single_seat_votes(cfg, root)
+    except PresidentError as exc:
+        print(f"ERROR single-seat states: {exc}", file=sys.stderr)
+        return 1
+    except FileNotFoundError as exc:
+        print(f"ERROR missing {exc.filename}; run pipeline/01_download.py first", file=sys.stderr)
+        return 1
+    results = {}
+```
+
+en vervang
+
+```python
+    write_outputs(results, cfg, interim_dir(), partial=bool(args.states))
+```
+
+door:
+
+```python
+    write_outputs(results, cfg, interim_dir(), partial=bool(args.states))
+    single.to_parquet(interim_dir() / "single_seat_votes.parquet", index=False)
+    print("Single-seat states, Democratic share of the 2016 and 2020 presidential votes: "
+          + ", ".join(f"{s.state} {s.d / (s.d + s.r):.4f}" for s in single.itertuples(index=False)))
+```
+
+Het bestand staat vóór de lus over de staten, zodat een ontbrekend of afwijkend MIT-bestand de vijf minuten van de join niet verspilt.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_join.py -q`
+Expected: `7 passed`.
+
+- [ ] **Step 5: Run the join**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python pipeline/02_join.py`
+
+Dit duurt ongeveer vijf minuten. Expected: dezelfde regels als in taak 5.3, dan precies
+
+```
+Single-seat states, Democratic share of the 2016 and 2020 presidential votes: AK 0.4334, DE 0.5796, ND 0.3156, SD 0.3541, VT 0.6694, WY 0.2603
+```
+
+en als laatste `Wrote 44 states to ...\data\interim`.
+
+- [ ] **Step 6: Check the interim file**
+
+Run: `.venv\Scripts\python -c "import pandas as pd; print(pd.read_parquet('data/interim/single_seat_votes.parquet').to_string(index=False))"`
+
+Expected:
+
+```
+state  d_pre_16  r_pre_16  d_pre_20  r_pre_20      d      r
+   AK    116454    163387    153778    189951 270232 353338
+   DE    235603    185127    296268    200603 531871 385730
+   ND     93758    216794    114902    235595 208660 452389
+   SD    117458    227721    150471    261043 267929 488764
+   VT    178573     95369    242820    112704 421393 208073
+   WY     55973    174419     73491    193559 129464 367978
+```
+
+`03_metrics` leest het bestand nog niet; dat volgt in taak 5.19.
+
+- [ ] **Step 7: Run all tests**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest -q`
+Expected: alle tests slagen.
+
+- [ ] **Step 8: Commit**
+
+```powershell
+git add pipeline/02_join.py tests/test_join.py
+git commit -m "Write the votes of the single-seat states to the interim files"
+```
+
+### Task 5.18: metrics.py, de drempel voor de Senaat
+
+**Files:**
+- Modify: `pipeline/gerry/metrics.py` (import bovenaan, functie onderaan)
+- Modify: `tests/test_metrics.py` (onderaan toevoegen)
+
+**Interfaces:**
+- Consumes: `seats_at_swing` en `enacted_threshold` (taak 5.4).
+- Produces: `senate_majority(votes, needed, around=2) -> dict` met, in deze volgorde, `base_share` (het landelijke aandeel over alle staten in `votes`), `states_needed`, `share` (`base_share` plus 0,5 min het `needed`-de hoogste staatsaandeel), `states_at_base`, `seats_at_base` (twee per staat) en `tipping`: de staten op plaats `needed - around` tot en met `needed + around`, van hoog naar laag aandeel, als lijst van {`postal`, `share`}. `ValueError` als die plaatsen niet allemaal bestaan.
+
+Uitbreidingsontwerp, hoofdstuk 7: uniforme verschuiving op de staatsaandelen, zoals in hoofdstuk 1 voor de districten. Een staat precies op 50% telt niet ("Keuzes in dit plan", punt 13).
+
+- [ ] **Step 1: Write the failing test**
+
+Voeg onderaan `tests/test_metrics.py` toe:
+
+```python
+
+
+# Task 5.18: the Senate block
+
+# five made-up states with their (Democratic, Republican) votes
+SENATE_VOTES = {"AA": (600, 400), "BB": (300, 700), "CC": (550, 450), "DD": (480, 520), "EE": (450, 550)}
+
+
+def test_senate_majority_hand_example():
+    res = m.senate_majority(SENATE_VOTES, 3, around=1)
+    # national share: (600 + 300 + 550 + 480 + 450) / 5000 = 2380 / 5000 = 0.476
+    assert res["base_share"] == pytest.approx(0.476)
+    # shares from high to low: AA 0.6, CC 0.55, DD 0.48, EE 0.45, BB 0.3; the third is 0.48
+    # threshold 0.476 + 0.5 - 0.48 = 0.496
+    assert res["share"] == pytest.approx(0.496)
+    assert res["states_needed"] == 3
+    # at the real votes AA and CC lie above one half: 2 states, 4 seats
+    assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
+    # the states ranked 3 - 1 to 3 + 1
+    assert [t["postal"] for t in res["tipping"]] == ["CC", "DD", "EE"]
+    assert [t["share"] for t in res["tipping"]] == pytest.approx([0.55, 0.48, 0.45])
+    assert list(res) == ["base_share", "states_needed", "share", "states_at_base", "seats_at_base", "tipping"]
+
+
+def test_senate_majority_lists_two_ranks_on_each_side_by_default():
+    # needed 3 of 5 states: ranks 1 to 5, every state from high to low
+    res = m.senate_majority(SENATE_VOTES, 3)
+    assert [t["postal"] for t in res["tipping"]] == ["AA", "CC", "DD", "EE", "BB"]
+
+
+def test_senate_majority_a_state_on_one_half_does_not_count():
+    # shares 0.75, 0.625, 0.5 and 0.375 (binary fractions, exact); national share 12 / 22
+    votes = {"AA": (3, 1), "BB": (5, 3), "CC": (1, 1), "DD": (3, 5)}
+    res = m.senate_majority(votes, 3, around=1)
+    # CC sits on one half and does not count at the real votes
+    assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
+    # the third highest share is 0.5: swing 0, so the threshold is the national share itself
+    assert res["share"] == res["base_share"] == pytest.approx(12 / 22)
+    assert [t["postal"] for t in res["tipping"]] == ["BB", "CC", "DD"]
+
+
+def test_senate_majority_orders_equal_shares_by_postal_code():
+    # AA and CC both 2 / 5 = 0.4, BB 0.6; national share (2 + 3 + 2) / 15 = 7 / 15
+    res = m.senate_majority({"CC": (2, 3), "BB": (3, 2), "AA": (2, 3)}, 2, around=1)
+    assert [t["postal"] for t in res["tipping"]] == ["BB", "AA", "CC"]
+    # the second highest share is 0.4: 7 / 15 + 0.5 - 0.4
+    assert res["share"] == pytest.approx(7 / 15 + 0.1)
+
+
+def test_senate_majority_needs_the_ranks_around_the_threshold():
+    # needed 2 of 2 states with two ranks on each side: ranks 0 to 4 do not all exist
+    with pytest.raises(ValueError, match="ranks"):
+        m.senate_majority({"AA": (1, 2), "BB": (2, 1)}, 2)
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_metrics.py -q`
+Expected: `5 failed, 58 passed`, met `AttributeError: module 'gerry.metrics' has no attribute 'senate_majority'`.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Vervang in `pipeline/gerry/metrics.py` de regel `from typing import Callable, Sequence` door:
+
+```python
+from typing import Callable, Mapping, Sequence
+```
+
+Voeg onderaan `pipeline/gerry/metrics.py` toe:
+
+```python
+
+
+# --- Senate block (extensions design, chapter 7) ----------------------------------------------------
+
+
+def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, around: int = 2) -> dict:
+    """Each state's two senators go to the party with more of its two-party vote. `votes` maps every state to its
+    (Democratic, Republican) votes. Under a uniform swing on the state shares Democrats need `needed` states: the
+    threshold is the national share plus 0.5 - h, with h the needed-th highest state share (exact, as
+    enacted_threshold). A state exactly on one half does not count. Also the states and seats at the real votes,
+    and the states ranked needed - around to needed + around, from high to low (equal shares by postal code)."""
+    postals = sorted(votes)
+    first, last = needed - around, needed + around
+    if not 1 <= first <= last <= len(postals):
+        raise ValueError(f"ranks {first} to {last} must lie within 1..{len(postals)}")
+    d = np.array([votes[p][0] for p in postals], dtype=float)
+    r = np.array([votes[p][1] for p in postals], dtype=float)
+    shares = d / (d + r)
+    base = float(d.sum() / (d + r).sum())
+    ranked = sorted(range(len(postals)), key=lambda i: (-shares[i], postals[i]))
+    states = int(seats_at_swing(shares, 0.0))
+    return {
+        "base_share": base,
+        "states_needed": needed,
+        "share": base + enacted_threshold(shares, needed),
+        "states_at_base": states,
+        "seats_at_base": 2 * states,
+        "tipping": [{"postal": postals[i], "share": float(shares[i])} for i in ranked[first - 1:last]],
+    }
+```
+
+`d / (d + r)` geeft voor een staat hetzelfde getal als `d_share` in `state_metrics` (dezelfde twee optellingen en één deling in dubbele precisie); de contracttest van taak 5.20 rekent daarop.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_metrics.py -q`
+Expected: `63 passed`.
+
+- [ ] **Step 5: Commit**
+
+```powershell
+git add pipeline/gerry/metrics.py tests/test_metrics.py
+git commit -m "Add the Senate threshold under a uniform swing on the state shares"
+```
+
+### Task 5.19: 03_metrics, het blok over de Senaat
+
+**Files:**
+- Modify: `pipeline/03_metrics.py`
+- Modify: `tests/test_metrics_step.py`, `tests/test_metrics_data.py`
+
+**Interfaces:**
+- Consumes: `senate_majority` (taak 5.18); `data/interim/single_seat_votes.parquet` (taak 5.17); `compute` met het woordenboek `votes` (taak 5.7) en `by_control` en `by_body` (taak 5.12); `_interim` en `_small_house` in `tests/test_metrics_step.py` (taak 5.6 en 5.7).
+- Produces: in `03_metrics.py` `SENATE_STATES = 50`, `SENATE_STATES_NEEDED = 26`, `read_single_seat_votes(idir, at_large) -> dict[str, tuple[float, float]]`, `national_senate(votes) -> dict`. `compute` zet `senate` onder `national` in `metrics.json`, met de velden van `senate_majority`. Nieuwe controle: `CheckError("senate_states", "US", ...)` als `single_seat_votes.parquet` andere staten noemt dan `config.yaml`, of als er geen 50 staten zijn; `CheckError("interim_files", "US", ...)` als het bestand ontbreekt.
+
+De stemmen per staat: voor de 44 staten `d_total` en `r_total` uit de eenheden, dezelfde getallen als achter `d_share` en *V0*; voor de zes staten met één zetel `d` en `r` uit `single_seat_votes.parquet`.
+
+- [ ] **Step 1: Write the failing tests**
+
+Voeg in `tests/test_metrics_step.py`, in `_interim`, direct vóór de regel `return SimpleNamespace(...)` toe:
+
+```python
+    # the single-seat state WY, 2016 and 2020 added up (02_join.py, Task 5.17)
+    pd.DataFrame({"state": ["WY"], "d_pre_16": [150], "r_pre_16": [350], "d_pre_20": [250], "r_pre_20": [250],
+                  "d": [400], "r": [600]}).to_parquet(tmp_path / "single_seat_votes.parquet")
+```
+
+Vervang in `_small_house` alles van de docstring tot en met de regel `seen = {}` door:
+
+```python
+    """A House of the 3 districts of XX plus WY: majority 3, WY fixed as Republican. national_majority is
+    replaced by a stand-in that records its arguments (its own tests are under Task 5.7). The Senate has the
+    two states XX and WY; senate_majority is replaced in the same way (Task 5.18 tests it)."""
+    monkeypatch.setattr(step, "HOUSE_SEATS", 3 + 1)
+    monkeypatch.setattr(step, "HOUSE_MAJORITY", 3)
+    monkeypatch.setattr(step, "SINGLE_SEAT_PARTY", {"WY": "R"})
+    monkeypatch.setattr(step, "SENATE_STATES", 2)
+    seen = {}
+```
+
+en de laatste twee regels van `_small_house` (`monkeypatch.setattr(step, "national_majority", stand_in)` en `return seen`) door:
+
+```python
+    def senate_stand_in(votes, needed):
+        seen["senate"] = (dict(votes), needed)
+        return {"base_share": 0.0, "states_needed": needed, "share": 0.0, "states_at_base": 0,
+                "seats_at_base": 0, "tipping": []}
+
+    monkeypatch.setattr(step, "national_majority", stand_in)
+    monkeypatch.setattr(step, "senate_majority", senate_stand_in)
+    return seen
+```
+
+Twee gemaakte staten kunnen de plaatsen 24 tot en met 28 niet vullen; daarom vervangt `_small_house` ook `senate_majority` in de tests van `compute`.
+
+Voeg onderaan `tests/test_metrics_step.py` toe:
+
+```python
+
+
+# --- Task 5.19: the Senate block ------------------------------------------------------------------
+
+
+def test_senate_needs_26_of_the_50_states():
+    # 51 of 100 seats; at 50-50 the vice president, a Republican since January 2025, decides; two seats per state
+    assert (step.SENATE_STATES, step.SENATE_STATES_NEEDED) == (50, 26)
+
+
+def test_read_single_seat_votes(tmp_path):
+    pd.DataFrame({"state": ["WY"], "d": [400], "r": [600]}).to_parquet(tmp_path / "single_seat_votes.parquet")
+    wyoming = {"WY": AtLargeState("WY", "Wyoming", "56")}
+    assert step.read_single_seat_votes(tmp_path, wyoming) == {"WY": (400.0, 600.0)}
+    # config.yaml and the file of 02_join.py must name the same states
+    with pytest.raises(CheckError, match="senate_states"):
+        step.read_single_seat_votes(tmp_path, {**wyoming, "AK": AtLargeState("AK", "Alaska", "02")})
+
+
+def test_read_single_seat_votes_needs_the_file_of_02_join(tmp_path):
+    with pytest.raises(CheckError, match="interim_files"):
+        step.read_single_seat_votes(tmp_path, {"WY": AtLargeState("WY", "Wyoming", "56")})
+
+
+def test_national_senate_needs_every_state():
+    with pytest.raises(CheckError, match="senate_states"):
+        step.national_senate({"AA": (1.0, 2.0)})
+
+
+def test_national_senate_uses_the_number_of_states_needed(monkeypatch):
+    # the five states of the Senate tests in tests/test_metrics.py, as if they were all the states
+    monkeypatch.setattr(step, "SENATE_STATES", 5)
+    monkeypatch.setattr(step, "SENATE_STATES_NEEDED", 3)
+    votes = {"AA": (600, 400), "BB": (300, 700), "CC": (550, 450), "DD": (480, 520), "EE": (450, 550)}
+    res = step.national_senate(votes)
+    # 0.476 + 0.5 - 0.48 = 0.496; ranks 3 - 2 to 3 + 2, high to low
+    assert (res["states_needed"], res["share"]) == (3, pytest.approx(0.496))
+    assert [t["postal"] for t in res["tipping"]] == ["AA", "CC", "DD", "EE", "BB"]
+
+
+def test_compute_adds_the_senate(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
+    seen = _small_house(monkeypatch)
+    nat = step.compute(cfg, tmp_path)["national"]
+    # XX: the votes of its units, 1300 D and 1700 R; WY: 400 D and 600 R from single_seat_votes.parquet
+    assert seen["senate"] == ({"XX": (1300.0, 1700.0), "WY": (400.0, 600.0)}, 26)
+    assert nat["senate"]["states_needed"] == 26
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_metrics_step.py -q`
+Expected: `9 failed, 40 passed`. De zes nieuwe tests falen met `AttributeError` (`SENATE_STATES`, `read_single_seat_votes` of `national_senate`), en ook de drie bestaande tests die `_small_house` gebruiken (`test_compute_assembles_states_national_and_checks`, `test_compute_adds_majority_competitive_and_redraw`, `test_compute_adds_the_overview_per_control_and_body`), omdat `monkeypatch.setattr` een ontbrekende `SENATE_STATES` niet aanvaardt.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Voeg in `pipeline/03_metrics.py` `senate_majority` toe aan de import uit `gerry.metrics`: vervang `seats_by_plan, sorted_band)` door `seats_by_plan, senate_majority, sorted_band)`.
+
+Voeg direct na `SINGLE_SEAT_PARTY = {...}` toe:
+
+```python
+# Senate block (extensions design, chapter 7): 51 of 100 seats; at 50-50 the vice president decides, a
+# Republican since January 2025. Each state gives both its seats to one party: Democrats need 26 states.
+SENATE_STATES = 50
+SENATE_STATES_NEEDED = 26
+```
+
+Voeg direct vóór `compute` toe:
+
+```python
+def read_single_seat_votes(idir, at_large: Mapping[str, AtLargeState]) -> dict[str, tuple[float, float]]:
+    """(Democratic, Republican) votes of the single-seat states, 2016 and 2020 added up, as 02_join.py wrote them
+    from the statewide file of the MIT Election Data and Science Lab."""
+    path = idir / "single_seat_votes.parquet"
+    if not path.exists():
+        raise CheckError("interim_files", "US", "single_seat_votes.parquet is missing; run pipeline/02_join.py again")
+    table = pd.read_parquet(path)
+    if sorted(table["state"]) != sorted(at_large):
+        raise CheckError("senate_states", "US", f"single_seat_votes.parquet has {sorted(table['state'])}, "
+                                                f"config.yaml has {sorted(at_large)}")
+    return {row.state: (float(row.d), float(row.r)) for row in table.itertuples(index=False)}
+
+
+def national_senate(votes: Mapping[str, tuple[float, float]]) -> dict:
+    """The Senate block (extensions design, ch. 7) from the (Democratic, Republican) votes of every state."""
+    if len(votes) != SENATE_STATES:
+        raise CheckError("senate_states", "US", f"{len(votes)} states with votes, expected {SENATE_STATES}")
+    return senate_majority(votes, SENATE_STATES_NEEDED)
+```
+
+Pas `compute` aan. Voeg direct na de regel `join_log = json.loads(...)` toe:
+
+```python
+    single_seat = read_single_seat_votes(idir, cfg.at_large)
+```
+
+Voeg direct na de regel `votes = {"d": 0.0, ...}` toe:
+
+```python
+    senate = {}    # (Democratic, Republican) votes per state for the Senate block
+```
+
+en in de lus direct na `votes["state_seats"].append(st.seats)`:
+
+```python
+        senate[postal] = (d_total, r_total)
+```
+
+Voeg tot slot direct vóór `return {"national": national, "states": states, "checks": checks}` toe, na de regels van `by_control` en `by_body`:
+
+```python
+    national["senate"] = national_senate({**senate, **single_seat})
+    sen = national["senate"]
+    print(f"US Senate: Democrats have {sen['base_share']:.4f} of the two-party vote in the {SENATE_STATES} states "
+          f"and need {sen['share']:.4f} for {sen['states_needed']} states; at {sen['base_share']:.4f} they win "
+          f"{sen['states_at_base']} states ({sen['seats_at_base']} seats); around the threshold: "
+          + ", ".join(f"{t['postal']} {t['share']:.4f}" for t in sen["tipping"]))
+```
+
+`compute` leest `single_seat_votes.parquet` vóór de lus over de staten, zodat een ontbrekend bestand meteen stopt.
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_metrics_step.py -q`
+Expected: `49 passed`.
+
+- [ ] **Step 5: Run 03_metrics on the real data**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python pipeline/03_metrics.py`
+
+Expected: na de regels van taak 5.7 en 5.12 precies
+
+```
+US Senate: Democrats have 0.5170 of the two-party vote in the 50 states and need 0.5291 for 26 states; at 0.5170 they win 22 states (44 seats); around the threshold: AZ 0.4930, GA 0.4889, FL 0.4879, NC 0.4876, TX 0.4635
+```
+
+en dan de regels `Wrote ...`, met dezelfde `Open items` en `Pending` als ervoor: `docs/validation.md` verandert niet.
+
+- [ ] **Step 6: Write the data test**
+
+Voeg onderaan `tests/test_metrics_data.py` toe:
+
+```python
+
+
+def test_senate(metrics):
+    sen = metrics["national"]["senate"]
+    # prototype run of 2026-10-07: the 44 states of the vote basis and the six single-seat states (MIT file)
+    assert (sen["states_needed"], sen["states_at_base"], sen["seats_at_base"]) == (26, 22, 44)
+    assert sen["base_share"] == pytest.approx(0.5169609, abs=5e-7)
+    # the 26th highest state share is Florida's 0.4878762: 0.5169609 + 0.5 - 0.4878762
+    assert sen["share"] == pytest.approx(0.5290847, abs=5e-7)
+    assert [t["postal"] for t in sen["tipping"]] == ["AZ", "GA", "FL", "NC", "TX"]
+    assert [t["share"] for t in sen["tipping"]] == pytest.approx(
+        [0.4929715, 0.4888521, 0.4878762, 0.4876063, 0.4635184], abs=5e-7)
+    # one vote base: a multi-seat state has the share behind its proportional seats
+    for t in sen["tipping"]:
+        assert t["share"] == metrics["states"][t["postal"]]["d_share"]
+```
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_metrics_data.py -m data -q`
+Expected: `26 passed`.
+
+- [ ] **Step 7: Run all tests**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest -q`
+Expected: alle tests slagen.
+
+- [ ] **Step 8: Commit**
+
+```powershell
+git add pipeline/03_metrics.py tests/test_metrics_step.py tests/test_metrics_data.py
+git commit -m "Add the Senate threshold on the state votes for the nation"
+```
+
+### Task 5.20: results.json en de contracttest voor de Senaat
+
+**Files:**
+- Modify: `pipeline/gerry/export.py`
+- Modify: `tests/test_export.py`
+- Modify: `site/js/contract.test.js`
+- Modify (gegenereerd): `site/data/results.json`, `site/data/map.topojson` (blijft gelijk)
+
+**Interfaces:**
+- Consumes: `national.senate` in `metrics.json` (taak 5.19); `NATIONAL_FIELDS` en de contracttest na taak 5.13.
+- Produces: `NATIONAL_FIELDS` met daarachter `senate`; `results.json` met `national.senate` tussen `by_body` en `single_seat`; een contracttest met één nieuwe test.
+
+Wat de contracttest controleert, zonder de stemmen van de zes staten (die staan niet in `results.json`; zie "Keuzes in dit plan", punt 15): 50 staten; `states_needed` is 26; `seats_at_base` is twee keer `states_at_base`; vijf verschillende staten in `tipping`, van hoog naar laag; voor een staat met districten is het aandeel in `tipping` zijn `d_share`; de staat op plaats 24 + i ligt boven 50% precies als die plaats binnen `states_at_base` valt; de drempel is *V50* plus 0,5 min het aandeel van de 26e staat (1e-12); `states_at_base` ligt tussen het aantal staten met districten boven 50% en dat aantal plus zes.
+
+- [ ] **Step 1: Write the failing test**
+
+Voeg in `tests/test_export.py`, in `toy_metrics` onder `"national"`, direct na het woordenboek `"by_body"` toe:
+
+```python
+            # extensions (Task 5.19): the Senate block, passed through unchanged
+            "senate": {"base_share": 0.55, "states_needed": 26, "share": 0.53, "states_at_base": 27,
+                       "seats_at_base": 54, "tipping": [{"postal": "HI", "share": 0.5}]},
+```
+
+Vervang in `test_build_results_national_adds_single_seat_states_sorted_by_postal` de bewering over `list(national)` en de lus eronder (taak 5.13) door:
+
+```python
+    assert list(national) == ["seats", "proportional", "enacted", "neutral", "position", "effects",
+                              "outside_band", "majority", "competitive", "redraw", "by_control", "by_body",
+                              "senate", "single_seat"]
+    # the extensions pass through unchanged
+    for key in ("majority", "competitive", "redraw", "by_control", "by_body", "senate"):
+        assert national[key] == toy_metrics()["national"][key], key
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_export.py -q`
+Expected: `1 failed, 32 passed`: `test_build_results_national_adds_single_seat_states_sorted_by_postal` met een `AssertionError` (`senate` ontbreekt).
+
+- [ ] **Step 3: Write minimal implementation**
+
+In `pipeline/gerry/export.py`:
+
+```python
+NATIONAL_FIELDS = ("seats", "proportional", "enacted", "neutral", "position", "effects", "outside_band",
+                   "majority", "competitive", "redraw", "by_control", "by_body", "senate")
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_export.py tests/test_export_step.py -q`
+Expected: `46 passed`.
+
+- [ ] **Step 5: Extend the contract test**
+
+In `site/js/contract.test.js`, voeg direct na `const CONTROL = [...]` toe:
+
+```js
+// 51 of 100 seats, two per state; at 50-50 the vice president, a Republican since January 2025, decides (chapter 7)
+const SENATE_STATES_NEEDED = 26;
+```
+
+Voeg onderaan het bestand toe:
+
+```js
+
+test('the Senate block follows from the state shares', { skip }, () => {
+  const { national, states } = data().results;
+  const s = national.senate;
+  const all = [...Object.keys(states), ...national.single_seat.map((x) => x.postal)];
+  assert.equal(all.length, 50);
+  assert.equal(s.states_needed, SENATE_STATES_NEEDED);
+  assert.ok(isFraction(s.base_share) && isFraction(s.share), 'senate.base_share and senate.share are fractions');
+  assert.ok(isInt(s.states_at_base) && s.states_at_base >= 0 && s.states_at_base <= all.length, 'senate.states_at_base');
+  assert.equal(s.seats_at_base, 2 * s.states_at_base);
+  // the states ranked 24th to 28th, from high to low share
+  assert.equal(s.tipping.length, 5);
+  assert.equal(new Set(s.tipping.map((t) => t.postal)).size, 5, 'senate.tipping names five states');
+  s.tipping.forEach((t, i) => {
+    const rank = SENATE_STATES_NEEDED - 2 + i;
+    assert.ok(all.includes(t.postal) && isFraction(t.share), `senate.tipping ${t.postal}`);
+    if (i > 0) assert.ok(s.tipping[i - 1].share >= t.share, 'senate.tipping runs from high to low');
+    // one vote base: a multi-seat state has the share of its district votes
+    if (t.postal in states) assert.ok(near(t.share, states[t.postal].d_share, 1e-12), `senate.tipping ${t.postal} is its d_share`);
+    // the state ranked here is Democratic at the real votes exactly when its share lies above one half
+    assert.equal(t.share > 0.5, rank <= s.states_at_base, `senate.tipping ${t.postal} (rank ${rank}) against states_at_base`);
+  });
+  // the threshold: the base share plus one half minus the share of the 26th state (exact)
+  assert.ok(near(s.share, s.base_share + 0.5 - s.tipping[2].share, 1e-12), `senate.share ${s.share}`);
+  // results.json has no votes of the single-seat states: they can add at most one state each
+  const above = Object.values(states).filter((x) => x.d_share > 0.5).length;
+  assert.ok(above <= s.states_at_base && s.states_at_base <= above + national.single_seat.length,
+    `senate.states_at_base ${s.states_at_base} against ${above} multi-seat states above one half`);
+});
+```
+
+`isInt`, `isFraction`, `near` en `data` bestaan al in het bestand.
+
+- [ ] **Step 6: Run the contract test against the old results.json**
+
+Run: `npm test`
+Expected: `tests 32`, `pass 31`, `fail 1`: `the Senate block follows from the state shares` met `TypeError: Cannot read properties of undefined (reading 'states_needed')`. `site/data/results.json` heeft `senate` nog niet.
+
+- [ ] **Step 7: Run the export**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python pipeline/04_export.py`
+
+Expected: dezelfde uitvoer als in taak 5.13, met als laatste regel `Wrote site/data/results.json (44 states) and site/data/map.topojson (683,120 bytes)`. De geometrie verandert niet; `results.json` groeit met ongeveer 0,5 kB (het blok `senate`).
+
+- [ ] **Step 8: Run the JavaScript tests**
+
+Run: `npm test`
+Expected: `tests 32`, `pass 32`, `fail 0`, `skipped 0`.
+
+Zie de test falen op een kapotte kopie: bewaar het bestand, verschuif de drempel en zet het daarna terug.
+
+Run: `Copy-Item site\data\results.json "$env:TEMP\results.json"`
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -c "import json, pathlib; p = pathlib.Path('site/data/results.json'); r = json.loads(p.read_text(encoding='utf-8')); r['national']['senate']['share'] += 0.001; p.write_text(json.dumps(r), encoding='utf-8')"`
+
+Run: `npm test`
+Expected: `✖ the Senate block follows from the state shares`, `fail 1`.
+
+Run: `Copy-Item "$env:TEMP\results.json" site\data\results.json -Force` en daarna `npm test`
+Expected: `pass 32`.
+
+- [ ] **Step 9: Run all tests**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest -q`
+Expected: alle tests slagen.
+
+- [ ] **Step 10: Commit**
+
+```powershell
+git add pipeline/gerry/export.py tests/test_export.py site/js/contract.test.js site/data/results.json site/data/map.topojson
+git commit -m "Export the Senate threshold to results.json"
+```
+
+### Task 5.21: de spec verwijst naar de Senaat
+
+**Files:**
+- Modify: `docs/superpowers/specs/2026-10-05-gerrymandering-map-design.md` (hoofdstuk 3, 4, 5 en 7)
+
+**Interfaces:**
+- Consumes: de velden en bestanden van taak 5.15 tot en met 5.20; de spec na taak 5.14.
+- Produces: een spec die de nieuwe databron, het tussenbestand en `national.senate` noemt. De notentabel en de tabel met invulwaarden in hoofdstuk 5 blijven gelijk; `tests/test_export.py` leest ze.
+
+De spec is Nederlands en intern; houd de zinnen kort en zonder em-dashes. De bronvermelding op de site (siteontwerp, punt 9, "Sources") moet het MIT-bestand ook noemen; dat hoort bij het siteplan (taak 4.3 van het hoofdplan), niet bij deze taak.
+
+- [ ] **Step 1: Edit the spec**
+
+Hoofdstuk 3, in de tabel van bronnen, direct na de regel van ALARM census-2020:
+
+```
+| [MIT Election Data and Science Lab, "U.S. President 1976-2024"](https://doi.org/10.7910/DVN/42MVDX), `1976-2024-president.csv` | Stemmen per staat van 2016 en 2020 in de zes staten met één zetel, voor het blok over de Senaat (uitbreidingsontwerp, hoofdstuk 7) | Dataverse doi:10.7910/DVN/42MVDX, versie 10.1 (04-09-2026) |
+```
+
+Hoofdstuk 3, de zin over licenties: vervang "de ALARM-dataset is CC0" door "de ALARM-dataset en de presidentsuitslagen per staat van het MIT Election Data and Science Lab zijn CC0".
+
+Hoofdstuk 3, in de lijst onder "Gedrag:", direct na de regel die begint met "Census en GitHub:":
+
+```
+- Het MIT-bestand komt via een directe link naar één Dataverse-bestand (`api/access/datafile/13887042`). De eerste download legt sha256 vast in `data/manifest.json`, zoals bij Census en GitHub.
+```
+
+Hoofdstuk 4, in de boom van `pipeline/`, direct na de regel van `ensemble.py`:
+
+```
+    president.py       stemmen per staat uit het bestand van het MIT Election Data and Science Lab
+```
+
+Hoofdstuk 4, in "Gegevens tussen de stappen", als laatste punt van de lijst onder "Het schrijft naar `data/interim/`:":
+
+```
+- `single_seat_votes.parquet`: `state`, `d_pre_16`, `r_pre_16`, `d_pre_20`, `r_pre_20`, `d`, `r` voor de zes staten met één zetel, uit het MIT-bestand (uitbreidingsontwerp, hoofdstuk 7).
+```
+
+Hoofdstuk 5, aan het eind van "### Uitbreidingen" (taak 5.14), na de vier punten:
+
+```
+De Senaat (hoofdstuk 7 van het uitbreidingsontwerp) gebruikt de stemmen per staat: voor de 44 staten de stembasis, voor de zes staten met één zetel de officiële uitslagen van 2016 en 2020 uit het MIT-bestand. Bij 50 tegen 50 beslist de vicepresident, sinds januari 2025 een Republikein, dus Democraten hebben 26 staten nodig. De drempel is het landelijke aandeel over de 50 staten plus 0,5 min het 26e hoogste staatsaandeel. Dit blok gaat niet over kaarten.
+```
+
+Hoofdstuk 7, in de tabel van `results.json`: vervang in de cel van `national` het stuk dat taak 5.14 toevoegde, `` `by_control`, `by_body` ``, door:
+
+```
+`by_control`, `by_body`; uit hoofdstuk 7 van dat ontwerp: `senate` {`base_share`, `states_needed`, `share`, `states_at_base`, `seats_at_base`, `tipping`: lijst van {`postal`, `share`}}
+```
+
+- [ ] **Step 2: Run the tests that read the spec**
+
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_export.py -q`
+Expected: `33 passed`.
+
+Run: `Select-String -Path docs\superpowers\specs\2026-10-05-gerrymandering-map-design.md -Pattern ([char]0x2014)`
+Expected: geen uitvoer.
+
+- [ ] **Step 3: Commit**
+
+```powershell
+git add docs/superpowers/specs/2026-10-05-gerrymandering-map-design.md
+git commit -m "Point the spec to the Senate block"
+```
+
 ## Afronding
 
 - [ ] **Step 1: Alle tests en de hele pijplijn**
 
 Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest -q` en `npm test`
-Expected: pytest alleen `passed` (en `skipped` alleen als de datamap ontbreekt), 68 tests meer dan vóór fase 5; `node --test` met `tests 31`, `pass 31`.
+Expected: pytest alleen `passed` (en `skipped` alleen als de datamap ontbreekt), minstens 90 tests meer dan vóór fase 5: 68 uit taak 5.1 tot en met 5.14 en 22 uit taak 5.15 tot en met 5.21, plus de tests die bij de uitvoering zijn toegevoegd; `node --test` met `tests 32`, `pass 32`.
 
 Run: `$env:PATH = "$PWD\.venv\Scripts;" + $env:PATH; make all`
 Expected: exit code 0, zonder `CheckError`. `git status --short` toont daarna geen gewijzigde bestanden, behalve een nieuwe datum in `results.json` als de dag veranderde.
