@@ -382,3 +382,61 @@ def test_is_narrow():
     # no plans at all
     with pytest.raises(ValueError, match="no plans"):
         m.is_narrow([0, 0])
+
+
+# Task 5.4: competitive districts, seats under a uniform swing, the enacted threshold
+
+def test_competitive_counts_45_to_55_percent_bounds_included():
+    # 0.45 and 0.55 are the bounds and count; 0.449 and 0.551 lie outside; 0.5 counts -> 3
+    assert m.competitive([0.45, 0.55, 0.449, 0.551, 0.5]) == 3
+
+
+def test_competitive_counts_per_plan():
+    # plans as rows: (0.45, 0.6) -> 1; (0.5, 0.52) -> 2; (0.3, 0.7) -> 0
+    assert m.competitive(np.array([[0.45, 0.6], [0.5, 0.52], [0.3, 0.7]])).tolist() == [1, 2, 0]
+
+
+def test_seats_at_swing_adds_the_swing_to_every_district():
+    shares = [0.6, 0.48, 0.45, 0.3]
+    # swing 0: only 0.6 lies above one half
+    assert m.seats_at_swing(shares, 0.0) == 1
+    # +0.03: 0.63, 0.51, 0.48, 0.33 -> 2
+    assert m.seats_at_swing(shares, 0.03) == 2
+    # -0.11: 0.49, 0.37, 0.34, 0.19 -> 0
+    assert m.seats_at_swing(shares, -0.11) == 0
+
+
+def test_seats_at_swing_on_one_half_is_not_democratic():
+    # 0.375 + 0.125 = 0.5 exactly (binary fractions, no rounding): not above one half
+    assert m.seats_at_swing([0.375, 0.625], 0.125) == 1
+
+
+def test_seats_at_swing_per_plan():
+    # (0.6, 0.4) - 0.015 = (0.585, 0.385) -> 1; (0.52, 0.51) - 0.015 = (0.505, 0.495) -> 1
+    assert m.seats_at_swing(np.array([[0.6, 0.4], [0.52, 0.51]]), -0.015).tolist() == [1, 1]
+
+
+def test_enacted_threshold_is_one_half_minus_the_needed_share():
+    shares = [0.48, 0.7, 0.4, 0.52, 0.55]
+    # high to low: 0.7, 0.55, 0.52, 0.48, 0.4
+    # needed 3: h = 0.52, swing 0.5 - 0.52 = -0.02
+    assert m.enacted_threshold(shares, 3) == pytest.approx(-0.02)
+    # needed 4: h = 0.48, swing 0.5 - 0.48 = +0.02
+    assert m.enacted_threshold(shares, 4) == pytest.approx(0.02)
+
+
+def test_enacted_threshold_is_the_edge_of_the_majority():
+    shares = [0.75, 0.625, 0.375]
+    # needed 2: h = 0.625, swing 0.5 - 0.625 = -0.125 (binary fractions, exact)
+    swing = m.enacted_threshold(shares, 2)
+    assert swing == -0.125
+    # at the threshold the second district sits on one half and does not count yet; just above it does
+    assert m.seats_at_swing(shares, swing) == 1
+    assert m.seats_at_swing(shares, swing + 0.001) == 2
+
+
+def test_enacted_threshold_needs_a_count_within_the_districts():
+    with pytest.raises(ValueError, match="needed"):
+        m.enacted_threshold([0.6, 0.4], 3)
+    with pytest.raises(ValueError, match="needed"):
+        m.enacted_threshold([0.6, 0.4], 0)

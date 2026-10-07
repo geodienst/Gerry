@@ -208,3 +208,31 @@ def is_narrow(dist_counts) -> bool:
     if total <= 0:
         raise ValueError("no plans")
     return int(counts.max()) * 20 >= 19 * total
+
+
+# --- Extensions (docs/superpowers/specs/2026-10-06-extensions-design.md) ---------------------------
+
+COMPETITIVE_LOW = 0.45       # chapter 3: a Democratic share from 45% to 55%, bounds included
+COMPETITIVE_HIGH = 0.55
+
+
+def competitive(shares) -> np.ndarray:
+    """Districts with a Democratic share from 45% to 55%, bounds included, counted along the last axis:
+    one number for a map, one per plan for a matrix with plans as rows."""
+    values = np.asarray(shares, dtype=float)
+    return ((values >= COMPETITIVE_LOW) & (values <= COMPETITIVE_HIGH)).sum(axis=-1)
+
+
+def seats_at_swing(shares, swing: float) -> np.ndarray:
+    """Democratic seats when `swing` is added to every district share: districts above one half, counted
+    along the last axis. A district that lands exactly on one half does not count."""
+    return (np.asarray(shares, dtype=float) + swing > 0.5).sum(axis=-1)
+
+
+def enacted_threshold(shares, needed: int) -> float:
+    """The swing 0.5 - h, with h the needed-th highest district share (chapter 1). Any larger swing gives at
+    least `needed` Democratic districts; at the threshold itself district `needed` sits on one half."""
+    ordered = np.sort(np.asarray(shares, dtype=float))[::-1]
+    if not 1 <= needed <= ordered.size:
+        raise ValueError(f"needed must lie in 1..{ordered.size}, got {needed}")
+    return float(0.5 - ordered[needed - 1])
