@@ -178,7 +178,9 @@ def test_state_checks():
     assert ref["districts"][0] == pytest.approx({"district": "01", "ours": 0.61, "alarm": 0.612})
     assert (ref["seats_ours"], ref["seats_alarm"]) == (1, 1)
     whole = checks["whole_unit"]
-    assert len(whole) == 6
+    # three districts each on the enacted map, the blocked map and the 2024 map (Task 5.8)
+    assert len(whole) == 9
+    assert [w["map_id"] for w in whole[6:]] == ["map_2024"] * 3
     flipped = [w for w in whole if w["block_dem"] != w["whole_dem"]]
     assert flipped == [pytest.approx({"map_id": "xx_new", "district": "02", "block": 0.51, "whole": 0.495,
                                       "block_dem": True, "whole_dem": False})]
@@ -347,6 +349,11 @@ def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
     assert out["states"]["XX"]["competitive"] == {"enacted": 0, "median": 0, "p5": 0, "p95": 2,
                                                   "neutral_dist": [2, 0, 2, 0]}
     assert out["states"]["XX"]["redraw"] == {"seats_2024": 2, "change": -1, "map_changed": True}
+    # Task 5.8: the row of the 2024 map in docs/validation.md
+    # 3 districts on the 2024 map, 12 moved blocks from join_log.json; 2 seats on the 2024 map and 1 on the
+    # enacted map, as in test_state_redraw_compares_with_the_2024_map
+    assert out["checks"]["map_2024"] == {"XX": {"districts": 3, "changed_blocks": 12, "seats_2024": 2,
+                                                "seats_enacted": 1}}
 
 
 def test_compute_needs_the_changed_blocks_of_02_join(tmp_path, monkeypatch):
@@ -373,7 +380,7 @@ def test_main_writes_metrics_and_report(tmp_path, monkeypatch):
                             "single_seat": []},
                "states": {},
                "checks": {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {},
-                          "join_log": {}}}
+                          "map_2024": {}, "join_log": {}}}
     (tmp_path / "data" / "interim").mkdir(parents=True)
     (tmp_path / "docs").mkdir()
     monkeypatch.setattr(step, "load_config", lambda: None)
@@ -395,7 +402,7 @@ def _main_setup(tmp_path, monkeypatch):
                             "single_seat": []},
                "states": {},
                "checks": {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {},
-                          "join_log": {}}}
+                          "map_2024": {}, "join_log": {}}}
     (tmp_path / "data" / "interim").mkdir(parents=True)
     (tmp_path / "docs").mkdir()
     monkeypatch.setattr(step, "load_config", lambda: None)

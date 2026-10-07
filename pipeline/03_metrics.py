@@ -162,7 +162,7 @@ def state_checks(st: StateConfig, enacted: pd.DataFrame, ensemble: pd.DataFrame,
     }
 
     whole_unit = []
-    for map_id in ["enacted"] + [m.id for m in st.extra_maps]:
+    for map_id in ["enacted", *(m.id for m in st.extra_maps), "map_2024"]:
         block = map_rows(enacted, map_id, "block")
         whole = map_rows(enacted, map_id, "whole_unit")
         if len(block) != st.seats or block["district"].tolist() != whole["district"].tolist():
@@ -275,7 +275,8 @@ def compute(cfg, idir) -> dict:
     join_log = json.loads((idir / "join_log.json").read_text(encoding="utf-8"))
 
     states = {}
-    checks = {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {}, "join_log": join_log}
+    checks = {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {}, "map_2024": {},
+              "join_log": join_log}
     # inputs of the majority thresholds, one entry per state
     votes = {"d": 0.0, "r": 0.0, "enacted_shares": [], "plan_shares": [], "state_shares": [], "state_seats": []}
     for postal in sorted(cfg.states):
@@ -302,6 +303,10 @@ def compute(cfg, idir) -> dict:
         states[postal]["redraw"] = state_redraw(st, enacted, states[postal]["enacted"], changed)
         for key, value in state_checks(st, enacted, ensemble, reference).items():
             checks[key][postal] = value
+        # docs/validation.md: one row per state for the map of the 2024 election
+        checks["map_2024"][postal] = {"districts": len(map_rows(enacted, "map_2024")), "changed_blocks": changed,
+                                      "seats_2024": states[postal]["redraw"]["seats_2024"],
+                                      "seats_enacted": states[postal]["enacted"]}
         s = states[postal]
         print(f"{postal}: proportional {s['proportional']}, neutral {s['neutral']['median']} "
               f"({s['neutral']['p5']}-{s['neutral']['p95']}), enacted {s['enacted']}")

@@ -37,6 +37,9 @@ METRICS = {
                    {"map_id": "enacted", "district": "02", "block": 0.51, "whole": 0.51, "block_dem": True, "whole_dem": True}],
         },
         "pre_20": {"AA": {"01": 0.40, "02": 0.62, "03": 0.55}, "BB": {"01": 0.45, "02": 0.51}},
+        # the maps of the 2024 election (extensions, Task 5.8): AA redrew since 2024, BB did not
+        "map_2024": {"AA": {"districts": 3, "changed_blocks": 120, "seats_2024": 1, "seats_enacted": 2},
+                     "BB": {"districts": 2, "changed_blocks": 0, "seats_2024": 1, "seats_enacted": 1}},
         # same shape as 02_join.py writes: counts, counts per map, ALARM's reference map
         "join_log": {"AA": {"units": 30, "empty_weight_fields": 4, "units_zero_vap": 3,
                             "unlinked_blocks": 5, "unlinked_keys": 2,
@@ -270,7 +273,8 @@ def test_report_sections_come_in_the_order_of_the_brief(crosscheck, notes):
     report = v.build_report(METRICS, crosscheck, notes)
     headings = [line[3:] for line in report.splitlines() if line.startswith("## ")]
     assert headings == ["Seat totals", "CD118 maps against ALARM cd_2020",
-                        "Whole-unit assignment against block allocation", "Plans and ties", "Join log",
+                        "Whole-unit assignment against block allocation", "Maps of the 2024 election",
+                        "Plans and ties", "Join log",
                         "PlanScore", "Dave's Redistricting App", "CD120 against state files",
                         "Explanations", "Explanations without an exceedance"]
 
@@ -479,3 +483,12 @@ def test_load_notes_accepts_each_check_of_the_brief(tmp_path, check):
     p = tmp_path / "notes.yaml"
     p.write_text(f"AA:\n  {check}: Text.\n", encoding="utf-8")
     assert v.load_notes(p) == {("AA", check): "Text."}
+
+
+def test_report_has_a_row_per_state_for_the_maps_of_2024(crosscheck, notes):
+    report = v.build_report(METRICS, crosscheck, notes)
+    section = report.split("## Maps of the 2024 election")[1].split("\n## ")[0]
+    assert "| State | Districts | Blocks in another district now | D seats, 2024 map | D seats, enacted map |" in section
+    # AA: 120 blocks moved and the seats went from 1 to 2; BB has the same map as in 2024
+    assert "| AA | 3 | 120 | 1 | 2 |" in section
+    assert "| BB | 2 | 0 | 1 | 1 |" in section

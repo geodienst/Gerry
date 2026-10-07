@@ -205,8 +205,23 @@ def _whole_unit(metrics: dict, ledger: _Ledger) -> str:
     return "\n\n".join([
         "## Whole-unit assignment against block allocation",
         "Each unit assigned whole to the district with most of its voting-age population, against the "
-        "block allocation used for Enacted. A district with another winner is open until explained.",
+        "block allocation used for the numbers on the site: the enacted map, a blocked map and the map of the "
+        "2024 election. A district with another winner is open until explained.",
         _table(["State", "Map", "Largest difference (points)", "Districts with another winner", "Status"], rows),
+    ])
+
+
+def _maps_2024(metrics: dict) -> str:
+    rows = [(state, m["districts"], m["changed_blocks"], m["seats_2024"], m["seats_enacted"])
+            for state, m in sorted(metrics["checks"]["map_2024"].items())]
+    return "\n\n".join([
+        "## Maps of the 2024 election",
+        "The maps used in November 2024 (Census CD119), with the same votes and the same checks as the other "
+        "maps. 02_join.py stops unless every unit with votes lies in a district, the votes add up to the state "
+        "totals and the map has the state's number of districts. The whole-unit check above covers these maps "
+        "too. The third column counts the blocks that lie in another district on the enacted map.",
+        _table(["State", "Districts", "Blocks in another district now", "D seats, 2024 map", "D seats, enacted map"],
+               rows),
     ])
 
 
@@ -361,6 +376,7 @@ def build_report(metrics: dict, crosscheck_dir: Path, notes_path: Path) -> str:
         _seat_totals(metrics),
         _cd118(metrics, ledger),
         _whole_unit(metrics, ledger),
+        _maps_2024(metrics),
         _plans_and_ties(metrics, ledger),
         _join_log(metrics),
         _planscore(metrics, crosscheck_dir, ledger),
