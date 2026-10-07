@@ -380,6 +380,14 @@ async function redraws(t) {
   t.check('the Texas sheet has the redraw line', /(Map unchanged since 2024\.|2024 map: \d+ Democratic seats? with these votes\. 2026 map: \d+ \((\d+ (fewer|more)|the same number)\)\.)/.test(await t.text('#sheet')));
 }
 
+// --- Task 6.12: competitive districts ------------------------------------------------------------
+async function competitive(t) {
+  await t.load('#TX');
+  t.check('the national line on competitive districts', /^Competitive districts \(45 to 55%\): \d+ on the enacted maps, \d+ on neutral maps( \(\d+ to \d+\))?\.$/.test(await t.text('#competitive-text')));
+  await t.until(`${HEADING} === 'Texas'`);
+  t.check('the Texas sheet has the line on competitive districts', /Competitive districts \(45 to 55%\): \d+ on the enacted map, \d+ on neutral maps/.test(await t.text('#sheet')));
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
   { name: 'list', run: list },
@@ -389,4 +397,5 @@ export const GROUPS = [
   { name: 'layout', run: layout },
   { name: 'majority', run: majority },
   { name: 'redraws', run: redraws },
+  { name: 'competitive', run: competitive },
 ];

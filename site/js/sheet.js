@@ -111,7 +111,7 @@ export function renderState(el, sheet, colors, onBack, extras = { head: [], body
   sorted.append('p').attr('class', 'note').text(sheet.sortedCaption);
 
   if (extras.body.length > 0) {
-    const more = root.append('div').attr('class', 'stack');
+    const more = root.append('div').attr('class', 'stack extras');
     for (const line of extras.body) more.append('p').attr('class', 'note').text(line);
   }
 

@@ -3,7 +3,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { results } from './testdata.js';
-import { majorityView, extensionFills, redrawView, stateRedraw, stateExtras } from './extensions.js';
+import {
+  majorityView, extensionFills, redrawView, stateRedraw, stateExtras, competitiveText,
+} from './extensions.js';
 
 /** testdata.js with the Phase 5 fields; all numbers made up, with 7 states and 429 seats nationally. */
 function extended() {
@@ -96,9 +98,25 @@ test('stateRedraw: fewer, more, the same number, and an unchanged map', () => {
   assert.equal(stateRedraw(r.states.MO), 'Map unchanged since 2024.');
 });
 
-test('stateExtras: the redraw after the chart', () => {
-  assert.deepEqual(stateExtras(extended(), 'TX'), {
+test('stateExtras: competitive districts and the redraw after the chart', () => {
+  const r = extended();
+  r.states.TX.competitive = { enacted: 1, median: 2, p5: 1, p95: 3, neutral_dist: [0, 600, 3900, 500, 0] };
+  assert.deepEqual(stateExtras(r, 'TX'), {
     head: [],
-    body: ['2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).'],
+    body: [
+      'Competitive districts (45 to 55%): 1 on the enacted map, 2 on neutral maps (1 to 3).',
+      '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).',
+    ],
   });
+});
+
+// --- competitive districts (Task 6.12) ---
+
+test('competitiveText: per state and for the nation, without a band of one value', () => {
+  assert.equal(competitiveText({ enacted: 2, median: 6, p5: 4, p95: 8 }, 'map'),
+    'Competitive districts (45 to 55%): 2 on the enacted map, 6 on neutral maps (4 to 8).');
+  assert.equal(competitiveText({ enacted: 81, median: 96, p5: 87, p95: 105 }, 'maps'),
+    'Competitive districts (45 to 55%): 81 on the enacted maps, 96 on neutral maps (87 to 105).');
+  assert.equal(competitiveText({ enacted: 0, median: 0, p5: 0, p95: 0 }, 'map'),
+    'Competitive districts (45 to 55%): 0 on the enacted map, 0 on neutral maps.');
 });

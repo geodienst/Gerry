@@ -71,5 +71,13 @@ export function stateRedraw(state) {
 /** The lines the extensions add to a state's sheet: under the heading, and after "Districts, sorted". */
 export function stateExtras(results, postal) {
   const s = results.states[postal];
-  return { head: [], body: [stateRedraw(s)] };
+  return { head: [], body: [competitiveText(s.competitive, 'map'), stateRedraw(s)] };
+}
+
+// --- Competitive districts (Task 6.12) ----------------------------------------------------------
+
+/** "Competitive districts (45 to 55%): 2 on the enacted map, 6 on neutral maps (4 to 8)." */
+export function competitiveText(c, maps) {
+  const band = c.p5 === c.p95 ? '' : ` (${count(c.p5)} to ${count(c.p95)})`;
+  return `Competitive districts (45 to 55%): ${count(c.enacted)} on the enacted ${maps}, ${count(c.median)} on neutral maps${band}.`;
 }
