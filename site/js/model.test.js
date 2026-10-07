@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { results } from './testdata.js';
 import {
   AT_LARGE_TEXT, indexResults, districtLabel, districtTip, stateTip, tapLine, stateOptions, mapHints,
-  effectList, positionText, stateSheet,
+  effectList, positionText, stateSheet, nationalView,
 } from './model.js';
 
 // --- the map (Task 6.2) ---
@@ -190,4 +190,30 @@ test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
   const other = stateSheet(r, 'MO');
   assert.equal(other.blocked.seatsText, 'With these votes it would give 2 Democratic seats.');
   assert.match(other.blocked.position, /^Of the 4,000 neutral maps, /);
+});
+
+// --- the national section (Task 6.7) ---
+
+test('nationalView: the key figures under the title', () => {
+  const view = nationalView(results());
+  assert.deepEqual(view.keyline, {
+    lead: 'Democratic seats of 429:',
+    items: [
+      { label: 'Proportional', value: '224' }, { label: 'Neutral baseline', value: '223' },
+      { label: 'Enacted', value: '213' }, { label: 'Drawing effect', value: 'R+10' },
+    ],
+  });
+});
+
+test('nationalView: the strip with the three numbers, the effects and the position', () => {
+  const view = nationalView(results());
+  assert.equal(view.note, '429 seats. The six states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont, Wyoming) are not counted.');
+  assert.deepEqual(view.trio.map((t) => [t.value, t.sub]), [['224', 'seats follow the vote'], ['223', '90% of outcomes: 217 to 229'], ['213', 'maps used in 2026']]);
+  assert.equal(view.effects, 'Geographic effect R+1: neutral maps give 1 seat toward Republicans compared with seats that follow the vote. '
+    + 'Drawing effect R+10: the enacted maps give 10 seats toward Republicans compared with neutral maps.');
+  assert.equal(view.position, 'In >99% of neutral outcomes Democrats win more seats than under the enacted maps.');
+  assert.equal(view.axisLabel, 'Democratic seats in all states with more than one seat: proportional 224, neutral baseline 223 '
+    + '(90% of outcomes 217 to 229), enacted 213. Bars: share of neutral outcomes per seat count.');
+  assert.equal(view.axis.dist.length, 430);
+  assert.equal(view.seatsTotal, 429);
 });

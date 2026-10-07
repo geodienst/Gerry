@@ -212,8 +212,25 @@ async function sheet(t) {
   await t.tab('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
 }
 
+// --- Task 6.7: the national section ---------------------------------------------------------------
+async function national(t) {
+  await t.load('#TX');
+  await t.until(`${HEADING} === 'Texas'`);
+  t.check('the line under the title has the four key figures', /^Democratic seats of \d+:\s*Proportional\s*\d+\s*Neutral baseline\s*\d+\s*Enacted\s*\d+\s*Drawing effect\s*(0|[RD]\+\d+)/.test(await t.text('#keyline')));
+  await t.js("document.querySelector('#keyline a[href=\"#national\"]').click()");
+  t.check('"National picture" leads to the national strip and keeps the state',
+    await t.until("location.hash === '#national'") && (await t.js("document.getElementById('pick').value")) === 'TX'
+    && await t.js("(() => { const top = document.getElementById('national').getBoundingClientRect().top; return top > -5 && top < innerHeight; })()"));
+  const strip = await t.text('#national');
+  t.check('the strip has the three numbers, the band and both effects',
+    ['Proportional', 'Neutral baseline', 'Enacted', '90% of outcomes', 'Geographic effect', 'Drawing effect', 'of neutral outcomes'].every((p) => strip.includes(p)));
+  t.check('the national seat axis has a text alternative', await t.js(
+    "document.querySelector('#national-axis svg')?.getAttribute('aria-label')?.startsWith('Democratic seats in all states with more than one seat') === true"));
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
   { name: 'list', run: list },
   { name: 'sheet', run: sheet },
+  { name: 'national', run: national },
 ];

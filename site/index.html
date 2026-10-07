@@ -16,6 +16,7 @@
     <header>
       <h1>U.S. House seats, counted three ways</h1>
       <p class="lede">Democratic seats in each state if seats followed the vote share, under neutrally drawn maps, and under the maps used on November 3, 2026. All three use the same votes: the 2016 and 2020 presidential results added together.</p>
+      <p class="keyline" id="keyline"></p>
     </header>
 
     <p class="load-error" id="load-error" role="alert" hidden></p>
@@ -49,6 +50,15 @@
       </section>
       <aside class="card" id="sheet" aria-labelledby="sheet-title"></aside>
     </div>
+
+    <section class="card" id="national" aria-labelledby="national-title">
+      <h2 id="national-title">All states with more than one seat</h2>
+      <p class="note" id="national-note"></p>
+      <div class="trio" id="national-trio"></div>
+      <div id="national-axis"></div>
+      <p class="note" id="national-caption"></p>
+      <p class="effects" id="national-effects"></p>
+    </section>
   </div>
 </body>
 </html>

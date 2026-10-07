@@ -3,9 +3,10 @@
 // globals; the page makes no other requests.
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
-import { indexResults, stateOptions, mapHints, effectList, stateSheet } from './model.js';
+import { indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView } from './model.js';
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState } from './sheet.js';
+import { renderKeyline, renderNational } from './national.js';
 
 const { d3 } = globalThis;
 const $ = (id) => document.getElementById(id);
@@ -124,6 +125,10 @@ async function main() {
   $('zoom-out').addEventListener('click', () => map.zoomBy(1 / 1.8));
   $('zoom-reset').addEventListener('click', () => { select('', { push: true }); map.zoomTo('', true); });
 
+  const national = nationalView(results);
+  renderKeyline($('keyline'), national);
+  renderNational($('national'), national);
+
   // Charts size themselves to their box; draw them again when the width changes, keeping keyboard focus.
   let width = window.innerWidth;
   window.addEventListener('resize', () => {
@@ -132,6 +137,7 @@ async function main() {
     const focusable = () => [...$('sheet').querySelectorAll('button, summary, a[href], [tabindex]')];
     const at = focusable().indexOf(document.activeElement);
     renderSheet();
+    renderNational($('national'), national);
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });
 

@@ -191,3 +191,40 @@ export function stateSheet(results, postal) {
     source: s.source,
   };
 }
+
+// --- The national section (Task 6.7) ------------------------------------------------------------
+
+/** The key figures under the title, the national strip and its seat axis. */
+export function nationalView(results) {
+  const n = results.national;
+  const names = n.single_seat.map((s) => s.name).sort((a, b) => a.localeCompare(b, 'en'));
+  const axis = {
+    dist: n.neutral.dist, proportional: n.proportional, median: n.neutral.median,
+    p5: n.neutral.p5, p95: n.neutral.p95, enacted: n.enacted,
+  };
+  return {
+    keyline: {
+      lead: `Democratic seats of ${seats(n.seats)}:`,
+      items: [
+        { label: 'Proportional', value: seats(n.proportional) },
+        { label: 'Neutral baseline', value: seats(n.neutral.median) },
+        { label: 'Enacted', value: seats(n.enacted) },
+        { label: 'Drawing effect', value: effect(n.effects.drawing) },
+      ],
+    },
+    note: `${seats(n.seats)} seats. The six states with one at-large seat (${names.join(', ')}) are not counted.`,
+    trio: [
+      { label: 'Proportional', value: seats(n.proportional), sub: 'seats follow the vote' },
+      { label: 'Neutral baseline', value: seats(n.neutral.median), sub: bandText(n.neutral, 'outcomes') },
+      { label: 'Enacted', value: seats(n.enacted), sub: 'maps used in 2026' },
+    ],
+    axis,
+    seatsTotal: n.seats,
+    axisLabel: `${axisLabel('all states with more than one seat', axis, 'outcomes')} Bars: share of neutral outcomes per seat count.`,
+    effects: `Geographic effect ${effect(n.effects.geographic)}: neutral maps give ${effectWords(n.effects.geographic)} `
+      + `compared with seats that follow the vote. Drawing effect ${effect(n.effects.drawing)}: the enacted maps give `
+      + `${effectWords(n.effects.drawing)} compared with neutral maps.`,
+    position: `In ${planShare(n.position.more)} of neutral outcomes Democrats win more seats than under the enacted maps.`,
+    caption: 'Bars: share of neutral outcomes per seat count; shaded: 5th to 95th percentile.',
+  };
+}
