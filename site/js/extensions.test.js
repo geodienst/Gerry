@@ -75,6 +75,17 @@ test('redrawView: the net change and the states with another seat count', () => 
   assert.deepEqual(view.rows.map((r) => [r.postal, r.text]), [
     ['TX', 'R+3 · 3 seats toward Republicans'], ['CA', 'D+1 · 1 seat toward Democrats'],
   ]);
+  // Equal changes in alphabetical order (testdata has NM before HI); FL has a new map with the
+  // same seats, so no row.
+  const r = extended();
+  r.states.NM.redraw = { seats_2024: 0, change: 1, map_changed: true }; // enacted 1
+  r.states.HI.redraw = { seats_2024: 1, change: 1, map_changed: true }; // enacted 2
+  r.states.LA.redraw = { seats_2024: 2, change: -1, map_changed: true }; // enacted 1
+  assert.deepEqual(redrawView(r).rows.map((row) => [row.postal, row.text]), [
+    ['TX', 'R+3 · 3 seats toward Republicans'], ['LA', 'R+1 · 1 seat toward Republicans'],
+    ['CA', 'D+1 · 1 seat toward Democrats'], ['HI', 'D+1 · 1 seat toward Democrats'],
+    ['NM', 'D+1 · 1 seat toward Democrats'],
+  ]);
 });
 
 test('stateRedraw: fewer, more, the same number, and an unchanged map', () => {
