@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from gerry.config import interim_dir
+from gerry.config import interim_dir, load_config
 
 METRICS = interim_dir() / "metrics.json"
 pytestmark = [pytest.mark.data,
@@ -133,3 +133,19 @@ def test_competitive_districts_for_the_nation(metrics):
     assert (c["enacted"], c["median"], c["p5"], c["p95"]) == (81, 96, 87, 105)
     assert c["enacted"] == sum(s["competitive"]["enacted"] for s in metrics["states"].values())
     assert len(c["neutral_dist"]) == 430 and sum(c["neutral_dist"]) == pytest.approx(1.0)
+
+
+def test_overview_per_control_and_body(metrics):
+    cfg = load_config()
+    states = metrics["states"]
+    for field, attr in (("by_control", "control"), ("by_body", "adopted_by")):
+        table = metrics["national"][field]
+        for value, entry in table.items():
+            members = [p for p, st in cfg.states.items() if getattr(st, attr) == value]
+            assert entry == {"states": len(members), "seats": sum(cfg.states[p].seats for p in members),
+                             "drawing": sum(states[p]["effects"]["drawing"] for p in members)}, (field, value)
+        assert sum(e["states"] for e in table.values()) == 44
+        assert sum(e["seats"] for e in table.values()) == 429
+        # the sum of the state drawing effects: -10 on 2026-10-06
+        drawing = sum(e["drawing"] for e in table.values())
+        assert drawing == sum(s["effects"]["drawing"] for s in states.values()) == -10

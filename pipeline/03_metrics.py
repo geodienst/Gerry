@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 
 from gerry.checks import CheckError
-from gerry.config import REPO_ROOT, AtLargeState, StateConfig, interim_dir, load_config
+from gerry.config import (ADOPTED_BY_VALUES, CONTROL_VALUES, REPO_ROOT, AtLargeState, StateConfig, interim_dir,
+                          load_config)
 from gerry.metrics import (MAX_SWING_STEPS, SWING_GRID, SwingRangeError, TieError, competitive, convolve,
                            dem_wins, distribution, effects, efficiency_gap, enacted_threshold, is_narrow,
                            largest_remainder, linear_band, mean_median, neutral_threshold, outside_band,
@@ -265,6 +266,21 @@ def national_redraw(states: Mapping[str, dict]) -> dict:
     return {"seats_2024": seats_2024, "change": sum(s["enacted"] for s in states.values()) - seats_2024}
 
 
+def national_by(states: Mapping[str, dict], cfg_states: Mapping[str, StateConfig], field: str) -> dict:
+    """Per value of `field` (control or adopted_by, extensions design ch. 4): the number of states, their seats
+    and the sum of their drawing effects. Every value of the design's table is listed, in that order, also
+    without states. The sum of the state effects is not the national drawing effect (spec chapter 5)."""
+    values = {"control": CONTROL_VALUES, "adopted_by": ADOPTED_BY_VALUES}[field]
+    out = {value: {"states": 0, "seats": 0, "drawing": 0} for value in values}
+    for postal, s in states.items():
+        st = cfg_states[postal]
+        entry = out[getattr(st, field)]
+        entry["states"] += 1
+        entry["seats"] += st.seats
+        entry["drawing"] += s["effects"]["drawing"]
+    return out
+
+
 def compute(cfg, idir) -> dict:
     enacted_all = pd.read_parquet(idir / "enacted_districts.parquet")
     ensemble_all = pd.read_parquet(idir / "ensemble_districts.parquet")
@@ -326,6 +342,12 @@ def compute(cfg, idir) -> dict:
     print(f"US competitive (45 to 55%): enacted {comp['enacted']}, neutral {comp['median']} "
           f"({comp['p5']}-{comp['p95']})")
     print(f"US 2024 maps: {red['seats_2024']}, enacted {national['enacted']}, change {red['change']:+d}")
+    national["by_control"] = national_by(states, cfg.states, "control")
+    national["by_body"] = national_by(states, cfg.states, "adopted_by")
+    for field in ("by_control", "by_body"):
+        parts = [f"{value} {e['states']} states, {e['seats']} seats, drawing {e['drawing']:+d}"
+                 for value, e in national[field].items()]
+        print(f"US {field}: " + "; ".join(parts))
     return {"national": national, "states": states, "checks": checks}
 
 

@@ -724,3 +724,37 @@ def test_compute_collects_the_inputs_of_every_state(tmp_path, monkeypatch):
     assert seen["base_share"] == pytest.approx(0.5)
     assert seen["state_shares"] == pytest.approx([1300 / 3000, 1700 / 3000]) and seen["state_seats"] == [3, 3]
     assert len(seen["enacted_shares"]) == 6 and [shares.shape for shares in seen["plan_shares"]] == [(4, 3), (4, 3)]
+
+
+# --- Task 5.12: the overview per control and per body ----------------------------------------
+
+
+def test_national_by_sums_states_seats_and_drawing_effects():
+    cfg_states = {
+        "AA": dataclasses.replace(XX, postal="AA", seats=4, adopted_by="Legislature", control="Republican"),
+        "BB": dataclasses.replace(XX, postal="BB", seats=6, adopted_by="Legislature", control="Republican"),
+        "CC": dataclasses.replace(XX, postal="CC", seats=2, adopted_by="Court", control="Nonpartisan"),
+    }
+    states = {"AA": {"effects": {"drawing": -2}}, "BB": {"effects": {"drawing": 1}}, "CC": {"effects": {"drawing": 0}}}
+    # Republican: AA and BB, 4 + 6 = 10 seats, drawing -2 + 1 = -1; Nonpartisan: CC, 2 seats, 0
+    # every value of the design's table is listed, in that order, also without states
+    assert step.national_by(states, cfg_states, "control") == {
+        "Republican": {"states": 2, "seats": 10, "drawing": -1},
+        "Democratic": {"states": 0, "seats": 0, "drawing": 0},
+        "Bipartisan": {"states": 0, "seats": 0, "drawing": 0},
+        "Nonpartisan": {"states": 1, "seats": 2, "drawing": 0},
+    }
+    by_body = step.national_by(states, cfg_states, "adopted_by")
+    assert list(by_body) == ["Legislature", "Commission", "Court"]
+    assert by_body["Legislature"] == {"states": 2, "seats": 10, "drawing": -1}
+    assert by_body["Court"] == {"states": 1, "seats": 2, "drawing": 0}
+
+
+def test_compute_adds_the_overview_per_control_and_body(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
+    _small_house(monkeypatch)
+    nat = step.compute(cfg, tmp_path)["national"]
+    # XX: Legislature, Republican, 3 seats, drawing effect enacted 1 - median 1 = 0
+    assert nat["by_control"]["Republican"] == {"states": 1, "seats": 3, "drawing": 0}
+    assert nat["by_body"]["Legislature"] == {"states": 1, "seats": 3, "drawing": 0}
+    assert sum(v["states"] for v in nat["by_control"].values()) == 1
