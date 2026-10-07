@@ -43,6 +43,8 @@
 html { font-size: clamp(15px, 0.45vw + 9px, 21px); }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--font-body); }
 [hidden] { display: none !important; }
+/* Read by screen readers, not shown */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .wrap { max-width: 2400px; margin: 0 auto; padding-inline: clamp(16px, 2.5vw, 56px); padding-block: 1.2rem 2.6rem; display: grid; gap: 1.2rem; }
 
 header { display: grid; gap: 0.35rem; }

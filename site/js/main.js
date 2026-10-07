@@ -77,7 +77,7 @@ async function main() {
   }
 
   /** Choose a state ("" for the whole map): sheet, outline, zoom and the link (#TX). */
-  function select(postal, { push = false, focus = false, animate = true } = {}) {
+  function select(postal, { push = false, focus = false, animate = true, announce = !focus } = {}) {
     const previous = ui.selected;
     ui.selected = postal;
     pick.value = postal;
@@ -85,12 +85,14 @@ async function main() {
     paint();
     if (postal !== previous) map.zoomTo(postal, animate);
     if (focus) $('sheet-title').focus();
+    // The map, the State menu and the link leave the focus where it is; a screen reader hears the new sheet's heading.
+    else if (announce && postal !== previous) $('sheet-status').textContent = $('sheet-title').textContent;
   }
 
   /** From a state back to the list; focus goes to that state's row, or to the heading when the row is folded. */
   function back() {
     const previous = ui.selected;
-    select('', { push: true });
+    select('', { push: true, announce: false });
     const row = $('sheet').querySelector(`.row[data-postal="${previous}"]`);
     row?.focus(); // a row inside the folded line cannot take focus
     if (!row || document.activeElement !== row) $('sheet-title').focus();
@@ -149,7 +151,7 @@ async function main() {
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });
 
-  select(stateFromHash(location.hash, results.states), { animate: false });
+  select(stateFromHash(location.hash, results.states), { animate: false, announce: false });
 }
 
 main();
