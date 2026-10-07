@@ -610,3 +610,56 @@ def test_proportional_at_swing_guard_has_two_sides_and_keeps_the_edges():
         m.proportional_at_swing([0.03], [2], -0.04)
     # exactly 0 and exactly 1 are shares: 3 seats at 0 give 0, 2 seats at 1 give 2
     assert m.proportional_at_swing([0.0, 1.0], [3, 2], 0.0) == 2
+
+
+# Task 5.18: the Senate block
+
+# five made-up states with their (Democratic, Republican) votes
+SENATE_VOTES = {"AA": (600, 400), "BB": (300, 700), "CC": (550, 450), "DD": (480, 520), "EE": (450, 550)}
+
+
+def test_senate_majority_hand_example():
+    res = m.senate_majority(SENATE_VOTES, 3, around=1)
+    # national share: (600 + 300 + 550 + 480 + 450) / 5000 = 2380 / 5000 = 0.476
+    assert res["base_share"] == pytest.approx(0.476)
+    # shares from high to low: AA 0.6, CC 0.55, DD 0.48, EE 0.45, BB 0.3; the third is 0.48
+    # threshold 0.476 + 0.5 - 0.48 = 0.496
+    assert res["share"] == pytest.approx(0.496)
+    assert res["states_needed"] == 3
+    # at the real votes AA and CC lie above one half: 2 states, 4 seats
+    assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
+    # the states ranked 3 - 1 to 3 + 1
+    assert [t["postal"] for t in res["tipping"]] == ["CC", "DD", "EE"]
+    assert [t["share"] for t in res["tipping"]] == pytest.approx([0.55, 0.48, 0.45])
+    assert list(res) == ["base_share", "states_needed", "share", "states_at_base", "seats_at_base", "tipping"]
+
+
+def test_senate_majority_lists_two_ranks_on_each_side_by_default():
+    # needed 3 of 5 states: ranks 1 to 5, every state from high to low
+    res = m.senate_majority(SENATE_VOTES, 3)
+    assert [t["postal"] for t in res["tipping"]] == ["AA", "CC", "DD", "EE", "BB"]
+
+
+def test_senate_majority_a_state_on_one_half_does_not_count():
+    # shares 0.75, 0.625, 0.5 and 0.375 (binary fractions, exact); national share 12 / 22
+    votes = {"AA": (3, 1), "BB": (5, 3), "CC": (1, 1), "DD": (3, 5)}
+    res = m.senate_majority(votes, 3, around=1)
+    # CC sits on one half and does not count at the real votes
+    assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
+    # the third highest share is 0.5: swing 0, so the threshold is the national share itself
+    assert res["share"] == res["base_share"] == pytest.approx(12 / 22)
+    assert [t["postal"] for t in res["tipping"]] == ["BB", "CC", "DD"]
+
+
+def test_senate_majority_orders_equal_shares_by_postal_code():
+    # AA and CC both 2 / 5 = 0.4, BB 0.6; national share (2 + 3 + 2) / 15 = 7 / 15
+    res = m.senate_majority({"CC": (2, 3), "BB": (3, 2), "AA": (2, 3)}, 2, around=1)
+    assert [t["postal"] for t in res["tipping"]] == ["BB", "AA", "CC"]
+    # the second highest share is 0.4: 7 / 15 + 0.5 - 0.4
+    assert res["share"] == pytest.approx(7 / 15 + 0.1)
+
+
+def test_senate_majority_needs_the_ranks_around_the_threshold():
+    # needed 2 of 2 states with two ranks on each side: ranks 0 to 4 do not all exist
+    with pytest.raises(ValueError, match="ranks"):
+        m.senate_majority({"AA": (1, 2), "BB": (2, 1)}, 2)

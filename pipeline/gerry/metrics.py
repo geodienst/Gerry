@@ -5,7 +5,7 @@ efficiency gap and mean-median are positive when they favor Republicans.
 """
 from __future__ import annotations
 
-from typing import Callable, Sequence
+from typing import Callable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -290,3 +290,32 @@ def proportional_at_swing(state_shares: Sequence[float], seats: Sequence[int], s
 def proportional_threshold(state_shares: Sequence[float], seats: Sequence[int], needed: int) -> float:
     """Smallest grid swing at which largest remainder per state gives at least `needed` seats in total."""
     return smallest_swing(lambda swing: proportional_at_swing(state_shares, seats, swing) >= needed)
+
+
+# --- Senate block (extensions design, chapter 7) ----------------------------------------------------
+
+
+def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, around: int = 2) -> dict:
+    """Each state's two senators go to the party with more of its two-party vote. `votes` maps every state to its
+    (Democratic, Republican) votes. Under a uniform swing on the state shares Democrats need `needed` states: the
+    threshold is the national share plus 0.5 - h, with h the needed-th highest state share (exact, as
+    enacted_threshold). A state exactly on one half does not count. Also the states and seats at the real votes,
+    and the states ranked needed - around to needed + around, from high to low (equal shares by postal code)."""
+    postals = sorted(votes)
+    first, last = needed - around, needed + around
+    if not 1 <= first <= last <= len(postals):
+        raise ValueError(f"ranks {first} to {last} must lie within 1..{len(postals)}")
+    d = np.array([votes[p][0] for p in postals], dtype=float)
+    r = np.array([votes[p][1] for p in postals], dtype=float)
+    shares = d / (d + r)
+    base = float(d.sum() / (d + r).sum())
+    ranked = sorted(range(len(postals)), key=lambda i: (-shares[i], postals[i]))
+    states = int(seats_at_swing(shares, 0.0))
+    return {
+        "base_share": base,
+        "states_needed": needed,
+        "share": base + enacted_threshold(shares, needed),
+        "states_at_base": states,
+        "seats_at_base": 2 * states,
+        "tipping": [{"postal": postals[i], "share": float(shares[i])} for i in ranked[first - 1:last]],
+    }
