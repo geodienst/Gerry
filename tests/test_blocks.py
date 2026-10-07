@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gerry.blocks import (PL_GEO_FIELDS, BlocksError, block_weighted, changed_blocks, read_bef, read_pl_blocks,
-                          read_pl_counties, unit_of_block, whole_unit)
+from gerry.blocks import (PL_GEO_FIELDS, BlocksError, _national, block_weighted, changed_blocks, read_bef,
+                          read_pl_blocks, read_pl_counties, unit_of_block, whole_unit)
 from gerry.config import data_dir
 
 
@@ -145,9 +145,12 @@ def test_read_bef_keeps_cd119_and_cd120_apart(tmp_path):
     # both national files stay in the cache at the same time; the cache must not mix them up
     cd119 = make_cd119_zip(tmp_path / "cd119.zip")
     cd120 = make_cd120_zip(tmp_path / "cd120.zip")
+    _national.cache_clear()
     for _ in range(2):
         assert read_bef(cd119, "cd119", "01", "AL").to_dict() == {"010010201001000": "06", "010010201001001": "02"}
         assert read_bef(cd120, "cd120", "01", "AL").to_dict() == {"010010201001000": "07", "010010201001001": "02"}
+    # two reads of two files, with room for both: two misses, then only hits
+    assert _national.cache_info().misses == 2 and _national.cache_info().currsize == 2
 
 
 def bef(mapping):
@@ -166,6 +169,13 @@ def test_changed_blocks_counts_a_block_in_one_file_only():
     old = bef({"320010001001000": "01", "320010001001001": "02"})
     new = bef({"320010001001000": "01", "320010001001002": "02"})
     # ...001 is only in old, ...002 only in new: two changed blocks
+    assert changed_blocks(old, new) == 2
+
+
+def test_changed_blocks_counts_a_move_into_or_out_of_zz():
+    # ZZ is a code like any other: ZZ -> 03 and 01 -> ZZ are two moved blocks
+    old = bef({"320010001001000": "ZZ", "320010001001001": "01"})
+    new = bef({"320010001001000": "03", "320010001001001": "ZZ"})
     assert changed_blocks(old, new) == 2
 
 
