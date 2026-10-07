@@ -91,6 +91,16 @@ PA:
     win 8 of 17 districts with 49.6% of the vote on 2016, 9 with 50.6% on 2020 and 8 with 50.1% on
     the sum. District 07 is 50.3% Democratic in 2020 and 49.5% on the sum, so the sum gives it to
     Republicans.
+TN:
+  cd118_vs_alarm: >
+    District 09 differs by 0.699 points, with the same number of Democratic seats.
+    ALARM's reference plan cd_2020 assigns every VTD whole to one district. On the 2022
+    map, Census CD118, the line between districts 08 and 09 splits 26 VTDs in Shelby and
+    Tipton counties. Of these, 21 have voting-age population on both sides. Putting those
+    VTDs whole in their cd_2020 district gives district 09 ALARM's share of 73.62%.
+    Spreading their votes by population instead of voting-age population gives a
+    difference of 0.734 points, still above the threshold. Source: our join of ALARM's
+    TN_cd_2020_map.rds with Census CD118.
 WI:
   planscore: >
     PlanScore gives 24.2 points in favor of Republicans for the 2016 presidential vote and 25.6
