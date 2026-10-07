@@ -301,6 +301,7 @@ SOURCES = {
     "tiger_gpkg": "https://www2.census.gov/geo/tiger/TGRGPKG26/tlgpkg_2026_us_legislative.gpkg.zip",
     "tiger_mo_cd119": "https://www2.census.gov/geo/tiger/TIGER2025/CD/tl_2025_29_cd119.zip",
     "cb_states": "https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_state_500k.zip",
+    "medsl_president": "https://dataverse.harvard.edu/api/access/datafile/13887042",
 }
 
 
@@ -356,6 +357,8 @@ def test_plan_downloads_follows_the_data_dir_layout():
         Download("census/tiger/tlgpkg_2026_us_legislative.gpkg.zip", SOURCES["tiger_gpkg"], None, None),
         Download("census/tiger/tl_2025_29_cd119.zip", SOURCES["tiger_mo_cd119"], None, None),
         Download("census/tiger/cb_2025_us_state_500k.zip", SOURCES["cb_states"], None, None),
+        # statewide presidential votes for the Senate block (extensions design, chapter 7)
+        Download("medsl/1976-2024-president.csv", SOURCES["medsl_president"], None, None),
     ]
 
 

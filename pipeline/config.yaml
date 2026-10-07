@@ -57,6 +57,10 @@ sources:
   tiger_gpkg: https://www2.census.gov/geo/tiger/TGRGPKG26/tlgpkg_2026_us_legislative.gpkg.zip
   tiger_mo_cd119: https://www2.census.gov/geo/tiger/TIGER2025/CD/tl_2025_29_cd119.zip
   cb_states: https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_state_500k.zip
+  # Senate block (extensions design, chapter 7): statewide presidential votes of the six single-seat states.
+  # MIT Election Data and Science Lab, "U.S. President 1976-2024", doi:10.7910/DVN/42MVDX, version 10.1,
+  # file 1976-2024-president.csv, CC0 1.0. A Dataverse file id always serves the same file.
+  medsl_president: https://dataverse.harvard.edu/api/access/datafile/13887042
 
 states:
   AL:

@@ -33,6 +33,8 @@ def test_state_of_reads_the_postal_code_from_the_key():
     assert script.state_of("census/pl/nv2020.pl.zip") == "NV"
     assert script.state_of("census/tiger/tl_2025_29_cd119.zip") is None
     assert script.state_of("census/cd120.zip") is None
+    # one file for all states: --only keeps it (Senate block, extensions design chapter 7)
+    assert script.state_of("medsl/1976-2024-president.csv") is None
 
 
 def test_select_without_only_keeps_everything():

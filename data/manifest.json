@@ -708,5 +708,10 @@
     "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/or_2020_block.csv",
     "size": 20997143,
     "sha256": "ba856bc13ea54aa98faec4493f35811dda52f0a20b8b38540a39c04e340e3144"
+  },
+  "medsl/1976-2024-president.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/13887042",
+    "size": 514108,
+    "sha256": "9936410a6dd4ecc8be7fe202c6dff5b5f8fee59d88f35ab542ed12879941dcb7"
   }
 }

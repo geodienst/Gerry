@@ -11,7 +11,7 @@ from gerry.config import (
 )
 
 SOURCE_KEYS = ("dataverse_api", "cd118", "cd119", "cd120", "pl94171", "census_vest",
-               "tiger_gpkg", "tiger_mo_cd119", "cb_states")
+               "tiger_gpkg", "tiger_mo_cd119", "cb_states", "medsl_president")
 
 
 def minimal() -> dict:
@@ -234,3 +234,9 @@ def test_real_config_has_the_block_file_of_the_2024_maps(cfg):
     # extensions design, chapter 2: the maps of the 2024 election, Census CD119 (2024-07-29)
     assert cfg.sources["cd119"] == ("https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/"
                                     "119-congressional-district-befs/cd119.zip")
+
+
+def test_real_config_has_the_statewide_presidential_votes(cfg):
+    # extensions design, chapter 7: MIT Election Data and Science Lab, U.S. President 1976-2024,
+    # doi:10.7910/DVN/42MVDX, version 10.1, file 1976-2024-president.csv (Dataverse file 13887042)
+    assert cfg.sources["medsl_president"] == "https://dataverse.harvard.edu/api/access/datafile/13887042"

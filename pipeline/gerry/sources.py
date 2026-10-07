@@ -218,6 +218,9 @@ def plan_downloads(cfg: Config, dv_files: dict[str, dict]) -> list[Download]:
     for name in ("tiger_gpkg", "tiger_mo_cd119", "cb_states"):
         url = src[name]
         plan.append(Download(f"census/tiger/{url.rsplit('/', 1)[1]}", url, None, None))
+    # statewide presidential votes for the Senate block (extensions design, chapter 7): one Dataverse file,
+    # checked against data/manifest.json like the Census files
+    plan.append(Download("medsl/1976-2024-president.csv", src["medsl_president"], None, None))
     keys = [dl.key for dl in plan]
     if len(set(keys)) != len(keys):
         raise DownloadError("download plan has duplicate keys")

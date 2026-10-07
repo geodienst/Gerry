@@ -29,7 +29,7 @@ _FILL_KEYS = ("reference_map", "consequence")
 _RESERVED_MAP_IDS = ("enacted", "check_2022", "map_2024")
 _SOURCE_KEYS = (
     "dataverse_api", "cd118", "cd119", "cd120", "pl94171", "census_vest",
-    "tiger_gpkg", "tiger_mo_cd119", "cb_states",
+    "tiger_gpkg", "tiger_mo_cd119", "cb_states", "medsl_president",
 )
 _TOP_KEYS = (
     "status_checked", "census_vest_commit", "ensemble", "sources", "states", "at_large",
