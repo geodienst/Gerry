@@ -1,7 +1,9 @@
 // Texts and view models built from results.json (spec chapter 7). Pure: no DOM
 // and no d3, so node --test covers every sentence the site shows. Every number
 // goes through format.js; nothing here computes a new statistic.
-import { share, seats, effectLine } from './format.js';
+import {
+  share, planShare, advantage, seats, count, effect, effectWords, effectLine, longDate,
+} from './format.js';
 
 // --- The map (Task 6.2) -------------------------------------------------------------------------
 
@@ -75,3 +77,111 @@ export const LEGEND_TEXT = {
   high: 'More Democratic',
   blank: 'Gray: one at-large seat.',
 };
+
+// --- "Drawing effect by state" and the state sheet (Task 6.4) -----------------------------------
+
+export const STATUS_LABELS = {
+  'In effect': 'In effect', Challenged: 'Challenged in court', Blocked: 'Blocked', 'At-large': 'At-large',
+};
+const sum = (values) => values.reduce((a, b) => a + b, 0);
+const plural = (n, one, many) => (n === 1 ? one : many);
+
+/** The list without a chosen state: states toward Republicans, zero states, states toward Democrats, and the sums. */
+export function effectList(results) {
+  const rows = Object.entries(results.states)
+    .map(([postal, s]) => ({ postal, name: s.name, drawing: s.effects.drawing, label: effect(s.effects.drawing) }))
+    .sort((a, b) => a.drawing - b.drawing || a.name.localeCompare(b.name, 'en'));
+  const toR = rows.filter((r) => r.drawing < 0);
+  const zero = rows.filter((r) => r.drawing === 0);
+  const toD = rows.filter((r) => r.drawing > 0);
+  const seatsR = -sum(toR.map((r) => r.drawing));
+  const seatsD = sum(toD.map((r) => r.drawing));
+  const net = seatsD - seatsR;
+  const moves = (n, total, party) => (n === 0
+    ? `no state moves a seat toward ${party}`
+    : `${count(n)} ${plural(n, 'state moves', 'states move')} ${seats(total)} ${plural(total, 'seat', 'seats')} toward ${party}`);
+  const first = moves(toR.length, seatsR, 'Republicans');
+  return {
+    toR, zero, toD, seatsR, seatsD, net,
+    zeroLabel: `${count(zero.length)} ${plural(zero.length, 'state matches its', 'states match their')} neutral median`,
+    summary: `${first[0].toUpperCase()}${first.slice(1)}, ${moves(toD.length, seatsD, 'Democrats')}. Net: ${effectWords(net)}.`,
+    bar: {
+      left: `${seats(seatsR)} toward Republicans`,
+      right: `${seats(seatsD)} toward Democrats`,
+      net: `Net ${effect(net)}`,
+      label: `${seats(seatsR)} seats toward Republicans, ${seats(seatsD)} toward Democrats, net ${effectWords(net)}`,
+    },
+  };
+}
+
+function bandText(neutral, unit) {
+  return neutral.p5 === neutral.p95
+    ? `90% of ${unit}: ${seats(neutral.p5)}`
+    : `90% of ${unit}: ${seats(neutral.p5)} to ${seats(neutral.p95)}`;
+}
+
+/** "Of the 5,000 neutral maps, 0% give fewer Democratic seats than the enacted map, 0% the same number and 100% more." */
+export function positionText(position, plans, what) {
+  return `Of the ${count(plans)} neutral maps, ${planShare(position.fewer)} give fewer Democratic seats than ${what}, `
+    + `${planShare(position.equal)} the same number and ${planShare(position.more)} more.`;
+}
+
+function measureContext(m) {
+  return `(neutral maps: ${advantage(m.median)}; 90% between ${advantage(m.p5)} and ${advantage(m.p95)})`;
+}
+
+function axisLabel(name, a, unit) {
+  const band = a.p5 === a.p95 ? seats(a.p5) : `${seats(a.p5)} to ${seats(a.p95)}`;
+  return `Democratic seats in ${name}: proportional ${seats(a.proportional)}, neutral baseline ${seats(a.median)} `
+    + `(90% of ${unit} ${band}), enacted ${seats(a.enacted)}.`;
+}
+
+/** Everything the sheet shows for one state, in the order of the site design (chapter 1). */
+export function stateSheet(results, postal) {
+  const s = results.states[postal];
+  const plans = sum(s.neutral.dist);
+  const axis = {
+    lo: 0, hi: s.seats, dist: s.neutral.dist, proportional: s.proportional,
+    median: s.neutral.median, p5: s.neutral.p5, p95: s.neutral.p95, enacted: s.enacted,
+  };
+  const blocked = s.blocked_map && {
+    name: s.blocked_map.name,
+    status: STATUS_LABELS[s.blocked_map.status],
+    seatsText: `With these votes it would give ${seats(s.blocked_map.enacted)} Democratic ${plural(s.blocked_map.enacted, 'seat', 'seats')}.`,
+    position: positionText(s.blocked_map.position, plans, s.blocked_map.name),
+    source: s.blocked_map.source,
+  };
+  const shares = s.sorted.enacted;
+  return {
+    postal,
+    name: s.name,
+    mapName: s.map_name,
+    status: STATUS_LABELS[s.status],
+    legal: `Legal status as of ${longDate(results.meta.status_checked)}`,
+    seatCount: `${seats(s.seats)} seats`,
+    trio: [
+      { label: 'Proportional', value: seats(s.proportional), sub: `${share(s.d_share)} Democratic vote` },
+      { label: 'Neutral baseline', value: seats(s.neutral.median), sub: bandText(s.neutral, 'maps') },
+      { label: 'Enacted', value: seats(s.enacted), sub: s.outside_band ? 'outside the neutral band' : 'inside the neutral band' },
+    ],
+    seatsOf: `Democratic seats of ${seats(s.seats)}.`,
+    axis,
+    axisLabel: `${axisLabel(s.name, axis, 'maps')} Bars: share of the ${count(plans)} neutral maps per seat count.`,
+    effects: [
+      { label: 'Geographic effect', value: effectLine(s.effects.geographic), note: '(neutral maps compared with proportional)' },
+      { label: 'Drawing effect', value: effectLine(s.effects.drawing), note: '(enacted map compared with neutral maps)' },
+    ],
+    position: positionText(s.position, plans, 'the enacted map'),
+    blocked: blocked || null,
+    sorted: s.sorted,
+    sortedLabel: `${s.name}: the ${count(s.seats)} enacted districts from lowest to highest Democratic share, `
+      + `${share(shares[0])} to ${share(shares[shares.length - 1])}, against the median and the 90% band of the neutral maps at each position.`,
+    sortedCaption: 'Dots: enacted districts. Line and shading: median and 90% band of the neutral maps at each position.',
+    measures: [
+      { label: 'Efficiency gap', value: advantage(s.eg.value), context: measureContext(s.eg) },
+      { label: 'Mean-median', value: advantage(s.mm ? s.mm.value : null), context: s.mm ? measureContext(s.mm) : '' },
+    ],
+    notes: s.notes.map((n) => n.text),
+    source: s.source,
+  };
+}
