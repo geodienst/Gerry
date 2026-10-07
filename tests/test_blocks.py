@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gerry.blocks import (PL_GEO_FIELDS, BlocksError, block_weighted, read_bef, read_pl_blocks, read_pl_counties,
-                          unit_of_block, whole_unit)
+from gerry.blocks import (PL_GEO_FIELDS, BlocksError, block_weighted, changed_blocks, read_bef, read_pl_blocks,
+                          read_pl_counties, unit_of_block, whole_unit)
 from gerry.config import data_dir
 
 
@@ -119,12 +119,59 @@ def test_read_bef_cd118_reads_the_state_file(tmp_path):
 
 
 def test_read_bef_rejects_an_unknown_kind(tmp_path):
-    with pytest.raises(BlocksError, match="cd119"):
-        read_bef(make_cd120_zip(tmp_path / "cd120.zip"), "cd119", "01", "AL")
+    with pytest.raises(BlocksError, match="cd117"):
+        read_bef(make_cd120_zip(tmp_path / "cd120.zip"), "cd117", "01", "AL")
+
+
+def make_cd119_zip(path):
+    # CD119: a national file with only GEOID and CDFP, plus files for the states that redrew in 2023 and 2024
+    text = ("GEOID,CDFP\r\n"
+            "010010201001000,06\r\n"
+            "010010201001001,02\r\n"
+            "320010001001000,02\r\n")
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("NationalCD119.txt", text)
+        zf.writestr("01_AL_CD119.txt", "not read")
+    return path
+
+
+def test_read_bef_cd119_reads_the_national_file(tmp_path):
+    bef = read_bef(make_cd119_zip(tmp_path / "cd119.zip"), "cd119", "01", "AL")
+    assert bef.name == "district" and bef.index.name == "block_id"
+    assert bef.to_dict() == {"010010201001000": "06", "010010201001001": "02"}
+
+
+def test_read_bef_keeps_cd119_and_cd120_apart(tmp_path):
+    # both national files stay in the cache at the same time; the cache must not mix them up
+    cd119 = make_cd119_zip(tmp_path / "cd119.zip")
+    cd120 = make_cd120_zip(tmp_path / "cd120.zip")
+    for _ in range(2):
+        assert read_bef(cd119, "cd119", "01", "AL").to_dict() == {"010010201001000": "06", "010010201001001": "02"}
+        assert read_bef(cd120, "cd120", "01", "AL").to_dict() == {"010010201001000": "07", "010010201001001": "02"}
+
+
+def bef(mapping):
+    return pd.Series(mapping, name="district").rename_axis("block_id")
+
+
+def test_changed_blocks_counts_blocks_with_another_district():
+    old = bef({"320010001001000": "01", "320010001001001": "02", "320010001001002": "ZZ"})
+    new = bef({"320010001001000": "01", "320010001001001": "01", "320010001001002": "ZZ"})
+    # only block ...001 moves, from district 02 to 01
+    assert changed_blocks(old, new) == 1
+    assert changed_blocks(old, old) == 0
+
+
+def test_changed_blocks_counts_a_block_in_one_file_only():
+    old = bef({"320010001001000": "01", "320010001001001": "02"})
+    new = bef({"320010001001000": "01", "320010001001002": "02"})
+    # ...001 is only in old, ...002 only in new: two changed blocks
+    assert changed_blocks(old, new) == 2
 
 
 NV_PL = data_dir() / "census" / "pl" / "nv2020.pl.zip"
 CD120 = data_dir() / "census" / "cd120.zip"
+CD119 = data_dir() / "census" / "cd119.zip"
 CD118 = data_dir() / "census" / "cd118.zip"
 
 
@@ -146,6 +193,17 @@ def test_nevada_block_equivalency_files():
     assert len(cd120) == 57409
     assert cd120.value_counts().sort_index().to_dict() == {"01": 7655, "02": 27405, "03": 7124, "04": 15225}
     assert cd118.sort_index().equals(cd120.sort_index())   # Nevada has not redrawn since 2021
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not (CD119.exists() and CD120.exists() and CD118.exists()),
+                    reason="needs census/cd119.zip, cd120.zip and cd118.zip")
+def test_2024_block_file_against_the_maps_of_2026():
+    # Nevada did not redraw; Missouri votes in 2026 on its 2022 map (CD118), which CD119 also has
+    assert changed_blocks(read_bef(CD120, "cd120", "32", "NV"), read_bef(CD119, "cd119", "32", "NV")) == 0
+    assert changed_blocks(read_bef(CD118, "cd118", "29", "MO"), read_bef(CD119, "cd119", "29", "MO")) == 0
+    # Alabama: the 2024 court map in CD119, the legislature's 2023 plan in CD120
+    assert changed_blocks(read_bef(CD120, "cd120", "01", "AL"), read_bef(CD119, "cd119", "01", "AL")) == 23529
 
 
 # ---- Task 1.8: blocks to units, votes to districts ----

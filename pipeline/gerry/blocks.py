@@ -88,18 +88,23 @@ def read_pl_counties(zip_path: Path, st: str) -> pd.DataFrame:
     return out
 
 
-@functools.lru_cache(maxsize=1)
-def _national_cd120(zip_path: str) -> dict[str, pd.DataFrame]:
-    """NationalCD120.txt, read once and split by state FIPS (first two GEOID characters)."""
-    with zipfile.ZipFile(zip_path) as zf, zf.open("NationalCD120.txt") as fh:
+# Block equivalency files with one national table: the 2024 maps (CD119) and the 2026 maps (CD120)
+NATIONAL_FILES = {"cd119": "NationalCD119.txt", "cd120": "NationalCD120.txt"}
+
+
+@functools.lru_cache(maxsize=2)
+def _national(zip_path: str, member: str) -> dict[str, pd.DataFrame]:
+    """A national block equivalency file, read once and split by state FIPS (first two GEOID characters).
+    Room for two files, so 02_join keeps CD119 and CD120 both in memory."""
+    with zipfile.ZipFile(zip_path) as zf, zf.open(member) as fh:
         table = pd.read_csv(fh, engine="c", usecols=["GEOID", "CDFP"], dtype=str, keep_default_na=False)
     return {fips: part for fips, part in table.groupby(table["GEOID"].str[:2], sort=False)}
 
 
 def read_bef(zip_path: Path, kind: str, fips: str, postal: str) -> pd.Series:
-    """Block -> district code for one state. cd120: national file; cd118: {fips}_{postal}_CD118.txt."""
-    if kind == "cd120":
-        table = _national_cd120(str(Path(zip_path).resolve())).get(fips)
+    """Block -> district code for one state. cd119, cd120: national file; cd118: {fips}_{postal}_CD118.txt."""
+    if kind in NATIONAL_FILES:
+        table = _national(str(Path(zip_path).resolve()), NATIONAL_FILES[kind]).get(fips)
         if table is None:
             raise BlocksError(f"{postal}: no blocks with FIPS {fips} in {zip_path}")
     elif kind == "cd118":
@@ -115,6 +120,13 @@ def read_bef(zip_path: Path, kind: str, fips: str, postal: str) -> pd.Series:
     if not cdfp.str.len().eq(2).all():
         raise BlocksError(f"{postal}: {kind} has district codes that are not 2 characters")
     return pd.Series(cdfp.to_numpy(), index=pd.Index(geoid.to_numpy(), name="block_id"), name="district")
+
+
+def changed_blocks(old: pd.Series, new: pd.Series) -> int:
+    """Blocks whose district differs between two block equivalency files of one state (from read_bef).
+    A block that is in only one of the two counts as changed."""
+    blocks = old.index.union(new.index)
+    return int((old.reindex(blocks) != new.reindex(blocks)).sum())
 
 
 def unit_of_block(blocks: pd.DataFrame, unit_kind: str, fips: str) -> pd.Series:
