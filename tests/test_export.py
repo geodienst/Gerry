@@ -211,6 +211,9 @@ def toy_metrics():
             "by_body": {"Legislature": {"states": 2, "seats": 4, "drawing": 0},
                         "Commission": {"states": 0, "seats": 0, "drawing": 0},
                         "Court": {"states": 0, "seats": 0, "drawing": 0}},
+            # extensions (Task 5.19): the Senate block, passed through unchanged
+            "senate": {"base_share": 0.55, "states_needed": 26, "share": 0.53, "states_at_base": 27,
+                       "seats_at_base": 54, "tipping": [{"postal": "HI", "share": 0.5}]},
         },
         "states": {"HI": toy_state_metrics("15", ["narrow_ensemble"]), "MO": mo},
         "checks": {"anything": "not exported"},
@@ -245,9 +248,9 @@ def test_build_results_national_adds_single_seat_states_sorted_by_postal():
                                        {"postal": "DE", "fips": "10", "name": "Delaware"}]
     assert list(national) == ["seats", "proportional", "enacted", "neutral", "position", "effects",
                               "outside_band", "majority", "competitive", "redraw", "by_control", "by_body",
-                              "single_seat"]
+                              "senate", "single_seat"]
     # the extensions pass through unchanged
-    for key in ("majority", "competitive", "redraw", "by_control", "by_body"):
+    for key in ("majority", "competitive", "redraw", "by_control", "by_body", "senate"):
         assert national[key] == toy_metrics()["national"][key], key
 
 

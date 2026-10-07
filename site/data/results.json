@@ -963,6 +963,35 @@
     "drawing": 0
    }
   },
+  "senate": {
+   "base_share": 0.5169608961242592,
+   "states_needed": 26,
+   "share": 0.5290847223592346,
+   "states_at_base": 22,
+   "seats_at_base": 44,
+   "tipping": [
+    {
+     "postal": "AZ",
+     "share": 0.49297147418992043
+    },
+    {
+     "postal": "GA",
+     "share": 0.4888520578713317
+    },
+    {
+     "postal": "FL",
+     "share": 0.48787617376502457
+    },
+    {
+     "postal": "NC",
+     "share": 0.48760625778208216
+    },
+    {
+     "postal": "TX",
+     "share": 0.46351837472645074
+    }
+   ]
+  },
   "single_seat": [
    {
     "postal": "AK",

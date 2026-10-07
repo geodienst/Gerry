@@ -34,6 +34,8 @@ const MAX_SWING = 0.05;            // a threshold lies within 5 points of the ba
 const GRID = 10000;                // neutral and proportional thresholds: steps of 0.01 point
 const ADOPTED_BY = ['Legislature', 'Commission', 'Court'];
 const CONTROL = ['Republican', 'Democratic', 'Bipartisan', 'Nonpartisan'];
+// 51 of 100 seats, two per state; at 50-50 the vice president, a Republican since January 2025, decides (chapter 7)
+const SENATE_STATES_NEEDED = 26;
 
 let cache;
 function data() {
@@ -409,4 +411,33 @@ test('who adopted each map, and the overview per control and per body', { skip }
     assert.equal(sum(entries.map((e) => e.states)), 44);
     assert.equal(sum(entries.map((e) => e.seats)), 429);
   }
+});
+
+test('the Senate block follows from the state shares', { skip }, () => {
+  const { national, states } = data().results;
+  const s = national.senate;
+  const all = [...Object.keys(states), ...national.single_seat.map((x) => x.postal)];
+  assert.equal(all.length, 50);
+  assert.equal(s.states_needed, SENATE_STATES_NEEDED);
+  assert.ok(isFraction(s.base_share) && isFraction(s.share), 'senate.base_share and senate.share are fractions');
+  assert.ok(isInt(s.states_at_base) && s.states_at_base >= 0 && s.states_at_base <= all.length, 'senate.states_at_base');
+  assert.equal(s.seats_at_base, 2 * s.states_at_base);
+  // the states ranked 24th to 28th, from high to low share
+  assert.equal(s.tipping.length, 5);
+  assert.equal(new Set(s.tipping.map((t) => t.postal)).size, 5, 'senate.tipping names five states');
+  s.tipping.forEach((t, i) => {
+    const rank = SENATE_STATES_NEEDED - 2 + i;
+    assert.ok(all.includes(t.postal) && isFraction(t.share), `senate.tipping ${t.postal}`);
+    if (i > 0) assert.ok(s.tipping[i - 1].share >= t.share, 'senate.tipping runs from high to low');
+    // one vote base: a multi-seat state has the share of its district votes
+    if (t.postal in states) assert.ok(near(t.share, states[t.postal].d_share, 1e-12), `senate.tipping ${t.postal} is its d_share`);
+    // the state ranked here is Democratic at the real votes exactly when its share lies above one half
+    assert.equal(t.share > 0.5, rank <= s.states_at_base, `senate.tipping ${t.postal} (rank ${rank}) against states_at_base`);
+  });
+  // the threshold: the base share plus one half minus the share of the 26th state (exact)
+  assert.ok(near(s.share, s.base_share + 0.5 - s.tipping[2].share, 1e-12), `senate.share ${s.share}`);
+  // results.json has no votes of the single-seat states: they can add at most one state each
+  const above = Object.values(states).filter((x) => x.d_share > 0.5).length;
+  assert.ok(above <= s.states_at_base && s.states_at_base <= above + national.single_seat.length,
+    `senate.states_at_base ${s.states_at_base} against ${above} multi-seat states above one half`);
 });
