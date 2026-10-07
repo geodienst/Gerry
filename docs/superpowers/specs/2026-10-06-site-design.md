@@ -119,6 +119,8 @@ Concept, in het Engels, voor onderaan de pagina:
 
 De zinnen bij "Known limits" schrijf ik uit in het siteplan, na akkoord op deze opzet.
 
+**Voet, toevoeging van de eigenaar (7 oktober 2026).** De voet krijgt het logo van de Geodienst (Rijksuniversiteit Groningen) met het woord Geodienst, samen één link naar https://rug.nl/geo. Het logo is een eigen bestand van de site (`site/img/geodienst.svg`, uit `logo geodienst.svg` in de projectmap, zonder Inkscape-gegevens). De site doet daardoor geen verzoek naar een andere host; dat gebeurt pas als iemand op de link klikt.
+
 ## 10. Bronlabels (ter beoordeling)
 
 De site toont per staat de kaartnaam en de bron van het kaartbestand uit `config.yaml`. Voorstel: de regel heet "Map file:" in plaats van "Source:", omdat een deel van de labels de leverancier van het bestand noemt (bijvoorbeeld Redistricting Data Hub voor IL, MD, MO en MS) en niet het orgaan dat de kaart aannam. Wie de kaart aannam, staat al in "Adopted by". Een gewijzigd label gaat alleen in `config.yaml`, daarna `make export`.
