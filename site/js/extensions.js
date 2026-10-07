@@ -16,7 +16,7 @@ export function majorityView(results) {
       ? `Proportional needs less than half of the vote because each state rounds its seats to whole numbers on its own, and over ${states} states those roundings do not cancel out.`
       : '',
     rule: 'A majority is 218 of the 435 seats. The six states with one seat count for the party that won them '
-      + 'in both 2016 and 2020: Delaware and Vermont for Democrats, Alaska, North Dakota, South Dakota and Wyoming '
+      + 'in both 2016 and 2020: Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming '
       + `for Republicans. So Democrats need ${seats(m.seats_needed)} of the ${seats(results.national.seats)} districts.`,
     axis: {
       base: m.base_share, low: m.neutral.low, high: m.neutral.high,

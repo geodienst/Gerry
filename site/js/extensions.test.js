@@ -41,7 +41,7 @@ test('majorityView: the sentence of the extensions design with the four shares',
   assert.equal(view.sentence, 'With these votes, Democrats need 52.3% of the two-party vote for a House majority under the enacted maps, '
     + '51.2% under neutral maps and 49.8% if seats followed the vote. They have 51.8%.');
   assert.equal(view.rule, 'A majority is 218 of the 435 seats. The six states with one seat count for the party that won them in both '
-    + '2016 and 2020: Delaware and Vermont for Democrats, Alaska, North Dakota, South Dakota and Wyoming for Republicans. '
+    + '2016 and 2020: Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming for Republicans. '
     + 'So Democrats need 216 of the 429 districts.');
 });
 

@@ -159,7 +159,11 @@ async function sheet(t) {
   t.check('efficiency gap in points toward a party', /points toward (Republicans|Democrats)|less than 0\.05 points either way/.test(texas));
   t.check('the seat axis and the sorted chart have a text alternative', await t.js(
     "[...document.querySelectorAll('#sheet svg.chart')].filter((s) => s.getAttribute('role') === 'img' && s.getAttribute('aria-label')).length === 2"));
-  t.check('chart text stays at least 10px tall', await t.js("[...document.querySelectorAll('#sheet svg.chart text')].every((el) => el.getBoundingClientRect().height >= 10)"));
+  // The font size on screen, as in the layout group: the CSS size times the scale of the chart's viewBox.
+  const sizes = await t.js("[...document.querySelectorAll('#sheet svg.chart text')].map((el) => parseFloat(getComputedStyle(el).fontSize) * el.getScreenCTM().a)");
+  const small = sizes.filter((size) => !(size >= 10));
+  t.check('chart text is at least 10px on screen', sizes.length > 0 && small.length === 0, sizes.length
+    ? `${sizes.length} texts, smallest ${Math.min(...sizes).toFixed(1)}px${small.length ? `, ${small.length} below 10px` : ''}` : 'no chart text found');
   await t.js("location.hash = '#MO'");
   t.check('Missouri has the row for the blocked map', await t.until(`${HEADING} === 'Missouri'`)
     && /Blocked map.*Blocked.*would give/s.test(await t.text('#sheet')));
@@ -235,12 +239,14 @@ async function national(t) {
       if (!labels.length) continue;
       for (const line of svg.querySelectorAll(':scope > line')) {
         const x = Number(line.getAttribute('x1'));
+        const half = Number(line.getAttribute('stroke-width') || 1) / 2;
         const [y1, y2] = [Number(line.getAttribute('y1')), Number(line.getAttribute('y2'))].sort((a, b) => a - b);
         // the line's own label is the nearest one above it at the same x
         const own = labels.filter((l) => Math.abs(l.x - x) < 1e-6 && l.y <= y1).sort((a, b) => b.y - a.y)[0];
         for (const l of labels) {
           if (l === own) continue;
-          const across = x > l.box.x + 0.5 && x < l.box.x + l.box.width - 0.5;
+          // the stroke reaches the label or its 1.5-unit halo
+          const across = x + half > l.box.x - 1.5 && x - half < l.box.x + l.box.width + 1.5;
           const overlap = Math.min(y2, l.box.y + l.box.height) - Math.max(y1, l.box.y);
           if (across && overlap > 0.5) hits.push((own ? own.node.textContent : 'a line') + ' runs through ' + l.node.textContent);
         }
@@ -361,7 +367,7 @@ async function majority(t) {
   const note = await t.text('#majority-note');
   const below = await t.js(`${DATA}.then((r) => r.national.majority.proportional.share < 0.5)`);
   t.check('the sentence about Proportional below 50% appears exactly when it applies', below === note.includes('Proportional needs less than half of the vote'));
-  t.check('the note gives the six single-seat states their fixed party', /Delaware and Vermont for Democrats, Alaska, North Dakota, South Dakota and Wyoming for Republicans\. So Democrats need \d+ of the \d+ districts\.$/.test(note));
+  t.check('the note gives the six single-seat states their fixed party', /Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming for Republicans\. So Democrats need \d+ of the \d+ districts\.$/.test(note));
 }
 
 // --- Task 6.11: redraws since 2024 ---------------------------------------------------------------

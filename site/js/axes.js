@@ -107,7 +107,7 @@ export function netBar(seatsR, seatsD, width = 360) {
 
 // --- The vote axis of the House majority (Task 6.10) --------------------------------------------
 
-export const VOTE_AXIS = { width: 560, height: 92, margin: { l: 14, r: 14, t: 52, b: 22 }, domain: [0.45, 0.6] };
+export const VOTE_AXIS = { width: 560, height: 96, margin: { l: 14, r: 14, t: 56, b: 22 }, domain: [0.45, 0.6] };
 
 /** Domain of the vote axis: about 45% to 60%, wider if a value lies outside. */
 export function voteDomain(values, [low, high] = VOTE_AXIS.domain) {

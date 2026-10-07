@@ -32,11 +32,14 @@ function drawMarks(svg, marks, width, plotBottom, top, rows) {
   const boxes = labels.map(labelBox);
   const under = () => labels[0];
   placed.forEach((p, i) => {
-    // from its own label down to the plot, with a gap at each label of another marker in the way
-    for (const [from, to] of markerSegments(p.x, labelY(p) + 3, plotBottom, boxes.filter((box, j) => j !== i))) {
+    const stroke = p.key === 'neutral' ? 2 : 1;
+    // from its own label down to the plot, with a gap at each label of another marker in the way;
+    // the edge of the stroke stays 3 units from a label box, 1.5 past its halo
+    const pad = 3 + stroke / 2;
+    for (const [from, to] of markerSegments(p.x, labelY(p) + 3, plotBottom, boxes.filter((box, j) => j !== i), pad)) {
       svg.insert('line', under).attr('x1', p.x).attr('x2', p.x).attr('y1', from).attr('y2', to)
         .attr('stroke', p.key === 'base' ? 'var(--muted)' : 'var(--fg)')
-        .attr('stroke-width', p.key === 'neutral' ? 2 : 1)
+        .attr('stroke-width', stroke)
         .attr('stroke-dasharray', { proportional: '3 2', base: '1 2' }[p.key] ?? null);
     }
     if (p.key === 'enacted') svg.insert('circle', under).attr('cx', p.x).attr('cy', plotBottom - 6).attr('r', 5).attr('fill', 'var(--fg)');
