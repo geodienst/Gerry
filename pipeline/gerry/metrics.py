@@ -5,7 +5,7 @@ efficiency gap and mean-median are positive when they favor Republicans.
 """
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Callable, Sequence
 
 import numpy as np
 import pandas as pd
@@ -236,3 +236,57 @@ def enacted_threshold(shares, needed: int) -> float:
     if not 1 <= needed <= ordered.size:
         raise ValueError(f"needed must lie in 1..{ordered.size}, got {needed}")
     return float(0.5 - ordered[needed - 1])
+
+
+SWING_GRID = 10_000          # grid steps per unit of share: one step is 0.0001, or 0.01 percentage point
+MAX_SWING_STEPS = 500        # 5 percentage points (chapters 1 and 5)
+
+
+class SwingRangeError(ValueError):
+    """A threshold lies 5 percentage points or more from the base share."""
+
+
+def smallest_swing(holds: Callable[[float], bool], max_steps: int = MAX_SWING_STEPS) -> float:
+    """Smallest swing k / SWING_GRID with -max_steps < k <= max_steps at which holds(swing) is true. holds must
+    stay true once it is true (bisection). SwingRangeError when it is already true at -max_steps or still
+    false at +max_steps."""
+    lo, hi = -max_steps, max_steps
+    if holds(lo / SWING_GRID):
+        raise SwingRangeError(f"already true at a swing of {lo / SWING_GRID:+.4f}")
+    if not holds(hi / SWING_GRID):
+        raise SwingRangeError(f"still false at a swing of {hi / SWING_GRID:+.4f}")
+    while hi - lo > 1:
+        mid = (lo + hi) // 2
+        if holds(mid / SWING_GRID):
+            hi = mid
+        else:
+            lo = mid
+    return hi / SWING_GRID
+
+
+def majority_probability(plan_shares: Sequence[np.ndarray], swing: float, needed: int) -> float:
+    """Share of neutral outcomes with at least `needed` Democratic districts when `swing` is added to every
+    district share. One matrix per state with plans as rows; states convolved as independent (spec chapter 5)."""
+    pmfs = [np.bincount(seats_at_swing(shares, swing), minlength=shares.shape[1] + 1) for shares in plan_shares]
+    return float(convolve(pmfs)[needed:].sum())
+
+
+def neutral_threshold(plan_shares: Sequence[np.ndarray], needed: int, q: float) -> float:
+    """Smallest grid swing at which a share q of the neutral outcomes has at least `needed` districts."""
+    return smallest_swing(lambda swing: majority_probability(plan_shares, swing, needed) >= q - CUM_TOLERANCE)
+
+
+def proportional_at_swing(state_shares: Sequence[float], seats: Sequence[int], swing: float) -> int:
+    """Democratic seats summed over states, each by largest remainder on its two-party share plus swing."""
+    total = 0
+    for share, n in zip(state_shares, seats, strict=True):
+        d = share + swing
+        if not 0 <= d <= 1:
+            raise ValueError(f"share {share} plus swing {swing} lies outside 0..1")
+        total += largest_remainder(d, 1 - d, n)
+    return total
+
+
+def proportional_threshold(state_shares: Sequence[float], seats: Sequence[int], needed: int) -> float:
+    """Smallest grid swing at which largest remainder per state gives at least `needed` seats in total."""
+    return smallest_swing(lambda swing: proportional_at_swing(state_shares, seats, swing) >= needed)

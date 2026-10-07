@@ -471,3 +471,81 @@ def test_enacted_threshold_is_exact_and_not_on_the_grid():
     assert swing == pytest.approx(-0.02005, abs=1e-12)
     assert m.seats_at_swing(shares, swing) == 1
     assert m.seats_at_swing(shares, swing + 1e-9) == 2
+
+
+# Task 5.5: the grid of swings, the neutral and the proportional threshold
+
+def test_smallest_swing_finds_the_first_grid_point():
+    # grid steps of 0.0001: s >= 0.0123 first holds at step 123
+    assert m.smallest_swing(lambda s: s >= 0.0123) == pytest.approx(0.0123)
+    # s > -0.00015 first holds at step -1
+    assert m.smallest_swing(lambda s: s > -0.00015) == pytest.approx(-0.0001)
+
+
+def test_smallest_swing_accepts_the_upper_edge_only():
+    # +0.05 (step 500) is the last grid point and counts
+    assert m.smallest_swing(lambda s: s >= 0.05) == pytest.approx(0.05)
+    # at -0.05 (step -500) the condition must still be false; s > -0.05 first holds at step -499
+    assert m.smallest_swing(lambda s: s > -0.05) == pytest.approx(-0.0499)
+
+
+def test_smallest_swing_stops_outside_five_points():
+    with pytest.raises(m.SwingRangeError, match="already true"):
+        m.smallest_swing(lambda s: True)
+    with pytest.raises(m.SwingRangeError, match="still false"):
+        m.smallest_swing(lambda s: False)
+
+
+# Two made-up states with 2 districts each. Every share ends in 5 in the fifth decimal, so no district
+# lands exactly on one half at a grid point. A district turns Democratic once the swing passes 0.5 - share:
+#   AA plan 1: -0.10005, +0.09995   AA plan 2: -0.05005, -0.02005
+#   AA plan 3: +0.04495, +0.19995   AA plan 4: -0.01005, +0.00995
+#   BB plan 1: -0.20005, +0.02995   BB plan 2: +0.01005, +0.03995
+AA_PLANS = np.array([[0.60005, 0.40005], [0.55005, 0.52005], [0.45505, 0.30005], [0.51005, 0.49005]])
+BB_PLANS = np.array([[0.70005, 0.47005], [0.48995, 0.46005]])
+
+
+def test_majority_probability_convolves_the_states():
+    # swing 0: AA plans give 1, 2, 0, 1 seats -> P(AA) = [0.25, 0.5, 0.25]; BB 1, 0 -> P(BB) = [0.5, 0.5, 0]
+    # P(sum) = [0.125, 0.375, 0.375, 0.125, 0] -> 3 or more: 0.125
+    assert m.majority_probability([AA_PLANS, BB_PLANS], 0.0, 3) == pytest.approx(0.125)
+    # +0.02: AA 1, 2, 0, 2 -> [0.25, 0.25, 0.5]; BB 1, 1 -> [0, 1, 0]
+    # sum = AA + 1, so 3 or more means AA = 2: 0.5
+    assert m.majority_probability([AA_PLANS, BB_PLANS], 0.02, 3) == pytest.approx(0.5)
+    # +0.035: AA as at +0.02; BB 2, 1 -> [0, 0.5, 0.5]
+    # 3 or more: P(AA = 2) + P(AA = 1) * P(BB = 2) = 0.5 + 0.25 * 0.5 = 0.625
+    assert m.majority_probability([AA_PLANS, BB_PLANS], 0.035, 3) == pytest.approx(0.625)
+
+
+def test_neutral_threshold_at_5_50_and_95_percent():
+    # P(3 or more districts) by swing, from the turning points above:
+    #   up to -0.02005: 0          -0.02005 to +0.00995: 0.125     +0.00995 to +0.01005: 0.25
+    #   +0.01005 to +0.02995: 0.5  +0.02995 to +0.03995: 0.625     +0.03995 to +0.04495: 0.75
+    #   above +0.04495: 1
+    # first grid point above -0.02005 is step -200, above +0.01005 step 101, above +0.04495 step 450
+    plans = [AA_PLANS, BB_PLANS]
+    assert m.neutral_threshold(plans, 3, 0.05) == pytest.approx(-0.02)
+    assert m.neutral_threshold(plans, 3, 0.5) == pytest.approx(0.0101)
+    assert m.neutral_threshold(plans, 3, 0.95) == pytest.approx(0.045)
+
+
+def test_proportional_at_swing_sums_largest_remainder_over_states():
+    # 4 seats at 0.55005: quota 2.2002, remainders 0.2002 (D) and 0.7998 (R) -> 2
+    # 3 seats at 0.38005: quota 1.14015, remainders 0.14015 and 0.85985 -> 1; together 3
+    assert m.proportional_at_swing([0.55005, 0.38005], [4, 3], 0.0) == 3
+    # +0.08: 4 * 0.63005 = 2.5202, remainders 0.5202 and 0.4798 -> 3
+    #        3 * 0.46005 = 1.38015, remainders 0.38015 and 0.61985 -> 1; together 4
+    assert m.proportional_at_swing([0.55005, 0.38005], [4, 3], 0.08) == 4
+
+
+def test_proportional_at_swing_rejects_a_share_outside_0_to_1():
+    # 0.97 + 0.04 = 1.01
+    with pytest.raises(ValueError, match="outside"):
+        m.proportional_at_swing([0.97], [2], 0.04)
+
+
+def test_proportional_threshold():
+    # 2 seats each, at 0.72005 and 0.40005: 1 + 1 seats at swing 0
+    # the first state gets its second seat once 2 * (0.72005 + s) > 1.5, so s > 0.02995 (step 300);
+    # the second state keeps 1 seat from -0.05 to +0.05 (2 * 0.35005 = 0.7001 up to 2 * 0.45005 = 0.9001)
+    assert m.proportional_threshold([0.72005, 0.40005], [2, 2], 3) == pytest.approx(0.03)
