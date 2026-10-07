@@ -91,3 +91,27 @@ Op 6 oktober 2026:
 2. De kaarten van 2024 (CD119) zijn de referentie voor hertekeningen (paragraaf 2).
 3. Concurrerend is 45% tot 55% (paragraaf 3).
 4. Wie de kaart aannam: de politieke kleur is relevant. Twee velden, `adopted_by` en `control`, zoals in paragraaf 4 (akkoord 6 oktober 2026).
+
+Op 7 oktober 2026, bij de open punten van het implementatieplan (`docs/superpowers/plans/2026-10-06-extensions.md`):
+
+5. Een lid zonder partij dat in een commissie de doorslag gaf (te verwachten in New Jersey en Montana), telt niet als partij. Zulke kaarten krijgen `Bipartisan`, met een `adopted_note` die zegt wie de doorslag gaf en voor welk voorstel.
+6. De overige open punten volgen de aanbevelingen van het plan: stemden in elke kamer die stemde meerderheden van beide partijen voor, dan `Bipartisan`; een partij die de kaart zonder de gouverneur kan aannemen (North Carolina), kon haar alleen aannemen; `adopted_by` is het orgaan dat de geldende grenzen vaststelde, andere stappen gaan in `adopted_note`; één kolom "Adoption and control" in `data/sources.md`; de vaste partij van de zes staten met één zetel staat als vaste tekst op de site.
+7. De Senaat komt erbij, als apart blok (paragraaf 7).
+
+## 7. De Senaat, op dezelfde stemmen
+
+**Vraag.** Welk landelijk aandeel van de stemmen hebben Democraten nodig voor een meerderheid in de Senaat, als in elke staat beide senatoren naar de partij gaan die daar de presidentsverkiezingen van 2016 en 2020 samen won?
+
+**Geen gerrymandering.** De Senaat heeft geen districten. Het verschil met het stemaandeel komt doordat elke staat twee senatoren heeft, groot of klein. De site zet dit blok daarom apart van de kaarten en zegt dat in één zin.
+
+**Stemmen per staat.** Voor de 44 staten met districten het tweepartijenaandeel over de staat uit onze stembasis (de som van de districtsstemmen; West Virginia alleen 2020). Voor de zes staten met één zetel (AK, DE, ND, SD, VT, WY) de officiële uitslagen per staat van 2016 en 2020, opgeteld, uit een nieuwe databron: MIT Election Data and Science Lab, "U.S. President 1976–2020" (Harvard Dataverse, doi:10.7910/DVN/42MVDX). Het implementatieplan legt versie, bestand, licentie en controle vast; wijken de cijfers af van de officiële uitslagen van die staten, dan stoppen en vragen.
+
+**Meerderheid.** 51 van de 100 zetels. Bij 50 tegen 50 beslist de vicepresident; die is sinds januari 2025 Republikein. Omdat elke staat hier twee zetels aan één partij geeft, hebben Democraten 26 staten nodig.
+
+**Berekening.** Uniforme verschuiving op de staatsaandelen, zoals in paragraaf 1. *V50* is het landelijke aandeel over de 50 staten. De drempel is *V50 + (0,5 − h)*, met *h* het 26e hoogste staatsaandeel. Daarnaast: het aantal staten en zetels bij de echte stemmen, en de staten rond de drempel (de 24e tot en met de 28e).
+
+**Uitvoer.** `national.senate` {`base_share`, `states_needed` (26), `share`, `states_at_base`, `seats_at_base`, `tipping`: lijst van {`postal`, `share`}}.
+
+**Weergave.** Een apart blok naast de meerderheid in het Huis: "If each state's two senators went to the party that won its presidential vote, Democrats would need 52.9% of the two-party vote for a Senate majority. They have 51.7% and would win 22 states." (Voorbeeldgetallen uit een eerste berekening; de pijplijn rekent ze uit.) Met een korte uitleg dat dit geen effect van kaarten is.
+
+**Beperking.** Een gedachte-experiment: echte senatoren hangen ook af van kandidaten, en per verkiezing staat maar een derde van de zetels open.
