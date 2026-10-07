@@ -385,7 +385,7 @@ async function competitive(t) {
   await t.load('#TX');
   t.check('the national line on competitive districts', /^Competitive districts \(45 to 55%\): \d+ on the enacted maps, \d+ on neutral maps( \(\d+ to \d+\))?\.$/.test(await t.text('#competitive-text')));
   await t.until(`${HEADING} === 'Texas'`);
-  t.check('the Texas sheet has the line on competitive districts', /Competitive districts \(45 to 55%\): \d+ on the enacted map, \d+ on neutral maps/.test(await t.text('#sheet')));
+  t.check('the Texas sheet has the line on competitive districts', /Competitive districts \(45 to 55%\): \d+ on the enacted map, \d+ on neutral maps( \(\d+ to \d+\))?\./.test(await t.text('#sheet')));
 }
 
 // --- Task 6.13: who adopted the maps -------------------------------------------------------------

@@ -156,9 +156,9 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
 .redraws li { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }
 .redraws .v { font-variant-numeric: tabular-nums; }
 
-/* Extensions in the sheet: a rule sets the lines on competitive districts and the redraw apart from the
-   caption of "Districts, sorted" (Task 6.12). */
-.extras { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+/* Extensions: a rule sets the lines on competitive districts and the redraw in the sheet apart from the caption
+   of "Districts, sorted", and the national line on competitive districts apart from the redraws (Task 6.12). */
+.extras, #competitive-text { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
 
 /* Extensions: the tables by political control (Task 6.13) */
 #control table { border-collapse: collapse; font-size: 0.87rem; width: 100%; }
