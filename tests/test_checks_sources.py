@@ -4,6 +4,7 @@ The tests read the real data/sources.md and change one cell at a time in a copy.
 They do not depend on the current statuses or date, so they keep working after
 a status re-check.
 """
+import dataclasses
 import re
 from datetime import date, timedelta
 from pathlib import Path
@@ -191,6 +192,50 @@ def test_adoption_cell_must_start_with_both_values_and_a_full_stop(tmp_path):
     with pytest.raises(CheckError) as info:
         check_sources_md(load_config(), write(tmp_path, text))
     assert info.value.state == "TX" and "adoption" in info.value.detail
+
+
+@pytest.mark.parametrize("change", [
+    pytest.param(lambda v: "Per the record: " + v, id="text-before-the-pair"),
+    pytest.param(lambda v: v.replace("Republican. ", "Republican.", 1), id="no-space-after-the-full-stop"),
+    pytest.param(lambda v: "", id="empty-cell"),
+    pytest.param(lambda v: v.lower(), id="lower-case"),
+])
+def test_adoption_cell_must_start_with_the_pair(tmp_path, change):
+    # the cell begins with "<adopted_by>, <control>." followed by a space or the end of the cell
+    text = change_cell(real_text(), "Multi-seat states", "TX", "Adoption and control", change)
+    with pytest.raises(CheckError) as info:
+        check_sources_md(load_config(), write(tmp_path, text))
+    assert info.value.state == "TX" and "adoption" in info.value.detail
+
+
+def test_adoption_cell_may_be_the_pair_alone(tmp_path):
+    text = change_cell(real_text(), "Multi-seat states", "TX", "Adoption and control",
+                       lambda v: "Legislature, Republican.")
+    check_sources_md(load_config(), write(tmp_path, text))
+
+
+def test_row_not_in_config_raises(tmp_path):
+    cfg = load_config()
+    without_ks = {postal: st for postal, st in cfg.states.items() if postal != "KS"}
+    cfg = dataclasses.replace(cfg, states=without_ks)
+    with pytest.raises(CheckError) as info:
+        check_sources_md(cfg, write(tmp_path, real_text()))
+    assert info.value.state == "KS"
+    assert "not in config.yaml states" in info.value.detail
+
+
+def test_row_with_a_missing_cell_raises(tmp_path):
+    lines = real_text().splitlines()
+    i = table_start(lines, "Multi-seat states")
+    header = split(lines[i])
+    j = next(k for k in range(i + 2, len(lines)) if lines[k].startswith("| TX |"))
+    cells = split(lines[j])
+    del cells[header.index("Adoption and control")]
+    lines[j] = "| " + " | ".join(cells) + " |"
+    with pytest.raises(CheckError) as info:
+        parse_sources_md(write(tmp_path, "\n".join(lines) + "\n"))
+    assert info.value.state == "US"
+    assert f"has {len(header) - 1} cells, header has {len(header)}" in info.value.detail
 
 
 def test_map_cell_with_link_and_text_raises(tmp_path):
