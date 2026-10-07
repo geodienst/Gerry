@@ -822,3 +822,42 @@ def test_compute_adds_the_senate(tmp_path, monkeypatch):
     # XX: the votes of its units, 1300 D and 1700 R; WY: 400 D and 600 R from single_seat_votes.parquet
     assert seen["senate"] == ({"XX": (1300.0, 1700.0), "WY": (400.0, 600.0)}, 26)
     assert nat["senate"]["states_needed"] == 26
+
+
+# --- Task 5.19, review: the Senate state checks in both directions and the read order ----------------------
+
+
+def test_read_single_seat_votes_needs_exactly_the_states_of_config(tmp_path):
+    wyoming = {"WY": AtLargeState("WY", "Wyoming", "56")}
+    path = tmp_path / "single_seat_votes.parquet"
+    # an extra state (here one with districts), another state with the same count, a state twice
+    for states in (["WY", "XX"], ["AK"], ["WY", "WY"]):
+        pd.DataFrame({"state": states, "d": [400] * len(states), "r": [600] * len(states)}).to_parquet(path)
+        with pytest.raises(CheckError, match="senate_states"):
+            step.read_single_seat_votes(tmp_path, wyoming)
+
+
+def test_national_senate_needs_exactly_50_states():
+    for n in (49, 51):
+        votes = {f"S{i:02d}": (float(i + 1), 60.0) for i in range(n)}
+        with pytest.raises(CheckError, match="senate_states"):
+            step.national_senate(votes)
+
+
+def test_compute_reads_single_seat_votes_before_the_states(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
+    (tmp_path / "single_seat_votes.parquet").unlink()
+    _small_house(monkeypatch)
+
+    def no_state(*args, **kwargs):
+        raise AssertionError("compute reached the state loop")
+
+    monkeypatch.setattr(step, "state_metrics", no_state)
+    with pytest.raises(CheckError, match="interim_files"):
+        step.compute(cfg, tmp_path)
+
+
+def test_compute_puts_the_senate_after_by_body(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
+    _small_house(monkeypatch)
+    assert list(step.compute(cfg, tmp_path)["national"])[-3:] == ["by_control", "by_body", "senate"]
