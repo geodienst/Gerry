@@ -3,7 +3,8 @@
 Usage: python pipeline/02_join.py [--states ST [ST ...]]
 
 Without --states all states are joined and the interim files are rewritten. With --states only those
-states are joined and their rows replace the earlier rows in the interim files.
+states are joined and their rows replace the earlier rows in the interim files. Both rewrite the votes
+of the single-seat states for the Senate block (extensions design, chapter 7).
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ from gerry.checks import (CheckError, check_conservation, check_district_count, 
                           check_geoids, check_reference_labels, check_units_linked, check_vap_pop)
 from gerry.config import data_dir, interim_dir, load_config
 from gerry.ensemble import district_votes, read_stats, reference_labels
+from gerry.president import PresidentError, read_president, two_party_votes
 from gerry.units import UnitsError, add_composite, load_units, read_block_votes
 
 log = logging.getLogger("join")
@@ -119,6 +121,12 @@ def _ordered(frames: list[pd.DataFrame], key_cols: list[str], vote_cols: list[st
     return pd.concat(frames, ignore_index=True).reindex(columns=key_cols + vote_cols)
 
 
+def single_seat_votes(cfg, root: Path) -> pd.DataFrame:
+    """Democratic and Republican votes of 2016 and 2020 in the single-seat states, sorted by postal code, from
+    the statewide file of the MIT Election Data and Science Lab (Senate block, extensions design chapter 7)."""
+    return two_party_votes(read_president(root / "medsl" / "1976-2024-president.csv"), sorted(cfg.at_large))
+
+
 def write_outputs(results: dict[str, StateResult], cfg, out_dir: Path, partial: bool) -> None:
     elections = list(dict.fromkeys(e for st in cfg.states.values() for e in st.elections))
     vote_cols = [f"{p}_{e}" for e in elections for p in ("d", "r")] + ["d", "r"]
@@ -154,6 +162,14 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         parser.error(f"not a multi-seat state in config.yaml: {', '.join(unknown)}")
     root = data_dir()
+    try:
+        single = single_seat_votes(cfg, root)
+    except PresidentError as exc:
+        print(f"ERROR single-seat states: {exc}", file=sys.stderr)
+        return 1
+    except FileNotFoundError as exc:
+        print(f"ERROR missing {exc.filename}; run pipeline/01_download.py first", file=sys.stderr)
+        return 1
     results = {}
     for postal in states:
         start = time.monotonic()
@@ -172,6 +188,9 @@ def main(argv: list[str] | None = None) -> int:
               f"({enacted['zero_vap_split_units']} without VAP, {enacted['block_count_votes']:.1f} votes "
               f"by block count), {res.log['plans']} plans, {time.monotonic() - start:.1f} s", flush=True)
     write_outputs(results, cfg, interim_dir(), partial=bool(args.states))
+    single.to_parquet(interim_dir() / "single_seat_votes.parquet", index=False)
+    print("Single-seat states, Democratic share of the 2016 and 2020 presidential votes: "
+          + ", ".join(f"{s.state} {s.d / (s.d + s.r):.4f}" for s in single.itertuples(index=False)))
     print(f"Wrote {len(results)} states to {interim_dir()}")
     return 0
 

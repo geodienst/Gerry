@@ -1,11 +1,12 @@
 import importlib.util
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pandas as pd
 import pytest
 
-from gerry.config import data_dir, load_config
+from gerry.config import AtLargeState, data_dir, load_config
 
 SCRIPT = Path(__file__).resolve().parents[1] / "pipeline" / "02_join.py"
 
@@ -38,6 +39,29 @@ def test_maps_of_lists_enacted_extra_check_and_2024_maps():
     assert join.maps_of(cfg.states["NV"]) == [("enacted", "cd120"), ("check_2022", "cd118"), ("map_2024", "cd119")]
     assert join.maps_of(cfg.states["MO"]) == [("enacted", "cd118"), ("mo_hb1", "cd120"), ("check_2022", "cd118"),
                                               ("map_2024", "cd119")]
+
+
+# Senate block (extensions design, chapter 7): two single-seat states in the layout of the MIT file
+MEDSL = """year,state,state_po,state_fips,state_cen,state_ic,office,candidate,party_detailed,writein,candidatevotes,totalvotes,version,notes,party_simplified
+2016,WYOMING,WY,56,83,68.0,US PRESIDENT,"CLINTON, HILLARY",DEMOCRAT,False,10,0,20210113,,DEMOCRAT
+2016,WYOMING,WY,56,83,68.0,US PRESIDENT,"TRUMP, DONALD J.",REPUBLICAN,False,30,0,20210113,,REPUBLICAN
+2020,WYOMING,WY,56,83,68.0,US PRESIDENT,"BIDEN, JOSEPH R. JR",DEMOCRAT,False,20,0,20210113,,DEMOCRAT
+2020,WYOMING,WY,56,83,68.0,US PRESIDENT,"TRUMP, DONALD J.",REPUBLICAN,False,40,0,20210113,,REPUBLICAN
+2016,DELAWARE,DE,10,51,11.0,US PRESIDENT,"CLINTON, HILLARY",DEMOCRAT,False,50,0,20210113,,DEMOCRAT
+2016,DELAWARE,DE,10,51,11.0,US PRESIDENT,"TRUMP, DONALD J.",REPUBLICAN,False,40,0,20210113,,REPUBLICAN
+2020,DELAWARE,DE,10,51,11.0,US PRESIDENT,"BIDEN, JOSEPH R. JR",DEMOCRAT,False,60,0,20210113,,DEMOCRAT
+2020,DELAWARE,DE,10,51,11.0,US PRESIDENT,"TRUMP, DONALD J.",REPUBLICAN,False,30,0,20210113,,REPUBLICAN
+"""
+
+
+def test_single_seat_votes_reads_the_single_seat_states_in_order(tmp_path):
+    (tmp_path / "medsl").mkdir()
+    (tmp_path / "medsl" / "1976-2024-president.csv").write_text(MEDSL, encoding="utf-8")
+    cfg = SimpleNamespace(at_large={"WY": AtLargeState("WY", "Wyoming", "56"),
+                                    "DE": AtLargeState("DE", "Delaware", "10")})
+    votes = load_script().single_seat_votes(cfg, tmp_path)
+    # sorted by postal code: DE 50 + 60 Democratic, 40 + 30 Republican; WY 10 + 20 and 30 + 40
+    assert votes[["state", "d", "r"]].values.tolist() == [["DE", 110, 70], ["WY", 30, 70]]
 
 
 def files_of(postal, *extra):
