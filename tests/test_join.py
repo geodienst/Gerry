@@ -1,3 +1,4 @@
+import dataclasses
 import importlib.util
 import sys
 from pathlib import Path
@@ -6,6 +7,7 @@ from types import SimpleNamespace
 import pandas as pd
 import pytest
 
+from gerry.checks import CheckError
 from gerry.config import AtLargeState, data_dir, load_config
 
 SCRIPT = Path(__file__).resolve().parents[1] / "pipeline" / "02_join.py"
@@ -62,6 +64,86 @@ def test_single_seat_votes_reads_the_single_seat_states_in_order(tmp_path):
     votes = load_script().single_seat_votes(cfg, tmp_path)
     # sorted by postal code: DE 50 + 60 Democratic, 40 + 30 Republican; WY 10 + 20 and 30 + 40
     assert votes[["state", "d", "r"]].values.tolist() == [["DE", 110, 70], ["WY", 30, 70]]
+
+
+def tiny_result(join, postal):
+    """What join_state returns for one state, cut down to one district: enough for write_outputs and the log line."""
+    votes = dict.fromkeys(["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20", "d", "r"], 1.0)
+    frame = lambda **keys: pd.DataFrame([{**keys, **votes}])
+    return join.StateResult(
+        units=frame(unit_id="1"), enacted=frame(state=postal, map_id="enacted", method="block", district="01"),
+        ensemble=frame(state=postal, draw="1", district="01"), reference=frame(state=postal, district="01"),
+        log={"units": 1, "units_zero_vap": 0, "blocks": 1, "plans": 1,
+             "maps": {"enacted": {"split_units": 0, "zero_vap_split_units": 0, "block_count_votes": 0.0}}})
+
+
+@pytest.fixture
+def main_run(tmp_path, monkeypatch):
+    """run(argv, ...) calls main() with the data folder and data/interim inside tmp_path and join_state replaced by a
+    stand-in that returns one tiny district, or raises a CheckError for the state in `fail`. It returns the exit
+    code, the states join_state was asked for and the interim folder. `medsl` is written as the MIT file;
+    `wy_and_de` makes WY and DE the single-seat states, as in MEDSL, instead of the six of config.yaml."""
+    join = load_script()
+    interim = tmp_path / "interim"
+    monkeypatch.setenv("GERRY_DATA_DIR", str(tmp_path / "raw"))
+    monkeypatch.setattr(join, "interim_dir", lambda: interim)
+    asked = []
+
+    def run(argv, *, medsl=None, fail=None, wy_and_de=False):
+        if wy_and_de:
+            cfg = dataclasses.replace(load_config(), at_large={"WY": AtLargeState("WY", "Wyoming", "56"),
+                                                               "DE": AtLargeState("DE", "Delaware", "10")})
+            monkeypatch.setattr(join, "load_config", lambda: cfg)
+        (tmp_path / "raw" / "medsl").mkdir(parents=True, exist_ok=True)
+        if medsl is not None:
+            (tmp_path / "raw" / "medsl" / "1976-2024-president.csv").write_text(medsl, encoding="utf-8")
+
+        def join_state(cfg, postal, root):
+            asked.append(postal)
+            if postal == fail:
+                raise CheckError("join", postal, "forced")
+            return tiny_result(join, postal)
+
+        monkeypatch.setattr(join, "join_state", join_state)
+        return join.main(argv), asked, interim
+    return run
+
+
+def test_main_stops_before_the_first_state_when_the_mit_file_is_missing(main_run, capsys):
+    code, asked, interim = main_run(["--states", "NV"])
+    err = capsys.readouterr().err
+    assert code == 1 and asked == [] and not interim.exists()
+    assert err.startswith("ERROR missing ")
+    assert err.endswith("1976-2024-president.csv; run pipeline/01_download.py first\n")
+
+
+def test_main_stops_before_the_first_state_when_a_single_seat_state_is_not_in_the_file(main_run, capsys):
+    # config.yaml lists AK first of its six single-seat states; the file of MEDSL only has DE and WY
+    code, asked, interim = main_run(["--states", "NV"], medsl=MEDSL)
+    assert code == 1 and asked == [] and not interim.exists()
+    assert capsys.readouterr().err == "ERROR single-seat states: AK 2016: no rows in the file\n"
+
+
+def test_main_writes_no_interim_file_when_a_state_fails(main_run):
+    # the single-seat votes are fine and AL fails its checks: not even single_seat_votes.parquet is written
+    code, asked, interim = main_run(["--states", "NV", "AL"], medsl=MEDSL, fail="AL", wy_and_de=True)
+    assert code == 1 and asked == ["NV", "AL"] and not interim.exists()
+
+
+@pytest.mark.parametrize("argv", [[], ["--states", "NV"]])
+def test_main_writes_the_single_seat_votes_in_a_full_and_in_a_partial_run(main_run, capsys, argv):
+    code, asked, interim = main_run(argv, medsl=MEDSL, wy_and_de=True)
+    assert code == 0 and asked == (["NV"] if argv else sorted(load_config().states))
+    table = pd.read_parquet(interim / "single_seat_votes.parquet")
+    # MEDSL: DE 50 + 60 Democratic and 40 + 30 Republican, WY 10 + 20 and 30 + 40; whole numbers
+    assert table.to_dict("list") == {"state": ["DE", "WY"], "d_pre_16": [50, 10], "r_pre_16": [40, 30],
+                                     "d_pre_20": [60, 20], "r_pre_20": [30, 40], "d": [110, 30], "r": [70, 70]}
+    assert table.drop(columns="state").dtypes.astype(str).unique().tolist() == ["int64"]
+    # DE 110 / 180 = 0.6111, WY 30 / 100 = 0.3000; the line stands just before the last one
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[-2] == ("Single-seat states, Democratic share of the 2016 and 2020 presidential votes: "
+                         "DE 0.6111, WY 0.3000")
+    assert lines[-1].startswith(f"Wrote {len(asked)} states to ")
 
 
 def files_of(postal, *extra):
