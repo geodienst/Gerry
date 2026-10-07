@@ -406,6 +406,28 @@ def test_reproduction_is_judged_on_the_equal_turnout_number_not_on_ours(tmp_path
     assert "| AA | 2024 U.S. House | +15.00 | +15.00 | +31.67 | open | +5.00 | yes | explained | u (2026-10-12) |" in report
 
 
+def _planscore_csv(tmp_path, printed, votes):
+    d = tmp_path / "cc"
+    d.mkdir()
+    rows = ["AA,2024 U.S. House,u,2026-10-12,yes,%s,Republicans,%s,%d,%d" % (printed, *r) for r in votes]
+    (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
+    return d
+
+
+@pytest.mark.parametrize("printed, status", [("31.7", "ok"), ("31.6", "open")])
+def test_reproduction_limit_is_half_the_last_printed_decimal(tmp_path, notes, printed, status):
+    # (80,20),(10,30),(25,35): equal-turnout 31.667 points; one printed decimal allows 0.05
+    d = _planscore_csv(tmp_path, printed, (("01", 80, 20), ("02", 10, 30), ("03", 25, 35)))
+    assert "| +31.67 | %s | +5.00 |" % status in v.build_report(METRICS, d, notes)
+
+
+def test_reproduction_exactly_half_a_decimal_away_is_in_order(tmp_path, notes):
+    # (21000,9000) wins, (2010,7990) loses: V = 23010/40000 = 0.57525, S = 0.5, so equal-turnout
+    # is 0.1505 (15.05 points), exactly 0.05 from the printed 15.0; wasted votes (8010-11990)/40000 = -9.95
+    d = _planscore_csv(tmp_path, "15.0", (("01", 21000, 9000), ("02", 2010, 7990)))
+    assert "| +15.00 | -9.95 | +15.05 | ok | +5.00 |" in v.build_report(METRICS, d, notes)
+
+
 @pytest.mark.parametrize("printed, tolerance", [("7", 0.005), ("6.7", 0.0005), ("6.75", 0.00005)])
 def test_planscore_tolerance_is_half_the_last_printed_decimal(tmp_path, printed, tolerance):
     p = tmp_path / "planscore.csv"

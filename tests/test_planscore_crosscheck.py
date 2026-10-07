@@ -19,6 +19,8 @@ def rows():
 
 def test_at_least_three_states(rows):
     assert len({r["state"] for r in rows}) >= 3
+    # the brief asks for three states whose PlanScore plan is our Enacted map
+    assert len({r["state"] for r in rows if r["same_map"]}) >= 3
 
 
 def test_efficiency_gap_reproduces_planscore(rows):
