@@ -138,6 +138,10 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 footer { font-size: 0.8rem; color: var(--muted); max-width: 90ch; }
 footer p { margin: 0 0 0.3rem; }
 footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; margin-right: 0.4rem; }
+/* In dark mode the logo sits on a light tile so its red stays readable; the negative margins keep the line height. */
+@media (prefers-color-scheme: dark) {
+  footer .credit img { background: #fff; padding: 0.15rem; margin-block: -0.15rem; border-radius: 50%; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
