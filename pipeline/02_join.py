@@ -17,8 +17,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from gerry.blocks import (BlocksError, block_weighted, read_bef, read_pl_blocks, read_pl_counties, unit_of_block,
-                          whole_unit)
+from gerry.blocks import (BlocksError, block_weighted, changed_blocks, read_bef, read_pl_blocks, read_pl_counties,
+                          unit_of_block, whole_unit)
 from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
                           check_geoids, check_reference_labels, check_units_linked, check_vap_pop)
 from gerry.config import data_dir, interim_dir, load_config
@@ -38,8 +38,10 @@ class StateResult:
 
 
 def maps_of(st) -> list[tuple[str, str]]:
-    """(map_id, block equivalency file): the enacted map, extra maps, and the 2022 map for the check."""
-    return [("enacted", st.bef), *((m.id, m.bef) for m in st.extra_maps), ("check_2022", "cd118")]
+    """(map_id, block equivalency file): the enacted map, extra maps, the 2022 map for the check, and the map
+    of the 2024 election for the redraws (extensions design, chapter 2)."""
+    return [("enacted", st.bef), *((m.id, m.bef) for m in st.extra_maps), ("check_2022", "cd118"),
+            ("map_2024", "cd119")]
 
 
 def join_state(cfg, postal: str, root: Path) -> StateResult:
@@ -64,9 +66,10 @@ def join_state(cfg, postal: str, root: Path) -> StateResult:
     info.update({"blocks": len(blocks), "units_zero_vap": int((units["vap"] == 0).sum()),
                  "unlinked_blocks": unlinked_blocks, "unlinked_keys": unlinked_keys, "maps": {}})
 
-    rows = []
+    rows, befs = [], {}
     for map_id, bef in maps_of(st):
         district_of = read_bef(root / "census" / f"{bef}.zip", bef, st.fips, postal)
+        befs[map_id] = district_of
         check_units_linked(units, unit_of, district_of, postal)
         # distribute the votes per election; the composite follows from the distributed parts
         block = block_weighted(units, blocks, unit_of, district_of, parts, weights)
@@ -81,6 +84,11 @@ def join_state(cfg, postal: str, root: Path) -> StateResult:
             labels = unit_of.map(units.set_index("unit_id")["cd_2020"])
             info["reference_share"] = check_reference_labels(labels, district_of,
                                                              blocks.set_index("block_id")["pop"], postal)
+    # map_changed in 03_metrics: does any block lie in another district than on the 2024 map?
+    info["map_2024_changed_blocks"] = changed_blocks(befs["map_2024"], befs["enacted"])
+    if info["map_2024_changed_blocks"]:
+        log.info("%s: %d blocks lie in another district than on the 2024 map (CD119)", postal,
+                 info["map_2024_changed_blocks"])
     enacted = pd.concat(rows, ignore_index=True)
 
     stats = read_stats(root / "alarm" / f"{postal}_cd_2020_stats.csv")

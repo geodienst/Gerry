@@ -26,7 +26,7 @@ _EXTRA_MAP_STATUS = ("Blocked",)
 _BEF = ("cd120", "cd118")
 _UNIT_KINDS = ("vtd", "tract", "county")
 _FILL_KEYS = ("reference_map", "consequence")
-_RESERVED_MAP_IDS = ("enacted", "check_2022")
+_RESERVED_MAP_IDS = ("enacted", "check_2022", "map_2024")
 _SOURCE_KEYS = (
     "dataverse_api", "cd118", "cd119", "cd120", "pl94171", "census_vest",
     "tiger_gpkg", "tiger_mo_cd119", "cb_states",

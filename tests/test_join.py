@@ -32,17 +32,19 @@ def test_replace_states_without_old_file():
     assert load_script().replace_states(None, new, {"NV"}).equals(new)
 
 
-def test_maps_of_lists_enacted_extra_and_check_map():
+def test_maps_of_lists_enacted_extra_check_and_2024_maps():
     cfg = load_config()
     join = load_script()
-    assert join.maps_of(cfg.states["NV"]) == [("enacted", "cd120"), ("check_2022", "cd118")]
-    assert join.maps_of(cfg.states["MO"]) == [("enacted", "cd118"), ("mo_hb1", "cd120"), ("check_2022", "cd118")]
+    assert join.maps_of(cfg.states["NV"]) == [("enacted", "cd120"), ("check_2022", "cd118"), ("map_2024", "cd119")]
+    assert join.maps_of(cfg.states["MO"]) == [("enacted", "cd118"), ("mo_hb1", "cd120"), ("check_2022", "cd118"),
+                                              ("map_2024", "cd119")]
 
 
 def files_of(postal, *extra):
     st = postal.lower()
     return [data_dir() / p for p in (f"alarm/{postal}_cd_2020_map.rds", f"alarm/{postal}_cd_2020_stats.csv",
-                                     f"census/pl/{st}2020.pl.zip", "census/cd120.zip", "census/cd118.zip", *extra)]
+                                     f"census/pl/{st}2020.pl.zip", "census/cd120.zip", "census/cd118.zip",
+                                     "census/cd119.zip", *extra)]
 
 
 def shares(frame):
@@ -73,6 +75,24 @@ def test_nevada_join_reproduces_the_reference_numbers():
     assert len(result.ensemble) == 20000 and result.ensemble["draw"].nunique() == 5000
     assert list(result.units.columns) == ["unit_id", "vap", "pop", "d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20",
                                           "d", "r"]
+    # Nevada has not redrawn since 2021: the 2024 map (CD119) is the enacted map, block for block
+    assert log["map_2024_changed_blocks"] == 0
+    assert shares(pick("map_2024", "block")).equals(block)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not all(p.exists() for p in files_of("AL")), reason="needs the Alabama files")
+def test_alabama_join_has_another_map_in_2024():
+    result = load_script().join_state(load_config(), "AL", data_dir())
+    enacted = result.enacted
+    pick = lambda map_id: enacted[(enacted["map_id"] == map_id) & (enacted["method"] == "block")]
+    # the 2024 court map (CD119) against the legislature's 2023 plan (CD120): 23,529 blocks moved
+    assert result.log["map_2024_changed_blocks"] == 23529
+    # prototype on the real data: two districts above one half on the 2024 map, one on the 2026 map
+    assert int((shares(pick("map_2024")) > 0.5).sum()) == 2
+    assert int((shares(pick("enacted")) > 0.5).sum()) == 1
+    # the same votes on both maps
+    assert pick("map_2024")["d"].sum() == pytest.approx(pick("enacted")["d"].sum(), rel=1e-9)
 
 
 @pytest.mark.data
