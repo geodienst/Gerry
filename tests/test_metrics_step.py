@@ -576,6 +576,25 @@ def test_national_majority_stops_when_the_enacted_threshold_is_far_off():
         step.national_majority(**{**MAJORITY_ARGS, "needed": 4, "enacted_shares": [0.6, 0.47005, 0.52, 0.4]})
 
 
+# The guard on the enacted threshold, both signs, just inside and just outside 5 points (Task 5.7 review)
+def _third(share):
+    # needed 3: the third highest enacted share decides the swing 0.5 - share
+    return {**MAJORITY_ARGS, "enacted_shares": [0.9, 0.8, share, 0.4]}
+
+
+@pytest.mark.parametrize("third, share", [(0.45005, 0.54995), (0.54995, 0.45005)])
+def test_enacted_guard_lets_4_995_points_through(third, share):
+    # swing +0.04995 and -0.04995 from the base share 0.5
+    assert step.national_majority(**_third(third))["enacted"]["share"] == pytest.approx(share)
+
+
+@pytest.mark.parametrize("third", [0.44995, 0.55005])
+def test_enacted_guard_stops_at_5_005_points(third):
+    # swing +0.05005 and -0.05005
+    with pytest.raises(CheckError, match="majority_threshold.*enacted maps"):
+        step.national_majority(**_third(third))
+
+
 def test_national_majority_stops_when_a_grid_threshold_is_far_off():
     # plans with both districts at 0.3 and 0.2: no plan reaches 3 districts within +5 points
     low = np.array([[0.30005, 0.20005]])
@@ -624,3 +643,81 @@ def test_compute_adds_majority_competitive_and_redraw(tmp_path, monkeypatch):
     assert nat["competitive"] == {"enacted": 0, "median": 0, "p5": 0, "p95": 2,
                                   "neutral_dist": pytest.approx([0.5, 0.0, 0.5, 0.0])}
     assert nat["redraw"] == {"seats_2024": 2, "change": -1}
+
+
+# --- Task 5.7, review: the base share, the levels, the wiring of compute and the single-seat parties -------------
+
+
+def test_national_majority_adds_the_swings_to_the_base_share():
+    # every published share starts from base_share (the hand example has base_share 0.5)
+    res = step.national_majority(**{**MAJORITY_ARGS, "base_share": 0.52})
+    assert res["base_share"] == 0.52
+    # the swings of the hand example (+0.02995, +0.0101, -0.02, +0.045, +0.03) on 0.52
+    assert res["enacted"]["share"] == pytest.approx(0.54995)
+    assert res["neutral"] == pytest.approx({"share": 0.5301, "low": 0.5, "high": 0.565, "probability_at_base": 0.125})
+    assert res["proportional"]["share"] == pytest.approx(0.55)
+
+
+def test_probability_at_base_is_read_from_the_given_distribution():
+    # plan choice 6: the plans give P(3 or more) = 0.125 at swing 0; the given distribution (tie rule) says 1.0
+    res = step.national_majority(**{**MAJORITY_ARGS, "neutral_pmf": [0.0, 0.0, 0.0, 0.5, 0.5]})
+    assert res["neutral"]["probability_at_base"] == 1.0
+
+
+def test_national_majority_levels_are_5_50_and_95_percent():
+    # one state, one district, 20 plans: plan j (0..19) turns Democratic at grid step 10 j (share 0.50005 - 0.001 j),
+    # so P(1 district) at step k is (k // 10 + 1) / 20: 5% at step 0, 50% at step 90, 95% at step 180
+    plans = np.array([[0.50005 - 0.001 * j] for j in range(20)])
+    res = step.national_majority(base_share=0.5, needed=1, enacted_shares=[0.52], plan_shares=[plans],
+                                 state_shares=[0.50005], state_seats=[1], seats_at_base=0, neutral_pmf=[0.95, 0.05])
+    assert res["neutral"] == pytest.approx({"share": 0.509, "low": 0.5, "high": 0.518, "probability_at_base": 0.05})
+
+
+def test_compute_passes_needed_enacted_seats_and_plan_shares(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
+    _with_main_map(_enacted(), [(600, 400)] * 3).to_parquet(tmp_path / "enacted_districts.parquet")   # enacted 3
+    seen = _small_house(monkeypatch)
+    monkeypatch.setattr(step, "SINGLE_SEAT_PARTY", {"WY": "D"})     # one Democratic single-seat state: 3 - 1 = 2
+    nat = step.compute(cfg, tmp_path)["national"]
+    assert (nat["enacted"], nat["proportional"], nat["neutral"]["median"]) == (3, 1, 1)
+    assert (seen["seats_at_base"], seen["needed"]) == (3, 2)
+    np.testing.assert_allclose(seen["plan_shares"][0],
+                               [[.65, .35, .30], [.55, .50, .25], [.45, .45, .40], [.60, .40, .30]])
+
+
+def test_seats_needed_stops_on_an_extra_single_seat_state():
+    six = {p: AtLargeState(p, p, "00") for p in ("AK", "DE", "ND", "SD", "VT", "WY")}
+    with pytest.raises(CheckError, match="single_seat_party"):
+        step.seats_needed({**six, "MT": AtLargeState("MT", "Montana", "30")})
+
+
+def test_single_seat_party_is_owner_decision_1():
+    assert step.SINGLE_SEAT_PARTY == {"AK": "R", "DE": "D", "ND": "R", "SD": "R", "VT": "D", "WY": "R"}
+
+
+def test_national_competitive_p95_is_the_95th_percentile():
+    # one state, P = [0.1, 0.8, 0.1]; cumulative 0.1, 0.9, 1: p95 is 2 (0.9 < 0.95), the 90th percentile would be 1
+    res = step.national_competitive({"AA": {"competitive": {"enacted": 1, "neutral_dist": [1, 8, 1]}}})
+    assert (res["p5"], res["median"], res["p95"]) == (0, 1, 2)
+
+
+def test_compute_collects_the_inputs_of_every_state(tmp_path, monkeypatch):
+    # the national inputs are collected state by state: a second state YY, a copy of XX with the votes turned around
+    cfg = _interim(tmp_path)
+    yy = dataclasses.replace(XX, postal="YY", fips="98")
+    pd.DataFrame({"d": [1700.0], "r": [1300.0]}).to_parquet(tmp_path / "units" / "YY.parquet")      # XX has 1300 D, 1700 R
+    for name, frame in {"enacted_districts": _enacted(), "ensemble_districts": _ensemble(),
+                        "alarm_reference": _reference()}.items():
+        both = pd.concat([frame, frame.assign(state="YY")], ignore_index=True)
+        both.to_parquet(tmp_path / f"{name}.parquet")
+    (tmp_path / "join_log.json").write_text('{"XX": {"map_2024_changed_blocks": 12}, '
+                                            '"YY": {"map_2024_changed_blocks": 12}}', encoding="utf-8")
+    cfg = SimpleNamespace(states={"XX": XX, "YY": yy}, at_large=cfg.at_large)
+    seen = _small_house(monkeypatch)
+    monkeypatch.setattr(step, "HOUSE_SEATS", 6 + 1)
+    monkeypatch.setattr(step, "HOUSE_MAJORITY", 6)
+    step.compute(cfg, tmp_path)
+    # 3000 D of 6000 votes; XX first (1300 / 3000), then YY (1700 / 3000)
+    assert seen["base_share"] == pytest.approx(0.5)
+    assert seen["state_shares"] == pytest.approx([1300 / 3000, 1700 / 3000]) and seen["state_seats"] == [3, 3]
+    assert len(seen["enacted_shares"]) == 6 and [shares.shape for shares in seen["plan_shares"]] == [(4, 3), (4, 3)]
