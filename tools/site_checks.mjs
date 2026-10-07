@@ -254,17 +254,32 @@ async function national(t) {
     }
     return hits;
   })()`;
+  // Text that should never reach a visitor: an em dash, a value that failed to format, an empty fill (Task 6.15).
+  const broken = `(() => {
+    const bad = /\\u2014|undefined|NaN|\\[object|Infinity/;
+    const texts = [document.body.textContent, ...[...document.querySelectorAll('[aria-label]')].map((el) => el.getAttribute('aria-label'))];
+    const hits = texts.flatMap((text) => text.split('\\n')).filter((line) => bad.test(line)).map((line) => line.trim().slice(0, 80));
+    const empty = [...document.querySelectorAll('[data-fill]')].filter((el) => el.textContent.trim() === '').map((el) => 'empty ' + el.dataset.fill);
+    return [...hits, ...empty];
+  })()`;
+  const textHits = [];
   for (const width of [375, 2560, 1280]) {
     await t.load('', { width, height: 900 });
     const hits = (await t.js(crossings('#national'))).map((hit) => `national: ${hit}`);
+    if (width === 1280) textHits.push(...(await t.js(broken)).map((hit) => `national: ${hit}`));
     const states = await t.js("[...document.querySelectorAll('#pick option')].map((o) => o.value).filter(Boolean)");
     for (const postal of states) {
       await t.js(`location.hash = '#${postal}'`);
       await t.until(`document.getElementById('pick').value === '${postal}' && document.querySelector('#sheet text.mark-label') !== null`);
       hits.push(...(await t.js(crossings('#sheet'))).map((hit) => `${postal}: ${hit}`));
+      if (width === 1280) textHits.push(...(await t.js(broken)).map((hit) => `${postal}: ${hit}`));
     }
     t.check(`${width} px: no marker line runs through another label (national axis and ${states.length} states)`,
       hits.length === 0, hits.length ? `${hits.length} crossings: ${hits.join('; ')}` : '');
+    if (width === 1280) {
+      t.check(`no em dash, "undefined", "NaN" or empty fill on the page or on the sheets of all ${states.length} states`,
+        textHits.length === 0, textHits.join('; '));
+    }
   }
 }
 
@@ -313,6 +328,26 @@ async function layout(t) {
     const small = sizes.filter((size) => !(size >= 10));
     t.check(`${width}px: chart text is at least 10px on screen`, sizes.length > 0 && small.length === 0, sizes.length
       ? `${sizes.length} texts, smallest ${Math.min(...sizes).toFixed(1)}px${small.length ? `, ${small.length} below 10px` : ''}` : 'no chart text found');
+    // The paragraphs of the national strip keep a readable measure on wide screens (Task 6.15): characters per rendered line.
+    const lines = await t.js(`(() => {
+      const most = [];
+      for (const p of document.querySelectorAll('#national p')) {
+        const perLine = new Map();
+        const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+        for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+          for (let i = 0; i < n.length; i += 1) {
+            const range = document.createRange(); range.setStart(n, i); range.setEnd(n, i + 1);
+            const box = range.getClientRects()[0];
+            if (box) perLine.set(Math.round(box.top), (perLine.get(Math.round(box.top)) ?? 0) + 1);
+          }
+        }
+        most.push({ id: p.id || p.className, chars: Math.max(0, ...perLine.values()) });
+      }
+      return most;
+    })()`);
+    const long = lines.filter((p) => p.chars > 100);
+    t.check(`${width}px: no line in the national strip is longer than 100 characters`, lines.length > 0 && long.length === 0,
+      `longest ${Math.max(...lines.map((p) => p.chars))}${long.length ? `: ${long.map((p) => `${p.id} ${p.chars}`).join(', ')}` : ''}`);
     await t.screenshot(`california-${width}`);
   }
 
