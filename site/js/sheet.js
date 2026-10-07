@@ -75,8 +75,9 @@ function sourceLine(parent, source) {
 /**
  * One state, in the order of the site design (chapter 1).
  * @param {object} sheet stateSheet(results, postal)
+ * @param {{head: string[], body: string[]}} extras stateExtras(results, postal), from Phase 5
  */
-export function renderState(el, sheet, colors, onBack) {
+export function renderState(el, sheet, colors, onBack, extras = { head: [], body: [] }) {
   const root = d3.select(el).html('');
   root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
   const head = root.append('div').attr('class', 'stack');
@@ -86,6 +87,7 @@ export function renderState(el, sheet, colors, onBack) {
   meta.append('span').attr('class', 'pill').text(sheet.status);
   meta.append('span').text(sheet.legal);
   meta.append('span').text(sheet.seatCount);
+  for (const line of extras.head) head.append('p').attr('class', 'meta').text(line);
 
   trio(root, sheet.trio);
   root.append('p').attr('class', 'note').text(sheet.seatsOf);
@@ -107,6 +109,11 @@ export function renderState(el, sheet, colors, onBack) {
   sorted.append('h3').text('Districts, sorted');
   drawSorted(sorted.append('div').node(), sheet.sorted, colors, sheet.sortedLabel);
   sorted.append('p').attr('class', 'note').text(sheet.sortedCaption);
+
+  if (extras.body.length > 0) {
+    const more = root.append('div').attr('class', 'stack');
+    for (const line of extras.body) more.append('p').attr('class', 'note').text(line);
+  }
 
   const measures = root.append('div').attr('class', 'stack');
   measures.append('h3').text('Other measures');

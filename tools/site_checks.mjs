@@ -355,6 +355,16 @@ async function majority(t) {
   t.check('the note gives the six single-seat states their fixed party', /Delaware and Vermont for Democrats, Alaska, North Dakota, South Dakota and Wyoming for Republicans\. So Democrats need \d+ of the \d+ districts\.$/.test(note));
 }
 
+// --- Task 6.11: redraws since 2024 ---------------------------------------------------------------
+async function redraws(t) {
+  await t.load('#TX');
+  t.check('the national redraw sentence', /^With these votes, the maps of the 2024 election give Democrats \d+ seats and the 2026 maps \d+\. Net change: (0 · no difference|[RD]\+\d+ · .+)\.$/.test(await t.text('#redraw-text')));
+  const changed = await t.js(`${DATA}.then((r) => Object.values(r.states).filter((s) => s.redraw.change !== 0).length)`);
+  t.check('one line per state with another seat count', await t.js(`document.querySelectorAll('#redraw-list li').length === ${changed}`));
+  await t.until(`${HEADING} === 'Texas'`);
+  t.check('the Texas sheet has the redraw line', /(Map unchanged since 2024\.|2024 map: \d+ Democratic seats? with these votes\. 2026 map: \d+ \((\d+ (fewer|more)|the same number)\)\.)/.test(await t.text('#sheet')));
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
   { name: 'list', run: list },
@@ -363,4 +373,5 @@ export const GROUPS = [
   { name: 'method', run: method },
   { name: 'layout', run: layout },
   { name: 'majority', run: majority },
+  { name: 'redraws', run: redraws },
 ];

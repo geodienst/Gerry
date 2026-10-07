@@ -1,6 +1,6 @@
 // Texts and view models for the extensions (docs/superpowers/specs/2026-10-06-extensions-design.md,
 // chapters 1 to 4 and 7), from the results.json fields of Phase 5. Pure, like model.js.
-import { share, seats, count } from './format.js';
+import { share, seats, count, effectLine } from './format.js';
 
 // --- Majority threshold (Task 6.10) -------------------------------------------------------------
 
@@ -39,4 +39,37 @@ export function extensionFills(results) {
     'majority-seats': seats(results.national.majority.seats_needed),
     seats: seats(results.national.seats),
   };
+}
+
+// --- Redraws since 2024 (Task 6.11) -------------------------------------------------------------
+
+const plural = (n, one, many) => (n === 1 ? one : many);
+
+/** National: the net change and the states whose seat count changed, from large R to large D. */
+export function redrawView(results) {
+  const n = results.national.redraw;
+  const rows = Object.entries(results.states)
+    .filter(([, s]) => s.redraw.change !== 0)
+    .map(([postal, s]) => ({ postal, name: s.name, change: s.redraw.change, text: effectLine(s.redraw.change) }))
+    .sort((a, b) => a.change - b.change || a.name.localeCompare(b.name, 'en'));
+  return {
+    sentence: `With these votes, the maps of the 2024 election give Democrats ${seats(n.seats_2024)} seats and the 2026 maps `
+      + `${seats(results.national.enacted)}. Net change: ${effectLine(n.change)}.`,
+    rows,
+  };
+}
+
+/** In the sheet: "2024 map: 14 Democratic seats with these votes. 2026 map: 11 (3 fewer)." */
+export function stateRedraw(state) {
+  const r = state.redraw;
+  if (!r.map_changed) return 'Map unchanged since 2024.';
+  const difference = r.change === 0 ? 'the same number' : `${count(Math.abs(r.change))} ${r.change < 0 ? 'fewer' : 'more'}`;
+  return `2024 map: ${seats(r.seats_2024)} Democratic ${plural(r.seats_2024, 'seat', 'seats')} with these votes. `
+    + `2026 map: ${seats(state.enacted)} (${difference}).`;
+}
+
+/** The lines the extensions add to a state's sheet: under the heading, and after "Districts, sorted". */
+export function stateExtras(results, postal) {
+  const s = results.states[postal];
+  return { head: [], body: [stateRedraw(s)] };
 }

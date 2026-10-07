@@ -43,3 +43,15 @@ export function renderMajority(el, view) {
   root.select('#majority-text').text(view.sentence);
   root.select('#majority-note').text([view.proportionalNote, view.rule].filter(Boolean).join(' '));
 }
+
+/** Redraws since 2024: the net change and the states with another seat count (Task 6.11). */
+export function renderRedraws(el, view) {
+  const root = d3.select(el);
+  root.select('#redraw-text').text(view.sentence);
+  const list = root.select('#redraw-list').html('');
+  for (const row of view.rows) {
+    const item = list.append('li');
+    item.append('span').text(row.name);
+    item.append('span').attr('class', 'v').text(row.text);
+  }
+}

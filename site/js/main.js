@@ -6,10 +6,10 @@ import { makeColors } from './colors.js';
 import {
   indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, methodFills,
 } from './model.js';
-import { majorityView, extensionFills } from './extensions.js';
+import { majorityView, extensionFills, redrawView, stateExtras } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState } from './sheet.js';
-import { renderKeyline, renderNational, renderMajority } from './national.js';
+import { renderKeyline, renderNational, renderMajority, renderRedraws } from './national.js';
 
 const { d3 } = globalThis;
 const $ = (id) => document.getElementById(id);
@@ -67,7 +67,7 @@ async function main() {
   pick.addEventListener('change', () => select(pick.value, { push: true }));
 
   function renderSheet() {
-    if (ui.selected) renderState($('sheet'), stateSheet(results, ui.selected), colors, back);
+    if (ui.selected) renderState($('sheet'), stateSheet(results, ui.selected), colors, back, stateExtras(results, ui.selected));
     else renderList($('sheet'), effectList(results), colors, (postal) => select(postal, { push: true, focus: true }), ui);
   }
 
@@ -137,6 +137,7 @@ async function main() {
   renderNational($('national'), national);
   const majority = majorityView(results);
   renderMajority($('majority'), majority);
+  renderRedraws($('redraws'), redrawView(results));
   const fills = { ...methodFills(results), ...extensionFills(results) };
   for (const el of document.querySelectorAll('[data-fill]')) {
     if (Object.hasOwn(fills, el.dataset.fill)) el.textContent = fills[el.dataset.fill];

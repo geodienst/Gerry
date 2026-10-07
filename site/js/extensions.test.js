@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { results } from './testdata.js';
-import { majorityView, extensionFills } from './extensions.js';
+import { majorityView, extensionFills, redrawView, stateRedraw, stateExtras } from './extensions.js';
 
 /** testdata.js with the Phase 5 fields; all numbers made up, with 7 states and 429 seats nationally. */
 function extended() {
@@ -64,4 +64,30 @@ test('majorityView: the vote axis and its text alternative', () => {
 
 test('extensionFills: the numbers in the method paragraph "Extensions"', () => {
   assert.deepEqual(extensionFills(extended()), { 'majority-seats': '216', seats: '429' });
+});
+
+// --- redraws since 2024 (Task 6.11) ---
+
+test('redrawView: the net change and the states with another seat count', () => {
+  const view = redrawView(extended());
+  assert.equal(view.sentence, 'With these votes, the maps of the 2024 election give Democrats 217 seats and the 2026 maps 213. '
+    + 'Net change: R+4 · 4 seats toward Republicans.');
+  assert.deepEqual(view.rows.map((r) => [r.postal, r.text]), [
+    ['TX', 'R+3 · 3 seats toward Republicans'], ['CA', 'D+1 · 1 seat toward Democrats'],
+  ]);
+});
+
+test('stateRedraw: fewer, more, the same number, and an unchanged map', () => {
+  const r = extended();
+  assert.equal(stateRedraw(r.states.TX), '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).');
+  assert.equal(stateRedraw(r.states.CA), '2024 map: 0 Democratic seats with these votes. 2026 map: 1 (1 more).');
+  assert.equal(stateRedraw(r.states.FL), '2024 map: 1 Democratic seat with these votes. 2026 map: 1 (the same number).');
+  assert.equal(stateRedraw(r.states.MO), 'Map unchanged since 2024.');
+});
+
+test('stateExtras: the redraw after the chart', () => {
+  assert.deepEqual(stateExtras(extended(), 'TX'), {
+    head: [],
+    body: ['2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).'],
+  });
 });
