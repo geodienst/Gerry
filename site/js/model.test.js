@@ -68,6 +68,10 @@ test('effectList: toward Republicans, zero, toward Democrats, each from large R 
   assert.deepEqual(list.toR.map((r) => [r.postal, r.label]), [['FL', 'R+4'], ['TX', 'R+2']]);
   assert.deepEqual(list.zero.map((r) => r.postal), ['HI', 'LA', 'MO']);
   assert.deepEqual(list.toD.map((r) => [r.postal, r.label]), [['NM', 'D+1'], ['CA', 'D+3']]);
+  // ties go by name, not by file order or postal code: Mississippi (MS, added last) comes before Missouri (MO)
+  const r = results();
+  r.states.MS = { ...r.states.MO, name: 'Mississippi' };
+  assert.deepEqual(effectList(r).zero.map((s) => s.postal), ['HI', 'LA', 'MS', 'MO']);
 });
 
 test('effectList: the sums, the collapsed line and the net bar', () => {
@@ -91,6 +95,12 @@ test('effectList: one state, one seat, and no state on a side', () => {
   const list = effectList(r);
   assert.equal(list.zeroLabel, '1 state matches its neutral median');
   assert.equal(list.summary, '1 state moves 1 seat toward Republicans, no state moves a seat toward Democrats. Net: 1 seat toward Republicans.');
+  assert.equal(list.bar.label, '1 seat toward Republicans, 0 toward Democrats, net 1 seat toward Republicans');
+  // no state toward Republicans: the sentence starts with a capital and the sum is a plain 0
+  r.states.TX.effects.drawing = 2;
+  const flipped = effectList(r);
+  assert.equal(flipped.seatsR, 0);
+  assert.equal(flipped.summary, 'No state moves a seat toward Republicans, 1 state moves 2 seats toward Democrats. Net: 2 seats toward Democrats.');
 });
 
 // --- the state sheet (Task 6.4) ---
@@ -115,7 +125,10 @@ test('stateSheet: heading, status, the three numbers and the effects (Texas)', (
     { label: 'Enacted', value: '0', sub: 'outside the neutral band' },
   ]);
   assert.equal(sheet.seatsOf, 'Democratic seats of 4.');
-  assert.deepEqual(sheet.effects.map((e) => e.value), ['0 · no difference', 'R+2 · 2 seats toward Republicans']);
+  assert.deepEqual(sheet.effects, [
+    { label: 'Geographic effect', value: '0 · no difference', note: '(neutral maps compared with proportional)' },
+    { label: 'Drawing effect', value: 'R+2 · 2 seats toward Republicans', note: '(enacted map compared with neutral maps)' },
+  ]);
   assert.equal(sheet.position, 'Of the 5,000 neutral maps, 0% give fewer Democratic seats than the enacted map, 0% the same number and 100% more.');
   assert.equal(sheet.blocked, null);
 });
@@ -127,6 +140,7 @@ test('stateSheet: the seat axis and its text alternative (Texas)', () => {
     + 'Bars: share of the 5,000 neutral maps per seat count.');
   assert.equal(sheet.sortedLabel, 'Texas: the 4 enacted districts from lowest to highest Democratic share, 27.0% to 46.9%, '
     + 'against the median and the 90% band of the neutral maps at each position.');
+  assert.equal(sheet.sortedCaption, 'Dots: enacted districts. Line and shading: median and 90% band of the neutral maps at each position.');
 });
 
 test('stateSheet: efficiency gap and mean-median with their neutral context', () => {
@@ -151,6 +165,12 @@ test('stateSheet: two districts (Hawaii) and a band of one seat count', () => {
   assert.equal(sheet.trio[2].sub, 'inside the neutral band');
   assert.deepEqual(sheet.measures[1], { label: 'Mean-median', value: 'Not defined for two districts', context: '' });
   assert.equal(sheet.status, 'In effect');
+  assert.equal(sheet.axisLabel, 'Democratic seats in Hawaii: proportional 1, neutral baseline 2 (90% of maps 2), enacted 2. '
+    + 'Bars: share of the 5,000 neutral maps per seat count.');
+  // EG median, p5 and p95 all round to 17.9 points toward Democrats: the value once, not three times
+  assert.deepEqual(sheet.measures[0], {
+    label: 'Efficiency gap', value: '17.9 points toward Democrats', context: '(90% of neutral maps: 17.9 points toward Democrats)',
+  });
 });
 
 test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
@@ -163,4 +183,11 @@ test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
     position: 'Of the 5,000 neutral maps, 0% give fewer Democratic seats than HB 1 of 2025, 13% the same number and 87% more.',
     source: { label: 'Redistricting Data Hub', url: 'https://redistrictingdatahub.org/dataset/2025-missouri-congressional-districts-plan/' },
   });
+  // the plan count is the sum of the state's neutral.dist; a blocked map with two seats gets the plural
+  const r = results();
+  r.states.MO.neutral.dist = [0, 643, 3346, 11, 0, 0, 0, 0, 0];
+  r.states.MO.blocked_map.enacted = 2;
+  const other = stateSheet(r, 'MO');
+  assert.equal(other.blocked.seatsText, 'With these votes it would give 2 Democratic seats.');
+  assert.match(other.blocked.position, /^Of the 4,000 neutral maps, /);
 });

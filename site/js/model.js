@@ -94,7 +94,7 @@ export function effectList(results) {
   const toR = rows.filter((r) => r.drawing < 0);
   const zero = rows.filter((r) => r.drawing === 0);
   const toD = rows.filter((r) => r.drawing > 0);
-  const seatsR = -sum(toR.map((r) => r.drawing));
+  const seatsR = sum(toR.map((r) => -r.drawing));
   const seatsD = sum(toD.map((r) => r.drawing));
   const net = seatsD - seatsR;
   const moves = (n, total, party) => (n === 0
@@ -109,15 +109,16 @@ export function effectList(results) {
       left: `${seats(seatsR)} toward Republicans`,
       right: `${seats(seatsD)} toward Democrats`,
       net: `Net ${effect(net)}`,
-      label: `${seats(seatsR)} seats toward Republicans, ${seats(seatsD)} toward Democrats, net ${effectWords(net)}`,
+      label: `${seats(seatsR)} ${plural(seatsR, 'seat', 'seats')} toward Republicans, ${seats(seatsD)} toward Democrats, net ${effectWords(net)}`,
     },
   };
 }
 
+// "15 to 20", or one number if the 5th and 95th percentile are equal.
+const seatRange = (a) => (a.p5 === a.p95 ? seats(a.p5) : `${seats(a.p5)} to ${seats(a.p95)}`);
+
 function bandText(neutral, unit) {
-  return neutral.p5 === neutral.p95
-    ? `90% of ${unit}: ${seats(neutral.p5)}`
-    : `90% of ${unit}: ${seats(neutral.p5)} to ${seats(neutral.p95)}`;
+  return `90% of ${unit}: ${seatRange(neutral)}`;
 }
 
 /** "Of the 5,000 neutral maps, 0% give fewer Democratic seats than the enacted map, 0% the same number and 100% more." */
@@ -126,14 +127,19 @@ export function positionText(position, plans, what) {
     + `${planShare(position.equal)} the same number and ${planShare(position.more)} more.`;
 }
 
+// If p5 and p95 round to the same text, the median does too (it lies between them): show the value once,
+// like bandText does for seats.
 function measureContext(m) {
-  return `(neutral maps: ${advantage(m.median)}; 90% between ${advantage(m.p5)} and ${advantage(m.p95)})`;
+  const p5 = advantage(m.p5);
+  const p95 = advantage(m.p95);
+  return p5 === p95
+    ? `(90% of neutral maps: ${p5})`
+    : `(neutral maps: ${advantage(m.median)}; 90% between ${p5} and ${p95})`;
 }
 
 function axisLabel(name, a, unit) {
-  const band = a.p5 === a.p95 ? seats(a.p5) : `${seats(a.p5)} to ${seats(a.p95)}`;
   return `Democratic seats in ${name}: proportional ${seats(a.proportional)}, neutral baseline ${seats(a.median)} `
-    + `(90% of ${unit} ${band}), enacted ${seats(a.enacted)}.`;
+    + `(90% of ${unit} ${seatRange(a)}), enacted ${seats(a.enacted)}.`;
 }
 
 /** Everything the sheet shows for one state, in the order of the site design (chapter 1). */
