@@ -549,3 +549,64 @@ def test_proportional_threshold():
     # the first state gets its second seat once 2 * (0.72005 + s) > 1.5, so s > 0.02995 (step 300);
     # the second state keeps 1 seat from -0.05 to +0.05 (2 * 0.35005 = 0.7001 up to 2 * 0.45005 = 0.9001)
     assert m.proportional_threshold([0.72005, 0.40005], [2, 2], 3) == pytest.approx(0.03)
+
+
+def test_smallest_swing_returns_k_divided_by_the_grid():
+    # exact == on purpose: pytest.approx would hide the one-ulp gap. 3 / 10000 is the float nearest 0.0003, while
+    # 3 * 0.0001 is 0.00030000000000000003 and -3 * 0.0001 is -0.00030000000000000003
+    assert m.smallest_swing(lambda s: s >= 0.0003) == 0.0003
+    assert m.smallest_swing(lambda s: s >= -0.0003) == -0.0003
+    # strict: step 3 does not pass s > 0.0003, step 4 is the first that does
+    assert m.smallest_swing(lambda s: s > 0.0003) == 0.0004
+
+
+def test_smallest_swing_probes_its_edges_with_max_steps():
+    # max_steps=3: the probes sit at -3 / 10000 = -0.0003 and +3 / 10000 = 0.0003
+    with pytest.raises(m.SwingRangeError, match="already true"):
+        m.smallest_swing(lambda s: s >= -0.0003, max_steps=3)
+    with pytest.raises(m.SwingRangeError, match="still false"):
+        m.smallest_swing(lambda s: s > 0.0003, max_steps=3)
+    # step 2 is inside the range and step 4 is outside it
+    assert m.smallest_swing(lambda s: s >= 0.0002, max_steps=3) == 0.0002
+    with pytest.raises(m.SwingRangeError, match="still false"):
+        m.smallest_swing(lambda s: s >= 0.0004, max_steps=3)
+
+
+def test_smallest_swing_range_ends_at_exactly_five_points():
+    # step 501 (+0.0501) is out of range; a condition true from -0.0501 on is already true at step -500
+    with pytest.raises(m.SwingRangeError, match="still false"):
+        m.smallest_swing(lambda s: s >= 0.0501)
+    with pytest.raises(m.SwingRangeError, match="already true"):
+        m.smallest_swing(lambda s: s > -0.0501)
+
+
+def test_neutral_threshold_tolerates_float_error():
+    # One state, 12 plans of 11 districts. Plan j has j districts at 0.6 and the rest at 0.3, except plan 6: it has
+    # 5 at 0.6, one at 0.49995 and 5 at 0.3, so it reaches 6 seats from step 1 on (0.49995 + 0.0001 > 0.5).
+    # Up to step 0 the seat counts 0..4 have one plan, 5 has two, 6 has none and 7..11 have one: P(6 or more) = 5/12.
+    # From step 1 every count 0..11 has one plan: P(6 or more) = 6/12 = 0.5 by hand, but six times 1/12 is
+    # 0.49999999999999994 in floats, just under 0.5.
+    plans = np.array([[0.6] * j + [0.3] * (11 - j) for j in range(12)])
+    plans[6] = [0.6] * 5 + [0.49995] + [0.3] * 5
+    assert m.majority_probability([plans], 0.0001, 6) < 0.5
+    assert m.neutral_threshold([plans], 6, 0.5) == pytest.approx(0.0001)
+
+
+def test_neutral_threshold_does_not_round_a_real_shortfall_up():
+    # One state, one district, 10,000 plans: 4,999 at 0.9, 5,000 at 0.1 and one at 0.49995. P(1 district) is 0.4999
+    # up to step 0 and 0.5 from step 1 on. A shortfall of 1e-4 is not float noise.
+    shares = np.array([[0.9]] * 4999 + [[0.1]] * 5000 + [[0.49995]])
+    assert m.neutral_threshold([shares], 1, 0.5) == pytest.approx(0.0001)
+
+
+def test_proportional_at_swing_rejects_lists_of_different_length():
+    with pytest.raises(ValueError):
+        m.proportional_at_swing([0.55, 0.38], [4], 0.0)
+
+
+def test_proportional_at_swing_guard_has_two_sides_and_keeps_the_edges():
+    # 0.03 - 0.04 = -0.01
+    with pytest.raises(ValueError, match="outside"):
+        m.proportional_at_swing([0.03], [2], -0.04)
+    # exactly 0 and exactly 1 are shares: 3 seats at 0 give 0, 2 seats at 1 give 2
+    assert m.proportional_at_swing([0.0, 1.0], [3, 2], 0.0) == 2
