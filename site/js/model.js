@@ -194,10 +194,14 @@ export function stateSheet(results, postal) {
 
 // --- The national section (Task 6.7) ------------------------------------------------------------
 
+// A count of up to ten in a sentence, as a word: "The six states". Larger counts as digits.
+const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+
 /** The key figures under the title, the national strip and its seat axis. */
 export function nationalView(results) {
   const n = results.national;
   const names = n.single_seat.map((s) => s.name).sort((a, b) => a.localeCompare(b, 'en'));
+  const howMany = COUNT_WORDS[names.length] ?? count(names.length);
   const axis = {
     dist: n.neutral.dist, proportional: n.proportional, median: n.neutral.median,
     p5: n.neutral.p5, p95: n.neutral.p95, enacted: n.enacted,
@@ -212,7 +216,7 @@ export function nationalView(results) {
         { label: 'Drawing effect', value: effect(n.effects.drawing) },
       ],
     },
-    note: `${seats(n.seats)} seats. The six states with one at-large seat (${names.join(', ')}) are not counted.`,
+    note: `${seats(n.seats)} seats. The ${howMany} states with one at-large seat (${names.join(', ')}) are not counted.`,
     trio: [
       { label: 'Proportional', value: seats(n.proportional), sub: 'seats follow the vote' },
       { label: 'Neutral baseline', value: seats(n.neutral.median), sub: bandText(n.neutral, 'outcomes') },

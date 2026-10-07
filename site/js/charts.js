@@ -1,6 +1,7 @@
 // The charts (site design, chapter 5): the seat axis, the sorted districts and the net bar.
 // Geometry comes from axes.js, numbers from format.js; this module only draws.
 import { BASE_FONT, SEAT_AXIS, LABEL_GAP, chartUnits, placeLabels, sortedDomain, netBar } from './axes.js';
+import { markerSegments } from './axes.js';
 import { seats, percentLabel } from './format.js';
 
 const { d3 } = globalThis;
@@ -23,19 +24,34 @@ function drawMarks(svg, marks, width, plotBottom, top, rows) {
   const text = Object.fromEntries(marks.map((mark) => [mark.key, mark.text]));
   const placed = placeLabels(marks, width, LABEL_GAP, rows);
   const labelY = (p) => top - 6 - 12 * p.row; // row 0 right above the plot, each next row 12 units higher
-  for (const p of placed) {
-    svg.append('line').attr('x1', p.x).attr('x2', p.x).attr('y1', labelY(p) + 3).attr('y2', plotBottom)
-      .attr('stroke', p.key === 'base' ? 'var(--muted)' : 'var(--fg)')
-      .attr('stroke-width', p.key === 'neutral' ? 2 : 1)
-      .attr('stroke-dasharray', { proportional: '3 2', base: '1 2' }[p.key] ?? null);
-    if (p.key === 'enacted') svg.append('circle').attr('cx', p.x).attr('cy', plotBottom - 6).attr('r', 5).attr('fill', 'var(--fg)');
+  // Labels first, so their boxes are known; lines and symbols go in before the first label, under all of them.
+  const labels = placed.map((p) => svg.append('text').attr('class', 'mark-label').attr('x', p.x).attr('y', labelY(p))
+    .attr('text-anchor', p.anchor).text(text[p.key]).node());
+  const boxes = labels.map(labelBox);
+  const under = () => labels[0];
+  placed.forEach((p, i) => {
+    // from its own label down to the plot, with a gap at each label of another marker in the way
+    for (const [from, to] of markerSegments(p.x, labelY(p) + 3, plotBottom, boxes.filter((box, j) => j !== i))) {
+      svg.insert('line', under).attr('x1', p.x).attr('x2', p.x).attr('y1', from).attr('y2', to)
+        .attr('stroke', p.key === 'base' ? 'var(--muted)' : 'var(--fg)')
+        .attr('stroke-width', p.key === 'neutral' ? 2 : 1)
+        .attr('stroke-dasharray', { proportional: '3 2', base: '1 2' }[p.key] ?? null);
+    }
+    if (p.key === 'enacted') svg.insert('circle', under).attr('cx', p.x).attr('cy', plotBottom - 6).attr('r', 5).attr('fill', 'var(--fg)');
     if (p.key === 'proportional') {
-      svg.append('rect').attr('x', p.x - 4).attr('y', plotBottom - 10).attr('width', 8).attr('height', 8)
+      svg.insert('rect', under).attr('x', p.x - 4).attr('y', plotBottom - 10).attr('width', 8).attr('height', 8)
         .attr('fill', 'var(--sheet)').attr('stroke', 'var(--fg)');
     }
-  }
-  for (const p of placed) { // labels last, so their halo covers the lines
-    svg.append('text').attr('class', 'mark-label').attr('x', p.x).attr('y', labelY(p)).attr('text-anchor', p.anchor).text(text[p.key]);
+  });
+}
+
+/** A label's box in viewBox units; an empty box when the browser cannot measure it (a chart that is not displayed). */
+function labelBox(node) {
+  try {
+    const { x, y, width, height } = node.getBBox();
+    return { x, y, width, height };
+  } catch {
+    return { x: 0, y: 0, width: 0, height: 0 };
   }
 }
 

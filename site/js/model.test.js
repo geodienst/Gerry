@@ -196,6 +196,8 @@ test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
 
 test('nationalView: the key figures under the title', () => {
   const view = nationalView(results());
+  // testdata national: seats 429, proportional 224, neutral median 223, enacted 213, all as digits;
+  // drawing effect -10 (negative = fewer Democratic seats) -> "R+10"
   assert.deepEqual(view.keyline, {
     lead: 'Democratic seats of 429:',
     items: [
@@ -207,13 +209,24 @@ test('nationalView: the key figures under the title', () => {
 
 test('nationalView: the strip with the three numbers, the effects and the position', () => {
   const view = nationalView(results());
+  // 6 entries in single_seat -> "six"; their names sorted alphabetically
   assert.equal(view.note, '429 seats. The six states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont, Wyoming) are not counted.');
+  // the band runs from p5 217 to p95 229
   assert.deepEqual(view.trio.map((t) => [t.value, t.sub]), [['224', 'seats follow the vote'], ['223', '90% of outcomes: 217 to 229'], ['213', 'maps used in 2026']]);
+  // geographic -1 -> "R+1", one seat (singular); drawing -10 -> "R+10", 10 seats
   assert.equal(view.effects, 'Geographic effect R+1: neutral maps give 1 seat toward Republicans compared with seats that follow the vote. '
     + 'Drawing effect R+10: the enacted maps give 10 seats toward Republicans compared with neutral maps.');
+  // position.more 0.9972: above 0.99 and below 1 -> ">99%"
   assert.equal(view.position, 'In >99% of neutral outcomes Democrats win more seats than under the enacted maps.');
   assert.equal(view.axisLabel, 'Democratic seats in all states with more than one seat: proportional 224, neutral baseline 223 '
     + '(90% of outcomes 217 to 229), enacted 213. Bars: share of neutral outcomes per seat count.');
+  // dist has one probability per seat count from 0 to 429: 430 entries
   assert.equal(view.axis.dist.length, 430);
   assert.equal(view.seatsTotal, 429);
+  // the count comes from single_seat: 5 entries -> "five"; above ten as digits, 11 -> "11"
+  const r = results();
+  r.national.single_seat = r.national.single_seat.slice(0, 5);
+  assert.equal(nationalView(r).note, '429 seats. The five states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont) are not counted.');
+  r.national.single_seat = Array.from({ length: 11 }, (_, k) => ({ postal: `S${k}`, name: `State ${k}` }));
+  assert.match(nationalView(r).note, /^429 seats\. The 11 states with one at-large seat \(State 0, /);
 });

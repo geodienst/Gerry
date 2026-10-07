@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fitTransform, chartUnits, nationalSeatDomain, placeLabels, sortedDomain, netBar } from './axes.js';
+import { markerSegments } from './axes.js';
 
 // --- the map (Task 6.2) ---
 
@@ -108,4 +109,27 @@ test('netBar: bars from the center, scaled to the larger side, and the net marke
   const narrow = netBar(0, 10, 300);
   assert.equal(narrow.center, 150);
   assert.equal(narrow.anchor, 'end');
+});
+
+// --- marker lines (review of Task 6.7) ---
+
+test('markerSegments: a line with no label in its way runs from its label to the plot', () => {
+  assert.deepEqual(markerSegments(100, 25, 102, []), [[25, 102]]);
+  // a box from x 0 to 50 is out of reach: 100 > 50 + 2
+  assert.deepEqual(markerSegments(100, 25, 102, [{ x: 0, y: 22, width: 50, height: 15 }]), [[25, 102]]);
+  // an empty box, from a chart that is not displayed, leaves no gap
+  assert.deepEqual(markerSegments(100, 25, 102, [{ x: 0, y: 0, width: 0, height: 0 }]), [[25, 102]]);
+});
+
+test('markerSegments: a gap at each label in the way, 2 units around its box', () => {
+  const row0 = { x: 70, y: 22, width: 60, height: 15 }; // gap 22 - 2 = 20 to 22 + 15 + 2 = 39
+  // the line starts at 25, inside the gap, so it starts again at 39
+  assert.deepEqual(markerSegments(100, 25, 102, [row0]), [[39, 102]]);
+  // from higher up: 10 to 20, then 39 to 102
+  assert.deepEqual(markerSegments(100, 10, 102, [row0]), [[10, 20], [39, 102]]);
+  // overlapping boxes make one gap: 8 to 27 and 20 to 39 give 8 to 39
+  assert.deepEqual(markerSegments(100, 0, 102, [row0, { x: 80, y: 10, width: 40, height: 15 }]), [[0, 8], [39, 102]]);
+  // the pad reaches 2 units past the box: x 131 is in reach of a box that ends at 130, x 132 is not
+  assert.deepEqual(markerSegments(131, 25, 102, [row0]), [[39, 102]]);
+  assert.deepEqual(markerSegments(132, 25, 102, [row0]), [[25, 102]]);
 });

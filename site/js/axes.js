@@ -57,6 +57,32 @@ export function placeLabels(marks, width = SEAT_AXIS.width, gap = LABEL_GAP, row
   return placed.map(({ at, ...label }) => label);
 }
 
+/**
+ * The visible parts of a marker line at `x` from `top` down to `bottom`. The line leaves a gap
+ * at every label box in its way (the labels of other markers on lower rows), so no line runs
+ * through text (Task 6.7, Step 6). Boxes are in viewBox units; an empty box, from a chart that
+ * is not displayed, leaves no gap.
+ * @param {number} x
+ * @param {number} top
+ * @param {number} bottom
+ * @param {{x: number, y: number, width: number, height: number}[]} boxes
+ * @param {number} pad room around each box, more than the 1.5-unit halo of a label
+ * @returns {[number, number][]} [from, to] pairs, top to bottom
+ */
+export function markerSegments(x, top, bottom, boxes, pad = 2) {
+  const gaps = boxes.filter((b) => b.width > 0 && x > b.x - pad && x < b.x + b.width + pad)
+    .map((b) => [b.y - pad, b.y + b.height + pad])
+    .sort((a, b) => a[0] - b[0]);
+  const parts = [];
+  let y = top;
+  for (const [from, to] of gaps) {
+    if (from > y) parts.push([y, Math.min(from, bottom)]);
+    y = Math.max(y, to);
+  }
+  if (y < bottom) parts.push([y, bottom]);
+  return parts.filter(([from, to]) => to > from);
+}
+
 /** Vertical domain of the sorted district chart: at least 20% to 80%, plus a margin of 2 points. */
 export function sortedDomain(sorted) {
   const low = Math.min(0.2, ...sorted.p5, ...sorted.enacted) - 0.02;

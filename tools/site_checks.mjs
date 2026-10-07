@@ -226,6 +226,40 @@ async function national(t) {
     ['Proportional', 'Neutral baseline', 'Enacted', '90% of outcomes', 'Geographic effect', 'Drawing effect', 'of neutral outcomes'].every((p) => strip.includes(p)));
   t.check('the national seat axis has a text alternative', await t.js(
     "document.querySelector('#national-axis svg')?.getAttribute('aria-label')?.startsWith('Democratic seats in all states with more than one seat') === true"));
+  // A marker line stops at the labels of the other markers (Step 6: no line through the text).
+  const crossings = (scope) => `(() => {
+    const hits = [];
+    for (const svg of document.querySelectorAll('${scope} svg.chart')) {
+      const labels = [...svg.querySelectorAll(':scope > text.mark-label')].map((node) => ({
+        node, x: Number(node.getAttribute('x')), y: Number(node.getAttribute('y')), box: node.getBBox() }));
+      if (!labels.length) continue;
+      for (const line of svg.querySelectorAll(':scope > line')) {
+        const x = Number(line.getAttribute('x1'));
+        const [y1, y2] = [Number(line.getAttribute('y1')), Number(line.getAttribute('y2'))].sort((a, b) => a - b);
+        // the line's own label is the nearest one above it at the same x
+        const own = labels.filter((l) => Math.abs(l.x - x) < 1e-6 && l.y <= y1).sort((a, b) => b.y - a.y)[0];
+        for (const l of labels) {
+          if (l === own) continue;
+          const across = x > l.box.x + 0.5 && x < l.box.x + l.box.width - 0.5;
+          const overlap = Math.min(y2, l.box.y + l.box.height) - Math.max(y1, l.box.y);
+          if (across && overlap > 0.5) hits.push((own ? own.node.textContent : 'a line') + ' runs through ' + l.node.textContent);
+        }
+      }
+    }
+    return hits;
+  })()`;
+  for (const width of [375, 2560, 1280]) {
+    await t.load('', { width, height: 900 });
+    const hits = (await t.js(crossings('#national'))).map((hit) => `national: ${hit}`);
+    const states = await t.js("[...document.querySelectorAll('#pick option')].map((o) => o.value).filter(Boolean)");
+    for (const postal of states) {
+      await t.js(`location.hash = '#${postal}'`);
+      await t.until(`document.getElementById('pick').value === '${postal}' && document.querySelector('#sheet text.mark-label') !== null`);
+      hits.push(...(await t.js(crossings('#sheet'))).map((hit) => `${postal}: ${hit}`));
+    }
+    t.check(`${width} px: no marker line runs through another label (national axis and ${states.length} states)`,
+      hits.length === 0, hits.length ? `${hits.length} crossings: ${hits.join('; ')}` : '');
+  }
 }
 
 export const GROUPS = [
