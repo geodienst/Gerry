@@ -413,8 +413,14 @@ def make_row(postal: str, src: dict, retrieved: str, result: dict) -> dict   # s
 export function roundHalfUp(value, decimals, shift = 0)  // -> string, half-up op de decimale waarde
 export function share(fraction)        // -> "54.8%" | "49.95%" | "just under 50%" | "just over 50%" | "exactly 50%"
 export function planShare(fraction)    // -> "62%" | "<1%" | ">99%" | "0%" | "100%"
-export function advantage(value)       // number | null -> "favors Republicans by 4.2 points" | "Less than 0.05 points either way" | "Not defined for two districts"
+export function advantage(value)       // number | null -> "4.2 points toward Republicans" | "less than 0.05 points either way" | "Not defined for two districts"
 export function seats(n)               // -> "17"
+export function effect(n)              // geheel getal, positief = meer D-zetels -> "R+6" | "D+3" | "0" (Task 6.1 van het siteplan)
+export function effectWords(n)         // -> "6 seats toward Republicans" | "1 seat toward Democrats" | "no difference"
+export function effectLine(n)          // -> "R+6 · 6 seats toward Republicans" | "0 · no difference"
+export function count(n)               // -> "5,000"
+export function percentLabel(fraction) // -> "35%" (assen en legenda's)
+export function longDate(iso)          // "2026-10-03" -> "October 3, 2026"
 ```
 
 ### Gereedschap

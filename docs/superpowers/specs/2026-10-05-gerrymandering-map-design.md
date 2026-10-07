@@ -318,7 +318,7 @@ Opmaak van getallen. Eén formatter in `site/js/format.js`, getest met `node --t
 
 - Aandelen in procenten met één decimaal. Rondt een aandeel af op 50,0%, dan twee decimalen; is het dan nog 50,00%, dan "just under 50%" of "just over 50%".
 - Aandelen van plannen in hele procenten. Is de waarde groter dan 0 maar rondt ze af op 0, dan "<1%"; is ze kleiner dan 1 maar rondt ze af op 100, dan ">99%". Alleen exact 0 en 1 worden "0%" en "100%". Testgevallen onder meer 25/5000 en 4975/5000.
-- EG en MM in procentpunten met één decimaal, als "favors Republicans by 4.2 points". Rondt de waarde af op 0,0, dan "Less than 0.05 points either way".
+- EG en MM in procentpunten met één decimaal, met de richting: "4.2 points toward Republicans". Rondt de waarde af op 0,0, dan "less than 0.05 points either way". Effecten in hele zetels op dezelfde manier: "R+6 · 6 seats toward Republicans", "D+3 · 3 seats toward Democrats", "0 · no difference" (siteontwerp, bijgewerkt op 7 oktober 2026).
 - Zetels als geheel getal.
 - Afronden half-up op de decimale waarde, niet met `Math.round` op een kommagetal.
 

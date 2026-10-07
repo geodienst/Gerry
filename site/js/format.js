@@ -81,7 +81,7 @@ export function planShare(fraction) {
 
 /**
  * Efficiency gap or mean-median (fraction, positive favors Republicans) in
- * percentage points: 0.042 -> "favors Republicans by 4.2 points".
+ * percentage points with the direction: 0.182 -> "18.2 points toward Republicans".
  * null (mean-median with two districts) -> "Not defined for two districts".
  * @param {number|null} value
  * @returns {string}
@@ -92,8 +92,8 @@ export function advantage(value) {
     throw new TypeError(`expected a finite number or null, got ${value}`);
   }
   const points = roundHalfUp(Math.abs(value), 1, 2);
-  if (points === '0.0') return 'Less than 0.05 points either way';
-  return `favors ${value > 0 ? 'Republicans' : 'Democrats'} by ${points} points`;
+  if (points === '0.0') return 'less than 0.05 points either way';
+  return `${points} points toward ${value > 0 ? 'Republicans' : 'Democrats'}`;
 }
 
 /**
@@ -106,4 +106,90 @@ export function seats(n) {
     throw new TypeError(`expected a whole number of seats, got ${n}`);
   }
   return String(n);
+}
+
+// Effects count Democratic seats (spec chapter 5: positive is more Democratic
+// seats). The site shows the direction instead of a sign, so neither party is
+// the default (site design, update of October 7, 2026).
+
+function checkWhole(n) {
+  if (!Number.isInteger(n)) {
+    throw new TypeError(`expected a whole number of seats, got ${n}`);
+  }
+}
+
+/**
+ * A seat effect as a direction: -6 -> "R+6", 3 -> "D+3", 0 -> "0".
+ * @param {number} n whole seats, positive toward Democrats
+ * @returns {string}
+ */
+export function effect(n) {
+  checkWhole(n);
+  if (n === 0) return '0';
+  return `${n < 0 ? 'R' : 'D'}+${Math.abs(n)}`;
+}
+
+/**
+ * A seat effect in words: -6 -> "6 seats toward Republicans",
+ * 1 -> "1 seat toward Democrats", 0 -> "no difference".
+ * @param {number} n
+ * @returns {string}
+ */
+export function effectWords(n) {
+  checkWhole(n);
+  if (n === 0) return 'no difference';
+  const size = Math.abs(n);
+  return `${size} ${size === 1 ? 'seat' : 'seats'} toward ${n < 0 ? 'Republicans' : 'Democrats'}`;
+}
+
+/**
+ * Notation and words together: -6 -> "R+6 · 6 seats toward Republicans",
+ * 0 -> "0 · no difference". The separator is a middle dot (U+00B7).
+ * @param {number} n
+ * @returns {string}
+ */
+export function effectLine(n) {
+  return `${effect(n)} · ${effectWords(n)}`;
+}
+
+/**
+ * A whole number with thousands separators: 5000 -> "5,000".
+ * @param {number} n
+ * @returns {string}
+ */
+export function count(n) {
+  if (!Number.isSafeInteger(n) || n < 0) {
+    throw new TypeError(`expected a whole number, got ${n}`);
+  }
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+/**
+ * A fraction as a whole percent, for axis ticks and legends: 0.35 -> "35%".
+ * @param {number} fraction
+ * @returns {string}
+ */
+export function percentLabel(fraction) {
+  checkFraction(fraction);
+  return `${roundHalfUp(fraction, 0, 2)}%`;
+}
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+  'August', 'September', 'October', 'November', 'December'];
+
+/**
+ * A date from results.json as text: "2026-10-03" -> "October 3, 2026".
+ * @param {string} iso YYYY-MM-DD
+ * @returns {string}
+ */
+export function longDate(iso) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(typeof iso === 'string' ? iso : '');
+  if (match) {
+    const [year, month, day] = match.slice(1).map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+      return `${MONTHS[month - 1]} ${day}, ${year}`;
+    }
+  }
+  throw new TypeError(`expected a date as YYYY-MM-DD, got ${iso}`);
 }
