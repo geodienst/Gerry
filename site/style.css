@@ -69,7 +69,7 @@ a { color: var(--ink); }
 
 /* Map and sheet side by side from 900px; the sheet is at least 22rem and otherwise 30% wide. */
 .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: 1.2rem; align-items: start; }
-@media (width < 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 899.98px) { .main { grid-template-columns: minmax(0, 1fr); } }
 
 .controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
 .seg { display: inline-flex; border: 1px solid var(--rule); }
@@ -84,7 +84,7 @@ select { font: inherit; font-size: 0.87rem; padding: 0.3rem 0.4rem; background: 
 .mapbox { position: relative; background: var(--water); }
 svg { display: block; width: 100%; height: auto; }
 #map { touch-action: pan-y; cursor: grab; }
-#map.dragging { cursor: grabbing; }
+#map.dragging, #map.dragging path { cursor: grabbing; }
 #map .bg { fill: transparent; }
 #map path { vector-effect: non-scaling-stroke; }
 .district { stroke: var(--sheet); stroke-width: 0.4; cursor: pointer; }

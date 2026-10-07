@@ -50,23 +50,41 @@ async function launch() {
   const exe = BROWSERS.find((path) => existsSync(path));
   if (!exe) throw new Error('No Edge or Chrome found; set BROWSER to the path of one');
   const profile = mkdtempSync(join(tmpdir(), 'site-check-'));
+  // Without __COMPAT_LAYER (Git Bash sets it), Edge does not relaunch itself, so `child` is the browser
+  // and child.kill() stops it even when launching fails before DevTools answers.
+  const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => name.toUpperCase() !== '__COMPAT_LAYER'));
   const child = spawn(exe, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
-    '--no-first-run', '--no-default-browser-check', '--disable-extensions', 'about:blank'], { stdio: 'ignore' });
-  // The browser writes its port to DevToolsActivePort; the file can be locked while it writes.
-  let lines = [];
-  for (let i = 0; i < 150 && lines.length < 2; i += 1) {
-    await sleep(100);
-    try { lines = readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n').filter(Boolean); } catch { lines = []; }
-  }
-  if (lines.length < 2) throw new Error(`${exe} opened no DevTools port`);
-  const ws = new WebSocket(`ws://127.0.0.1:${lines[0]}${lines[1]}`);
-  await new Promise((done, fail) => { ws.onopen = done; ws.onerror = fail; });
+    '--no-first-run', '--no-default-browser-check', '--disable-extensions', 'about:blank'], { stdio: 'ignore', env });
+  let ws = null;
   const close = async () => {
-    ws.close();
+    // Ask the browser itself to quit. When Edge relaunches itself (as it does with __COMPAT_LAYER set),
+    // `child` is a stub that has already exited, and child.kill() alone would leave the browser running.
+    if (ws?.readyState === WebSocket.OPEN) {
+      await new Promise((done) => {
+        const timer = setTimeout(done, 5000);
+        ws.addEventListener('close', () => { clearTimeout(timer); done(); });
+        ws.send(JSON.stringify({ id: 0, method: 'Browser.close' }));
+      });
+    }
+    ws?.close();
     child.kill();
     await sleep(500);
     try { rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }); } catch { /* left for the OS */ }
   };
+  try {
+    // The browser writes its port to DevToolsActivePort; the file can be locked while it writes.
+    let lines = [];
+    for (let i = 0; i < 150 && lines.length < 2; i += 1) {
+      await sleep(100);
+      try { lines = readFileSync(join(profile, 'DevToolsActivePort'), 'utf8').split('\n').filter(Boolean); } catch { lines = []; }
+    }
+    if (lines.length < 2) throw new Error(`${exe} opened no DevTools port`);
+    ws = new WebSocket(`ws://127.0.0.1:${lines[0]}${lines[1]}`);
+    await new Promise((done, fail) => { ws.onopen = done; ws.onerror = fail; });
+  } catch (error) {
+    await close();
+    throw error;
+  }
   return { ws, close };
 }
 
@@ -102,7 +120,7 @@ async function main() {
   const base = option('--url') ?? `http://127.0.0.1:${server.address().port}/`;
   const origin = new URL(base).origin;
   const browser = await launch();
-  const { tab, on } = await openTab(browser.ws);
+  const { tab, on } = await openTab(browser.ws).catch(async (error) => { await browser.close(); throw error; });
   const requests = [];
   const errors = [];
   on['Network.requestWillBeSent'] = (p) => requests.push(p.request.url);
@@ -118,6 +136,8 @@ async function main() {
     return r.result.value;
   };
   const t = {
+    /** A DevTools command for the page, such as Input.dispatchTouchEvent. */
+    tab,
     sleep,
     js,
     check(name, ok, detail = '') {
@@ -140,6 +160,9 @@ async function main() {
         { name: 'prefers-color-scheme', value: dark ? 'dark' : 'light' },
         { name: 'prefers-reduced-motion', value: reduce ? 'reduce' : 'no-preference' },
       ] });
+      // A URL that differs from the current one only after # is a same-document navigation, which
+      // keeps the old page; leave it first so every load starts fresh.
+      await tab('Page.navigate', { url: 'about:blank' });
       await tab('Page.navigate', { url: `${base}${hash}` });
       await sleep(300);
       return this.until("document.querySelectorAll('#map path.district').length > 0 && document.querySelector('#map > g') !== null");

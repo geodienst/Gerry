@@ -36,8 +36,10 @@ test('the page fetches results.json and map.topojson and nothing else', () => {
 });
 
 test('visible text has no em dashes', () => {
+  // The character itself, and the forms a browser turns into one: HTML references, JS and CSS escapes.
+  const EM_DASH = /\u{2014}|&mdash;|&#0*8212;|&#x0*2014;|\\u\{?0*2014\}?|\\0*2014(?![0-9a-f])/iu;
   for (const file of ['index.html', 'style.css', ...MODULES]) {
-    assert.ok(!read(file).includes('\u{2014}'), `em dash in site/${file}`);
+    assert.ok(!EM_DASH.test(read(file)), `em dash in site/${file}`);
   }
 });
 

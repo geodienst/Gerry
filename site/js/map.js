@@ -53,23 +53,27 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     if (index.states[postal]) onSelect(postal);
   }
 
+  // Tooltips only for a mouse; a tap gets the tap line instead (choose).
   const districts = districtLayer.selectAll('path').data(districtsGeo.features).join('path')
     .attr('class', 'district').attr('d', path)
-    .on('mousemove', (event, f) => showTip(event, districtTip(index, f.properties.id, f.properties.state)))
-    .on('mouseleave', hideTip)
+    .on('pointermove', (event, f) => { if (event.pointerType === 'mouse') showTip(event, districtTip(index, f.properties.id, f.properties.state)); })
+    .on('pointerleave', hideTip)
     .on('click', (event, f) => choose(f.properties.state, f.properties.id));
   const states = stateLayer.selectAll('path').data(statesGeo.features).join('path')
     .attr('class', 'statefill').attr('d', path)
-    .on('mousemove', (event, f) => showTip(event, stateTip(index, f.properties.postal)))
-    .on('mouseleave', hideTip)
+    .on('pointermove', (event, f) => { if (event.pointerType === 'mouse') showTip(event, stateTip(index, f.properties.postal)); })
+    .on('pointerleave', hideTip)
     .on('click', (event, f) => choose(f.properties.postal, null));
   const borders = borderLayer.selectAll('path').data(statesGeo.features).join('path')
     .attr('class', 'state').attr('d', path);
 
   // Zoom: wheel only with Ctrl or Cmd, touch only with two fingers, drag with the mouse.
+  // The wheel delta is d3's, clamped to [-1, 1]: d3 multiplies it by 10 while Ctrl is held, which would make
+  // one notch zoom 4x. A notch zooms at most 2x; a trackpad pinch (many small events) is as in d3.
   const zoom = d3.zoom()
     .scaleExtent([1, MAP.maxZoom])
     .translateExtent([[0, 0], [MAP.width, MAP.height]])
+    .wheelDelta((e) => Math.max(-1, Math.min(1, -e.deltaY * (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002) * (e.ctrlKey ? 10 : 1))))
     .filter((event) => {
       if (event.type === 'wheel') return event.ctrlKey || event.metaKey;
       if (event.type === 'touchstart') return event.touches.length > 1;
@@ -87,7 +91,11 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     clearTimeout(timer);
     timer = setTimeout(() => { gesture.hidden = true; }, 1300);
   }
-  svg.addEventListener('wheel', (event) => { if (!event.ctrlKey && !event.metaKey) flash(hints.wheel); }, { passive: true });
+  // Ctrl or Cmd + wheel stays with the map, also at the zoom limits, where d3 lets it through to the page zoom.
+  svg.addEventListener('wheel', (event) => {
+    if (event.ctrlKey || event.metaKey) event.preventDefault();
+    else flash(hints.wheel);
+  }, { passive: false });
   let start = null;
   svg.addEventListener('touchstart', (event) => { start = event.touches.length === 1 ? event.touches[0].clientX : null; }, { passive: true });
   svg.addEventListener('touchmove', (event) => {
