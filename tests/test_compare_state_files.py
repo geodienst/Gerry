@@ -58,6 +58,25 @@ def test_mapping_that_is_not_one_to_one_is_flagged():
     assert out["one_to_one"] is False
 
 
+def test_a_block_in_another_district_is_neither_missing_nor_confirmed():
+    # c1 is the first block of 01 and lies in the state's district 2; most of 01 is state district 1.
+    # c7 is a CD120 water block (ZZ): its VAP is not part of the denominator.
+    census = series({"c1": "01", "c2": "01", "c3": "01", "c4": "02", "c5": "02", "c6": "02", "c7": "ZZ"})
+    official = series({"c1": "2", "c2": "1", "c3": "1", "c4": "2", "c5": "2", "c6": "2"})
+    vap = pd.Series({"c1": 50, "c2": 10, "c3": 10, "c4": 10, "c5": 10, "c6": 10, "c7": 900})
+    out = tool.compare_assignments(census, official, vap)
+    assert out["district_mapping"] == "01=01;02=02"
+    assert (out["only_census"], out["only_state"], out["blocks_matching"]) == (0, 0, 5)
+    assert out["share_vap"] == pytest.approx(0.5)
+
+
+def test_a_district_with_no_block_in_the_state_source_is_not_one_to_one():
+    out = tool.compare_assignments(CENSUS, series({"b1": "1", "b2": "1"}))
+    assert (out["district_mapping"], out["one_to_one"]) == ("01=01", False)
+    assert tool.result_text("block_file", out) == (
+        "2 of 4 blocks differ; 2 only in CD120, 0 only in the state file. The district mapping is not one-to-one")
+
+
 def test_result_text():
     same = {"blocks_census": 4, "blocks_state": 4, "only_census": 0, "only_state": 0, "blocks_matching": 4,
             "share_blocks": 1.0, "share_vap": None, "district_mapping": "01=01;02=02", "one_to_one": True}
@@ -69,6 +88,15 @@ def test_result_text():
     renumbered = {**same, "district_mapping": "01=02;02=01"}
     assert tool.result_text("block_file", renumbered) == (
         "Identical, block for block (4 blocks), with other district numbers: 01=02;02=01")
+
+
+def test_a_block_file_that_merges_districts_is_not_called_identical():
+    # every block matches once both CD120 districts map to state district 1, but the two are one there
+    out = tool.compare_assignments(CENSUS, series({"b1": "1", "b2": "1", "b3": "1", "b4": "1"}))
+    assert (out["blocks_matching"], out["one_to_one"]) == (4, False)
+    assert tool.result_text("block_file", out) == (
+        "0 of 4 blocks differ; 0 only in CD120, 0 only in the state file, "
+        "with other district numbers: 01=01;02=01. The district mapping is not one-to-one")
 
 
 def test_rows_have_the_columns_the_report_reads():

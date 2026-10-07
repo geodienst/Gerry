@@ -79,7 +79,7 @@ def result_text(kind: str, r: dict) -> str:
     renumbered = any(c != o for c, o in pairs)
     if kind == "block_file":
         n = r["blocks_census"]
-        if r["blocks_matching"] == n == r["blocks_state"] and r["only_state"] == 0:
+        if r["blocks_matching"] == n == r["blocks_state"] and r["only_state"] == 0 and r["one_to_one"]:
             text = f"Identical, block for block ({n:,} blocks)"
         else:
             text = (f"{n - r['blocks_matching']:,} of {n:,} blocks differ; {r['only_census']:,} only in CD120, "
