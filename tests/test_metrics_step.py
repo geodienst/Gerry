@@ -5,6 +5,7 @@ import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -451,3 +452,68 @@ def test_state_redraw_needs_the_2024_rows():
     enacted = _enacted()
     with pytest.raises(CheckError, match="district_count"):
         step.state_redraw(XX, enacted[enacted.map_id != "map_2024"], 1, 12)
+
+
+# --- Task 5.6, review: map_changed, the 2024 block rows, the redraw check, percentile levels, plan_shares ---
+
+
+def _same_2024_as_enacted():
+    enacted = _enacted()
+    copy = enacted[enacted.map_id == "enacted"].assign(map_id="map_2024")
+    return pd.concat([enacted[enacted.map_id != "map_2024"], copy], ignore_index=True)
+
+
+def test_state_redraw_marks_a_changed_map_that_keeps_its_seats():
+    # one block changed district, the 2024 rows are a copy of the enacted rows: 1 seat on both
+    # (map_changed follows the moved blocks, not the seat difference)
+    assert step.state_redraw(XX, _same_2024_as_enacted(), 1, 1) == {"seats_2024": 1, "change": 0, "map_changed": True}
+
+
+def test_state_redraw_takes_other_seats_after_one_moved_block():
+    # a single moved block is a redraw: it may change the seats (2 on the 2024 rows against 1)
+    assert step.state_redraw(XX, _enacted(), 1, 1) == {"seats_2024": 2, "change": -1, "map_changed": True}
+
+
+def test_state_redraw_takes_the_2024_seats_from_the_block_rows():
+    # the whole-unit rows of 2024 flip district 02 (495 < 505); the block rows keep it (520 > 480): 2 seats
+    enacted = _enacted()
+    hit = (enacted.map_id == "map_2024") & (enacted.method == "whole_unit") & (enacted.district == "02")
+    enacted.loc[hit, COLS] = _votes(495, 505)
+    assert step.state_redraw(XX, enacted, 1, 12)["seats_2024"] == 2
+
+
+def test_state_redraw_stops_when_an_unchanged_map_gains_seats():
+    # the 2024 rows give 2 seats: an enacted map without moved blocks cannot have 3 either
+    # (test_state_redraw_stops_when_an_unchanged_map_gives_other_seats has 1 seat, the other direction)
+    with pytest.raises(CheckError, match="redraw"):
+        step.state_redraw(XX, _enacted(), 3, 0)
+
+
+def test_plan_shares_has_plans_as_rows_and_districts_as_columns():
+    shares = step.plan_shares(_ensemble(), XX)
+    # plans as rows (draw 1..4), districts as columns (01 first): plan 1 is .65 .35 .30, plan 2 .55 .50 .25 (the tie
+    # in 02 is 500 of 1000), plan 3 .45 .45 .40, plan 4 .60 .40 .30
+    expected = [[.65, .35, .30], [.55, .50, .25], [.45, .45, .40], [.60, .40, .30]]
+    np.testing.assert_allclose(shares, expected)
+
+
+def _spread_ensemble():
+    # plans with 0, 1, 2 and 3 competitive districts
+    plans = {
+        "1": [(700, 300), (300, 700), (200, 800)],     # .70 .30 .20 -> 0
+        "2": [(500, 500), (300, 700), (200, 800)],     # .50 .30 .20 -> 1
+        "3": [(500, 500), (500, 500, 300, 200), (200, 800)],   # .50 .50 .20 -> 2
+        "4": [(500, 500), (500, 500, 300, 200), (500, 500, 300, 200)],   # .50 .50 .50 -> 3
+    }
+    rows = []
+    for draw, districts in plans.items():
+        for i, v in enumerate(districts, start=1):
+            rows.append(["XX", draw, f"{i:02d}"] + _votes(*v))
+    return pd.DataFrame(rows, columns=["state", "draw", "district"] + COLS)
+
+
+def test_state_competitive_percentile_levels():
+    # sorted counts 0 1 2 3: p5 is the first (0), the median needs 2 of 4 plans (1), p95 needs 3.8 of 4 (3)
+    res = step.state_competitive(XX, _enacted(), _spread_ensemble())
+    assert (res["p5"], res["median"], res["p95"]) == (0, 1, 3)
+    assert res["neutral_dist"] == [1, 1, 1, 1]
