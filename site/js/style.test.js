@@ -35,8 +35,15 @@ const contrast = (a, b) => { const [hi, lo] = [luminance(a), luminance(b)].sort(
 /** `top` with opacity `alpha` over `bottom`, as hex */
 const blend = (top, bottom, alpha) => `#${rgb(top).map((v, i) => Math.round(alpha * v + (1 - alpha) * rgb(bottom)[i]).toString(16).padStart(2, '0')).join('')}`;
 // The two opacities in style.css that decide a contrast: the bars of the seat axis and the zoom hint over the map.
-const BAR_OPACITY = Number(/\.chart \.bar \{[^}]*fill-opacity:\s*([\d.]+)/.exec(css)[1]);
-const HINT_ALPHA = Number(/\.gesture \{[^}]*background:\s*rgba\(10, 12, 16, ([\d.]+)\)/.exec(css)[1]);
+// The patterns allow any spacing and a number without a leading zero (.75).
+function cssNumber(pattern, what) {
+  const match = pattern.exec(css);
+  assert.ok(match, `style.css: cannot read ${what}`);
+  return Number(match[1]);
+}
+const barOpacity = () => cssNumber(/\.chart\s+\.bar\s*\{[^}]*?\bfill-opacity\s*:\s*(\d*\.?\d+)/, 'the fill-opacity of .chart .bar');
+const hintAlpha = () => cssNumber(/\.gesture\s*\{[^}]*?\bbackground\s*:\s*rgba\(\s*10\s*,\s*12\s*,\s*16\s*,\s*(\d*\.?\d+)\s*\)/,
+  'the alpha of rgba(10, 12, 16, alpha) in the background of .gesture');
 
 test('text reaches 4.5:1 on the page, the sheet and the pressed buttons', () => {
   for (const [mode, t] of Object.entries(MODES)) {
@@ -51,8 +58,9 @@ test('text reaches 4.5:1 on the page, the sheet and the pressed buttons', () => 
 
 test('marks reach 3:1: poles, bars, marker lines and the outline of the chosen state', () => {
   // .chart .bar: --muted at its fill-opacity over --sheet
+  const opacity = barOpacity();
   for (const [mode, t] of Object.entries(MODES)) {
-    const bar = blend(t.muted, t.sheet, BAR_OPACITY);
+    const bar = blend(t.muted, t.sheet, opacity);
     const pairs = [
       ['party-d', t['party-d'], t.sheet], ['party-r', t['party-r'], t.sheet],
       ['neutral-d', t['neutral-d'], t.sheet], ['neutral-r', t['neutral-r'], t.sheet],
@@ -68,9 +76,10 @@ test('marks reach 3:1: poles, bars, marker lines and the outline of the chosen s
 
 test('the zoom hint over the map is readable on its lightest colors', () => {
   // .gesture: white on rgba(10, 12, 16, alpha) over the map
+  const alpha = hintAlpha();
   for (const [mode, t] of Object.entries(MODES)) {
     for (const under of [t.mid, t.water, t.blank, '#ffffff']) {
-      const ratio = contrast('#ffffff', blend('#0a0c10', under, HINT_ALPHA));
+      const ratio = contrast('#ffffff', blend('#0a0c10', under, alpha));
       assert.ok(ratio >= 4.5, `${mode}: zoom hint over ${under} is ${ratio.toFixed(2)}:1`);
     }
   }

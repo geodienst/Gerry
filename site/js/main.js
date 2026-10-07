@@ -94,6 +94,7 @@ async function main() {
   function back() {
     const previous = ui.selected;
     select('', { push: true, announce: false });
+    $('sheet-status').textContent = ''; // the list is back, so the live region drops the old state's name
     const row = $('sheet').querySelector(`.row[data-postal="${previous}"]`);
     row?.focus(); // a row inside the folded line cannot take focus
     if (!row || document.activeElement !== row) $('sheet-title').focus();

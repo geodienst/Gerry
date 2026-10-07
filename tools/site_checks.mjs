@@ -296,11 +296,17 @@ async function layout(t) {
   for (const [width, height, place, font] of [[375, 812, 'below', '15px'], [1280, 800, 'beside', '15px'], [2560, 1440, 'beside', '20.52px']]) {
     await t.load('#CA', { width, height });
     await t.until(`${HEADING} === 'California'`);
-    t.check(`${width}px: no sideways scrolling`, await t.js('document.documentElement.scrollWidth <= window.innerWidth'));
+    // clientWidth leaves out the scrollbar and, unlike innerWidth, does not grow with the overflow on a phone.
+    const sideways = await t.js('({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth })');
+    t.check(`${width}px: no sideways scrolling`, sideways.scrollWidth <= sideways.clientWidth, JSON.stringify(sideways));
     const where = await t.js("(() => { const m = document.querySelector('.main > section').getBoundingClientRect(); const s = document.getElementById('sheet').getBoundingClientRect(); return s.left >= m.right - 1 ? 'beside' : s.top >= m.bottom - 1 ? 'below' : 'overlap'; })()");
     t.check(`${width}px: the sheet is ${place} the map`, where === place, where);
     t.check(`${width}px: root font size ${font}`, (await t.js('getComputedStyle(document.documentElement).fontSize')) === font);
-    t.check(`${width}px: chart text stays at least 10px tall`, await t.js("[...document.querySelectorAll('svg.chart text')].every((el) => el.getBoundingClientRect().height >= 10)"));
+    // The font size on screen: the CSS size times the scale of the chart's viewBox.
+    const sizes = await t.js("[...document.querySelectorAll('svg.chart text')].map((el) => parseFloat(getComputedStyle(el).fontSize) * el.getScreenCTM().a)");
+    const small = sizes.filter((size) => !(size >= 10));
+    t.check(`${width}px: chart text is at least 10px on screen`, sizes.length > 0 && small.length === 0, sizes.length
+      ? `${sizes.length} texts, smallest ${Math.min(...sizes).toFixed(1)}px${small.length ? `, ${small.length} below 10px` : ''}` : 'no chart text found');
     await t.screenshot(`california-${width}`);
   }
 
@@ -324,6 +330,9 @@ async function layout(t) {
     "(() => { const s = document.getElementById('sheet-status'); return { focus: document.activeElement.id, live: s.getAttribute('aria-live'), text: s.textContent }; })()");
   t.check('a state chosen with the State menu keeps the focus there and is announced',
     heard.focus === 'pick' && heard.live === 'polite' && heard.text === 'Nevada', JSON.stringify(heard));
+  await t.js("document.querySelector('#sheet .back').click()");
+  const cleared = (await t.until(`${HEADING} === 'Drawing effect by state'`)) && await t.text('#sheet-status');
+  t.check('"All states" empties the live region', cleared === '', JSON.stringify(cleared));
 
   await t.load('', { dark: true });
   t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(17, 19, 22)');
