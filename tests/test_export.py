@@ -269,6 +269,12 @@ def test_build_results_state_entry():
         "sorted": m["sorted"],
         "competitive": m["competitive"], "redraw": m["redraw"],
     }
+    # the key order of results.json (dict equality above ignores it)
+    assert list(results["states"]["HI"]) == [
+        "name", "fips", "seats", "map_name", "status", "source", "adopted", "notes", "d_share",
+        "proportional", "enacted", "neutral", "position", "effects", "outside_band", "eg", "mm",
+        "districts", "sorted", "competitive", "redraw"]
+    assert list(results["states"]["HI"]["adopted"]) == ["by", "control", "note"]
     assert "blocked_map" not in results["states"]["HI"]
 
 

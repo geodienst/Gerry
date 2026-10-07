@@ -298,6 +298,21 @@ test('visible text in results.json has no em dashes', { skip }, () => {
 
 // --- Extensions: majority threshold, competitive districts, redraws, who adopted the map ---------------------
 
+// Democratic seats by largest remainder with two parties, step for step as largest_remainder in
+// pipeline/gerry/metrics.py: equal remainders go to the party with more votes.
+function largestRemainder(d, seats) {
+  const quotaD = d * seats / (d + (1 - d));
+  const quotaR = seats - quotaD;
+  const floorD = Math.floor(quotaD);
+  const floorR = Math.floor(quotaR);
+  if (floorD + floorR === seats) return floorD;
+  const restD = quotaD - floorD;
+  const restR = quotaR - floorR;
+  if (restD !== restR) return restD > restR ? floorD + 1 : floorD;
+  assert.notEqual(d, 1 - d, `equal remainders and equal votes for ${seats} seats`);
+  return d > 1 - d ? floorD + 1 : floorD;
+}
+
 test('majority thresholds follow from the districts and lie within 5 points of the base share', { skip }, () => {
   const { national, states } = data().results;
   const m = national.majority;
@@ -320,6 +335,13 @@ test('majority thresholds follow from the districts and lie within 5 points of t
     const steps = (share - m.base_share) * GRID;
     assert.ok(near(steps, Math.round(steps), 1e-6), `threshold ${share} lies on the grid of 0.01 point`);
   }
+  // proportional: the smallest grid swing at which largest remainder per state, on d_share plus the swing, gives
+  // MAJORITY_DISTRICTS seats (a larger swing never gives fewer seats)
+  const proportionalAt = (swing) => sum(Object.values(states).map((s) => largestRemainder(s.d_share + swing, s.seats)));
+  let step = 1 - MAX_SWING * GRID;
+  while (step < MAX_SWING * GRID && proportionalAt(step / GRID) < MAJORITY_DISTRICTS) step += 1;
+  assert.ok(near(m.proportional.share, m.base_share + step / GRID, 1e-12),
+    `majority.proportional.share ${m.proportional.share} against ${m.base_share + step / GRID} from d_share and seats`);
   assert.ok(m.neutral.low <= m.neutral.share && m.neutral.share <= m.neutral.high, 'majority.neutral band order');
   assert.ok(near(m.neutral.probability_at_base, sum(national.neutral.dist.slice(MAJORITY_DISTRICTS)), 1e-9),
     'majority.neutral.probability_at_base follows from neutral.dist');
@@ -329,6 +351,8 @@ function checkCompetitive(c, length, total, where) {
   for (const key of ['enacted', 'median', 'p5', 'p95']) assert.ok(isInt(c[key]) && c[key] >= 0 && c[key] < length, `${where}.competitive.${key}`);
   assert.equal(c.neutral_dist.length, length, `${where}.competitive.neutral_dist length`);
   assert.ok(near(sum(c.neutral_dist), total, 1e-6), `${where}.competitive.neutral_dist sums to ${total}`);
+  // per state: counts of plans, not probabilities
+  if (total === PLANS) assert.ok(c.neutral_dist.every(isInt), `${where}.competitive.neutral_dist holds whole numbers of plans`);
   for (const [key, q] of [['p5', 0.05], ['median', 0.5], ['p95', 0.95]]) {
     assert.equal(c[key], percentile(c.neutral_dist, q), `${where}.competitive.${key} follows from neutral_dist`);
   }
