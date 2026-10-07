@@ -17,6 +17,7 @@ export function renderKeyline(el, view) {
     span.append('b').text(item.value);
   }
   line.append('a').attr('href', '#national').attr('class', 'linkbtn').text('National picture');
+  line.append('a').attr('href', '#method').attr('class', 'linkbtn').text('Method');
 }
 
 /** The three numbers, the national seat axis, the effects and the position. */

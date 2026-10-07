@@ -3,7 +3,9 @@
 // globals; the page makes no other requests.
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
-import { indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView } from './model.js';
+import {
+  indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, methodFills,
+} from './model.js';
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState } from './sheet.js';
 import { renderKeyline, renderNational } from './national.js';
@@ -128,6 +130,8 @@ async function main() {
   const national = nationalView(results);
   renderKeyline($('keyline'), national);
   renderNational($('national'), national);
+  const fills = methodFills(results);
+  for (const el of document.querySelectorAll('[data-fill]')) el.textContent = fills[el.dataset.fill];
 
   // Charts size themselves to their box; draw them again when the width changes, keeping keyboard focus.
   let width = window.innerWidth;

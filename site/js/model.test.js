@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { results } from './testdata.js';
 import {
   AT_LARGE_TEXT, indexResults, districtLabel, districtTip, stateTip, tapLine, stateOptions, mapHints,
-  effectList, positionText, stateSheet, nationalView,
+  effectList, positionText, stateSheet, nationalView, methodFills,
 } from './model.js';
 
 // --- the map (Task 6.2) ---
@@ -229,4 +229,18 @@ test('nationalView: the strip with the three numbers, the effects and the positi
   assert.equal(nationalView(r).note, '429 seats. The five states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont) are not counted.');
   r.national.single_seat = Array.from({ length: 11 }, (_, k) => ({ postal: `S${k}`, name: `State ${k}` }));
   assert.match(nationalView(r).note, /^429 seats\. The 11 states with one at-large seat \(State 0, /);
+});
+
+// --- the method and the footer (Task 6.8) ---
+
+test('methodFills: plans, states, ALARM version, dates and Louisiana', () => {
+  assert.deepEqual(methodFills(results()), {
+    plans: '5,000',
+    states: '7',
+    'alarm-version': '15',
+    'status-date': 'October 3, 2026',
+    generated: 'October 6, 2026',
+    'la-share': '>99%', // 4989 of 5000 is 99.78%, which rounds to 100 but is not all plans
+    'la-seats': '1 Democratic seat',
+  });
 });

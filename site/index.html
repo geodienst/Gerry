@@ -59,6 +59,36 @@
       <p class="note" id="national-caption"></p>
       <p class="effects" id="national-effects"></p>
     </section>
+
+    <section class="prose" id="method" aria-labelledby="method-title">
+      <h2 id="method-title">Method</h2>
+      <p><b>How to read the three numbers.</b> All numbers count Democratic seats in the U.S. House. <i>Proportional</i> gives each state's seats in proportion to its two-party vote. <i>Neutral baseline</i> is the median of <span data-fill="plans"></span> maps per state drawn by a computer that follows each state's rules but ignores party. <i>Enacted</i> is what the maps used on November 3, 2026 produce with the same votes. The difference between the first two is the geographic effect; the difference between the last two is the drawing effect. An effect shows its direction: R+6 means 6 seats toward Republicans, D+3 means 3 seats toward Democrats.</p>
+      <p><b>Why neutral maps are not proportional.</b> Each district elects one winner, so the party with more votes in a state usually wins a larger share of its seats than of its votes. Democratic voters also live closer together, mostly in cities, so neutral maps often put many of them in a few districts that Democrats win by large margins. The geographic effect is the sum of both.</p>
+      <p><b>Votes.</b> We use the 2016 and 2020 presidential results added together, by voting district (by census tract in California, Hawaii, Maine and Oregon, by county in Iowa and West Virginia; West Virginia uses 2020 only), as prepared by the ALARM Project. The enacted seats come from assigning these votes to the 2026 districts, not from House results. With these votes the enacted seats can differ from what happened in 2024.</p>
+      <p><b>The Voting Rights Act.</b> The law can require districts where a minority group forms a large share of the voters. In seat counts such districts can look like packing. ALARM's neutral maps follow the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). Where a map adopted after that ruling removed such districts, the change shows up in the drawing effect. The notes per state say what ALARM did there.</p>
+      <p><b>Neutral maps that keep old district cores.</b> In Kansas and Nebraska, ALARM's neutral maps keep the cores of the districts drawn after the 2010 census. In Louisiana, New Mexico and Utah they keep those of the 2021 or 2022 map. In New Mexico, and largely in Louisiana, that pulls the drawing effect toward zero.</p>
+      <p><b>The national band.</b> The national neutral baseline combines the <span data-fill="states"></span> states as if their neutral maps were drawn independently. The national effects therefore differ slightly from the sum of the state effects.</p>
+      <p><b>Known limits.</b></p>
+      <ul>
+        <li>The smallest vote units are voting districts in 38 states, census tracts in California, Hawaii, Maine and Oregon, and counties in Iowa and West Virginia, as in ALARM's map files. Where such a unit crosses a district line, we split its votes over its census blocks by voting-age population. In the four tract states the split follows the block votes in ALARM's census-2020 files.</li>
+        <li>In California, ALARM's map file has no votes for two census tracts in Modoc and Siskiyou counties. ALARM's census-2020 block file gives them about 4,100 votes in 2016 and 2020 together. We follow the map file, so all three numbers use the same votes.</li>
+        <li>In Michigan, ALARM's map file leaves out 38 voting districts that cover water. ALARM's census-2020 data gives them 17,272 votes, which we do not count. In Ohio the map file leaves out 4 such districts, which have no votes.</li>
+        <li>ALARM's census-2020 block file for Maine is from October 2025 and spreads the votes over the tracts differently from the map file. We use it only to split each tract's votes over its blocks; the votes per tract come from the map file.</li>
+        <li>For New Jersey, ALARM's map file has the 2020 results from before ALARM revised its census-2020 file for that state. We follow the map file.</li>
+        <li>For a voting district, tract or county without voting-age population, we split its votes equally over its blocks. On the 2026 maps such units cross a district line in eight states, with about 4,500 votes in total.</li>
+        <li>We do not check the enacted maps for equal population. Nevada and California count prisoners differently from the census when they redistrict.</li>
+        <li>A district number can mean a different area on another map, as in Utah, so district numbers cannot be compared between maps.</li>
+        <li>With these votes, TX-15, TX-28 and TX-34 are among the districts that stay Democratic.</li>
+        <li>In Louisiana the Voting Rights Act requirement and the kept district cores together nearly fix the outcome. Of the <span data-fill="plans"></span> neutral maps, <span data-fill="la-share"></span> give <span data-fill="la-seats"></span>.</li>
+      </ul>
+      <p><b>Sources.</b> Neutral maps and votes: ALARM Project, 50-State Redistricting Simulations, version <span data-fill="alarm-version"></span> (McCartan, Imai and others; Harvard Dataverse, <a href="https://doi.org/10.7910/DVN/SLCD3E">doi:10.7910/DVN/SLCD3E</a>), CC0. ALARM's vote data build on precinct results from the Voting and Election Science Team (CC BY 4.0). Block votes for splitting tracts in California, Hawaii, Maine and Oregon: ALARM Project, census-2020 files (CC BY-SA 4.0). District lines and block files: U.S. Census Bureau, TIGER/Line 2026 and the block equivalency files for the 118th and 120th Congress (public domain). Legal status as of <span data-fill="status-date"></span>. Cross-checked against PlanScore for seven states.</p>
+    </section>
+
+    <footer>
+      <p>Data generated <span data-fill="generated"></span>. Legal status as of <span data-fill="status-date"></span>. ALARM dataset version <span data-fill="alarm-version"></span>.</p>
+      <p>Map drawn with D3 and topojson-client, both under the ISC license: <a href="vendor/d3.LICENSE.txt">D3 license</a>, <a href="vendor/topojson-client.LICENSE.txt">topojson-client license</a>.</p>
+      <p class="credit"><a href="https://rug.nl/geo"><img src="img/geodienst.svg" alt="" width="20" height="20">Geodienst</a></p>
+    </footer>
   </div>
 </body>
 </html>

@@ -232,3 +232,20 @@ export function nationalView(results) {
     caption: 'Bars: share of neutral outcomes per seat count; shaded: 5th to 95th percentile.',
   };
 }
+
+// --- The method and the footer (Task 6.8) -------------------------------------------------------
+
+/** Text for the [data-fill] spans in the method section and the footer. */
+export function methodFills(results) {
+  const { meta, states } = results;
+  const la = states.LA.neutral; // Known limits: the share of Louisiana's neutral maps at the median
+  return {
+    plans: count(sum(Object.values(states)[0].neutral.dist)),
+    states: count(Object.keys(states).length),
+    'alarm-version': count(meta.ensemble.version),
+    'status-date': longDate(meta.status_checked),
+    generated: longDate(meta.generated),
+    'la-share': planShare(la.dist[la.median] / sum(la.dist)),
+    'la-seats': `${seats(la.median)} Democratic ${plural(la.median, 'seat', 'seats')}`,
+  };
+}

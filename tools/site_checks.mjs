@@ -262,9 +262,28 @@ async function national(t) {
   }
 }
 
+// --- Task 6.8: the method and the footer ----------------------------------------------------------
+async function method(t) {
+  await t.load();
+  t.check('every number in the method and the footer is filled in', await t.js("[...document.querySelectorAll('[data-fill]')].every((el) => el.textContent.trim() !== '')"));
+  const text = await t.text('#method');
+  for (const part of ['How to read the three numbers.', 'Why neutral maps are not proportional.', 'Votes.', 'The Voting Rights Act.',
+    'Neutral maps that keep old district cores.', 'The national band.', 'Known limits.', 'Sources.']) {
+    t.check(`the method has "${part}"`, text.includes(part));
+  }
+  t.check('"Known limits" has ten points', await t.js("document.querySelectorAll('#method ul > li').length === 10"));
+  await t.js("document.querySelector('#keyline a[href=\"#method\"]').click()");
+  t.check('"Method" under the title leads to the method', await t.until("location.hash === '#method'"));
+  t.check('the footer names the data date, the legal status date and the ALARM version',
+    /Data generated .+\. Legal status as of .+\. ALARM dataset version \d+\./.test(await t.text('footer')));
+  t.check('the footer links to the Geodienst with its logo',
+    await t.js("(() => { const a = document.querySelector('footer a[href=\"https://rug.nl/geo\"]'); const img = a && a.querySelector('img'); return !!a && a.textContent.trim() === 'Geodienst' && !!img && img.complete && img.naturalWidth > 0; })()"));
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
   { name: 'list', run: list },
   { name: 'sheet', run: sheet },
   { name: 'national', run: national },
+  { name: 'method', run: method },
 ];

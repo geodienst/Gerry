@@ -16,6 +16,8 @@ test('the page loads scripts and styles only from its own folder', () => {
   const refs = [...read('index.html').matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]);
   // data:, is an empty icon, so the browser does not ask for favicon.ico
   assert.deepEqual(refs, ['data:,', 'style.css', 'vendor/d3.min.js', 'vendor/topojson-client.min.js', 'js/main.js']);
+  const images = [...read('index.html').matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(images, ['img/geodienst.svg']);
 });
 
 test('modules import only the modules next to them', () => {
@@ -45,7 +47,7 @@ test('visible text has no em dashes', () => {
 
 test('the page and everything it loads stay under 1.5 MB', () => {
   const files = ['index.html', 'style.css', ...MODULES, 'vendor/d3.min.js', 'vendor/topojson-client.min.js',
-    'data/results.json', 'data/map.topojson'];
+    'data/results.json', 'data/map.topojson', 'img/geodienst.svg'];
   const bytes = files.reduce((total, file) => total + statSync(join(SITE, file)).size, 0);
   assert.ok(bytes < 1_500_000, `${bytes} bytes`);
 });
