@@ -28,7 +28,7 @@ De rangorde tussen de drie wordt niet vooraf aangenomen. De data bepaalt per sta
 - **ALARM Project, 50-State Redistricting Simulations** (Harvard Dataverse, McCartan, Imai e.a.). Ensembles en de stemcomposiet per eenheid (`map.rds`) per staat. Lees eerst de documentatie en codebook voordat je iets bouwt.
 - **Census TIGER/Line en blokbestanden**: grenzen en blok-naar-districttoewijzing van de kaarten waarmee in november 2026 gestemd wordt (120e Congres, CD120; voor Missouri de kaart van 2022), plus de staten.
 - **Hertekende kaarten 2025-2026**: verifieer per staat via webonderzoek of de kaart tussentijds is gewijzigd. De pijplijn gebruikt de blokbestanden van Census; vergelijk die eenmalig met de officiële shapefile of block assignment file van de staat. Houd een tabel bij in `data/sources.md` met per staat: bron, datum, status (In effect, Challenged, Blocked, At-large).
-- **Kruiscontrole**: PlanScore en Dave's Redistricting App voor een handvol staten.
+- **Kruiscontrole**: PlanScore voor een handvol staten. Dave's Redistricting App valt af: de gebruiksvoorwaarden verbieden automatische toegang en kopiëren zonder schriftelijke toestemming (besluit van de eigenaar, 7 oktober 2026).
 
 Ruwe data komt niet in git. `data/raw/` staat in `.gitignore`; alles is reproduceerbaar via de downloadscripts.
 

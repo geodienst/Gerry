@@ -147,8 +147,8 @@ def _shares(rows: pd.DataFrame) -> np.ndarray:
 
 def state_checks(st: StateConfig, enacted: pd.DataFrame, ensemble: pd.DataFrame,
                  reference: pd.DataFrame) -> dict:
-    """Numbers for docs/validation.md: plans, ties, CD118 against ALARM cd_2020,
-    whole units against block allocation, and 2020 shares for the DRA comparison."""
+    """Numbers for docs/validation.md: plans, ties, CD118 against ALARM cd_2020 and
+    whole units against block allocation."""
     ours = map_rows(enacted, "check_2022")
     alarm = reference.sort_values("district").reset_index(drop=True)
     if len(ours) != st.seats or ours["district"].tolist() != alarm["district"].tolist():
@@ -174,15 +174,12 @@ def state_checks(st: StateConfig, enacted: pd.DataFrame, ensemble: pd.DataFrame,
                                "block": float(b_share), "whole": float(w_share),
                                "block_dem": bool(block_wins[i]), "whole_dem": bool(whole_wins[i])})
 
-    main = map_rows(enacted, "enacted")
-    pre_20 = {dist: float(dv / (dv + rv)) for dist, dv, rv in zip(main["district"], main["d_pre_20"], main["r_pre_20"])}
     return {
         "plans": int(ensemble["draw"].nunique()),
         "ties": {"ensemble": int((ensemble["d"] == ensemble["r"]).sum()),
                  "enacted": int((enacted["d"] == enacted["r"]).sum())},
         "cd118_vs_alarm": reference_check,
         "whole_unit": whole_unit,
-        "pre_20": pre_20,
     }
 
 
@@ -275,8 +272,7 @@ def compute(cfg, idir) -> dict:
     join_log = json.loads((idir / "join_log.json").read_text(encoding="utf-8"))
 
     states = {}
-    checks = {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {}, "map_2024": {},
-              "join_log": join_log}
+    checks = {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "map_2024": {}, "join_log": join_log}
     # inputs of the majority thresholds, one entry per state
     votes = {"d": 0.0, "r": 0.0, "enacted_shares": [], "plan_shares": [], "state_shares": [], "state_seats": []}
     for postal in sorted(cfg.states):

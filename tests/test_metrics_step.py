@@ -169,6 +169,8 @@ def test_state_metrics_rejects_wrong_district_count():
 
 def test_state_checks():
     checks = step.state_checks(XX, _enacted(), _ensemble(), _reference())
+    # no 2020 shares any more: they were for the DRA comparison (Task 2.14x)
+    assert set(checks) == {"plans", "ties", "cd118_vs_alarm", "whole_unit"}
     assert checks["plans"] == 4
     # one tied district in the plans (plan 2, district 02), none in the maps
     assert checks["ties"] == {"ensemble": 1, "enacted": 0}
@@ -182,10 +184,9 @@ def test_state_checks():
     assert len(whole) == 9
     assert [w["map_id"] for w in whole[6:]] == ["map_2024"] * 3
     flipped = [w for w in whole if w["block_dem"] != w["whole_dem"]]
+    # 2024 map: blocks 560-440, 520-480, 300-700 and whole units 555-445, 515-485, 305-695 have the same winners
     assert flipped == [pytest.approx({"map_id": "xx_new", "district": "02", "block": 0.51, "whole": 0.495,
                                       "block_dem": True, "whole_dem": False})]
-    # 2020 shares on the enacted map are half the composite on both sides: 0.6, 0.3, 0.4
-    assert checks["pre_20"] == pytest.approx({"01": 0.6, "02": 0.3, "03": 0.4})
 
 
 def test_state_checks_requires_check_2022_rows():
@@ -284,14 +285,6 @@ def test_national_metrics_effects_position_and_band_edges(monkeypatch, enacted, 
 # --- validation-report numbers ---------------------------------------------------------------
 
 
-def test_state_checks_pre_20_uses_2020_columns():
-    enacted = _enacted()
-    hit = (enacted.map_id == "enacted") & (enacted.method == "block") & (enacted.district == "01")
-    enacted.loc[hit, COLS] = _votes(600, 400, 270, 230)     # 2020: 270 / 500 = 0.54, composite 0.6
-    checks = step.state_checks(XX, enacted, _ensemble(), _reference())
-    assert checks["pre_20"]["01"] == pytest.approx(0.54)
-
-
 def test_state_checks_counts_tied_enacted_rows():
     enacted = _enacted()
     hit = (enacted.map_id == "xx_new") & (enacted.method == "whole_unit") & (enacted.district == "03")
@@ -341,6 +334,8 @@ def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
     _small_house(monkeypatch)
     out = step.compute(cfg, tmp_path)
     assert set(out) == {"national", "states", "checks"}
+    # no 2020 shares (pre_20) in the checks since the DRA comparison is gone (Task 2.14x)
+    assert set(out["checks"]) == {"plans", "ties", "cd118_vs_alarm", "whole_unit", "map_2024", "join_log", "totals"}
     assert out["states"]["XX"]["proportional"] == 1             # units 1300 D / 1700 R, as in the hand example
     assert out["checks"]["plans"] == {"XX": 4}
     assert out["checks"]["totals"] == {"district_seats": 3, "at_large": 1}
@@ -379,8 +374,8 @@ def test_main_writes_metrics_and_report(tmp_path, monkeypatch):
     metrics = {"national": {"seats": 0, "proportional": 0, "enacted": 0, "neutral": {"median": 0},
                             "single_seat": []},
                "states": {},
-               "checks": {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {},
-                          "map_2024": {}, "join_log": {}}}
+               "checks": {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "map_2024": {},
+                          "join_log": {}}}
     (tmp_path / "data" / "interim").mkdir(parents=True)
     (tmp_path / "docs").mkdir()
     monkeypatch.setattr(step, "load_config", lambda: None)
@@ -401,8 +396,8 @@ def _main_setup(tmp_path, monkeypatch):
     metrics = {"national": {"seats": 0, "proportional": 0, "enacted": 0, "neutral": {"median": 0},
                             "single_seat": []},
                "states": {},
-               "checks": {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {},
-                          "map_2024": {}, "join_log": {}}}
+               "checks": {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "map_2024": {},
+                          "join_log": {}}}
     (tmp_path / "data" / "interim").mkdir(parents=True)
     (tmp_path / "docs").mkdir()
     monkeypatch.setattr(step, "load_config", lambda: None)
@@ -414,18 +409,19 @@ def _main_setup(tmp_path, monkeypatch):
 
 def test_main_reads_notes_and_cross_check_files_from_the_repo_data_folder(tmp_path, monkeypatch, capsys):
     _main_setup(tmp_path, monkeypatch)
-    (tmp_path / "data" / "validation_notes.yaml").write_text("AA:\n  dra: A note kept in the repo.\n",
+    (tmp_path / "data" / "validation_notes.yaml").write_text("AA:\n  planscore: A note kept in the repo.\n",
                                                              encoding="utf-8")
     (tmp_path / "data" / "crosscheck").mkdir()
-    (tmp_path / "data" / "crosscheck" / "dra.csv").write_text(
-        "state,map_name,url,accessed,district,dem,rep\n", encoding="utf-8")
+    (tmp_path / "data" / "crosscheck" / "planscore.csv").write_text(
+        "state,election,url,accessed,same_map,planscore_eg_pct,planscore_favors,district,dem_votes,rep_votes\n",
+        encoding="utf-8")
     step.main()
     report = (tmp_path / "docs" / "validation.md").read_text(encoding="utf-8")
-    # dra.csv is found (header only); planscore.csv and state_files.csv are not
-    assert "Pending: 2." in report
+    # planscore.csv is found (header only); state_files.csv is not
+    assert "Pending: 1." in report
     # AA is not in this made-up run, so its note is listed as one without an exceedance
-    assert "- **AA, dra.** A note kept in the repo." in report
-    assert "Open items: 0. Pending: 2." in capsys.readouterr().out
+    assert "- **AA, planscore.** A note kept in the repo." in report
+    assert "Open items: 0. Pending: 1." in capsys.readouterr().out
 
 
 def test_main_writes_the_report_with_lf_line_ends(tmp_path, monkeypatch):

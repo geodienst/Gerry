@@ -66,7 +66,6 @@ tests/
   test_metrics_data.py         referentiegetallen op echte data, marker data (Task 2.11)
   test_validation.py           validation.py (Task 2.12)
   test_planscore_crosscheck.py PlanScore (Task 2.13), overgeslagen zolang planscore.csv ontbreekt
-  test_dra_crosscheck.py       DRA (Task 2.14), overgeslagen zolang dra.csv ontbreekt
   test_export.py               export.py (Task 3.1, 3.2)
   test_geometry.py             geometry.py (Task 3.3)
   test_check_geometry.py       check_geometry (Task 3.4)
@@ -76,7 +75,6 @@ tests/
 data/manifest.json             checksums van downloads (in git)
 data/sources.md                status en bronnen per staat (in git)
 data/crosscheck/planscore.csv  met de hand (Task 2.13, in git)
-data/crosscheck/dra.csv        met de hand (Task 2.14, in git)
 data/crosscheck/state_files.csv  door tools/compare_state_files.py (Task 3.6, in git)
 data/validation_notes.yaml     verklaringen van overschrijdingen (in git)
 data/interim/                  tussenresultaten, niet in git (zie "Bestanden tussen de stappen")
@@ -357,10 +355,9 @@ def main() -> None                               # schrijft metrics.json en docs
 # gerry/validation.py
 SHARE_TOLERANCE = 0.005                          # 0,5 procentpunt
 EXPECTED_PLANS = 5000
-CHECK_KEYS = ("cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction", "planscore", "dra", "state_files")
+CHECK_KEYS = ("cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction", "planscore", "state_files")
 PLANSCORE_COLUMNS = ("state", "election", "url", "accessed", "same_map", "planscore_eg_pct",
     "planscore_favors", "district", "dem_votes", "rep_votes")
-DRA_COLUMNS = ("state", "map_name", "url", "accessed", "district", "dem", "rep")
 STATE_FILES_COLUMNS = ("state", "map", "source_kind", "source_url", "retrieved", "blocks_census", "blocks_state",
     "only_census", "only_state", "blocks_matching", "share_blocks", "share_vap", "district_mapping",
     "one_to_one", "result")                      # tools/compare_state_files.py importeert deze tuple
@@ -440,7 +437,7 @@ export function longDate(iso)          // "2026-10-03" -> "October 3, 2026"
 - `metrics.json`: `{"national": {...}, "states": {ST: {...}}, "checks": {...}}`.
   - Per staat precies de numerieke velden van `results.json` uit hoofdstuk 7 van de spec (`d_share`, `proportional`, `enacted`, `neutral`, `position`, `effects`, `outside_band`, `eg`, `mm`, `districts`, `sorted`, `blocked_map` zonder `name`/`status`/`source`) plus `computed_notes` (lijst van sleutels). `districts[].d` en `.r` zijn onafgeronde kommagetallen; `mm` is `null` bij twee districten, nooit NaN.
   - `national`: `seats`, `proportional`, `enacted`, `neutral`, `position`, `effects`, `outside_band`, plus `single_seat` [{`postal`, `fips`, `name`}]. Het rapport gebruikt `single_seat`; `build_results` neemt alleen de andere zeven velden over en bouwt `single_seat` opnieuw uit `config.yaml`.
-  - `checks`: `plans` {ST: int}; `ties` {ST: {`ensemble`, `enacted`}}; `cd118_vs_alarm` {ST: {`districts`: [{`district`, `ours`, `alarm`}], `seats_ours`, `seats_alarm`}}; `whole_unit` {ST: [{`map_id`, `district`, `block`, `whole`, `block_dem`, `whole_dem`}]}; `pre_20` {ST: {district: aandeel D in 2020}}; `join_log` (de inhoud van `join_log.json`); `totals` {`district_seats`, `at_large`}.
+  - `checks`: `plans` {ST: int}; `ties` {ST: {`ensemble`, `enacted`}}; `cd118_vs_alarm` {ST: {`districts`: [{`district`, `ours`, `alarm`}], `seats_ours`, `seats_alarm`}}; `whole_unit` {ST: [{`map_id`, `district`, `block`, `whole`, `block_dem`, `whole_dem`}]}; `join_log` (de inhoud van `join_log.json`); `totals` {`district_seats`, `at_large`}.
 - `districts.geojson`, `outline.geojson`, `map.topojson`: geometrie van `04_export`, vóór het kopiëren naar `site/data/`. `map_check.svg`: de visuele controle van Task 3.5.
 
 ### docs/validation.md
@@ -10961,6 +10958,8 @@ git commit -m "Add PlanScore cross-check"
 
 ### Task 2.14: kruiscontrole met Dave's Redistricting App
 
+**Vervallen** (besluit van de eigenaar, 7 oktober 2026). De gebruiksvoorwaarden van DRA verbieden toegang met automatische middelen en het kopiëren van materiaal zonder voorafgaande schriftelijke toestemming. Taak 2.14x haalde de vergelijking weg; `docs/validation.md` noemt DRA als niet gebruikt. `data/crosscheck/dra.csv` en `tests/test_dra_crosscheck.py` komen er niet. De stappen hieronder blijven als verslag staan.
+
 **Files:**
 - Create: `data/crosscheck/dra.csv`, `tests/test_dra_crosscheck.py`
 - Modify: `data/validation_notes.yaml` (alleen bij overschrijdingen)
@@ -11131,7 +11130,7 @@ Lees `docs/validation.md` van boven naar beneden. Werk de lijst onder "Open item
       Enacted uses block allocation, so district 03 counts as a Democratic seat.
   ```
 - `plans`: hoort niet voor te komen, want `02_join.py` controleert het aantal plannen. Stop en zoek de oorzaak met systematic-debugging.
-- `planscore_reproduction`, `planscore`, `dra`: zie Taken 2.13 en 2.14.
+- `planscore_reproduction`, `planscore`: zie Taak 2.13.
 
 Geen open punt, wel om te controleren: de sectie "Join log" noemt `unlinked_blocks` alleen bij ME (112 blokken in 6 tracts), MI (631 blokken in 38 VTD's) en OH (63 blokken in 4 VTD's). Dat is water dat ALARM niet in `map.rds` opnam; `check_vap_pop` heeft in `02_join.py` al gecontroleerd dat die blokken geen VAP en geen bevolking hebben (spec hoofdstuk 6 en 10). Ze hebben geen verklaring nodig. Onder de tabellen van die sectie staat alleen OR met nieuwe labels voor ALARM's referentiekaart (taak 1.17). Wijkt een van beide af, stop dan en vraag de eigenaar.
 
@@ -12987,7 +12986,7 @@ Expected: alle tests slagen.
 
 - [ ] **Step 9: Rebuild the validation report**
 
-Nu bestaan alle drie de kruiscontrolebestanden, `planscore.csv` en `dra.csv` uit taak 2.13 en 2.14 en `state_files.csv` uit Step 5.
+Nu bestaan beide kruiscontrolebestanden, `planscore.csv` uit taak 2.13 en `state_files.csv` uit Step 5.
 
 Run: `$env:PYTHONUTF8=1; .venv\Scripts\python pipeline/03_metrics.py`
 
@@ -12997,7 +12996,7 @@ Run: `Select-String -Path docs\validation.md -SimpleMatch -Pattern '**Open items
 
 Expected: één treffer.
 
-Staat er een open punt onder de samenvattingsregel, bijvoorbeeld `UT state_files: ...`, lees dan de sectie "CD120 against state files". Is de oorzaak aangetoond, schrijf dan onder de sleutel `state_files` van die staat een verklaring in `data/validation_notes.yaml`, met de getallen en de bron, zoals in taak 2.15, en draai `03_metrics.py` opnieuw. Is de oorzaak niet duidelijk, stop en vraag de eigenaar; pas niets aan in de pijplijn. Is `Pending` groter dan 0, dan ontbreekt `planscore.csv` of `dra.csv`. Maak dan eerst taak 2.13 en 2.14 af.
+Staat er een open punt onder de samenvattingsregel, bijvoorbeeld `UT state_files: ...`, lees dan de sectie "CD120 against state files". Is de oorzaak aangetoond, schrijf dan onder de sleutel `state_files` van die staat een verklaring in `data/validation_notes.yaml`, met de getallen en de bron, zoals in taak 2.15, en draai `03_metrics.py` opnieuw. Is de oorzaak niet duidelijk, stop en vraag de eigenaar; pas niets aan in de pijplijn. Is `Pending` groter dan 0, dan ontbreekt `planscore.csv`. Maak dan eerst taak 2.13 af.
 
 - [ ] **Step 10: Regenerate results.json**
 
@@ -13760,7 +13759,7 @@ Draai deze taak pas als het siteplan uit Task 4.3 is uitgevoerd. Laad eerst de s
 
 Run: `$env:PATH = "$PWD\.venv\Scripts;" + $env:PATH; make test`
 
-Expected: pytest meldt alleen `passed`, en `skipped` alleen voor tests met de marker `data` als de datamap ontbreekt; de kruiscontroletests van Task 2.13 en 2.14 slaan niet over (Step 5 controleert dat). `node --test` meldt `fail 0` en `skipped 0`. Exit code 0.
+Expected: pytest meldt alleen `passed`, en `skipped` alleen voor tests met de marker `data` als de datamap ontbreekt; de kruiscontroletests van Task 2.13 slaan niet over (Step 5 controleert dat). `node --test` meldt `fail 0` en `skipped 0`. Exit code 0.
 
 - [ ] **Step 2: De hele pijplijn met alle controles**
 
@@ -13785,22 +13784,22 @@ Expected: één treffer, `docs\validation.md:7:**Open items: 0.** Pending: 0.` (
 Geen treffer: open de regel die begint met `**Open items:`. Direct eronder staan de punten.
 
 - `Open items` groter dan 0: een overschrijding zonder verklaring in `data/validation_notes.yaml`.
-- `Pending` groter dan 0: een kruiscontrolebestand in `data/crosscheck/` ontbreekt (`planscore.csv`, `dra.csv` of `state_files.csv`). Dan zijn de criteria van Step 5 en Step 6 ook niet gehaald.
+- `Pending` groter dan 0: een kruiscontrolebestand in `data/crosscheck/` ontbreekt (`planscore.csv` of `state_files.csv`). Dan zijn de criteria van Step 5 en Step 6 ook niet gehaald.
 
-- [ ] **Step 5: Criteria "PlanScore" en "DRA"**
+- [ ] **Step 5: Criterium "PlanScore"**
 
-Run: `Test-Path data\crosscheck\planscore.csv, data\crosscheck\dra.csv`
+Run: `Test-Path data\crosscheck\planscore.csv`
 
-Expected: twee regels `True`.
+Expected: `True`.
 
-Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_planscore_crosscheck.py tests/test_dra_crosscheck.py -v -rs`
+Run: `$env:PYTHONUTF8=1; .venv\Scripts\python -m pytest tests/test_planscore_crosscheck.py -v -rs`
 
-Expected: `3 passed`, geen `skipped`. Slaat een test over, dan ontbreekt het bestand. Maak dan Task 2.13 of 2.14 af.
+Expected: `2 passed`, geen `skipped`. Slaat een test over, dan ontbreekt het bestand. Maak dan Task 2.13 af.
 
 Open `docs/validation.md`. Controleer met de hand:
 
 - Het deel over PlanScore noemt minstens drie staten. Per staat staat eerst de reproductie van hun EG uit hun eigen districtsstemmen, met `ok` in de kolom "Reproduced" (met onze functie, of met de formule voor gelijke opkomst als de eigenaar in Task 2.13 voor optie (a) koos), daarna onze EG op de composiet naast die van PlanScore, met `explained` in de kolom "Composite". Elk verschil groter dan afronding heeft een verklaring.
-- Het deel over Dave's Redistricting App noemt minstens vijf staten, zoals Task 2.14 en `tests/test_dra_crosscheck.py` eisen, met de presidentsuitslag van 2020 per district naast onze cijfers, met URL en datum.
+- Het deel over Dave's Redistricting App zegt dat DRA niet is gebruikt, en waarom.
 
 - [ ] **Step 6: Criterium "vergelijking CD120 met de bestanden van AL, OH, TN, UT en MO HB 1"**
 

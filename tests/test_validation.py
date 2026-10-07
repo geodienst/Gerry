@@ -7,7 +7,6 @@ from gerry import validation as v
 from gerry.metrics import efficiency_gap
 
 PLANSCORE_HEADER = "state,election,url,accessed,same_map,planscore_eg_pct,planscore_favors,district,dem_votes,rep_votes\n"
-DRA_HEADER = "state,map_name,url,accessed,district,dem,rep\n"
 STATE_FILES_HEADER = ("state,map,source_kind,source_url,retrieved,blocks_census,blocks_state,only_census,"
                       "only_state,blocks_matching,share_blocks,share_vap,district_mapping,one_to_one,result\n")
 
@@ -36,7 +35,6 @@ METRICS = {
             "BB": [{"map_id": "enacted", "district": "01", "block": 0.45, "whole": 0.45, "block_dem": False, "whole_dem": False},
                    {"map_id": "enacted", "district": "02", "block": 0.51, "whole": 0.51, "block_dem": True, "whole_dem": True}],
         },
-        "pre_20": {"AA": {"01": 0.40, "02": 0.62, "03": 0.55}, "BB": {"01": 0.45, "02": 0.51}},
         # the maps of the 2024 election (extensions, Task 5.8): AA redrew since 2024, BB did not
         "map_2024": {"AA": {"districts": 3, "changed_blocks": 120, "seats_2024": 1, "seats_enacted": 2},
                      "BB": {"districts": 2, "changed_blocks": 0, "seats_2024": 1, "seats_enacted": 1}},
@@ -72,10 +70,6 @@ def crosscheck(tmp_path):
     rows = ["AA,2024 U.S. House,https://planscore.org/x,2026-10-12,yes,6.7,Republicans,%s,%d,%d" % r
             for r in (("01", 60, 40), ("02", 30, 70), ("03", 45, 55))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
-    # AA 2020 two-party shares from DRA: 40.0, 62.0 and 55.8 (0.8 points above our 55.0)
-    rows = ["AA,Plan A,https://davesredistricting.org/x,2026-10-12,%s,%s,%s" % r
-            for r in (("01", "40.00", "60.00"), ("02", "62.00", "38.00"), ("03", "55.80", "44.20"))]
-    (d / "dra.csv").write_text(DRA_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     return d
 
 
@@ -84,17 +78,16 @@ def notes(tmp_path):
     p = tmp_path / "validation_notes.yaml"
     p.write_text("BB:\n  cd118_vs_alarm: >\n    ALARM's reference plan for BB is the 2021 map.\n"
                  "AA:\n  planscore: PlanScore uses 2024 House votes; we use 2016 and 2020 president.\n"
-                 "CC:\n  dra: Left over from an earlier run.\n", encoding="utf-8")
+                 "CC:\n  planscore: Left over from an earlier run.\n", encoding="utf-8")
     return p
 
 
 def test_report_counts_open_and_pending(crosscheck, notes):
     report = v.build_report(METRICS, crosscheck, notes)
-    # open: AA whole_unit (district 03 flips), AA dra (0.800 points), BB plans (4999)
+    # open: AA whole_unit (district 03 flips), BB plans (4999)
     # explained: BB cd118_vs_alarm, AA planscore; pending: state_files.csv
-    assert "**Open items: 3.** Pending: 1." in report
+    assert "**Open items: 2.** Pending: 1." in report
     assert "- AA whole_unit: enacted district 03 has another winner" in report
-    assert "- AA dra: largest difference 0.800 points" in report
     assert "- BB plans: 4999 plans, expected 5000" in report
     assert "- data/crosscheck/state_files.csv not found" in report
 
@@ -119,7 +112,8 @@ def test_report_planscore_section(crosscheck, notes):
 def test_report_lists_explanations_and_unused_notes(crosscheck, notes):
     report = v.build_report(METRICS, crosscheck, notes)
     assert "- **BB, cd118_vs_alarm.** ALARM's reference plan for BB is the 2021 map." in report
-    assert "- **CC, dra.** Left over from an earlier run." in report.split("## Explanations without an exceedance")[1]
+    unused = report.split("## Explanations without an exceedance")[1]
+    assert "- **CC, planscore.** Left over from an earlier run." in unused
 
 
 def test_report_tables_for_logs(crosscheck, notes):
@@ -155,13 +149,14 @@ def test_report_state_files_section(tmp_path, notes):
     assert "- AA state_files: 3 of 200 blocks outside the matching district, 0 only in the state source" in report
     assert ("| BB | Plan B | block_file | 100 | 0 | 0 | Identical, block for block (100 blocks) | ok | "
             "https://example.org/b (2026-10-05) |") in report
-    # planscore.csv and dra.csv are missing from this folder
-    assert "Pending: 2." in report
+    # planscore.csv is missing from this folder
+    assert "Pending: 1." in report
 
 
 def test_report_without_crosscheck_files(tmp_path):
     report = v.build_report(METRICS, tmp_path, tmp_path / "missing.yaml")
-    assert "Pending: 3." in report
+    # planscore.csv and state_files.csv
+    assert "Pending: 2." in report
 
 
 def test_report_has_no_em_dash(crosscheck, notes):
@@ -213,26 +208,20 @@ def test_equal_turnout_gap_differs_from_wasted_votes():
 
 
 def test_read_crosscheck_rejects_wrong_columns(tmp_path):
-    p = tmp_path / "dra.csv"
+    p = tmp_path / "planscore.csv"
     p.write_text("state,district,dem\nAA,01,40\n", encoding="utf-8")
     with pytest.raises(ValueError, match="columns"):
-        v.read_crosscheck(p, v.DRA_COLUMNS)
-    assert v.read_crosscheck(tmp_path / "none.csv", v.DRA_COLUMNS) is None
+        v.read_crosscheck(p, v.PLANSCORE_COLUMNS)
+    assert v.read_crosscheck(tmp_path / "none.csv", v.PLANSCORE_COLUMNS) is None
 
 
-def test_load_notes_rejects_unknown_check(tmp_path):
+# dra was a check name until DRA was dropped (Task 2.14x); now it is unknown like any typo
+@pytest.mark.parametrize("check", ["typo_check", "dra"])
+def test_load_notes_rejects_unknown_check(tmp_path, check):
     p = tmp_path / "notes.yaml"
-    p.write_text("AA:\n  typo_check: text\n", encoding="utf-8")
-    with pytest.raises(ValueError, match="typo_check"):
+    p.write_text(f"AA:\n  {check}: text\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=f"unknown check '{check}' for AA"):
         v.load_notes(p)
-
-
-def test_dra_unknown_district_raises(tmp_path, notes):
-    d = tmp_path / "cc"
-    d.mkdir()
-    (d / "dra.csv").write_text(DRA_HEADER + "AA,Plan A,u,2026-10-12,09,40,60\n", encoding="utf-8")
-    with pytest.raises(ValueError, match="AA district 09"):
-        v.build_report(copy.deepcopy(METRICS), d, notes)
 
 
 # --- every status condition and report number pinned on its own ------------------------------
@@ -248,13 +237,6 @@ def _with(**checks):
 def _cd118_only(districts, seats_ours, seats_alarm):
     return _with(cd118_vs_alarm={"AA": {"districts": districts, "seats_ours": seats_ours,
                                         "seats_alarm": seats_alarm}})
-
-
-def _dra_dir(tmp_path, rows):
-    d = tmp_path / "cc"
-    d.mkdir()
-    (d / "dra.csv").write_text(DRA_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
-    return d
 
 
 def test_report_seat_totals_section(crosscheck, notes):
@@ -323,33 +305,24 @@ def test_whole_unit_is_judged_per_map(tmp_path):
     assert "- AA whole_unit: alt districts 01, 02 have another winner" in report
 
 
-def test_dra_section_rows_and_districts_above_the_threshold(crosscheck, notes):
+@pytest.mark.parametrize("stray", [
+    # a file in the layout Task 2.14 planned
+    "state,map_name,url,accessed,district,dem,rep\nAA,Plan A,u,2026-10-12,03,55.80,44.20\n",
+    # no cross-check layout at all: read_crosscheck would raise on it
+    "no header\n",
+], ids=["dra_layout", "not_a_crosscheck_file"])
+def test_dra_section_says_not_used_and_ignores_dra_csv(crosscheck, notes, stray):
+    before = v.build_report(METRICS, crosscheck, notes)
+    (crosscheck / "dra.csv").write_text(stray, encoding="utf-8")
     report = v.build_report(METRICS, crosscheck, notes)
-    # 55.80 / (55.80 + 44.20) = 55.80% against our 55.00%: 0.800 points
-    assert "| AA | Plan A | 3 of 3 | 0.800 | open | https://davesredistricting.org/x (2026-10-12) |" in report
-    assert "| AA | 03 | 55.80% | 55.00% | 0.800 |" in report
-
-
-def test_dra_takes_votes_as_well_as_percentages(tmp_path, notes):
-    # only dem / (dem + rep) counts: 4000 / 10000 = 0.40, 6200 / 10000 = 0.62, 5500 / 10000 = 0.55
-    d = _dra_dir(tmp_path, ["AA,Plan A,https://dra.example/a,2026-10-12,%s,%d,%d" % r
-                            for r in (("01", 4000, 6000), ("02", 6200, 3800), ("03", 5500, 4500))])
-    report = v.build_report(METRICS, d, notes)
-    assert "| AA | Plan A | 3 of 3 | 0.000 | ok | https://dra.example/a (2026-10-12) |" in report
-
-
-def test_dra_missing_district_is_open_although_the_rest_agrees(tmp_path, notes):
-    d = _dra_dir(tmp_path, ["AA,Plan A,u,2026-10-12,%s,%d,%d" % r for r in (("01", 40, 60), ("02", 62, 38))])
-    report = v.build_report(METRICS, d, notes)
-    assert "- AA dra: largest difference 0.000 points, 2 of 3 districts" in report
-    assert "| AA | Plan A | 2 of 3 | 0.000 | open |" in report
-
-
-def test_dra_district_listed_twice_raises(tmp_path, notes):
-    d = _dra_dir(tmp_path, ["AA,Plan A,u,2026-10-12,%s,%d,%d" % r
-                            for r in (("01", 40, 60), ("01", 40, 60), ("02", 62, 38))])
-    with pytest.raises(ValueError, match="AA lists a district twice"):
-        v.build_report(METRICS, d, notes)
+    # dra.csv is not read: no error and the same report
+    assert report == before
+    body = report.split("\n## Dave's Redistricting App\n\n")[1].split("\n\n## ")[0]
+    assert body == ("Not used. DRA's terms of use, updated July 31, 2026, do not allow automated access to the "
+                    "site, or copying material from it without prior written consent. This report therefore has no "
+                    "comparison with DRA. The comparison with an outside source is the PlanScore section above.")
+    # open: AA whole_unit, BB plans; pending: state_files.csv; nothing for DRA
+    assert "**Open items: 2.** Pending: 1." in report
 
 
 def test_state_files_each_condition_alone_is_open(tmp_path):
@@ -452,10 +425,12 @@ def test_load_notes_rejects_empty_text_and_flat_layout(tmp_path, text, message):
 
 
 def test_read_crosscheck_strips_spaces_around_values(tmp_path):
-    p = tmp_path / "dra.csv"
-    p.write_text(DRA_HEADER + "AA, Plan A , https://dra.example/a , 2026-10-12 , 01 , 40 , 60 \n", encoding="utf-8")
-    df = v.read_crosscheck(p, v.DRA_COLUMNS)
-    assert df.iloc[0].tolist() == ["AA", "Plan A", "https://dra.example/a", "2026-10-12", "01", "40", "60"]
+    p = tmp_path / "planscore.csv"
+    p.write_text(PLANSCORE_HEADER + "AA, 2024 U.S. House , https://planscore.org/x , 2026-10-12 , yes , 6.7 , "
+                 "Republicans , 01 , 40 , 60 \n", encoding="utf-8")
+    df = v.read_crosscheck(p, v.PLANSCORE_COLUMNS)
+    assert df.iloc[0].tolist() == ["AA", "2024 U.S. House", "https://planscore.org/x", "2026-10-12", "yes", "6.7",
+                                   "Republicans", "01", "40", "60"]
 
 
 @pytest.mark.parametrize("column, other", [("url", "u2"), ("accessed", "2026-10-13"), ("same_map", "no"),
@@ -478,7 +453,7 @@ def test_note_text_is_folded_to_one_line(tmp_path):
 
 
 @pytest.mark.parametrize("check", ["cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction",
-                                   "planscore", "dra", "state_files"])
+                                   "planscore", "state_files"])
 def test_load_notes_accepts_each_check_of_the_brief(tmp_path, check):
     p = tmp_path / "notes.yaml"
     p.write_text(f"AA:\n  {check}: Text.\n", encoding="utf-8")

@@ -115,7 +115,7 @@ Concept, in het Engels, voor onderaan de pagina:
 >
 > **Known limits.** [de beperkingen uit hoofdstuk 10 van het hoofdontwerp die geen noot per staat hebben, elk in één zin: de eenheden van de stemmen; twee tracts in California zonder stemmen bij ALARM; 38 watereenheden in Michigan; het blokbestand van Maine; de cijfers van New Jersey; eenheden zonder volwassenen; geen toets op gelijke bevolking; districtsnummers verschillen tussen kaarten; TX-15, TX-28 en TX-34 blijven Democratisch op deze stemmen; Louisiana ligt bijna vast op één Democratische zetel.]
 >
-> **Sources.** ALARM Project, 50-State Redistricting Simulations, version 15 (McCartan, Imai and others; Harvard Dataverse, doi:10.7910/DVN/SLCD3E), CC0. U.S. Census Bureau, TIGER/Line 2026 and block equivalency files for the 119th and 120th Congress. Legal status as of <datum>. Cross-checked against PlanScore and Dave's Redistricting App for a few states.
+> **Sources.** ALARM Project, 50-State Redistricting Simulations, version 15 (McCartan, Imai and others; Harvard Dataverse, doi:10.7910/DVN/SLCD3E), CC0. U.S. Census Bureau, TIGER/Line 2026 and block equivalency files for the 119th and 120th Congress. Legal status as of <datum>. Cross-checked against PlanScore for seven states.
 
 De zinnen bij "Known limits" schrijf ik uit in het siteplan, na akkoord op deze opzet.
 

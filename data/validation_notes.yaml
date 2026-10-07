@@ -1,6 +1,6 @@
 # Explanations for exceedances in docs/validation.md, written by hand.
 # Layout: state postal code, then check name, then the explanation in plain English.
-# Check names: cd118_vs_alarm, whole_unit, plans, planscore_reproduction, planscore, dra, state_files.
+# Check names: cd118_vs_alarm, whole_unit, plans, planscore_reproduction, planscore, state_files.
 # Name the numbers and the source. No em dashes.
 #
 # Made-up example of the layout:

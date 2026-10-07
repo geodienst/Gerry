@@ -8,8 +8,6 @@ Input files (UTF-8, comma-separated, header row, every value read as text):
   columns (url, accessed, same_map, planscore_eg_pct, planscore_favors) repeat on every
   row of a state and election. planscore_eg_pct is the size exactly as PlanScore prints it
   ("4.2"), planscore_favors is "Republicans" or "Democrats", same_map is "yes" or "no".
-- data/crosscheck/dra.csv, DRA_COLUMNS, one row per district; dem and rep as DRA shows
-  them for the 2020 presidential election (votes or percentages; only dem / (dem + rep) is used).
 - data/crosscheck/state_files.csv, STATE_FILES_COLUMNS, one row per compared map, written by
   tools/compare_state_files.py (Phase 3). source_kind is "block_file" or "shapes"; the
   blocks_* and only_* columns are block counts; one_to_one is "True" or "False".
@@ -28,11 +26,9 @@ from gerry.metrics import dem_wins, efficiency_gap
 
 SHARE_TOLERANCE = 0.005       # 0.5 percentage point, as a fraction
 EXPECTED_PLANS = 5000
-CHECK_KEYS = ("cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction", "planscore", "dra",
-              "state_files")
+CHECK_KEYS = ("cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction", "planscore", "state_files")
 PLANSCORE_COLUMNS = ("state", "election", "url", "accessed", "same_map", "planscore_eg_pct",
                      "planscore_favors", "district", "dem_votes", "rep_votes")
-DRA_COLUMNS = ("state", "map_name", "url", "accessed", "district", "dem", "rep")
 # tools/compare_state_files.py (Phase 3) imports this tuple and writes state_files.csv with it.
 STATE_FILES_COLUMNS = ("state", "map", "source_kind", "source_url", "retrieved", "blocks_census", "blocks_state",
                        "only_census", "only_state", "blocks_matching", "share_blocks", "share_vap",
@@ -303,41 +299,15 @@ def _planscore(metrics: dict, crosscheck_dir: Path, ledger: _Ledger) -> str:
          "Our composite, enacted map", "Same map", "Composite", "Source"], rows)])
 
 
-def _dra(metrics: dict, crosscheck_dir: Path, ledger: _Ledger) -> str:
-    head = ["## Dave's Redistricting App",
-            "2020 presidential two-party share per district on the current map: DRA against our block "
-            "allocation. Threshold: 0.5 points per district, and every district present."]
-    df = read_crosscheck(crosscheck_dir / "dra.csv", DRA_COLUMNS)
-    if df is None:
-        ledger.pending.append("data/crosscheck/dra.csv not found")
-        return "\n\n".join(head + ["Pending: data/crosscheck/dra.csv not found."])
-    pre_20 = metrics["checks"]["pre_20"]
-    rows, details = [], []
-    for state, sub in df.groupby("state", sort=True):
-        if state not in pre_20:
-            raise ValueError(f"dra.csv: {state} is not a state in metrics.json")
-        if sub["district"].duplicated().any():
-            raise ValueError(f"dra.csv: {state} lists a district twice")
-        diffs = []
-        for row in sub.itertuples(index=False):
-            if row.district not in pre_20[state]:
-                raise ValueError(f"dra.csv: {state} district {row.district} is not in the enacted map")
-            theirs = float(row.dem) / (float(row.dem) + float(row.rep))
-            ours = pre_20[state][row.district]
-            diffs.append(abs(theirs - ours))
-            if abs(theirs - ours) > SHARE_TOLERANCE + 1e-12:
-                details.append((state, row.district, _pct(theirs), _pct(ours), _pts(abs(theirs - ours))))
-        complete = len(sub) == len(pre_20[state])
-        worst = max(diffs)
-        what = f"largest difference {_pts(worst)} points" + ("" if complete else f", {len(sub)} of {len(pre_20[state])} districts")
-        status = ledger.judge(state, "dra", complete and worst <= SHARE_TOLERANCE + 1e-12, what)
-        sources = "; ".join(f"{u} ({a})" for u, a in dict.fromkeys(zip(sub["url"], sub["accessed"])))
-        rows.append((state, sub["map_name"].iloc[0], f"{len(sub)} of {len(pre_20[state])}", _pts(worst), status, sources))
-    parts = head + [_table(["State", "Map", "Districts", "Largest difference (points)", "Status", "Source"], rows)]
-    if details:
-        parts += ["Districts above the threshold:",
-                  _table(["State", "District", "DRA", "Ours", "Difference (points)"], details)]
-    return "\n\n".join(parts)
+def _dra_not_used() -> str:
+    """The DRA section, a fixed text: DRA is not used (owner decision of 7 October 2026), so nothing here is
+    open or pending, and a dra.csv in data/crosscheck/ is ignored."""
+    return "\n\n".join([
+        "## Dave's Redistricting App",
+        "Not used. DRA's terms of use, updated July 31, 2026, do not allow automated access to the site, or copying "
+        "material from it without prior written consent. This report therefore has no comparison with DRA. The "
+        "comparison with an outside source is the PlanScore section above.",
+    ])
 
 
 def _state_files(crosscheck_dir: Path, ledger: _Ledger) -> str:
@@ -380,7 +350,7 @@ def build_report(metrics: dict, crosscheck_dir: Path, notes_path: Path) -> str:
         _plans_and_ties(metrics, ledger),
         _join_log(metrics),
         _planscore(metrics, crosscheck_dir, ledger),
-        _dra(metrics, crosscheck_dir, ledger),
+        _dra_not_used(),
         _state_files(crosscheck_dir, ledger),
     ]
     used = [f"- **{s}, {c}.** {ledger.notes[(s, c)]}" for s, c in sorted(ledger.used)]
