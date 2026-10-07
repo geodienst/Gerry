@@ -149,3 +149,17 @@ def test_overview_per_control_and_body(metrics):
         # the sum of the state drawing effects: -10 on 2026-10-06
         drawing = sum(e["drawing"] for e in table.values())
         assert drawing == sum(s["effects"]["drawing"] for s in states.values()) == -10
+    # the totals approved by the owner on 2026-10-07 (config.yaml after Task 5.10), in the order of the design
+    assert metrics["national"]["by_control"] == {
+        "Republican": {"states": 16, "seats": 165, "drawing": -17},
+        "Democratic": {"states": 8, "seats": 118, "drawing": 9},
+        "Bipartisan": {"states": 10, "seats": 61, "drawing": -3},
+        "Nonpartisan": {"states": 10, "seats": 85, "drawing": 1},
+    }
+    assert metrics["national"]["by_body"] == {
+        "Legislature": {"states": 28, "seats": 301, "drawing": -9},
+        "Commission": {"states": 9, "seats": 73, "drawing": -1},
+        "Court": {"states": 7, "seats": 55, "drawing": 0},
+    }
+    assert list(metrics["national"]["by_control"]) == ["Republican", "Democratic", "Bipartisan", "Nonpartisan"]
+    assert list(metrics["national"]["by_body"]) == ["Legislature", "Commission", "Court"]

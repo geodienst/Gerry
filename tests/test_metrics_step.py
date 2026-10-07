@@ -744,6 +744,9 @@ def test_national_by_sums_states_seats_and_drawing_effects():
         "Bipartisan": {"states": 0, "seats": 0, "drawing": 0},
         "Nonpartisan": {"states": 1, "seats": 2, "drawing": 0},
     }
+    # dict equality ignores the order; results.json keeps it (plan, choice 8)
+    assert list(step.national_by(states, cfg_states, "control")) == ["Republican", "Democratic", "Bipartisan",
+                                                                      "Nonpartisan"]
     by_body = step.national_by(states, cfg_states, "adopted_by")
     assert list(by_body) == ["Legislature", "Commission", "Court"]
     assert by_body["Legislature"] == {"states": 2, "seats": 10, "drawing": -1}
