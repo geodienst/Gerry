@@ -338,6 +338,15 @@ def test_compute_needs_the_changed_blocks_of_02_join(tmp_path, monkeypatch):
         step.compute(cfg, tmp_path)
 
 
+def test_compute_takes_zero_changed_blocks_as_a_count(tmp_path, monkeypatch):
+    # 0 is a count (35 of the 44 real states have it), not a missing value: it reaches the redraw check, which
+    # stops here because the 2024 rows of XX give 2 seats against 1 on the enacted map
+    cfg = _interim(tmp_path, join_log='{"XX": {"map_2024_changed_blocks": 0}}')
+    monkeypatch.setattr(step, "HOUSE_SEATS", 3 + 1)
+    with pytest.raises(CheckError, match="redraw failed"):
+        step.compute(cfg, tmp_path)
+
+
 def test_main_writes_metrics_and_report(tmp_path, monkeypatch):
     import json
 
