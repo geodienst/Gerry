@@ -1,0 +1,106 @@
+// Entry point: loads site/data/results.json and site/data/map.topojson, then wires the map,
+// the sheet beside it and the national strip. d3 and topojson come from site/vendor/ as
+// globals; the page makes no other requests.
+import { stateFromHash, linkFor } from './hash.js';
+import { makeColors } from './colors.js';
+import { indexResults, stateOptions, mapHints } from './model.js';
+import { createMap, drawLegend } from './map.js';
+
+const { d3 } = globalThis;
+const $ = (id) => document.getElementById(id);
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const darkMode = window.matchMedia('(prefers-color-scheme: dark)');
+
+async function getJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`${url} answered ${response.status}`);
+  return response.json();
+}
+
+/** The two poles of the current palette, read from the CSS tokens (light or dark). */
+function readPoles(palette) {
+  const css = getComputedStyle(document.documentElement);
+  const token = (name) => css.getPropertyValue(name).trim();
+  return {
+    d: token(palette === 'party' ? '--party-d' : '--neutral-d'),
+    r: token(palette === 'party' ? '--party-r' : '--neutral-r'),
+    mid: token('--mid'),
+    blank: token('--blank'),
+  };
+}
+
+async function main() {
+  let results;
+  let topology;
+  try {
+    [results, topology] = await Promise.all([getJson('data/results.json'), getJson('data/map.topojson')]);
+  } catch (error) {
+    $('load-error').textContent = `The map data did not load (${error.message}). `
+      + 'Open the page through a web server, for example with make serve, not as a file.';
+    $('load-error').hidden = false;
+    return;
+  }
+
+  const index = indexResults(results);
+  const ui = { view: 'districts', palette: 'party', selected: '' };
+  let colors = makeColors(d3.interpolateLab, readPoles(ui.palette));
+  const hints = mapHints({
+    touch: window.matchMedia('(pointer: coarse)').matches,
+    mac: /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
+  });
+  $('maphint').textContent = hints.hint;
+
+  const map = createMap({
+    svg: $('map'), box: $('mapbox'), tip: $('tip'), tapline: $('tapline'), gesture: $('gesture'),
+    index, topology, hints,
+    onSelect: (postal) => select(postal, { push: true }),
+    reduceMotion: () => reduceMotion.matches,
+  });
+
+  const pick = $('pick');
+  for (const option of stateOptions(results)) pick.append(new Option(option.name, option.postal));
+  pick.addEventListener('change', () => select(pick.value, { push: true }));
+
+  function paint() {
+    map.paint(colors, ui.view, ui.selected);
+    drawLegend($('legend'), ui.view, colors);
+  }
+
+  /** Choose a state ("" for the whole map): outline, zoom and the link (#TX). */
+  function select(postal, { push = false, animate = true } = {}) {
+    const previous = ui.selected;
+    ui.selected = postal;
+    pick.value = postal;
+    if (push && postal !== previous) history.pushState(null, '', linkFor(postal, location.pathname + location.search));
+    paint();
+    if (postal !== previous) map.zoomTo(postal, animate);
+  }
+
+  function fromLocation() {
+    const postal = stateFromHash(location.hash, results.states);
+    const target = location.hash.slice(1);
+    if (!postal && target && document.getElementById(target)) return; // a link to a section, such as #method
+    select(postal);
+  }
+  window.addEventListener('popstate', fromLocation);
+  window.addEventListener('hashchange', fromLocation);
+
+  const pressed = (on, off) => { $(on).setAttribute('aria-pressed', 'true'); $(off).setAttribute('aria-pressed', 'false'); };
+  $('view-districts').addEventListener('click', () => { ui.view = 'districts'; pressed('view-districts', 'view-states'); paint(); });
+  $('view-states').addEventListener('click', () => { ui.view = 'states'; pressed('view-states', 'view-districts'); paint(); });
+  const setPalette = (palette) => {
+    ui.palette = palette;
+    colors = makeColors(d3.interpolateLab, readPoles(palette));
+    paint();
+  };
+  $('palette-party').addEventListener('click', () => { pressed('palette-party', 'palette-neutral'); setPalette('party'); });
+  $('palette-neutral').addEventListener('click', () => { pressed('palette-neutral', 'palette-party'); setPalette('neutral'); });
+  darkMode.addEventListener('change', () => setPalette(ui.palette));
+  $('zoom-in').addEventListener('click', () => map.zoomBy(1.8));
+  $('zoom-out').addEventListener('click', () => map.zoomBy(1 / 1.8));
+  $('zoom-reset').addEventListener('click', () => { select('', { push: true }); map.zoomTo('', true); });
+
+  select(stateFromHash(location.hash, results.states), { animate: false });
+}
+
+main();

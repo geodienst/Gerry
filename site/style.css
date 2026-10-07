@@ -1,0 +1,141 @@
+/* U.S. House seats, counted three ways. Site design: docs/superpowers/specs/2026-10-06-site-design.md.
+   Tokens: chapter 3 of the design; --water, --band and --focus come from preview version 5. */
+:root {
+  color-scheme: light dark;
+  --bg: #f5f6f7;
+  --sheet: #ffffff;
+  --fg: #16181b;
+  --muted: #5b626b;
+  --rule: #d7dbe0;
+  --ink: #23324f;
+  --party-d: #2a78d6;
+  --party-r: #e34948;
+  --neutral-d: #01665e;
+  --neutral-r: #8c510a;
+  --mid: #ecebe7;
+  --blank: #c9ccd1;
+  --water: #e9edf2;
+  --band: rgba(35, 50, 79, 0.14);
+  --focus: var(--ink);
+  --font-head: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111316;
+    --sheet: #191c20;
+    --fg: #eceef1;
+    --muted: #a3aab3;
+    --rule: #2d3239;
+    --ink: #c8d3ea;
+    --party-d: #3987e5;
+    --party-r: #e66767;
+    --neutral-d: #5ab4ac;
+    --neutral-r: #d8b365;
+    --mid: #3a3a37;
+    --blank: #4a4f56;
+    --water: #20252b;
+    --band: rgba(200, 211, 234, 0.16);
+  }
+}
+
+/* Sizes in rem; the root grows from 15px (up to about 1300px wide) to 21px on large screens. */
+html { font-size: clamp(15px, 0.45vw + 9px, 21px); }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--font-body); }
+[hidden] { display: none !important; }
+.wrap { max-width: 2400px; margin: 0 auto; padding-inline: clamp(16px, 2.5vw, 56px); padding-block: 1.2rem 2.6rem; display: grid; gap: 1.2rem; }
+
+header { display: grid; gap: 0.35rem; }
+h1 { font: 600 clamp(1.6rem, 2.6vw, 2.4rem)/1.15 var(--font-head); margin: 0; text-wrap: balance; }
+.lede { margin: 0; max-width: 70ch; color: var(--muted); }
+.keyline { margin: 0.2rem 0 0; font-size: 0.95rem; display: flex; flex-wrap: wrap; gap: 0.2rem 1.2rem; align-items: baseline; }
+.keyline b { font: 600 1.25rem/1.1 var(--font-head); font-variant-numeric: tabular-nums; }
+.keyline .lab { color: var(--muted); font-size: 0.85rem; margin-right: 0.3rem; }
+.linkbtn { font: inherit; font-size: 0.85rem; background: none; border: 0; color: var(--ink); padding: 0; cursor: pointer; text-decoration: underline; }
+h2 { font: 600 1.33rem/1.2 var(--font-head); margin: 0; text-wrap: balance; }
+h3 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+.num { font-variant-numeric: tabular-nums; }
+a { color: var(--ink); }
+.load-error { margin: 0; padding: 0.7rem 1rem; border: 1px solid var(--rule); background: var(--sheet); }
+
+.card { background: var(--sheet); border: 1px solid var(--rule); padding: 1rem; display: grid; gap: 0.7rem; min-width: 0; align-content: start; }
+.stack { display: grid; gap: 0.4rem; }
+.trio { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; align-items: baseline; }
+.trio div { display: grid; }
+.trio .lab { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.trio .val { font: 600 2rem/1.1 var(--font-head); font-variant-numeric: tabular-nums; }
+.trio .sub { font-size: 0.87rem; color: var(--muted); }
+.effects { margin: 0; font-size: 0.93rem; }
+
+/* Map and sheet side by side from 900px; the sheet is at least 22rem and otherwise 30% wide. */
+.main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: 1.2rem; align-items: start; }
+@media (width < 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+.controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--rule); }
+.seg button { font: inherit; font-size: 0.87rem; padding: 0.4rem 0.65rem; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+select { font: inherit; font-size: 0.87rem; padding: 0.3rem 0.4rem; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); }
+.pick { font-size: 0.87rem; color: var(--muted); display: flex; gap: 0.4rem; align-items: center; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[tabindex="-1"]:focus { outline: none; }
+
+.mapbox { position: relative; background: var(--water); }
+svg { display: block; width: 100%; height: auto; }
+#map { touch-action: pan-y; cursor: grab; }
+#map.dragging { cursor: grabbing; }
+#map .bg { fill: transparent; }
+#map path { vector-effect: non-scaling-stroke; }
+.district { stroke: var(--sheet); stroke-width: 0.4; cursor: pointer; }
+.state { fill: none; stroke: var(--sheet); stroke-width: 1.2; pointer-events: none; }
+.state.on { stroke: var(--fg); stroke-width: 2.2; }
+.statefill { stroke: var(--sheet); stroke-width: 0.8; cursor: pointer; }
+.zoombar { position: absolute; top: 0.5rem; right: 0.5rem; display: grid; gap: 0.25rem; }
+.zoombar button { font: 600 1rem/1 var(--font-body); width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
+.zoombar button.wide { width: auto; padding-inline: 0.5rem; font-size: 0.8rem; font-weight: 500; }
+.gesture { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 12, 16, 0.6); color: #fff; font-size: 1.1rem; pointer-events: none; text-align: center; padding: 1rem; }
+.maphint { font-size: 0.8rem; color: var(--muted); margin: 0; }
+.tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
+.tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
+.tip b, .tip span { display: block; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; font-size: 0.8rem; color: var(--muted); }
+.legend svg { width: 18rem; max-width: 100%; }
+.legend text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+
+/* The sheet */
+.pill { display: inline-block; font-size: 0.8rem; padding: 0.05rem 0.5rem; border: 1px solid var(--rule); color: var(--muted); }
+.meta { font-size: 0.87rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.25rem 0.65rem; align-items: center; margin: 0; }
+.list { display: grid; gap: 2px; }
+.row { display: grid; grid-template-columns: 9.5em minmax(0, 1fr) 3.2em; gap: 0.5rem; align-items: center; font: inherit; font-size: 0.87rem; padding: 0.12rem 0.25rem; cursor: pointer; border: 0; background: transparent; color: var(--fg); text-align: left; width: 100%; }
+.row:hover { background: var(--band); }
+.row .v { text-align: right; font-variant-numeric: tabular-nums; }
+.row svg { height: 0.8rem; }
+details.zeros > summary { cursor: pointer; font-size: 0.87rem; color: var(--muted); padding: 0.25rem; list-style: none; display: flex; gap: 0.4rem; align-items: center; }
+details.zeros > summary::-webkit-details-marker { display: none; }
+details.zeros > summary::before { content: ""; width: 0.45rem; height: 0.45rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; margin-right: 0.15rem; }
+details.zeros[open] > summary::before { transform: rotate(45deg); }
+.net { display: grid; gap: 0.35rem; border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+.net svg text { font-size: 11px; font-family: var(--font-body); fill: var(--fg); }
+.axis text, .chart text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.axis line, .axis path { stroke: var(--rule); }
+.chart .mark-label { fill: var(--fg); paint-order: stroke; stroke: var(--sheet); stroke-width: 3px; stroke-linejoin: round; }
+.chart .bar { fill: var(--muted); fill-opacity: 0.75; }
+.note { font-size: 0.87rem; color: var(--muted); margin: 0; }
+.notes { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.notes li { font-size: 0.87rem; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 0.65rem; }
+.back { font: inherit; font-size: 0.87rem; background: none; border: 0; color: var(--ink); padding: 0; cursor: pointer; text-decoration: underline; justify-self: start; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.8rem; font-size: 0.87rem; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+/* Method and footer: one column of about 70 characters */
+.prose { max-width: 70ch; display: grid; gap: 0.8rem; }
+.prose p, .prose ul { margin: 0; }
+.prose ul { padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+footer { font-size: 0.8rem; color: var(--muted); max-width: 90ch; }
+footer p { margin: 0 0 0.3rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

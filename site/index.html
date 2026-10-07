@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>U.S. House seats, counted three ways</title>
+  <meta name="description" content="Democratic seats in each state if seats followed the vote share, under neutrally drawn maps, and under the maps used on November 3, 2026.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="vendor/d3.min.js"></script>
+  <script defer src="vendor/topojson-client.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>U.S. House seats, counted three ways</h1>
+      <p class="lede">Democratic seats in each state if seats followed the vote share, under neutrally drawn maps, and under the maps used on November 3, 2026. All three use the same votes: the 2016 and 2020 presidential results added together.</p>
+    </header>
+
+    <p class="load-error" id="load-error" role="alert" hidden></p>
+
+    <div class="main">
+      <section class="card" aria-label="Map">
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Map view">
+            <button type="button" id="view-districts" aria-pressed="true">Districts: Democratic share</button>
+            <button type="button" id="view-states" aria-pressed="false">States: drawing effect</button>
+          </div>
+          <div class="seg" role="group" aria-label="Colors">
+            <button type="button" id="palette-party" aria-pressed="true">Party colors</button>
+            <button type="button" id="palette-neutral" aria-pressed="false">Neutral colors</button>
+          </div>
+          <label class="pick" for="pick">State <select id="pick"><option value="">All states</option></select></label>
+        </div>
+        <div class="mapbox" id="mapbox">
+          <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of the U.S. congressional districts. Choose a state with the State menu or the list."></svg>
+          <div class="zoombar">
+            <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+            <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
+            <button type="button" id="zoom-reset" class="wide" aria-label="All states">All</button>
+          </div>
+          <div class="gesture" id="gesture" hidden></div>
+          <div class="tip" id="tip" hidden></div>
+        </div>
+        <p class="tapline" id="tapline" aria-live="polite"></p>
+        <p class="maphint" id="maphint"></p>
+        <div class="legend" id="legend"></div>
+      </section>
+      <aside class="card" id="sheet" aria-labelledby="sheet-title"></aside>
+    </div>
+  </div>
+</body>
+</html>
