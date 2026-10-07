@@ -73,3 +73,38 @@ def test_national_totals(metrics):
     assert nat["enacted"] == sum(s["enacted"] for s in states)
     assert len(nat["neutral"]["dist"]) == 430
     assert sum(nat["neutral"]["dist"]) == pytest.approx(1.0)
+
+
+# Extensions: numbers from the prototype run of 2026-10-06 (plan 2026-10-06-extensions.md, "Proefrun").
+# state: competitive districts (45 to 55%) on the enacted map, and median, p5 and p95 over the plans
+COMPETITIVE = {
+    "AZ": (4, 4, 2, 5), "CA": (1, 9, 6, 12), "FL": (14, 7, 4, 9), "NC": (2, 4, 3, 6), "NV": (3, 2, 1, 2),
+    "TX": (5, 9, 4, 12), "WV": (0, 0, 0, 0),
+}
+# state: Democratic seats on the 2024 map and the change to the enacted map (enacted minus 2024)
+REDRAW = {
+    "AL": (2, -1), "CA": (44, 4), "FL": (10, -1), "LA": (2, -1), "NC": (4, -1), "OH": (4, -1), "TN": (1, -1),
+    "TX": (14, -3), "UT": (0, 1),
+}
+
+
+@pytest.mark.parametrize("postal", sorted(COMPETITIVE))
+def test_competitive_districts(metrics, postal):
+    c = metrics["states"][postal]["competitive"]
+    assert (c["enacted"], c["median"], c["p5"], c["p95"]) == COMPETITIVE[postal]
+    assert sum(c["neutral_dist"]) == 5000
+
+
+def test_competitive_upper_bound_is_inclusive(metrics):
+    # Florida plan 136, district 21 has 387,981 D of 705,420 votes: exactly 0.55 (705,420 * 0.55 = 387,981), the only
+    # plan district in any state that sits on a bound. With the bound included the plan has 5 competitive districts;
+    # an exclusive bound would make it 4 and read [217, 686] here.
+    assert metrics["states"]["FL"]["competitive"]["neutral_dist"][4:6] == [216, 687]
+
+
+def test_redraws_since_2024(metrics):
+    states = metrics["states"]
+    # the nine states with another map than in 2024; Missouri votes on its 2022 map, as in 2024
+    assert {p for p, s in states.items() if s["redraw"]["map_changed"]} == set(REDRAW)
+    for postal, s in states.items():
+        assert (s["redraw"]["seats_2024"], s["redraw"]["change"]) == REDRAW.get(postal, (s["enacted"], 0)), postal

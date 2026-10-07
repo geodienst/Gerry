@@ -46,6 +46,9 @@ def _enacted():
         # whole units flip district 02: 495 < 505
         ("xx_new", "whole_unit"): [("01", 530, 470), ("02", 495, 505), ("03", 275, 725)],
         ("check_2022", "block"): [("01", 610, 390), ("02", 300, 700), ("03", 390, 610)],
+        # the map of the 2024 election: 01 D, 02 D, 03 R -> 2 seats; whole units give the same winners
+        ("map_2024", "block"): [("01", 560, 440), ("02", 520, 480), ("03", 300, 700)],
+        ("map_2024", "whole_unit"): [("01", 555, 445), ("02", 515, 485), ("03", 305, 695)],
     }
     for (map_id, method), districts in maps.items():
         for district, d, r in districts:
@@ -301,21 +304,38 @@ def test_state_checks_counts_alarm_seats_from_the_reference():
     assert (cd118["seats_ours"], cd118["seats_alarm"]) == (1, 0)
 
 
-def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
+def _interim(tmp_path, join_log='{"XX": {"map_2024_changed_blocks": 12}}'):
+    """The interim files of 02_join.py for the made-up state XX."""
     (tmp_path / "units").mkdir()
     pd.DataFrame({"d": [1300.0], "r": [1700.0]}).to_parquet(tmp_path / "units" / "XX.parquet")
     _enacted().to_parquet(tmp_path / "enacted_districts.parquet")
     _ensemble().to_parquet(tmp_path / "ensemble_districts.parquet")
     _reference().to_parquet(tmp_path / "alarm_reference.parquet")
-    (tmp_path / "join_log.json").write_text('{"XX": {"note": "x"}}', encoding="utf-8")
-    cfg = SimpleNamespace(states={"XX": XX}, at_large={"WY": AtLargeState("WY", "Wyoming", "56")})
+    (tmp_path / "join_log.json").write_text(join_log, encoding="utf-8")
+    return SimpleNamespace(states={"XX": XX}, at_large={"WY": AtLargeState("WY", "Wyoming", "56")})
+
+
+def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
     monkeypatch.setattr(step, "HOUSE_SEATS", 3 + 1)
     out = step.compute(cfg, tmp_path)
     assert set(out) == {"national", "states", "checks"}
     assert out["states"]["XX"]["proportional"] == 1             # units 1300 D / 1700 R, as in the hand example
     assert out["checks"]["plans"] == {"XX": 4}
     assert out["checks"]["totals"] == {"district_seats": 3, "at_large": 1}
-    assert out["checks"]["join_log"] == {"XX": {"note": "x"}}
+    assert out["checks"]["join_log"] == {"XX": {"map_2024_changed_blocks": 12}}
+    # Task 5.6: the hand examples of state_competitive and state_redraw below
+    assert out["states"]["XX"]["competitive"] == {"enacted": 0, "median": 0, "p5": 0, "p95": 2,
+                                                  "neutral_dist": [2, 0, 2, 0]}
+    assert out["states"]["XX"]["redraw"] == {"seats_2024": 2, "change": -1, "map_changed": True}
+
+
+def test_compute_needs_the_changed_blocks_of_02_join(tmp_path, monkeypatch):
+    # a join_log.json from before the extensions has no map_2024_changed_blocks
+    cfg = _interim(tmp_path, join_log='{"XX": {"units": 3}}')
+    monkeypatch.setattr(step, "HOUSE_SEATS", 3 + 1)
+    with pytest.raises(CheckError, match="map_2024_changed_blocks"):
+        step.compute(cfg, tmp_path)
 
 
 def test_main_writes_metrics_and_report(tmp_path, monkeypatch):
@@ -380,3 +400,45 @@ def test_main_writes_the_report_with_lf_line_ends(tmp_path, monkeypatch):
     raw = (tmp_path / "docs" / "validation.md").read_bytes()
     assert b"\r" not in raw
     assert raw.endswith(b"\n") and not raw.endswith(b"\n\n")
+
+
+# --- Task 5.6: competitive districts and redraws per state -------------------------------------
+
+
+def test_state_competitive_counts_the_enacted_map_and_the_plans():
+    res = step.state_competitive(XX, _enacted(), _ensemble())
+    # enacted shares 0.6, 0.3, 0.4: none from 0.45 to 0.55
+    # plans: (.65 .35 .30) -> 0; (.55 .50 .25) -> 2; (.45 .45 .40) -> 2; (.60 .40 .30) -> 0
+    # plans per count 0..3: [2, 0, 2, 0]; sorted 0 0 2 2: p5 0, median 0 (2 of 4 plans reach 0), p95 2
+    assert res == {"enacted": 0, "median": 0, "p5": 0, "p95": 2, "neutral_dist": [2, 0, 2, 0]}
+
+
+def test_state_competitive_counts_the_bounds_on_the_enacted_map():
+    # shares 0.45, 0.55 and 0.6: both bounds count -> 2
+    enacted = _with_main_map(_enacted(), [(450, 550), (550, 450), (600, 400)])
+    assert step.state_competitive(XX, enacted, _ensemble())["enacted"] == 2
+
+
+def test_state_redraw_compares_with_the_2024_map():
+    # 2024 map: 560-440 D, 520-480 D, 300-700 R -> 2 seats; enacted 1 -> change 1 - 2 = -1
+    assert step.state_redraw(XX, _enacted(), 1, 12) == {"seats_2024": 2, "change": -1, "map_changed": True}
+
+
+def test_state_redraw_of_an_unchanged_map():
+    # the 2024 rows are a copy of the enacted rows: 1 seat on both, no block changed district
+    enacted = _enacted()
+    copy = enacted[enacted.map_id == "enacted"].assign(map_id="map_2024")
+    enacted = pd.concat([enacted[enacted.map_id != "map_2024"], copy], ignore_index=True)
+    assert step.state_redraw(XX, enacted, 1, 0) == {"seats_2024": 1, "change": 0, "map_changed": False}
+
+
+def test_state_redraw_stops_when_an_unchanged_map_gives_other_seats():
+    # no block changed district, yet the 2024 rows give 2 seats against 1: they belong to another map
+    with pytest.raises(CheckError, match="redraw"):
+        step.state_redraw(XX, _enacted(), 1, 0)
+
+
+def test_state_redraw_needs_the_2024_rows():
+    enacted = _enacted()
+    with pytest.raises(CheckError, match="district_count"):
+        step.state_redraw(XX, enacted[enacted.map_id != "map_2024"], 1, 12)

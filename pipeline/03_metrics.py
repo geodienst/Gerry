@@ -14,7 +14,7 @@ import pandas as pd
 
 from gerry.checks import CheckError
 from gerry.config import REPO_ROOT, AtLargeState, StateConfig, interim_dir, load_config
-from gerry.metrics import (TieError, convolve, dem_wins, distribution, effects, efficiency_gap,
+from gerry.metrics import (TieError, competitive, convolve, dem_wins, distribution, effects, efficiency_gap,
                            is_narrow, largest_remainder, linear_band, mean_median, outside_band,
                            pmf_percentile, pmf_position, position, sample_percentile, seats_by_plan,
                            sorted_band)
@@ -107,6 +107,35 @@ def state_metrics(st: StateConfig, d_total: float, r_total: float,
     return result
 
 
+def plan_shares(ensemble: pd.DataFrame, st: StateConfig) -> np.ndarray:
+    """Democratic share per plan (rows) and district (columns, 01 first)."""
+    mats = plan_matrices(ensemble, st)
+    return mats["d"] / (mats["d"] + mats["r"])
+
+
+def state_competitive(st: StateConfig, enacted: pd.DataFrame, ensemble: pd.DataFrame) -> dict:
+    """Competitive districts (45% to 55%) on the enacted map and over the plans (extensions design, ch. 3)."""
+    main = map_result(map_rows(enacted, "enacted"), st, "enacted")
+    counts = competitive(plan_shares(ensemble, st))
+    return {
+        "enacted": int(competitive(main["shares"])),
+        "median": sample_percentile(counts, 50),
+        "p5": sample_percentile(counts, 5),
+        "p95": sample_percentile(counts, 95),
+        "neutral_dist": [int(n) for n in distribution(counts, st.seats)],
+    }
+
+
+def state_redraw(st: StateConfig, enacted: pd.DataFrame, enacted_seats: int, changed_blocks: int) -> dict:
+    """Democratic seats on the map of the 2024 election with the same votes, and the change to the enacted
+    map (extensions design, ch. 2). changed_blocks comes from join_log.json (02_join.py)."""
+    seats_2024 = map_result(map_rows(enacted, "map_2024"), st, "map_2024")["enacted"]
+    if changed_blocks == 0 and seats_2024 != enacted_seats:
+        raise CheckError("redraw", st.postal, f"no block changed district since 2024, yet the 2024 map gives "
+                                              f"{seats_2024} seats and the enacted map {enacted_seats}")
+    return {"seats_2024": seats_2024, "change": enacted_seats - seats_2024, "map_changed": changed_blocks > 0}
+
+
 def _shares(rows: pd.DataFrame) -> np.ndarray:
     return (rows["d"] / (rows["d"] + rows["r"])).to_numpy(dtype=float)
 
@@ -194,6 +223,12 @@ def compute(cfg, idir) -> dict:
             raise CheckError("interim_files", postal, "state missing from the interim Parquet files")
         units = pd.read_parquet(idir / "units" / f"{postal}.parquet", columns=["d", "r"])
         states[postal] = state_metrics(st, float(units["d"].sum()), float(units["r"].sum()), enacted, ensemble)
+        changed = join_log.get(postal, {}).get("map_2024_changed_blocks")
+        if changed is None:
+            raise CheckError("interim_files", postal, "join_log.json has no map_2024_changed_blocks; "
+                                                      "run pipeline/02_join.py again")
+        states[postal]["competitive"] = state_competitive(st, enacted, ensemble)
+        states[postal]["redraw"] = state_redraw(st, enacted, states[postal]["enacted"], changed)
         for key, value in state_checks(st, enacted, ensemble, reference).items():
             checks[key][postal] = value
         s = states[postal]
