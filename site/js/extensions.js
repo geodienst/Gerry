@@ -122,6 +122,8 @@ export function senateView(results) {
     sentence: `If each state's two senators went to the party that won its presidential vote, Democrats would need `
       + `${share(s.share)} of the two-party vote for a Senate majority. They have ${share(s.base_share)} and would `
       + `win ${count(s.states_at_base)} ${plural(s.states_at_base, 'state', 'states')}.`,
-    note: 'The Senate has no districts; the difference comes from each state having two senators, whatever its population.',
+    note: 'The Senate has no districts, so this is not an effect of maps. The gap comes from each state having two senators, '
+      + 'whatever its population. These shares count the votes of every state; the House block leaves out the votes of the '
+      + 'six states with one seat.',
   };
 }

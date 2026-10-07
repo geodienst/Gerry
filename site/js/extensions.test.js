@@ -148,8 +148,16 @@ test('controlTables: every value in order, with states, seats and the summed dra
 // --- the Senate (Task 6.14) ---
 
 test('senateView: the threshold, the share and the states at the real votes', () => {
+  // By hand: share(0.5291) -> 52.91% -> "52.9%" (needed); share(0.5172) -> 51.72% -> "51.7%" (base share);
+  // states_at_base 22 -> "22 states".
   const view = senateView(extended());
   assert.equal(view.sentence, "If each state's two senators went to the party that won its presidential vote, Democrats would "
     + 'need 52.9% of the two-party vote for a Senate majority. They have 51.7% and would win 22 states.');
-  assert.equal(view.note, 'The Senate has no districts; the difference comes from each state having two senators, whatever its population.');
+  assert.equal(view.note, 'The Senate has no districts, so this is not an effect of maps. The gap comes from each state having two '
+    + 'senators, whatever its population. These shares count the votes of every state; the House block leaves out the votes '
+    + 'of the six states with one seat.');
+  // One state takes the singular.
+  const r = extended();
+  r.national.senate.states_at_base = 1;
+  assert.ok(senateView(r).sentence.endsWith('They have 51.7% and would win 1 state.'));
 });
