@@ -392,7 +392,7 @@ async function competitive(t) {
 async function control(t) {
   await t.load('#TX');
   t.check('the table by control has four rows and the one by body three', await t.js("document.querySelectorAll('#by-control tr').length === 4 && document.querySelectorAll('#by-body tr').length === 3"));
-  t.check('the drawing effects in the tables show their direction', await t.js("[...document.querySelectorAll('#control tbody td:last-child')].every((td) => /^(0|[RD]\\+\\d+)$/.test(td.textContent))"));
+  t.check('the seven drawing effects in the tables show their direction', await t.js("((cells) => cells.length === 7 && cells.every((td) => /^(0|[RD]\\+\\d+)$/.test(td.textContent)))([...document.querySelectorAll('#control tbody td:last-child')])"));
   t.check('the national strip links to the tables', await t.js("document.querySelector('#national a[href=\"#control\"]') !== null"));
   await t.until(`${HEADING} === 'Texas'`);
   t.check('the Texas sheet says who adopted the map', /Adopted by: (Legislature|Commission|Court) \((Republican control|Democratic control|bipartisan|nonpartisan)\)\./.test(await t.text('#sheet')));
