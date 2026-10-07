@@ -278,6 +278,17 @@ async function method(t) {
     /Data generated .+\. Legal status as of .+\. ALARM dataset version \d+\./.test(await t.text('footer')));
   t.check('the footer links to the Geodienst with its logo',
     await t.js("(() => { const a = document.querySelector('footer a[href=\"https://rug.nl/geo\"]'); const img = a && a.querySelector('img'); return !!a && a.textContent.trim() === 'Geodienst' && !!img && img.complete && img.naturalWidth > 0; })()"));
+  // A click on plain text leaves the focus on the body; Escape then acts only while the map or the sheet is in view.
+  await t.load('#TX');
+  await t.until(`${HEADING} === 'Texas'`);
+  await t.click(await t.center("document.querySelector('#method p')"));
+  const reading = await t.js('scrollY');
+  await t.key('Escape', 27);
+  await t.sleep(300);
+  const after = await t.js(`({ body: document.activeElement === document.body, heading: ${HEADING}, hash: location.hash, y: scrollY })`);
+  const kept = after.body && after.heading === 'Texas' && after.hash === '#TX' && after.y === reading;
+  t.check('Escape after a click in the method keeps the state and the place on the page', kept,
+    kept ? '' : `${JSON.stringify(after)}, scrollY before ${reading}`);
 }
 
 export const GROUPS = [

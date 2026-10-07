@@ -104,12 +104,14 @@ async function main() {
   }
   window.addEventListener('popstate', fromLocation);
   window.addEventListener('hashchange', fromLocation);
-  // Escape acts from the sheet, the map, or with nothing focused; not from the State menu
-  // or from text elsewhere on the page.
+  // Escape acts from the sheet or the map, or with nothing focused while one of them is in view;
+  // not from the State menu, from text elsewhere on the page, or while reading further down.
+  const inView = (el) => { const box = el.getBoundingClientRect(); return box.bottom > 0 && box.top < window.innerHeight; };
   document.addEventListener('keydown', (event) => {
     const from = event.target;
-    const here = from === document.body || $('sheet').contains(from) || $('mapbox').contains(from);
-    if (event.key === 'Escape' && ui.selected && here) back();
+    const inside = $('sheet').contains(from) || $('mapbox').contains(from);
+    const idle = from === document.body && (inView($('sheet')) || inView($('mapbox')));
+    if (event.key === 'Escape' && ui.selected && (inside || idle)) back();
   });
 
   const pressed = (on, off) => { $(on).setAttribute('aria-pressed', 'true'); $(off).setAttribute('aria-pressed', 'false'); };
