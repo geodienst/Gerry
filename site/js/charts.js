@@ -1,0 +1,109 @@
+// The charts (site design, chapter 5): the seat axis, the sorted districts and the net bar.
+// Geometry comes from axes.js, numbers from format.js; this module only draws.
+import { BASE_FONT, SEAT_AXIS, LABEL_GAP, chartUnits, placeLabels, sortedDomain, netBar } from './axes.js';
+import { seats, percentLabel } from './format.js';
+
+const { d3 } = globalThis;
+
+/** An empty svg in `el`, sized so that one viewBox unit is 1/15 rem; returns it with its width in units. */
+function chartSvg(el, maxUnits, height, label) {
+  const rootPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || BASE_FONT;
+  const width = chartUnits(el.getBoundingClientRect().width, rootPx, maxUnits);
+  const svg = d3.select(el).html('').append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`).style('max-width', `${width / BASE_FONT}rem`)
+    .attr('class', 'chart').attr('role', 'img').attr('aria-label', label);
+  return { svg, width };
+}
+
+/**
+ * Markers with labels: Proportional dashed with a square, Neutral a solid line, Enacted a dot,
+ * and "base", the actual vote on the vote axis (Task 6.10), a dotted line.
+ */
+function drawMarks(svg, marks, width, plotBottom, top, rows) {
+  const text = Object.fromEntries(marks.map((mark) => [mark.key, mark.text]));
+  const placed = placeLabels(marks, width, LABEL_GAP, rows);
+  const labelY = (p) => top - 6 - 12 * p.row; // row 0 right above the plot, each next row 12 units higher
+  for (const p of placed) {
+    svg.append('line').attr('x1', p.x).attr('x2', p.x).attr('y1', labelY(p) + 3).attr('y2', plotBottom)
+      .attr('stroke', p.key === 'base' ? 'var(--muted)' : 'var(--fg)')
+      .attr('stroke-width', p.key === 'neutral' ? 2 : 1)
+      .attr('stroke-dasharray', { proportional: '3 2', base: '1 2' }[p.key] ?? null);
+    if (p.key === 'enacted') svg.append('circle').attr('cx', p.x).attr('cy', plotBottom - 6).attr('r', 5).attr('fill', 'var(--fg)');
+    if (p.key === 'proportional') {
+      svg.append('rect').attr('x', p.x - 4).attr('y', plotBottom - 10).attr('width', 8).attr('height', 8)
+        .attr('fill', 'var(--sheet)').attr('stroke', 'var(--fg)');
+    }
+  }
+  for (const p of placed) { // labels last, so their halo covers the lines
+    svg.append('text').attr('class', 'mark-label').attr('x', p.x).attr('y', labelY(p)).attr('text-anchor', p.anchor).text(text[p.key]);
+  }
+}
+
+/**
+ * Seat axis: bars for the share of neutral plans per seat count, the 5th to 95th
+ * percentile band, and the markers for Proportional, Neutral and Enacted.
+ * @param {Element} el
+ * @param {{dist: number[], proportional: number, median: number, p5: number, p95: number, enacted: number}} axis
+ * @param {[number, number]} domain whole seats shown, lo to hi
+ * @param {string} label text alternative
+ * @param {number} maxUnits widest chart in viewBox units
+ */
+export function drawSeatAxis(el, axis, [lo, hi], label, maxUnits = SEAT_AXIS.width) {
+  const { height: H, margin: m } = SEAT_AXIS;
+  const { svg, width: W } = chartSvg(el, maxUnits, H, label);
+  const x = d3.scaleLinear().domain([lo - 0.5, hi + 0.5]).range([m.l, W - m.r]);
+  const total = d3.sum(axis.dist);
+  const shown = axis.dist.slice(lo, hi + 1).map((n, i) => [lo + i, n / total]);
+  const y = d3.scaleLinear().domain([0, d3.max(shown, (d) => d[1]) || 1]).range([H - m.b, m.t + 8]);
+  svg.append('rect').attr('x', x(axis.p5 - 0.5)).attr('y', m.t + 4)
+    .attr('width', x(axis.p95 + 0.5) - x(axis.p5 - 0.5)).attr('height', H - m.b - m.t - 4).attr('fill', 'var(--band)');
+  const barWidth = Math.max(1, Math.min(18, (x(1) - x(0)) * 0.8));
+  svg.append('g').selectAll('rect').data(shown).join('rect').attr('class', 'bar')
+    .attr('x', (d) => x(d[0]) - barWidth / 2).attr('width', barWidth)
+    .attr('y', (d) => y(d[1])).attr('height', (d) => H - m.b - y(d[1]));
+  const ticks = x.ticks(Math.min(10, hi - lo + 1, Math.floor(W / 40))).filter(Number.isInteger);
+  svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H - m.b})`)
+    .call(d3.axisBottom(x).tickValues(ticks).tickSize(3).tickFormat((d) => seats(d)));
+  drawMarks(svg, [
+    { key: 'proportional', x: x(axis.proportional), text: `Proportional ${seats(axis.proportional)}` },
+    { key: 'neutral', x: x(axis.median), text: `Neutral ${seats(axis.median)}` },
+    { key: 'enacted', x: x(axis.enacted), text: `Enacted ${seats(axis.enacted)}` },
+  ], W, H - m.b, m.t, 3);
+}
+
+/** Sorted districts: enacted shares as dots against the neutral band and median per position, a dashed line at 50%. */
+export function drawSorted(el, sorted, colors, label) {
+  const H = 190;
+  const m = { l: 34, r: 10, t: 10, b: 24 };
+  const { svg, width: W } = chartSvg(el, 560, H, label);
+  const n = sorted.enacted.length;
+  const x = d3.scaleLinear().domain([0.5, n + 0.5]).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain(sortedDomain(sorted)).range([H - m.b, m.t]);
+  const index = d3.range(n);
+  const area = d3.area().x((i) => x(i + 1)).y0((i) => y(sorted.p5[i])).y1((i) => y(sorted.p95[i])).curve(d3.curveStep);
+  svg.append('path').attr('d', area(index)).attr('fill', 'var(--band)');
+  svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(0.5)).attr('y2', y(0.5))
+    .attr('stroke', 'var(--muted)').attr('stroke-dasharray', '4 3');
+  svg.append('text').attr('x', W - m.r).attr('y', y(0.5) - 4).attr('text-anchor', 'end').text(percentLabel(0.5));
+  svg.append('path').attr('d', d3.line().x((i) => x(i + 1)).y((i) => y(sorted.p50[i])).curve(d3.curveStep)(index))
+    .attr('fill', 'none').attr('stroke', 'var(--muted)').attr('stroke-width', 1.5);
+  svg.append('g').selectAll('circle').data(sorted.enacted).join('circle')
+    .attr('cx', (v, i) => x(i + 1)).attr('cy', (v) => y(v)).attr('r', n > 30 ? 3 : 4)
+    .attr('fill', (v) => colors.party(v > 0.5)).attr('stroke', 'var(--sheet)').attr('stroke-width', 1);
+  svg.append('g').attr('class', 'axis').attr('transform', `translate(${m.l},0)`)
+    .call(d3.axisLeft(y).ticks(5).tickSize(3).tickFormat((v) => percentLabel(v)));
+  svg.append('text').attr('x', m.l).attr('y', H - 6).text('Districts from lowest to highest Democratic share');
+}
+
+/** Net bar under the list: seats toward Republicans to the left, toward Democrats to the right, a marker at the net. */
+export function drawNetBar(el, list, colors) {
+  const { svg, width: W } = chartSvg(el, 360, 64, list.bar.label);
+  const bar = netBar(list.seatsR, list.seatsD, W);
+  svg.append('rect').attr('x', bar.left.x).attr('y', 18).attr('width', bar.left.width).attr('height', 14).attr('fill', colors.party(false));
+  svg.append('rect').attr('x', bar.right.x).attr('y', 18).attr('width', bar.right.width).attr('height', 14).attr('fill', colors.party(true));
+  svg.append('line').attr('x1', bar.center).attr('x2', bar.center).attr('y1', 12).attr('y2', 38).attr('stroke', 'var(--muted)');
+  svg.append('text').attr('x', 4).attr('y', 12).text(list.bar.left);
+  svg.append('text').attr('x', W - 4).attr('y', 12).attr('text-anchor', 'end').text(list.bar.right);
+  svg.append('path').attr('d', `M${bar.netX},38 l-6,9 h12 z`).attr('fill', 'var(--fg)');
+  svg.append('text').attr('x', bar.netX).attr('y', 60).attr('text-anchor', bar.anchor).style('font-weight', 600).text(list.bar.net);
+}

@@ -110,6 +110,61 @@ async function map(t) {
   await t.tab('Emulation.setTouchEmulationEnabled', { enabled: false });
 }
 
+// --- Task 6.6: the list and the sheet ------------------------------------------------------------
+async function list(t) {
+  await t.load();
+  t.check('without a state the sheet shows "Drawing effect by state"', await t.until(`${HEADING} === 'Drawing effect by state'`));
+  t.check('one row per state, 44 in all', await t.js("document.querySelectorAll('#sheet .row').length === 44"));
+  t.check('rows show the effect as R+n, D+n or 0', await t.js("[...document.querySelectorAll('#sheet .row .v')].every((v) => /^(0|[RD]\\+\\d+)$/.test(v.textContent))"));
+  t.check('the states without a drawing effect are folded behind one line', await t.js(
+    "(() => { const d = document.querySelector('#sheet details.zeros'); return d !== null && !d.open && /neutral median$/.test(d.querySelector('summary').textContent); })()"));
+  await t.js("document.querySelector('#sheet details.zeros summary').click()");
+  t.check('the line with the arrow unfolds them', await t.js("document.querySelector('#sheet details.zeros').open"));
+  t.check('the net bar names both sides and the net', await t.js(
+    "(() => { const s = document.querySelector('#sheet .net svg'); return s !== null && s.textContent.includes('toward Republicans') && s.textContent.includes('toward Democrats') && /Net (0|[RD]\\+\\d+)/.test(s.textContent); })()"));
+  t.check('a sentence under the net bar gives the sums', /Net: .+\.$/.test(await t.text('#sheet .net p')));
+  await t.screenshot('list-1280');
+}
+
+async function sheet(t) {
+  await t.load('#TX');
+  t.check('#TX opens the sheet for Texas', await t.until(`${HEADING} === 'Texas'`));
+  const texas = await t.text('#sheet');
+  for (const part of ['All states', 'Legal status as of ', 'Proportional', 'Neutral baseline', 'Enacted', 'Geographic effect',
+    'Drawing effect', 'neutral maps,', 'Districts, sorted', 'Efficiency gap', 'Mean-median', 'Notes', 'Map file:']) {
+    t.check(`the Texas sheet has "${part}"`, texas.includes(part));
+  }
+  t.check('the status reads "In effect" or "Challenged in court"', /In effect|Challenged in court/.test(texas));
+  t.check('effects show their direction', /([RD]\+\d+ · \d+ seats? toward (Republicans|Democrats)|0 · no difference)/.test(texas));
+  t.check('efficiency gap in points toward a party', /points toward (Republicans|Democrats)|less than 0\.05 points either way/.test(texas));
+  t.check('the seat axis and the sorted chart have a text alternative', await t.js(
+    "[...document.querySelectorAll('#sheet svg.chart')].filter((s) => s.getAttribute('role') === 'img' && s.getAttribute('aria-label')).length === 2"));
+  t.check('chart text stays at least 10px tall', await t.js("[...document.querySelectorAll('#sheet svg.chart text')].every((el) => el.getBoundingClientRect().height >= 10)"));
+  await t.js("location.hash = '#MO'");
+  t.check('Missouri has the row for the blocked map', await t.until(`${HEADING} === 'Missouri'`)
+    && /Blocked map.*Blocked.*would give/s.test(await t.text('#sheet')));
+  await t.js("location.hash = '#HI'");
+  t.check('Hawaii shows "Not defined for two districts"', await t.until(`${HEADING} === 'Hawaii'`)
+    && (await t.text('#sheet')).includes('Not defined for two districts'));
+  await t.key('Escape', 27);
+  t.check('Escape goes back to the list and drops the state from the link', await t.until(`${HEADING} === 'Drawing effect by state' && location.hash === ''`));
+  await t.js("document.querySelector('#sheet .row').focus()");
+  const first = await t.js("document.querySelector('#sheet .row').dataset.postal");
+  await t.key('Enter', 13, '\r');
+  t.check('Enter on a row opens that state', await t.until(`location.hash === '#${first}'`));
+  t.check('focus moves to the heading of the sheet', await t.js("document.activeElement?.id === 'sheet-title'"));
+  await t.key('Escape', 27);
+  t.check('Escape puts focus back on the row of that state', await t.until(`document.activeElement?.dataset?.postal === '${first}'`));
+  await t.js("document.querySelector('#sheet .row').click()");
+  await t.until(`${HEADING} !== 'Drawing effect by state'`);
+  await t.js("document.querySelector('#sheet .back').click()");
+  t.check('the button "All states" goes back to the list', await t.until(`${HEADING} === 'Drawing effect by state'`));
+  await t.load('#TX');
+  await t.screenshot('texas-1280');
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
+  { name: 'list', run: list },
+  { name: 'sheet', run: sheet },
 ];

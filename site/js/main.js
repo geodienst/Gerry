@@ -3,8 +3,9 @@
 // globals; the page makes no other requests.
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
-import { indexResults, stateOptions, mapHints } from './model.js';
+import { indexResults, stateOptions, mapHints, effectList, stateSheet } from './model.js';
 import { createMap, drawLegend } from './map.js';
+import { renderList, renderState } from './sheet.js';
 
 const { d3 } = globalThis;
 const $ = (id) => document.getElementById(id);
@@ -42,7 +43,7 @@ async function main() {
   }
 
   const index = indexResults(results);
-  const ui = { view: 'districts', palette: 'party', selected: '' };
+  const ui = { view: 'districts', palette: 'party', selected: '', zerosOpen: false };
   let colors = makeColors(d3.interpolateLab, readPoles(ui.palette));
   const hints = mapHints({
     touch: window.matchMedia('(pointer: coarse)').matches,
@@ -61,19 +62,35 @@ async function main() {
   for (const option of stateOptions(results)) pick.append(new Option(option.name, option.postal));
   pick.addEventListener('change', () => select(pick.value, { push: true }));
 
+  function renderSheet() {
+    if (ui.selected) renderState($('sheet'), stateSheet(results, ui.selected), colors, back);
+    else renderList($('sheet'), effectList(results), colors, (postal) => select(postal, { push: true, focus: true }), ui);
+  }
+
   function paint() {
     map.paint(colors, ui.view, ui.selected);
     drawLegend($('legend'), ui.view, colors);
+    renderSheet();
   }
 
-  /** Choose a state ("" for the whole map): outline, zoom and the link (#TX). */
-  function select(postal, { push = false, animate = true } = {}) {
+  /** Choose a state ("" for the whole map): sheet, outline, zoom and the link (#TX). */
+  function select(postal, { push = false, focus = false, animate = true } = {}) {
     const previous = ui.selected;
     ui.selected = postal;
     pick.value = postal;
     if (push && postal !== previous) history.pushState(null, '', linkFor(postal, location.pathname + location.search));
     paint();
     if (postal !== previous) map.zoomTo(postal, animate);
+    if (focus) $('sheet-title').focus();
+  }
+
+  /** From a state back to the list; focus goes to that state's row if it is visible. */
+  function back() {
+    const previous = ui.selected;
+    select('', { push: true });
+    const row = $('sheet').querySelector(`.row[data-postal="${previous}"]`);
+    if (row && row.offsetParent !== null) row.focus();
+    else $('sheet-title').focus();
   }
 
   function fromLocation() {
@@ -84,6 +101,9 @@ async function main() {
   }
   window.addEventListener('popstate', fromLocation);
   window.addEventListener('hashchange', fromLocation);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && ui.selected && event.target.tagName !== 'SELECT') back();
+  });
 
   const pressed = (on, off) => { $(on).setAttribute('aria-pressed', 'true'); $(off).setAttribute('aria-pressed', 'false'); };
   $('view-districts').addEventListener('click', () => { ui.view = 'districts'; pressed('view-districts', 'view-states'); paint(); });
@@ -99,6 +119,14 @@ async function main() {
   $('zoom-in').addEventListener('click', () => map.zoomBy(1.8));
   $('zoom-out').addEventListener('click', () => map.zoomBy(1 / 1.8));
   $('zoom-reset').addEventListener('click', () => { select('', { push: true }); map.zoomTo('', true); });
+
+  // Charts size themselves to their box; draw them again when the width changes.
+  let width = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === width) return; // phones change only the height while scrolling
+    width = window.innerWidth;
+    renderSheet();
+  });
 
   select(stateFromHash(location.hash, results.states), { animate: false });
 }
