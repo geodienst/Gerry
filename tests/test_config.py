@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 from gerry.config import (
-    ENSEMBLE_NOTE_KEYS, REPO_ROOT, STATE_NOTE_KEYS, ConfigError, ExtraMap,
+    ADOPTED_BY_VALUES, CONTROL_VALUES, ENSEMBLE_NOTE_KEYS, REPO_ROOT, STATE_NOTE_KEYS, ConfigError, ExtraMap,
     data_dir, interim_dir, load_config,
 )
 
@@ -37,12 +37,16 @@ def minimal() -> dict:
                     "name": "HB 1 of 2025", "status": "Blocked", "bef": "cd120",
                     "source_label": "Redistricting Data Hub", "source_url": "https://example.org/mo-2025"}},
                 "notes": ["blocked_map"],
+                "adopted_by": "Legislature", "control": "Republican",
             },
             "NM": {
                 "name": "New Mexico", "fips": "35", "seats": 3, "map_name": "SB 1 of 2021",
                 "status": "In effect", "source_label": "New Mexico Legislature",
                 "source_url": "https://example.org/nm", "bef": "cd120",
                 "elections": ["pre_16", "pre_20"], "unit_kind": "tract",
+                # made-up values; the real ones come from the research in data/sources.md
+                "adopted_by": "Commission", "control": "Bipartisan",
+                "adopted_note": "Made-up note for the test.",
             },
         },
         "at_large": {"VT": {"name": "Vermont", "fips": "50"}},
@@ -72,6 +76,10 @@ def test_minimal_config_loads_with_types(tmp_path):
     assert cfg.states["NM"].extra_maps == ()
     assert cfg.states["NM"].notes == ()
     assert cfg.at_large["VT"].fips == "50"
+    # extensions design, chapter 4: who adopted the map, under whose control; the note is optional
+    assert (mo.adopted_by, mo.control, mo.adopted_note) == ("Legislature", "Republican", None)
+    nm = cfg.states["NM"]
+    assert (nm.adopted_by, nm.control, nm.adopted_note) == ("Commission", "Bipartisan", "Made-up note for the test.")
 
 
 def set_path(raw: dict, path: str, value) -> None:
@@ -116,6 +124,15 @@ BAD_VALUES = [
     *[(f"states.MO.extra_maps.{map_id}", {"name": "x", "status": "Blocked", "bef": "cd120", "source_label": "x",
                                           "source_url": "https://example.org/x"}, "not a valid map id")
       for map_id in ("enacted", "check_2022", "map_2024")],
+    # extensions design, chapter 4: adopted_by and control from the two tables, adopted_note optional
+    ("states.NM.adopted_by", "Governor", "adopted_by"),
+    ("states.NM.control", "Independent", "control"),
+    ("states.NM.control", None, "missing keys"),
+    ("states.NM.adopted_by", None, "missing keys"),
+    ("states.NM.adopted_by", "Court", "court"),            # a court is Nonpartisan (NM: Bipartisan)
+    ("states.MO.control", "Nonpartisan", "legislature"),   # a legislature never is
+    ("states.NM.adopted_note", "", "adopted_note"),
+    ("states.NM.adopted_note", "Staff drew it \u2014 the legislature voted.", "em dash"),
 ]
 
 
@@ -228,6 +245,18 @@ def test_real_config_elections(cfg):
 def test_real_config_globals(cfg):
     assert cfg.status_checked >= date(2026, 10, 3)  # moves forward with every status re-check
     assert cfg.ensemble.name == "alarm_v15" and cfg.ensemble.version == 15
+
+
+def test_real_config_adoption_fields(cfg):
+    # extensions design, chapter 4; the values come from data/sources.md, column "Adoption and control"
+    for postal, st in cfg.states.items():
+        assert st.adopted_by in ADOPTED_BY_VALUES and st.control in CONTROL_VALUES, postal
+    # the examples in the design
+    examples = {"TX": ("Legislature", "Republican"), "IL": ("Legislature", "Democratic"),
+                "CA": ("Legislature", "Democratic"), "AZ": ("Commission", "Nonpartisan"),
+                "UT": ("Court", "Nonpartisan")}
+    for postal, expected in examples.items():
+        assert (cfg.states[postal].adopted_by, cfg.states[postal].control) == expected, postal
 
 
 def test_real_config_has_the_block_file_of_the_2024_maps(cfg):

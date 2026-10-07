@@ -13,7 +13,8 @@ from gerry.units import UnitsError, add_composite, load_units, read_block_votes,
 def make_state(postal, fips, unit_kind, elections=("pre_16", "pre_20")):
     return StateConfig(postal=postal, name="Test", fips=fips, seats=2, map_name="m", status="In effect",
                        source_label="s", source_url="https://example.org/", bef="cd120",
-                       elections=tuple(elections), unit_kind=unit_kind, extra_maps=(), notes=())
+                       elections=tuple(elections), unit_kind=unit_kind, extra_maps=(), notes=(),
+                       adopted_by="Legislature", control="Republican", adopted_note=None)
 
 
 def write(path, text):

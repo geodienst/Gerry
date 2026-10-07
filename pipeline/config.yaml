@@ -74,6 +74,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
   AZ:
     name: Arizona
     fips: "04"
@@ -85,6 +87,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Commission
+    control: Nonpartisan
+    adopted_note: "The commission approved the map 5-0 on 2021-12-22. After county adjustments it certified version 14.0 by 3-2 on 2022-01-18, with the independent chair and both Republican members in favor."
   AR:
     name: Arkansas
     fips: "05"
@@ -96,6 +101,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
+    adopted_note: "Governor Asa Hutchinson let the two identical bills become law without signing them. In Arkansas a majority of the members of each chamber can override a veto."
   CA:
     name: California
     fips: "06"
@@ -108,6 +116,9 @@ states:
     elections: [pre_16, pre_20]
     unit_kind: tract
     notes: [adopted_after_2024_election]
+    adopted_by: Legislature
+    control: Democratic
+    adopted_note: "Voters approved Proposition 50 on 2025-11-04. It requires this map, passed by the Legislature, for elections through 2030; the Citizens Redistricting Commission draws the next map after the 2030 census."
   CO:
     name: Colorado
     fips: "08"
@@ -119,6 +130,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Commission
+    control: Nonpartisan
+    adopted_note: "The Colorado Supreme Court approved the commission's plan on 2021-11-01. On 2022-03-18 it approved small adjustments requested by the Secretary of State and county clerks."
   CT:
     name: Connecticut
     fips: "09"
@@ -130,6 +144,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Court
+    control: Nonpartisan
+    adopted_note: "A special master appointed by the Connecticut Supreme Court drew the plan after the Reapportionment Commission did not agree on one. The court instructed the special master to change the existing districts only as far as the law required."
   FL:
     name: Florida
     fips: "12"
@@ -142,6 +159,8 @@ states:
     elections: [pre_16, pre_20]
     unit_kind: vtd
     notes: [adopted_after_2024_election]
+    adopted_by: Legislature
+    control: Republican
   GA:
     name: Georgia
     fips: "13"
@@ -153,6 +172,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
+    adopted_note: "The General Assembly passed this map in a special session after a federal district court ruled in October 2023 that the 2021 map violated Section 2 of the Voting Rights Act. The court approved the new map on 2023-12-28."
   HI:
     name: Hawaii
     fips: "15"
@@ -164,6 +186,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: tract
+    adopted_by: Commission
+    control: Bipartisan
+    adopted_note: "Democratic and Republican legislative leaders each named four members, and those eight chose the chair. Seven of the eight appointees and the chair voted for the plan."
   ID:
     name: Idaho
     fips: "16"
@@ -175,6 +200,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Commission
+    control: Bipartisan
+    adopted_note: "Republican and Democratic leaders each named three of the six members, and a plan needs four votes. The three Republican appointees and one Democratic appointee voted for this plan."
   IL:
     name: Illinois
     fips: "17"
@@ -186,6 +214,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Democratic
   IN:
     name: Indiana
     fips: "18"
@@ -197,6 +227,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
   IA:
     name: Iowa
     fips: "19"
@@ -208,6 +240,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: county
+    adopted_by: Legislature
+    control: Bipartisan
+    adopted_note: "Nonpartisan staff of the Legislative Services Agency drew the plan. The Legislature could pass or reject it but could amend it only to correct errors."
   KS:
     name: Kansas
     fips: "20"
@@ -219,6 +254,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
+    adopted_note: "Democratic Governor Laura Kelly vetoed the map. Republicans held two-thirds of both chambers and completed the override on 2022-02-09."
   KY:
     name: Kentucky
     fips: "21"
@@ -230,6 +268,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
+    adopted_note: "Democratic Governor Andy Beshear vetoed the map. Republicans held a majority of the members of both chambers, enough to override a veto in Kentucky, and overrode the veto on 2022-01-20."
   LA:
     name: Louisiana
     fips: "22"
@@ -242,6 +283,8 @@ states:
     elections: [pre_16, pre_20]
     unit_kind: vtd
     notes: [adopted_after_2024_election]
+    adopted_by: Legislature
+    control: Republican
   ME:
     name: Maine
     fips: "23"
@@ -253,6 +296,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: tract
+    adopted_by: Legislature
+    control: Bipartisan
+    adopted_note: "The Apportionment Commission proposed the plan. Maine law requires two-thirds of each chamber, and the Legislature enacted it 127-0 in the House and 31-0 in the Senate."
   MD:
     name: Maryland
     fips: "24"
@@ -264,6 +310,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Democratic
+    adopted_note: "Republican Governor Larry Hogan signed the map; Democrats held the three-fifths of both chambers needed to override a veto. It replaced the 2021 plan, which a state court struck down on 2022-03-25."
   MA:
     name: Massachusetts
     fips: "25"
@@ -275,6 +324,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Bipartisan
+    adopted_note: "Majorities of both parties voted for the map in both chambers, and Republican Governor Charlie Baker signed it."
   MI:
     name: Michigan
     fips: "26"
@@ -286,6 +338,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Commission
+    control: Nonpartisan
+    adopted_note: "A commission of 13 citizens drew the map. Its members were 4 Democrats, 4 Republicans and 5 affiliated with neither party, and they adopted the map 8-5, with yes votes from each group."
   MN:
     name: Minnesota
     fips: "27"
@@ -297,6 +352,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Court
+    control: Nonpartisan
+    adopted_note: "A panel of five judges drew the map after the Legislature did not pass one. A 2022 law moved one block with no residents from district 8 to district 7."
   MS:
     name: Mississippi
     fips: "28"
@@ -308,6 +366,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
   MO:
     name: Missouri
     fips: "29"
@@ -327,6 +387,8 @@ states:
         source_label: "Redistricting Data Hub"
         source_url: https://redistrictingdatahub.org/dataset/2025-missouri-congressional-districts-plan/
     notes: [blocked_map]
+    adopted_by: Legislature
+    control: Republican
   MT:
     name: Montana
     fips: "30"
@@ -338,6 +400,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Commission
+    control: Bipartisan
+    adopted_note: "Presiding officer Maylinn Smith, chosen by the Montana Supreme Court, cast the deciding vote for plan CP-12, the Republican commissioners' proposal. The two Democratic commissioners voted against the plan, which became the final map."
   NE:
     name: Nebraska
     fips: "31"
@@ -349,6 +414,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Bipartisan
+    adopted_note: "The Nebraska Legislature is officially nonpartisan, so the party counts use voter registration. Registered Republicans held 32 of 49 seats, one short of the 33 votes that end a filibuster, and 4 registered Democrats voted for the final plan."
   NV:
     name: Nevada
     fips: "32"
@@ -360,6 +428,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Democratic
   NH:
     name: New Hampshire
     fips: "33"
@@ -371,6 +441,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Court
+    control: Nonpartisan
+    adopted_note: "The New Hampshire Supreme Court adopted the least-change plan of its special master, Nathaniel Persily, after the governor vetoed two congressional plans from the Legislature."
   NJ:
     name: New Jersey
     fips: "34"
@@ -382,6 +455,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Commission
+    control: Bipartisan
+    adopted_note: "John E. Wallace Jr., the commission's independent chair chosen by the New Jersey Supreme Court, cast the deciding vote for the Democratic delegation's map. All six Republican members voted against it."
   NM:
     name: New Mexico
     fips: "35"
@@ -393,6 +469,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Democratic
   NY:
     name: New York
     fips: "36"
@@ -404,6 +482,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Democratic
+    adopted_note: "The Legislature passed this plan two days after it rejected the second plan of the Independent Redistricting Commission. In the Senate 3 Republicans voted for it and 17 against; in the Assembly 16 voted for it and 30 against."
   NC:
     name: North Carolina
     fips: "37"
@@ -416,6 +497,9 @@ states:
     elections: [pre_16, pre_20]
     unit_kind: vtd
     notes: [adopted_after_2024_election]
+    adopted_by: Legislature
+    control: Republican
+    adopted_note: "North Carolina's governor cannot veto bills that redraw congressional districts. Republicans held majorities in both chambers and passed the plan without Democratic votes."
   OH:
     name: Ohio
     fips: "39"
@@ -428,6 +512,9 @@ states:
     elections: [pre_16, pre_20]
     unit_kind: vtd
     notes: [adopted_after_2024_election]
+    adopted_by: Commission
+    control: Bipartisan
+    adopted_note: "Republicans held five of the seven seats on the commission. Both Democratic members voted for the plan, which passed unanimously."
   OK:
     name: Oklahoma
     fips: "40"
@@ -439,6 +526,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
   OR:
     name: Oregon
     fips: "41"
@@ -450,6 +539,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: tract
+    adopted_by: Legislature
+    control: Democratic
   PA:
     name: Pennsylvania
     fips: "42"
@@ -461,6 +552,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Court
+    control: Nonpartisan
+    adopted_note: "The Pennsylvania Supreme Court voted 4-3 for a plan that a group of voters submitted in court. Governor Tom Wolf had vetoed the plan the General Assembly passed."
   RI:
     name: Rhode Island
     fips: "44"
@@ -472,6 +566,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Democratic
   SC:
     name: South Carolina
     fips: "45"
@@ -483,6 +579,8 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Legislature
+    control: Republican
   TN:
     name: Tennessee
     fips: "47"
@@ -495,6 +593,8 @@ states:
     elections: [pre_16, pre_20]
     unit_kind: vtd
     notes: [adopted_after_2024_election]
+    adopted_by: Legislature
+    control: Republican
   TX:
     name: Texas
     fips: "48"
@@ -507,6 +607,8 @@ states:
     elections: [pre_16, pre_20]
     unit_kind: vtd
     notes: [adopted_after_2024_election]
+    adopted_by: Legislature
+    control: Republican
   UT:
     name: Utah
     fips: "49"
@@ -519,6 +621,9 @@ states:
     elections: [pre_16, pre_20]
     unit_kind: vtd
     notes: [adopted_after_2024_election]
+    adopted_by: Court
+    control: Nonpartisan
+    adopted_note: "A state district judge adopted a map the plaintiffs submitted, after ruling that the Legislature's map violated Proposition 4, the redistricting initiative voters passed in 2018. An order of 2025-11-21 adjusted one boundary, which gives Map 1A."
   VA:
     name: Virginia
     fips: "51"
@@ -530,6 +635,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Court
+    control: Nonpartisan
+    adopted_note: "The Supreme Court of Virginia adopted a plan drawn by two special masters, each nominated by one party's legislative leaders, after the Virginia Redistricting Commission did not submit one."
   WA:
     name: Washington
     fips: "53"
@@ -541,6 +649,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Commission
+    control: Bipartisan
+    adopted_note: "The commission's four voting members, two appointed by each party's legislative caucuses, approved the plan unanimously. In February 2022 the Legislature amended it by a two-thirds vote, and no district's population changed by more than 19 people."
   WV:
     name: West Virginia
     fips: "54"
@@ -553,6 +664,8 @@ states:
     elections: [pre_20]
     unit_kind: county
     notes: [composite_2020_only]
+    adopted_by: Legislature
+    control: Republican
   WI:
     name: Wisconsin
     fips: "55"
@@ -564,6 +677,9 @@ states:
     bef: cd120
     elections: [pre_16, pre_20]
     unit_kind: vtd
+    adopted_by: Court
+    control: Nonpartisan
+    adopted_note: "The Wisconsin Supreme Court voted 4-3 for the map Governor Tony Evers proposed in court, because it moved the fewest people to new districts. The governor had vetoed the Legislature's map."
 
 at_large:
   AK: {name: Alaska, fips: "02"}

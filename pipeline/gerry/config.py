@@ -20,6 +20,9 @@ ENSEMBLE_NOTE_KEYS = (
 )
 STATE_NOTE_KEYS = ("adopted_after_2024_election", "composite_2020_only", "blocked_map")
 COMPUTED_NOTE_KEYS = ("narrow_ensemble",)
+# extensions design, chapter 4: who adopted the current map, and under whose control
+ADOPTED_BY_VALUES = ("Legislature", "Commission", "Court")
+CONTROL_VALUES = ("Republican", "Democratic", "Bipartisan", "Nonpartisan")
 
 _STATE_STATUS = ("In effect", "Challenged")
 _EXTRA_MAP_STATUS = ("Blocked",)
@@ -36,9 +39,9 @@ _TOP_KEYS = (
 )
 _STATE_REQUIRED = (
     "name", "fips", "seats", "map_name", "status", "source_label", "source_url",
-    "bef", "elections", "unit_kind",
+    "bef", "elections", "unit_kind", "adopted_by", "control",
 )
-_STATE_KEYS = _STATE_REQUIRED + ("extra_maps", "notes")
+_STATE_KEYS = _STATE_REQUIRED + ("extra_maps", "notes", "adopted_note")
 _EXTRA_MAP_KEYS = ("name", "status", "bef", "source_label", "source_url")
 _ELECTION = re.compile(r"[a-z]{3}_\d{2}")
 _POSTAL = re.compile(r"[A-Z]{2}")
@@ -73,6 +76,9 @@ class StateConfig:
     unit_kind: str
     extra_maps: tuple[ExtraMap, ...]
     notes: tuple[str, ...]
+    adopted_by: str              # ADOPTED_BY_VALUES
+    control: str                 # CONTROL_VALUES
+    adopted_note: str | None     # English, shown on the site
 
 
 @dataclass(frozen=True)
@@ -251,7 +257,26 @@ def _state(postal: Any, raw: Any) -> StateConfig:
         unit_kind=_choice(raw, "unit_kind", where, _UNIT_KINDS),
         extra_maps=tuple(_extra_map(k, v, f"{where}.extra_maps") for k, v in extra_raw.items()),
         notes=_keys(raw.get("notes"), STATE_NOTE_KEYS, f"{where}.notes"),
+        **_adoption(raw, where),
     )
+
+
+def _adoption(raw: dict, where: str) -> dict:
+    """adopted_by, control and adopted_note (extensions design, chapter 4). By the two tables there, a court
+    is Nonpartisan and a legislature never is."""
+    adopted_by = _choice(raw, "adopted_by", where, ADOPTED_BY_VALUES)
+    control = _choice(raw, "control", where, CONTROL_VALUES)
+    if adopted_by == "Court" and control != "Nonpartisan":
+        raise ConfigError(f"{where}.control: a map adopted by a court is Nonpartisan, got {control!r}")
+    if adopted_by == "Legislature" and control == "Nonpartisan":
+        raise ConfigError(f"{where}.control: a map adopted by a legislature is Republican, Democratic or "
+                          "Bipartisan, got 'Nonpartisan'")
+    note = None
+    if raw.get("adopted_note") is not None:
+        note = _text(raw, "adopted_note", where)
+        if "\u2014" in note:
+            raise ConfigError(f"{where}.adopted_note: no em dash in text shown on the site")
+    return {"adopted_by": adopted_by, "control": control, "adopted_note": note}
 
 
 def _extra_map(map_id: Any, raw: Any, where: str) -> ExtraMap:

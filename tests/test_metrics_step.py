@@ -24,7 +24,7 @@ XX = StateConfig(
     elections=("pre_16", "pre_20"), unit_kind="vtd",
     extra_maps=(ExtraMap(id="xx_new", name="Plan B", status="Blocked", bef="cd120",
                          source_label="Example source", source_url="https://example.org/b"),),
-    notes=())
+    notes=(), adopted_by="Legislature", control="Republican", adopted_note=None)
 
 COLS = ["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20", "d", "r"]
 

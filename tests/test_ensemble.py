@@ -9,7 +9,8 @@ from gerry.ensemble import N_PLANS, district_votes, read_stats, reference_labels
 def make_state(postal="NV", seats=2, elections=("pre_16", "pre_20")):
     return StateConfig(postal=postal, name="Test", fips="32", seats=seats, map_name="m", status="In effect",
                        source_label="s", source_url="https://example.org/", bef="cd120",
-                       elections=tuple(elections), unit_kind="vtd", extra_maps=(), notes=())
+                       elections=tuple(elections), unit_kind="vtd", extra_maps=(), notes=(),
+                       adopted_by="Legislature", control="Republican", adopted_note=None)
 
 
 def write_stats(path, draws, seats=2, skip=None):

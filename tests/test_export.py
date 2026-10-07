@@ -18,11 +18,13 @@ HB1 = ExtraMap(id="mo_hb1", name="HB 1 of 2025", status="Blocked", bef="cd120",
                source_url="https://redistrictingdatahub.org/dataset/2025-missouri-congressional-districts-plan/")
 
 
-def state(postal, name, fips, seats, notes=(), extra_maps=()):
+def state(postal, name, fips, seats, notes=(), extra_maps=(), adopted_by="Legislature", control="Republican",
+          adopted_note=None):
     return StateConfig(
         postal=postal, name=name, fips=fips, seats=seats, map_name=f"{name} map", status="In effect",
         source_label=f"{name} source", source_url=f"https://example.org/{postal.lower()}", bef="cd120",
         elections=("pre_16", "pre_20"), unit_kind="vtd", extra_maps=tuple(extra_maps), notes=tuple(notes),
+        adopted_by=adopted_by, control=control, adopted_note=adopted_note,
     )
 
 
