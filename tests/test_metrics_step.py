@@ -316,9 +316,27 @@ def _interim(tmp_path, join_log='{"XX": {"map_2024_changed_blocks": 12}}'):
     return SimpleNamespace(states={"XX": XX}, at_large={"WY": AtLargeState("WY", "Wyoming", "56")})
 
 
+def _small_house(monkeypatch):
+    """A House of the 3 districts of XX plus WY: majority 3, WY fixed as Republican. national_majority is
+    replaced by a stand-in that records its arguments (its own tests are under Task 5.7)."""
+    monkeypatch.setattr(step, "HOUSE_SEATS", 3 + 1)
+    monkeypatch.setattr(step, "HOUSE_MAJORITY", 3)
+    monkeypatch.setattr(step, "SINGLE_SEAT_PARTY", {"WY": "R"})
+    seen = {}
+
+    def stand_in(**kwargs):
+        seen.update(kwargs)
+        return {"seats_needed": kwargs["needed"], "base_share": 0.0, "enacted": {"share": 0.0, "seats_at_base": 0},
+                "neutral": {"share": 0.0, "low": 0.0, "high": 0.0, "probability_at_base": 0.0},
+                "proportional": {"share": 0.0}}
+
+    monkeypatch.setattr(step, "national_majority", stand_in)
+    return seen
+
+
 def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
     cfg = _interim(tmp_path)
-    monkeypatch.setattr(step, "HOUSE_SEATS", 3 + 1)
+    _small_house(monkeypatch)
     out = step.compute(cfg, tmp_path)
     assert set(out) == {"national", "states", "checks"}
     assert out["states"]["XX"]["proportional"] == 1             # units 1300 D / 1700 R, as in the hand example
@@ -517,3 +535,92 @@ def test_state_competitive_percentile_levels():
     res = step.state_competitive(XX, _enacted(), _spread_ensemble())
     assert (res["p5"], res["median"], res["p95"]) == (0, 1, 3)
     assert res["neutral_dist"] == [1, 1, 1, 1]
+
+
+# --- Task 5.7: majority thresholds, competitive districts and redraws for the nation ------------
+
+
+def test_seats_needed_counts_the_single_seat_states_fixed_as_democratic():
+    at_large = {p: AtLargeState(p, p, "00") for p in ("AK", "DE", "ND", "SD", "VT", "WY")}
+    # 218 of 435 for a majority; DE and VT are fixed as Democratic -> 216 of the 429 districts
+    assert step.seats_needed(at_large) == 216
+
+
+def test_seats_needed_stops_on_other_single_seat_states():
+    with pytest.raises(CheckError, match="single_seat_party"):
+        step.seats_needed({"WY": AtLargeState("WY", "Wyoming", "56")})
+
+
+# The two made-up states of Task 5.5 in tests/test_metrics.py, with their turning points.
+AA_PLANS = np.array([[0.60005, 0.40005], [0.55005, 0.52005], [0.45505, 0.30005], [0.51005, 0.49005]])
+BB_PLANS = np.array([[0.70005, 0.47005], [0.48995, 0.46005]])
+MAJORITY_ARGS = {"base_share": 0.5, "needed": 3, "enacted_shares": [0.6, 0.47005, 0.52, 0.4],
+                 "plan_shares": [AA_PLANS, BB_PLANS], "state_shares": [0.72005, 0.40005], "state_seats": [2, 2],
+                 "seats_at_base": 2, "neutral_pmf": [0.125, 0.375, 0.375, 0.125, 0.0]}
+
+
+def test_national_majority_hand_example():
+    res = step.national_majority(**MAJORITY_ARGS)
+    assert (res["seats_needed"], res["base_share"]) == (3, 0.5)
+    # enacted: high to low 0.6, 0.52, 0.47005, 0.4; the third is 0.47005 -> swing 0.02995, share 0.52995
+    assert res["enacted"] == pytest.approx({"share": 0.52995, "seats_at_base": 2})
+    # neutral (Task 5.5): 5% at -0.02, 50% at +0.0101, 95% at +0.045; at the base 3 or more: 0.125 + 0
+    assert res["neutral"] == pytest.approx({"share": 0.5101, "low": 0.48, "high": 0.545, "probability_at_base": 0.125})
+    # proportional (Task 5.5): +0.03
+    assert res["proportional"] == pytest.approx({"share": 0.53})
+
+
+def test_national_majority_stops_when_the_enacted_threshold_is_far_off():
+    # needed 4: the fourth share is 0.4 -> swing +0.1, 10 points from the base share
+    with pytest.raises(CheckError, match="majority_threshold.*enacted maps"):
+        step.national_majority(**{**MAJORITY_ARGS, "needed": 4, "enacted_shares": [0.6, 0.47005, 0.52, 0.4]})
+
+
+def test_national_majority_stops_when_a_grid_threshold_is_far_off():
+    # plans with both districts at 0.3 and 0.2: no plan reaches 3 districts within +5 points
+    low = np.array([[0.30005, 0.20005]])
+    with pytest.raises(CheckError, match="majority_threshold.*neutral maps"):
+        step.national_majority(**{**MAJORITY_ARGS, "plan_shares": [low, low]})
+    # proportional: the second state at 0.15005 + 0.05 = 0.20005 keeps 0 seats (2 * 0.20005 = 0.4001), the first
+    # reaches 2: 3 seats are out of reach within +5 points
+    with pytest.raises(CheckError, match="majority_threshold.*proportional"):
+        step.national_majority(**{**MAJORITY_ARGS, "state_shares": [0.72005, 0.15005]})
+
+
+def test_national_competitive_convolves_the_states():
+    # competitive counts per plan, as in test_national_metrics: A [1, 3], B [2, 2], C [0, 1, 1]
+    # P = [0, 0.0625, 0.3125, 0.4375, 0.1875]; cumulative 0, .0625, .375, .8125, 1 -> median 3, p5 1, p95 4
+    def state(dist, enacted):
+        return {"competitive": {"enacted": enacted, "neutral_dist": dist}}
+
+    res = step.national_competitive({"AA": state([1, 3], 1), "BB": state([2, 2], 0), "CC": state([0, 1, 1], 2)})
+    assert (res["enacted"], res["median"], res["p5"], res["p95"]) == (3, 3, 1, 4)    # enacted 1 + 0 + 2
+    assert res["neutral_dist"] == pytest.approx([0, 0.0625, 0.3125, 0.4375, 0.1875])
+
+
+def test_national_redraw_sums_the_states():
+    states = {"AA": {"enacted": 3, "redraw": {"seats_2024": 5}}, "BB": {"enacted": 2, "redraw": {"seats_2024": 1}}}
+    # 2024 maps: 5 + 1 = 6; enacted 3 + 2 = 5; change 5 - 6 = -1
+    assert step.national_redraw(states) == {"seats_2024": 6, "change": -1}
+
+
+def test_compute_adds_majority_competitive_and_redraw(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
+    seen = _small_house(monkeypatch)
+    out = step.compute(cfg, tmp_path)
+    nat = out["national"]
+    # 4 seats, majority 3, WY Republican -> 3 of the 3 districts
+    assert seen["needed"] == 3 and nat["majority"]["seats_needed"] == 3
+    # units: 1300 D and 1700 R
+    assert seen["base_share"] == pytest.approx(1300 / 3000)
+    assert seen["state_shares"] == pytest.approx([1300 / 3000]) and seen["state_seats"] == [3]
+    # enacted shares 0.6, 0.3, 0.4; one Democratic district at the base
+    assert sorted(seen["enacted_shares"]) == pytest.approx([0.3, 0.4, 0.6])
+    assert seen["seats_at_base"] == 1
+    assert [shares.shape for shares in seen["plan_shares"]] == [(4, 3)]
+    # the neutral distribution of the seats: plans give 1, 2, 0, 1 -> [0.25, 0.5, 0.25, 0]
+    assert seen["neutral_pmf"] == pytest.approx([0.25, 0.5, 0.25, 0.0])
+    # one state: the national numbers are those of XX (Task 5.6), with probabilities
+    assert nat["competitive"] == {"enacted": 0, "median": 0, "p5": 0, "p95": 2,
+                                  "neutral_dist": pytest.approx([0.5, 0.0, 0.5, 0.0])}
+    assert nat["redraw"] == {"seats_2024": 2, "change": -1}

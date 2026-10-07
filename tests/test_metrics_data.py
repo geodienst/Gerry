@@ -108,3 +108,28 @@ def test_redraws_since_2024(metrics):
     assert {p for p, s in states.items() if s["redraw"]["map_changed"]} == set(REDRAW)
     for postal, s in states.items():
         assert (s["redraw"]["seats_2024"], s["redraw"]["change"]) == REDRAW.get(postal, (s["enacted"], 0)), postal
+
+
+def test_redraws_for_the_nation(metrics):
+    # 217 Democratic districts on the 2024 maps, 213 on the enacted maps
+    assert metrics["national"]["redraw"] == {"seats_2024": 217, "change": -4}
+
+
+def test_majority_thresholds(metrics):
+    maj = metrics["national"]["majority"]
+    assert maj["seats_needed"] == 216
+    assert maj["base_share"] == pytest.approx(0.5179747, abs=5e-7)
+    # enacted: the 216th highest district share is 0.4949420 -> 0.5179747 + 0.5 - 0.4949420
+    assert maj["enacted"] == pytest.approx({"share": 0.5230328, "seats_at_base": 213}, abs=5e-7)
+    # neutral: grid swings -0.0064 (50%), -0.0114 (5%) and -0.0020 (95%)
+    assert maj["neutral"] == pytest.approx({"share": 0.5115747, "low": 0.5065747, "high": 0.5159747,
+                                            "probability_at_base": 0.9853454}, abs=5e-7)
+    # proportional: grid swing -0.0201, where IN and NY both gain a seat (214 -> 216)
+    assert maj["proportional"] == pytest.approx({"share": 0.4978747}, abs=5e-7)
+
+
+def test_competitive_districts_for_the_nation(metrics):
+    c = metrics["national"]["competitive"]
+    assert (c["enacted"], c["median"], c["p5"], c["p95"]) == (81, 96, 87, 105)
+    assert c["enacted"] == sum(s["competitive"]["enacted"] for s in metrics["states"].values())
+    assert len(c["neutral_dist"]) == 430 and sum(c["neutral_dist"]) == pytest.approx(1.0)

@@ -14,13 +14,18 @@ import pandas as pd
 
 from gerry.checks import CheckError
 from gerry.config import REPO_ROOT, AtLargeState, StateConfig, interim_dir, load_config
-from gerry.metrics import (TieError, competitive, convolve, dem_wins, distribution, effects, efficiency_gap,
-                           is_narrow, largest_remainder, linear_band, mean_median, outside_band,
-                           pmf_percentile, pmf_position, position, sample_percentile, seats_by_plan,
-                           sorted_band)
+from gerry.metrics import (MAX_SWING_STEPS, SWING_GRID, SwingRangeError, TieError, competitive, convolve,
+                           dem_wins, distribution, effects, efficiency_gap, enacted_threshold, is_narrow,
+                           largest_remainder, linear_band, mean_median, neutral_threshold, outside_band,
+                           pmf_percentile, pmf_position, position, proportional_threshold, sample_percentile,
+                           seats_by_plan, sorted_band)
 from gerry.validation import build_report
 
 HOUSE_SEATS = 435
+HOUSE_MAJORITY = 218
+# Owner decision 1 (extensions design, chapter 6): each single-seat state goes to the party that won it in
+# both the 2016 and the 2020 presidential election.
+SINGLE_SEAT_PARTY = {"AK": "R", "DE": "D", "ND": "R", "SD": "R", "VT": "D", "WY": "R"}
 WIN_COLS = ["d", "r", "d_pre_20", "r_pre_20"]
 
 
@@ -206,6 +211,63 @@ def national_metrics(states: Mapping[str, dict], at_large: Mapping[str, AtLargeS
     }
 
 
+def seats_needed(at_large: Mapping[str, AtLargeState]) -> int:
+    """Districts Democrats need for a House majority: 218 minus the single-seat states fixed as Democratic."""
+    if set(at_large) != set(SINGLE_SEAT_PARTY):
+        raise CheckError("single_seat_party", "US", f"config.yaml has single-seat states {sorted(at_large)}, "
+                                                    f"03_metrics.py fixes {sorted(SINGLE_SEAT_PARTY)}")
+    return HOUSE_MAJORITY - sum(1 for postal in at_large if SINGLE_SEAT_PARTY[postal] == "D")
+
+
+def national_majority(*, base_share: float, needed: int, enacted_shares, plan_shares, state_shares,
+                      state_seats, seats_at_base: int, neutral_pmf) -> dict:
+    """The national two-party share Democrats need for `needed` districts under a uniform swing (extensions
+    design, ch. 1): exact for the enacted maps; on the grid of 0.01 point for the neutral maps (half of the
+    outcomes, and 5% and 95%) and for proportional seats. Stops when a threshold lies 5 points or more from
+    base_share, so the fixed result of the single-seat states still holds."""
+    enacted = enacted_threshold(enacted_shares, needed)
+    if abs(enacted) > MAX_SWING_STEPS / SWING_GRID:
+        raise CheckError("majority_threshold", "US", f"enacted maps: Democrats need {base_share + enacted:.4f}, "
+                                                     f"more than 5 points from {base_share:.4f}")
+    try:
+        low, middle, high = [neutral_threshold(plan_shares, needed, q) for q in (0.05, 0.5, 0.95)]
+    except SwingRangeError as err:
+        raise CheckError("majority_threshold", "US", f"neutral maps: {err}, 5 points or more from "
+                                                     f"{base_share:.4f}") from err
+    try:
+        proportional = proportional_threshold(state_shares, state_seats, needed)
+    except SwingRangeError as err:
+        raise CheckError("majority_threshold", "US", f"proportional seats: {err}, 5 points or more from "
+                                                     f"{base_share:.4f}") from err
+    return {
+        "seats_needed": needed,
+        "base_share": base_share,
+        "enacted": {"share": base_share + enacted, "seats_at_base": seats_at_base},
+        "neutral": {"share": base_share + middle, "low": base_share + low, "high": base_share + high,
+                    "probability_at_base": float(np.sum(np.asarray(neutral_pmf, dtype=float)[needed:]))},
+        "proportional": {"share": base_share + proportional},
+    }
+
+
+def national_competitive(states: Mapping[str, dict]) -> dict:
+    """Competitive districts for the nation: the sum over the enacted maps, and the convolution of the
+    states' plan distributions (states independent, as for the seats)."""
+    pmf = convolve([np.asarray(s["competitive"]["neutral_dist"]) for s in states.values()])
+    return {
+        "enacted": sum(s["competitive"]["enacted"] for s in states.values()),
+        "median": pmf_percentile(pmf, 50),
+        "p5": pmf_percentile(pmf, 5),
+        "p95": pmf_percentile(pmf, 95),
+        "neutral_dist": [float(p) for p in pmf],
+    }
+
+
+def national_redraw(states: Mapping[str, dict]) -> dict:
+    """Democratic seats on the maps of the 2024 election, and the net change to the enacted maps."""
+    seats_2024 = sum(s["redraw"]["seats_2024"] for s in states.values())
+    return {"seats_2024": seats_2024, "change": sum(s["enacted"] for s in states.values()) - seats_2024}
+
+
 def compute(cfg, idir) -> dict:
     enacted_all = pd.read_parquet(idir / "enacted_districts.parquet")
     ensemble_all = pd.read_parquet(idir / "ensemble_districts.parquet")
@@ -214,6 +276,8 @@ def compute(cfg, idir) -> dict:
 
     states = {}
     checks = {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "pre_20": {}, "join_log": join_log}
+    # inputs of the majority thresholds, one entry per state
+    votes = {"d": 0.0, "r": 0.0, "enacted_shares": [], "plan_shares": [], "state_shares": [], "state_seats": []}
     for postal in sorted(cfg.states):
         st = cfg.states[postal]
         enacted = enacted_all[enacted_all["state"] == postal]
@@ -222,7 +286,14 @@ def compute(cfg, idir) -> dict:
         if enacted.empty or ensemble.empty or reference.empty:
             raise CheckError("interim_files", postal, "state missing from the interim Parquet files")
         units = pd.read_parquet(idir / "units" / f"{postal}.parquet", columns=["d", "r"])
-        states[postal] = state_metrics(st, float(units["d"].sum()), float(units["r"].sum()), enacted, ensemble)
+        d_total, r_total = float(units["d"].sum()), float(units["r"].sum())
+        states[postal] = state_metrics(st, d_total, r_total, enacted, ensemble)
+        votes["d"] += d_total
+        votes["r"] += r_total
+        votes["enacted_shares"].append(_shares(map_rows(enacted, "enacted")))
+        votes["plan_shares"].append(plan_shares(ensemble, st))
+        votes["state_shares"].append(d_total / (d_total + r_total))
+        votes["state_seats"].append(st.seats)
         changed = join_log.get(postal, {}).get("map_2024_changed_blocks")
         if changed is None:
             raise CheckError("interim_files", postal, "join_log.json has no map_2024_changed_blocks; "
@@ -238,6 +309,22 @@ def compute(cfg, idir) -> dict:
     checks["totals"] = {"district_seats": national["seats"], "at_large": len(cfg.at_large)}
     print(f"US: proportional {national['proportional']}, neutral {national['neutral']['median']} "
           f"({national['neutral']['p5']}-{national['neutral']['p95']}), enacted {national['enacted']}")
+    national["majority"] = national_majority(
+        base_share=votes["d"] / (votes["d"] + votes["r"]), needed=seats_needed(cfg.at_large),
+        enacted_shares=np.concatenate(votes["enacted_shares"]), plan_shares=votes["plan_shares"],
+        state_shares=votes["state_shares"], state_seats=votes["state_seats"],
+        seats_at_base=national["enacted"], neutral_pmf=national["neutral"]["dist"])
+    national["competitive"] = national_competitive(states)
+    national["redraw"] = national_redraw(states)
+    maj, comp, red = national["majority"], national["competitive"], national["redraw"]
+    print(f"US majority: {maj['seats_needed']} of {national['seats']} districts; Democrats have "
+          f"{maj['base_share']:.4f} and need {maj['enacted']['share']:.4f} (enacted), {maj['neutral']['share']:.4f} "
+          f"({maj['neutral']['low']:.4f}-{maj['neutral']['high']:.4f}, neutral), {maj['proportional']['share']:.4f} "
+          f"(proportional); at {maj['base_share']:.4f}: {maj['enacted']['seats_at_base']} districts enacted, "
+          f"{maj['neutral']['probability_at_base']:.4f} of neutral outcomes with a majority")
+    print(f"US competitive (45 to 55%): enacted {comp['enacted']}, neutral {comp['median']} "
+          f"({comp['p5']}-{comp['p95']})")
+    print(f"US 2024 maps: {red['seats_2024']}, enacted {national['enacted']}, change {red['change']:+d}")
     return {"national": national, "states": states, "checks": checks}
 
 
