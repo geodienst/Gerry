@@ -39,6 +39,7 @@ export function nationalSeatDomain(axis, seatsTotal, pad = NATIONAL_PAD) {
  * Label rows for markers on one axis. Row 0 sits right above the plot; a label
  * that would collide with one already in a row moves one row up (site design,
  * chapter 5). Labels near an edge are anchored to stay inside the chart.
+ * The result is in x order, ties in input order.
  * @param {{key: string, x: number}[]} marks in drawing order
  * @returns {{key: string, x: number, row: number, anchor: string}[]}
  */
@@ -46,12 +47,14 @@ export function placeLabels(marks, width = SEAT_AXIS.width, gap = LABEL_GAP, row
   const placed = [];
   const order = marks.map((m, i) => ({ ...m, i })).sort((a, b) => a.x - b.x || a.i - b.i);
   for (const mark of order) {
-    let row = 0;
-    while (row < rows - 1 && placed.some((p) => p.row === row && Math.abs(p.x - mark.x) < gap)) row += 1;
     const anchor = mark.x < 70 ? 'start' : mark.x > width - 70 ? 'end' : 'middle';
-    placed.push({ key: mark.key, x: mark.x, row, anchor });
+    // a start or end label runs inward from its mark, so compare its middle, about gap / 2 further in
+    const at = anchor === 'start' ? mark.x + gap / 2 : anchor === 'end' ? mark.x - gap / 2 : mark.x;
+    let row = 0;
+    while (row < rows - 1 && placed.some((p) => p.row === row && Math.abs(p.at - at) < gap)) row += 1;
+    placed.push({ key: mark.key, x: mark.x, row, anchor, at });
   }
-  return placed;
+  return placed.map(({ at, ...label }) => label);
 }
 
 /** Vertical domain of the sorted district chart: at least 20% to 80%, plus a margin of 2 points. */

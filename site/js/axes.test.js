@@ -28,7 +28,8 @@ test('chartUnits: one unit is 1/15 rem, between the minimum and the maximum', ()
   assert.equal(chartUnits(311, 15, 560), 311); // phone: the sheet is 311px wide
   assert.equal(chartUnits(1200, 15, 560), 560); // wide card: at most 560 units
   assert.equal(chartUnits(800, 20.52, 560), 560); // 800 * 15 / 20.52 = 584.8
-  assert.equal(chartUnits(500, 20.52, 560), 365); // 500 * 15 / 20.52 = 365.5, rounds to 365
+  assert.equal(chartUnits(500, 20.52, 560), 365); // 500 * 15 / 20.52 = 365.497, rounds to 365
+  assert.equal(chartUnits(500, 18, 560), 417); // 500 * 15 / 18 = 416.67, rounds up to 417
   assert.equal(chartUnits(200, 15, 560), 280); // never below 280 units
 });
 
@@ -38,7 +39,9 @@ test('nationalSeatDomain: 14 seats around the band', () => {
 });
 
 test('nationalSeatDomain: widens for a marker outside, stays within 0 and the seat total', () => {
+  // band 217 - 14 = 203 to 229 + 14 = 243; enacted 190 < 203 and proportional 250 > 243 widen it
   assert.deepEqual(nationalSeatDomain({ p5: 217, p95: 229, median: 223, proportional: 250, enacted: 190 }, 429), [190, 250]);
+  // 5 - 14 = -9 stops at 0, 425 + 14 = 439 stops at the 429 seats
   assert.deepEqual(nationalSeatDomain({ p5: 5, p95: 425, median: 200, proportional: 200, enacted: 200 }, 429), [0, 429]);
 });
 
@@ -53,17 +56,40 @@ test('placeLabels: a colliding label moves one row up, a third one row further',
   // all three on one seat count: rows 0, 1 and 2, in drawing order
   assert.deepEqual(placeLabels([{ key: 'p', x: 300 }, { key: 'n', x: 300 }, { key: 'e', x: 300 }]).map((p) => [p.key, p.row]),
     [['p', 0], ['n', 1], ['e', 2]]);
+  // 191 - 100 = 91 < 92: n moves up; 192 - 100 = 92 is not below 92: both stay in row 0
+  assert.deepEqual(placeLabels([{ key: 'p', x: 100 }, { key: 'n', x: 191 }]).map((p) => p.row), [0, 1]);
+  assert.deepEqual(placeLabels([{ key: 'p', x: 100 }, { key: 'n', x: 192 }]).map((p) => p.row), [0, 0]);
+  // a fourth label on the same spot shares the top row; with rows = 4 it gets a row of its own
+  const four = [{ key: 'p', x: 300 }, { key: 'n', x: 300 }, { key: 'e', x: 300 }, { key: 'base', x: 300 }];
+  assert.deepEqual(placeLabels(four).map((p) => p.row), [0, 1, 2, 2]);
+  assert.deepEqual(placeLabels(four, 560, 92, 4).map((p) => p.row), [0, 1, 2, 3]);
+  // an edge label collides by where its text sits: e at 500 > 560 - 70 ends at its mark, so the middle
+  // of its text is about 500 - 92 / 2 = 454, and 454 - 400 = 54 < 92 moves e up although 500 - 400 = 100
+  assert.deepEqual(placeLabels([{ key: 'p', x: 400 }, { key: 'e', x: 500 }]).map((p) => p.row), [0, 1]);
+  // the same at the start: s at 60 < 70 starts at its mark, its middle about 60 + 92 / 2 = 106; 160 - 106 = 54 < 92
+  assert.deepEqual(placeLabels([{ key: 's', x: 60 }, { key: 'p', x: 160 }]).map((p) => p.row), [0, 1]);
 });
 
 test('placeLabels: anchors at the edges keep labels inside the chart', () => {
+  // width 560: 30 < 70 starts at its mark, 540 > 560 - 70 = 490 ends at its mark, 280 is centered
   assert.deepEqual(placeLabels([{ key: 'a', x: 30 }, { key: 'b', x: 280 }, { key: 'c', x: 540 }]).map((p) => p.anchor), ['start', 'middle', 'end']);
+  // width 311: start below 70, end above 311 - 70 = 241; 70 and 241 themselves are centered
+  assert.deepEqual(placeLabels([{ key: 'a', x: 69 }, { key: 'b', x: 70 }, { key: 'c', x: 241 }, { key: 'd', x: 242 }], 311)
+    .map((p) => p.anchor), ['start', 'middle', 'middle', 'end']);
 });
 
 test('sortedDomain: at least 20% to 80% with a margin of 2 points', () => {
+  // everything inside 20% to 80%: 0.2 - 0.02 = 0.18, 0.8 + 0.02 = 0.82
   const [low, high] = sortedDomain({ enacted: [0.27, 0.47], p5: [0.25, 0.45], p95: [0.29, 0.6] });
   assert.ok(Math.abs(low - 0.18) < 1e-12 && Math.abs(high - 0.82) < 1e-12, `${low} ${high}`);
+  // low from enacted: 0.1 - 0.02 = 0.08; high from p95: 0.97 + 0.02 = 0.99
   const [low2, high2] = sortedDomain({ enacted: [0.1, 0.95], p5: [0.12, 0.9], p95: [0.15, 0.97] });
   assert.ok(Math.abs(low2 - 0.08) < 1e-12 && Math.abs(high2 - 0.99) < 1e-12, `${low2} ${high2}`);
+  // low from p5: 0.15 - 0.02 = 0.13; high from enacted: 0.9 + 0.02 = 0.92
+  const [low3, high3] = sortedDomain({ enacted: [0.3, 0.9], p5: [0.15, 0.6], p95: [0.35, 0.85] });
+  assert.ok(Math.abs(low3 - 0.13) < 1e-12 && Math.abs(high3 - 0.92) < 1e-12, `${low3} ${high3}`);
+  // 0.005 - 0.02 = -0.015 stops at 0, 0.995 + 0.02 = 1.015 stops at 1
+  assert.deepEqual(sortedDomain({ enacted: [0.01, 0.99], p5: [0.005, 0.95], p95: [0.02, 0.995] }), [0, 1]);
 });
 
 test('netBar: bars from the center, scaled to the larger side, and the net marker', () => {
@@ -71,9 +97,15 @@ test('netBar: bars from the center, scaled to the larger side, and the net marke
   const bar = netBar(6, 4, 360);
   assert.equal(bar.center, 180);
   assert.deepEqual(bar.left, { x: 20, width: 160 });
+  assert.equal(bar.right.x, 180); // the bar toward Democrats starts at the center
   assert.ok(Math.abs(bar.right.width - 106.667) < 1e-3);
   assert.ok(Math.abs(bar.netX - 126.667) < 1e-3);
   assert.equal(bar.anchor, 'middle');
   assert.equal(netBar(0, 0, 360).netX, 180);
-  assert.equal(netBar(10, 0, 360).anchor, 'start');
+  assert.equal(netBar(10, 0, 360).anchor, 'start'); // scale 160 / 10 = 16: 180 - 10 * 16 = 20 < 60
+  assert.equal(netBar(0, 10, 360).anchor, 'end'); // 180 + 10 * 16 = 340 > 360 - 60 = 300
+  // width 300: center 150, scale (150 - 20) / 10 = 13, netX 150 + 10 * 13 = 280 > 300 - 60 = 240
+  const narrow = netBar(0, 10, 300);
+  assert.equal(narrow.center, 150);
+  assert.equal(narrow.anchor, 'end');
 });
