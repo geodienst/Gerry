@@ -149,8 +149,8 @@ def test_report_state_files_section(tmp_path, notes):
     assert "- AA state_files: 3 of 200 blocks outside the matching district, 0 only in the state source" in report
     assert ("| BB | Plan B | block_file | 100 | 0 | 0 | Identical, block for block (100 blocks) | ok | "
             "https://example.org/b (2026-10-05) |") in report
-    # planscore.csv is missing from this folder
-    assert "Pending: 1." in report
+    # open: AA whole_unit, BB plans and AA state_files from the cross-check file; pending: planscore.csv
+    assert "**Open items: 3.** Pending: 1." in report
 
 
 def test_report_without_crosscheck_files(tmp_path):

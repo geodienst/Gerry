@@ -8463,7 +8463,7 @@ git commit -m "Add join step writing interim files for all states"
 
 ## Phase 2: metrieken en controlerapport
 
-Deze fase bouwt de rekenregels uit hoofdstuk 5 van de spec in `pipeline/gerry/metrics.py`, het script `pipeline/03_metrics.py` dat ze per staat en landelijk toepast, en het controlerapport `docs/validation.md` via `pipeline/gerry/validation.py`. Daarna volgen de kruiscontroles met PlanScore en Dave's Redistricting App (DRA) en een volledige run waarin elke overschrijding een verklaring krijgt.
+Deze fase bouwt de rekenregels uit hoofdstuk 5 van de spec in `pipeline/gerry/metrics.py`, het script `pipeline/03_metrics.py` dat ze per staat en landelijk toepast, en het controlerapport `docs/validation.md` via `pipeline/gerry/validation.py`. Daarna volgen de kruiscontrole met PlanScore (`data/crosscheck/planscore.csv`, taak 2.13) en een volledige run waarin elke overschrijding een verklaring krijgt.
 
 Vooraf:
 
@@ -11169,7 +11169,7 @@ Vooraf nodig:
 
 - Fase 0: `.venv` met geopandas, pyogrio, pyyaml en openpyxl (taak 0.1); `npm install` gedaan, zodat `node_modules/mapshaper` bestaat (taak 0.2); `pytest.ini` met de marker `data`; `gerry.config` (taak 0.4); `gerry.checks.CheckError` en `gerry.checks.check_sources_md` (taak 0.5).
 - Fase 1: `gerry.blocks.read_pl_blocks` en `gerry.blocks.read_bef` (taak 1.7); de downloads in de datamap (taak 1.3).
-- Fase 2: `data/interim/metrics.json` (taak 2.11, voor het draaien van `04_export` in taak 3.5); `gerry.validation.STATE_FILES_COLUMNS` en het controlerapport van `03_metrics.py` (taak 2.12, voor taak 3.6); `data/crosscheck/planscore.csv` en `dra.csv` (taak 2.13 en 2.14).
+- Fase 2: `data/interim/metrics.json` (taak 2.11, voor het draaien van `04_export` in taak 3.5); `gerry.validation.STATE_FILES_COLUMNS` en het controlerapport van `03_metrics.py` (taak 2.12, voor taak 3.6); `data/crosscheck/planscore.csv` (taak 2.13).
 
 Gecontroleerd in een sandbox op 5 oktober 2026, met de echte bestanden:
 
