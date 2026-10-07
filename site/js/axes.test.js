@@ -11,6 +11,11 @@ test('fitTransform: a state fills 88% of the map, centered', () => {
   assert.ok(Math.abs(t.k - 8.58) < 1e-9, String(t.k));
   // the box center (150, 125) lands on the map center (487.5, 305)
   assert.ok(Math.abs(t.x + t.k * 150 - 487.5) < 1e-9 && Math.abs(t.y + t.k * 125 - 305) < 1e-9);
+  // a tall box 100 x 200: 100/975 = 0.1026 < 200/610 = 0.3279, so the height sets k = 0.88 / 0.3279 = 2.684
+  const tall = fitTransform([[100, 100], [200, 300]]);
+  assert.ok(Math.abs(tall.k - 2.684) < 1e-9, String(tall.k));
+  // its center (150, 200) lands on the map center as well
+  assert.ok(Math.abs(tall.x + tall.k * 150 - 487.5) < 1e-9 && Math.abs(tall.y + tall.k * 200 - 305) < 1e-9);
 });
 
 test('fitTransform: a tiny state stops at 80 times', () => {

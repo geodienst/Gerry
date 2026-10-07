@@ -43,6 +43,9 @@ test('tapLine: the tapped district, nothing in the states view, the at-large tex
 
 test('stateOptions: the states with more than one seat, by name', () => {
   assert.deepEqual(stateOptions(results()).map((o) => o.postal), ['CA', 'FL', 'HI', 'LA', 'MO', 'NM', 'TX']);
+  // In testdata the names sort like the postal codes. Sorted by postal code, these four would come as IA, ID, NH, NV.
+  const states = { IA: { name: 'Iowa' }, ID: { name: 'Idaho' }, NV: { name: 'Nevada' }, NH: { name: 'New Hampshire' } };
+  assert.deepEqual(stateOptions({ states }).map((o) => o.postal), ['ID', 'IA', 'NV', 'NH']);
 });
 
 test('mapHints: mouse, Mac and touch', () => {
@@ -51,6 +54,7 @@ test('mapHints: mouse, Mac and touch', () => {
     wheel: 'Use Ctrl + scroll to zoom the map',
     touch: 'Use two fingers to move the map',
   });
+  assert.equal(mapHints({ touch: false, mac: true }).hint, 'Click a state to zoom in on its districts. ⌘ + scroll to zoom, drag to move.');
   assert.equal(mapHints({ touch: false, mac: true }).wheel, 'Use ⌘ + scroll to zoom the map');
   assert.equal(mapHints({ touch: true, mac: false }).hint, 'Tap a state to zoom in on its districts. Use two fingers to zoom and move the map.');
 });

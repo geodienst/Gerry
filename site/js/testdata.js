@@ -37,6 +37,7 @@ const BASE = {
       { postal: 'VT', fips: '50', name: 'Vermont' }, { postal: 'WY', fips: '56', name: 'Wyoming' },
     ],
   },
+  // These made-up states feed the list sums and tooltip tests. Their fields need not agree with each other.
   states: {
     TX: state({
       name: 'Texas', fips: '48', seats: 4, map_name: 'PLANC2333 (HB 4)', status: 'Challenged',
