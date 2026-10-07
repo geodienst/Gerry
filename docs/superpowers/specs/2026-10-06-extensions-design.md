@@ -27,7 +27,7 @@ Besluit van de eigenaar (6 oktober 2026): alle vier toevoegen. Dit document legt
 
 **Referentie.** De kaarten van de verkiezing van 2024: het Census-blokbestand CD119 (`https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip`, 22.959.130 bytes, 29 juli 2024, kop `GEOID,CDFP`, zelfde vorm als CD118 en CD120). We kiezen 2024 en niet 2022, omdat AL, GA, LA, NY en NC tussen 2022 en 2024 al nieuwe kaarten kregen. Met 2024 als referentie meten we alleen de golf van 2025 en 2026. Dit is een nieuwe databron; `01_download` haalt hem op en zet hem in het manifest.
 
-**Berekening.** `02_join` verdeelt de stemmen ook over de kaart van 2024 (blokmethode, zelfde controles als de andere kaarten). Per staat: `seats_2024` en `change` = Enacted min `seats_2024`. Daarnaast `map_changed`: of de blokindeling van CD119 en CD120 voor die staat verschilt. Voor Missouri is de kaart van 2024 dezelfde als de huidige (de kaart van 2022). Landelijk: de som van beide en het netto verschil.
+**Berekening.** `02_join` verdeelt de stemmen ook over de kaart van 2024 (blokmethode, zelfde controles als de andere kaarten). Per staat: `seats_2024` en `change` = Enacted min `seats_2024`. Daarnaast `map_changed`: of de blokindeling van CD119 voor die staat verschilt van het blokbestand van de vastgestelde kaart (CD120; voor Missouri CD118). Voor Missouri is de kaart van 2024 dezelfde als de huidige (de kaart van 2022). Landelijk: de som van beide en het netto verschil.
 
 **Weergave.** In het staatsblad: "2024 map: 14 Democratic seats with these votes. 2026 map: 11 (3 fewer)." of "Map unchanged since 2024." Landelijk: het netto verschil en de staten met een andere uitkomst.
 
