@@ -223,7 +223,8 @@ async function sheet(t) {
 async function national(t) {
   await t.load('#TX');
   await t.until(`${HEADING} === 'Texas'`);
-  t.check('the line under the title has the four key figures', /^Democratic seats of \d+:\s*Proportional\s*\d+\s*Neutral baseline\s*\d+\s*Enacted\s*\d+\s*Drawing effect\s*(0|[RD]\+\d+)/.test(await t.text('#keyline')));
+  t.check('the line under the title gives the key figures as one sentence',
+    /^Of \d+ seats, Democrats win \d+ if seats follow the votes, \d+ on neutral maps and \d+ on the 2026 maps\. Drawing effect: (0|[RD]\+\d+)\.National pictureMethod$/.test(await t.text('#keyline')));
   await t.js("document.querySelector('#keyline a[href=\"#national\"]').click()");
   t.check('"National picture" leads to the national strip and keeps the state',
     await t.until("location.hash === '#national'") && (await t.js("document.getElementById('pick').value")) === 'TX'
@@ -450,7 +451,69 @@ async function senate(t) {
   t.check('the Senate block says it is not an effect of maps', (await t.text('#senate-note')).startsWith('The Senate has no districts'));
 }
 
+// --- Owner decision of October 7, 2026: working title, lede, keyline sentence, "How to read this" ---
+async function explainer(t) {
+  await t.load();
+  t.check('the title and the heading read "House of cards"', await t.js("document.title === 'House of cards' && document.querySelector('header h1').textContent === 'House of cards'"));
+  t.check('the lede asks the question and names the three ways',
+    (await t.text('header .lede')).startsWith('How many U.S. House seats would Democrats win with the same votes on different maps?'));
+  t.check('the meta description is the lede', await t.js("document.querySelector('meta[name=description]').content === document.querySelector('header .lede').textContent"));
+  // The numbers the page shows, formatted in the page with its own format.js, against results.json.
+  const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
+    const n = r.national;
+    const s = r.states.TX;
+    const plans = s.neutral.dist.reduce((a, b) => a + b, 0);
+    const band = s.neutral.p5 === s.neutral.p95 ? f.seats(s.neutral.p5) : f.seats(s.neutral.p5) + ' to ' + f.seats(s.neutral.p95);
+    const g = s.effects.geographic;
+    const d = s.effects.drawing;
+    return {
+      keyline: 'Of ' + n.seats + ' seats, Democrats win ' + n.proportional + ' if seats follow the votes, ' + n.neutral.median
+        + ' on neutral maps and ' + n.enacted + ' on the 2026 maps. Drawing effect: ' + f.effect(n.effects.drawing) + '.',
+      parts: ['Texas has ' + s.seats + ' seats, and ' + f.share(s.d_share) + ' of its two-party vote went to Democrats.',
+        'Proportional: ' + s.proportional + ' seats.', 'Neutral baseline: ' + s.neutral.median + ' seats.',
+        'The typical result of ' + f.count(plans) + " maps a computer drew under Texas's rules", '90% of those maps give ' + band + '.',
+        'Enacted: ' + s.enacted + ' seats.',
+        'Geographic effect, ' + f.effect(g) + (g === 0 ? ': no difference.' : ': from ' + s.proportional + ' to ' + s.neutral.median + '.'),
+        'Drawing effect, ' + f.effect(d) + (d === 0 ? ': no difference.' : ': from ' + s.neutral.median + ' to ' + s.enacted + '.')],
+    };
+  })`);
+  t.check('the keyline sentence has the national numbers of results.json', (await t.text('#keyline')).startsWith(want.keyline), want.keyline);
+  const body = await t.text('#explainer');
+  const missing = want.parts.filter((part) => !body.includes(part));
+  t.check('"How to read this" has the Texas numbers of results.json', missing.length === 0, missing.join(' | '));
+  const box = "document.getElementById('explainer')";
+  t.check('"How to read this" sits between the header and the map, open, with five items', await t.js(`(() => {
+    const d = ${box};
+    return d.tagName === 'DETAILS' && d.open && !d.hidden && d.checkVisibility()
+      && d.previousElementSibling.tagName === 'HEADER' && !!(d.compareDocumentPosition(document.getElementById('map')) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && d.querySelector('summary').textContent === 'How to read this' && d.querySelectorAll('#explainer-items li').length === 5;
+  })()`));
+  await t.js(`${box}.querySelector('summary').click()`);
+  t.check('a click on "How to read this" folds it', await t.js(`!${box}.open && !document.getElementById('explainer-intro').checkVisibility()`));
+  await t.js(`${box}.querySelector('summary').focus()`);
+  t.check('the summary takes keyboard focus', await t.js(`document.activeElement === ${box}.querySelector('summary')`));
+  await t.key('Enter', 13, '\r');
+  t.check('Enter on the summary unfolds it', await t.until(`${box}.open`, 2000));
+  await t.key(' ', 32, ' ');
+  t.check('Space on the summary folds it again', await t.until(`!${box}.open`, 2000));
+  await t.key('Tab', 9);
+  t.check('Tab moves on from the summary to the map controls', await t.js("document.activeElement?.id === 'view-districts'"));
+  for (const [width, height] of [[375, 812], [1280, 800]]) {
+    for (const dark of [false, true]) {
+      await t.load('', { width, height, dark });
+      const fit = await t.js(`(() => { const d = ${box}.getBoundingClientRect();
+        return { open: ${box}.open, inside: d.left >= 0 && d.right <= document.documentElement.clientWidth,
+          wide: document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+          card: getComputedStyle(${box}).backgroundColor === getComputedStyle(document.getElementById('sheet')).backgroundColor }; })()`);
+      t.check(`${width}px${dark ? ' dark' : ''}: "How to read this" is open, fits the width and has the card background`,
+        fit.open && fit.inside && fit.wide && fit.card, JSON.stringify(fit));
+      await t.screenshot(`explainer-${width}${dark ? '-dark' : ''}`);
+    }
+  }
+}
+
 export const GROUPS = [
+  { name: 'explainer', run: explainer },
   { name: 'map', run: map },
   { name: 'list', run: list },
   { name: 'sheet', run: sheet },

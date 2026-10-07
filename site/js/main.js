@@ -4,7 +4,7 @@
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
 import {
-  indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, methodFills,
+  indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, explainerView, methodFills,
 } from './model.js';
 import {
   majorityView, extensionFills, redrawView, stateExtras, competitiveText, controlTables, senateView,
@@ -12,7 +12,7 @@ import {
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState } from './sheet.js';
 import {
-  renderKeyline, renderNational, renderMajority, renderRedraws, renderControl, renderSenate,
+  renderKeyline, renderExplainer, renderNational, renderMajority, renderRedraws, renderControl, renderSenate,
 } from './national.js';
 
 const { d3 } = globalThis;
@@ -139,6 +139,7 @@ async function main() {
 
   const national = nationalView(results);
   renderKeyline($('keyline'), national);
+  renderExplainer($('explainer'), explainerView(results, 'TX'));
   renderNational($('national'), national);
   const majority = majorityView(results);
   renderMajority($('majority'), majority);

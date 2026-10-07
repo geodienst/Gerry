@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { results } from './testdata.js';
 import {
   AT_LARGE_TEXT, indexResults, districtLabel, districtTip, stateTip, tapLine, stateOptions, mapHints,
-  effectList, positionText, stateSheet, nationalView, methodFills,
+  effectList, positionText, stateSheet, nationalView, explainerView, methodFills,
 } from './model.js';
 
 // --- the map (Task 6.2) ---
@@ -221,17 +221,24 @@ test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
 
 // --- the national section (Task 6.7) ---
 
-test('nationalView: the key figures under the title', () => {
+test('nationalView: the key figures under the title, as one sentence', () => {
   const view = nationalView(results());
   // testdata national: seats 429, proportional 224, neutral median 223, enacted 213, all as digits;
-  // drawing effect -10 (negative = fewer Democratic seats) -> "R+10"
-  assert.deepEqual(view.keyline, {
-    lead: 'Democratic seats of 429:',
-    items: [
-      { label: 'Proportional', value: '224' }, { label: 'Neutral baseline', value: '223' },
-      { label: 'Enacted', value: '213' }, { label: 'Drawing effect', value: 'R+10' },
-    ],
-  });
+  // drawing effect -10 (negative = fewer Democratic seats) -> "R+10"; the four numbers are strong
+  assert.deepEqual(view.keyline, [
+    { text: 'Of 429 seats, Democrats win ' }, { text: '224', strong: true },
+    { text: ' if seats follow the votes, ' }, { text: '223', strong: true },
+    { text: ' on neutral maps and ' }, { text: '213', strong: true },
+    { text: ' on the 2026 maps. Drawing effect: ' }, { text: 'R+10', strong: true }, { text: '.' },
+  ]);
+  assert.equal(view.keyline.map((part) => part.text).join(''),
+    'Of 429 seats, Democrats win 224 if seats follow the votes, 223 on neutral maps and 213 on the 2026 maps. Drawing effect: R+10.');
+  // no drawing effect -> "0"; toward Democrats -> "D+3"
+  const r = results();
+  r.national.effects.drawing = 0;
+  assert.equal(nationalView(r).keyline.at(-2).text, '0');
+  r.national.effects.drawing = 3;
+  assert.equal(nationalView(r).keyline.at(-2).text, 'D+3');
 });
 
 test('nationalView: the strip with the three numbers, the effects and the position', () => {
@@ -261,6 +268,54 @@ test('nationalView: the strip with the three numbers, the effects and the positi
   assert.equal(nationalView(r).note, '429 seats. The five states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont) are not counted.');
   r.national.single_seat = Array.from({ length: 11 }, (_, k) => ({ postal: `S${k}`, name: `State ${k}` }));
   assert.match(nationalView(r).note, /^429 seats\. The 11 states with one at-large seat \(State 0, /);
+});
+
+// --- "How to read this" (owner decision of October 7, 2026) ---
+
+/** Texas with the numbers of the real results.json: 38 seats, 46.4%, 18 / 17 (15 to 20) / 11, R+1 and R+6. */
+function realTexas() {
+  const r = results();
+  Object.assign(r.states.TX, {
+    seats: 38, d_share: 0.46351837472645074, proportional: 18, enacted: 11,
+    effects: { geographic: -1, drawing: -6 },
+  });
+  // 5,000 maps in all; the median, p5 and p95 are read from their fields, not from dist
+  r.states.TX.neutral = { median: 17, p5: 15, p95: 20, dist: [...Array(15).fill(0), 300, 1000, 2000, 1000, 400, 300, 0] };
+  return r;
+}
+
+test('explainerView: Texas as the worked example, every number from results.json', () => {
+  assert.deepEqual(explainerView(realTexas(), 'TX'), {
+    title: 'How to read this',
+    intro: 'Texas has 38 seats, and 46.4% of its two-party vote went to Democrats. With those votes:',
+    items: [
+      { lead: 'Proportional: 18 seats.', text: 'Seats in proportion to the votes, so every vote counts the same.' },
+      { lead: 'Neutral baseline: 17 seats.', text: "The typical result of 5,000 maps a computer drew under Texas's rules without looking at party. 90% of those maps give 15 to 20." },
+      { lead: 'Enacted: 11 seats.', text: 'The map Texas uses on November 3, 2026, with the same votes.' },
+      { lead: 'Geographic effect, R+1: from 18 to 17.', text: 'Each district has one winner, and Democratic voters live close together in cities, so even fair maps give them a little less than their share of the vote.' },
+      { lead: 'Drawing effect, R+6: from 17 to 11.', text: 'This comes from how the enacted map is drawn.' },
+    ],
+    closing: 'The map and the list show these numbers for every state. Select a state to see its own.',
+  });
+});
+
+test('explainerView: one seat, a band of one count, effects of zero and toward Democrats', () => {
+  // testdata Texas: 4 seats, proportional 2, neutral 2 (1 to 3), enacted 0, geographic 0, drawing -2
+  const view = explainerView(results(), 'TX');
+  assert.equal(view.intro, 'Texas has 4 seats, and 46.4% of its two-party vote went to Democrats. With those votes:');
+  assert.equal(view.items[1].text, "The typical result of 5,000 maps a computer drew under Texas's rules without looking at party. 90% of those maps give 1 to 3.");
+  // no geographic effect: no "from 2 to 2", and no reason that points one way
+  assert.deepEqual(view.items[3], { lead: 'Geographic effect, 0: no difference.', text: '' });
+  assert.deepEqual(view.items[4], { lead: 'Drawing effect, R+2: from 2 to 0.', text: 'This comes from how the enacted map is drawn.' });
+  // one seat: singular; a band of one seat count; effects toward Democrats; Hawaii's dist has 5,000 maps
+  const r = results();
+  Object.assign(r.states.HI, { proportional: 1, enacted: 2, effects: { geographic: 1, drawing: 0 } });
+  const hawaii = explainerView(r, 'HI');
+  assert.equal(hawaii.intro, 'Hawaii has 2 seats, and 66.0% of its two-party vote went to Democrats. With those votes:');
+  assert.equal(hawaii.items[0].lead, 'Proportional: 1 seat.');
+  assert.equal(hawaii.items[1].text, "The typical result of 5,000 maps a computer drew under Hawaii's rules without looking at party. 90% of those maps give 2.");
+  assert.deepEqual(hawaii.items[3], { lead: 'Geographic effect, D+1: from 1 to 2.', text: '' });
+  assert.deepEqual(hawaii.items[4], { lead: 'Drawing effect, 0: no difference.', text: '' });
 });
 
 // --- the method and the footer (Task 6.8) ---

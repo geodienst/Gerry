@@ -1,4 +1,4 @@
-/* U.S. House seats, counted three ways. Site design: docs/superpowers/specs/2026-10-06-site-design.md.
+/* House of cards (working title). Site design: docs/superpowers/specs/2026-10-06-site-design.md.
    Tokens: chapter 3 of the design; --water, --band and --focus come from preview version 5. */
 :root {
   color-scheme: light dark;
@@ -52,9 +52,10 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--
 header { display: grid; gap: 0.35rem; }
 h1 { font: 600 clamp(1.6rem, 2.6vw, 2.4rem)/1.15 var(--font-head); margin: 0; text-wrap: balance; }
 .lede { margin: 0; max-width: 70ch; color: var(--muted); }
-.keyline { margin: 0.2rem 0 0; font-size: 0.95rem; display: flex; flex-wrap: wrap; gap: 0.2rem 1.2rem; align-items: baseline; }
-.keyline b { font: 600 1.25rem/1.1 var(--font-head); font-variant-numeric: tabular-nums; }
-.keyline .lab { color: var(--muted); font-size: 0.85rem; margin-right: 0.3rem; }
+/* The key figures as one sentence; the numbers in the heading face, the two links after it. */
+.keyline { margin: 0.2rem 0 0; max-width: 80ch; }
+.keyline b { font: 600 1.15em/1 var(--font-head); font-variant-numeric: tabular-nums; }
+.keyline .links { display: inline-flex; gap: 1rem; margin-left: 1rem; white-space: nowrap; }
 .linkbtn { font: inherit; font-size: 0.85rem; background: none; border: 0; color: var(--ink); padding: 0; cursor: pointer; text-decoration: underline; }
 h2 { font: 600 1.33rem/1.2 var(--font-head); margin: 0; text-wrap: balance; }
 h3 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
@@ -74,6 +75,22 @@ a { color: var(--ink); }
    stop at 70ch; the axes keep the full width. So does the line on competitive districts (about 110 characters
    with its labeled range); the rule above it sits on its wrapper and keeps the full width. */
 #national p { max-width: 70ch; }
+
+/* "How to read this": a card that folds; the three numbers on one row and the two effects on the next from 900px. */
+.explainer > summary { cursor: pointer; list-style: none; display: flex; gap: 0.6rem; align-items: center; font: 600 1.33rem/1.2 var(--font-head); }
+.explainer > summary::-webkit-details-marker { display: none; }
+.explainer > summary::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; }
+.explainer[open] > summary::before { transform: rotate(45deg); }
+.explainer-body { display: grid; gap: 0.7rem; }
+.explainer-body > p { margin: 0; max-width: 70ch; }
+.explainer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem 1.5rem; }
+.explainer li { font-size: 0.93rem; border-left: 2px solid var(--rule); padding-left: 0.65rem; max-width: 70ch; }
+.explainer li b { font-weight: 600; }
+@media (min-width: 900px) {
+  .explainer ul { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .explainer li { grid-column: span 2; }
+  .explainer li:nth-child(n+4) { grid-column: span 3; }
+}
 
 /* Map and sheet side by side from 900px; the sheet is at least 22rem and otherwise 30% wide. */
 .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: 1.2rem; align-items: start; }

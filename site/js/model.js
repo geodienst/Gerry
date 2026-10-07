@@ -217,15 +217,13 @@ export function nationalView(results) {
     p5: n.neutral.p5, p95: n.neutral.p95, enacted: n.enacted,
   };
   return {
-    keyline: {
-      lead: `Democratic seats of ${seats(n.seats)}:`,
-      items: [
-        { label: 'Proportional', value: seats(n.proportional) },
-        { label: 'Neutral baseline', value: seats(n.neutral.median) },
-        { label: 'Enacted', value: seats(n.enacted) },
-        { label: 'Drawing effect', value: effect(n.effects.drawing) },
-      ],
-    },
+    // One sentence in parts; the parts with `strong` are the numbers (owner decision of October 7, 2026).
+    keyline: [
+      { text: `Of ${seats(n.seats)} seats, Democrats win ` }, { text: seats(n.proportional), strong: true },
+      { text: ' if seats follow the votes, ' }, { text: seats(n.neutral.median), strong: true },
+      { text: ' on neutral maps and ' }, { text: seats(n.enacted), strong: true },
+      { text: ' on the 2026 maps. Drawing effect: ' }, { text: effect(n.effects.drawing), strong: true }, { text: '.' },
+    ],
     note: `${seats(n.seats)} seats. The ${howMany} states with one at-large seat (${names.join(', ')}) are not counted.`,
     trio: [
       { label: 'Proportional', value: seats(n.proportional), sub: 'seats follow the vote' },
@@ -240,6 +238,44 @@ export function nationalView(results) {
       + `${effectWords(n.effects.drawing)} compared with neutral maps.`,
     position: `In ${planShare(n.position.more)} of neutral outcomes Democrats win more seats than under the enacted maps.`,
     caption: 'Bars: share of neutral outcomes per seat count; shaded: 5th to 95th percentile.',
+  };
+}
+
+// --- "How to read this" (owner decision of October 7, 2026) -------------------------------------
+
+/**
+ * The block between the header and the map: one state worked through, Texas on the site.
+ * An effect of zero reads "no difference"; the reason after the geographic effect only
+ * appears when that effect points toward Republicans, as it explains that direction.
+ */
+export function explainerView(results, postal) {
+  const s = results.states[postal];
+  const { median } = s.neutral;
+  const { geographic, drawing } = s.effects;
+  const seatCount = (n) => `${seats(n)} ${plural(n, 'seat', 'seats')}`;
+  const change = (n, from, to) => (n === 0 ? `${effect(n)}: ${effectWords(n)}.` : `${effect(n)}: from ${seats(from)} to ${seats(to)}.`);
+  return {
+    title: 'How to read this',
+    intro: `${s.name} has ${seatCount(s.seats)}, and ${share(s.d_share)} of its two-party vote went to Democrats. With those votes:`,
+    items: [
+      { lead: `Proportional: ${seatCount(s.proportional)}.`, text: 'Seats in proportion to the votes, so every vote counts the same.' },
+      {
+        lead: `Neutral baseline: ${seatCount(median)}.`,
+        text: `The typical result of ${count(sum(s.neutral.dist))} maps a computer drew under ${s.name}'s rules without looking at party. `
+          + `90% of those maps give ${seatRange(s.neutral)}.`,
+      },
+      { lead: `Enacted: ${seatCount(s.enacted)}.`, text: `The map ${s.name} uses on November 3, 2026, with the same votes.` },
+      {
+        lead: `Geographic effect, ${change(geographic, s.proportional, median)}`,
+        text: geographic < 0 ? 'Each district has one winner, and Democratic voters live close together in cities, '
+          + 'so even fair maps give them a little less than their share of the vote.' : '',
+      },
+      {
+        lead: `Drawing effect, ${change(drawing, median, s.enacted)}`,
+        text: drawing === 0 ? '' : 'This comes from how the enacted map is drawn.',
+      },
+    ],
+    closing: 'The map and the list show these numbers for every state. Select a state to see its own.',
   };
 }
 

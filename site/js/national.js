@@ -1,4 +1,4 @@
-// The key figures under the title and the national strip below the map (site design,
+// The key figures under the title, "How to read this" and the national strip below the map (site design,
 // update of October 7, 2026). Texts come from model.js; the blocks of the extensions
 // (Tasks 6.10 to 6.14) from extensions.js.
 import { drawSeatAxis, drawVoteAxis } from './charts.js';
@@ -7,17 +7,28 @@ import { nationalSeatDomain } from './axes.js';
 const { d3 } = globalThis;
 const NATIONAL_UNITS = 720; // the national axis may be wider than the one in the sheet
 
-/** The line under the title: the four key figures and the links to the sections below. */
+/** The line under the title: the key figures as one sentence and the links to the sections below. */
 export function renderKeyline(el, view) {
   const line = d3.select(el).html('');
-  line.append('span').attr('class', 'lab').text(view.keyline.lead);
-  for (const item of view.keyline.items) {
-    const span = line.append('span');
-    span.append('span').attr('class', 'lab').text(item.label);
-    span.append('b').text(item.value);
+  for (const part of view.keyline) line.append(part.strong ? 'b' : 'span').text(part.text);
+  const links = line.append('span').attr('class', 'links');
+  links.append('a').attr('href', '#national').attr('class', 'linkbtn').text('National picture');
+  links.append('a').attr('href', '#method').attr('class', 'linkbtn').text('Method');
+}
+
+/** "How to read this": the worked example between the header and the map, shown once it is filled. */
+export function renderExplainer(el, view) {
+  const root = d3.select(el);
+  root.select('#explainer-title').text(view.title);
+  root.select('#explainer-intro').text(view.intro);
+  const items = root.select('#explainer-items').html('');
+  for (const item of view.items) {
+    const li = items.append('li');
+    li.append('b').text(item.lead);
+    if (item.text) li.append('span').text(` ${item.text}`);
   }
-  line.append('a').attr('href', '#national').attr('class', 'linkbtn').text('National picture');
-  line.append('a').attr('href', '#method').attr('class', 'linkbtn').text('Method');
+  root.select('#explainer-closing').text(view.closing);
+  el.hidden = false;
 }
 
 /** The three numbers, the national seat axis, the effects and the position. */
