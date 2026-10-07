@@ -440,3 +440,34 @@ def test_enacted_threshold_needs_a_count_within_the_districts():
         m.enacted_threshold([0.6, 0.4], 3)
     with pytest.raises(ValueError, match="needed"):
         m.enacted_threshold([0.6, 0.4], 0)
+
+
+def test_competitive_bounds_have_no_tolerance():
+    # 1e-9 outside either bound is outside; the real ensemble has shares 3e-7 outside (OH 0.4499997, NM 0.5500004)
+    assert m.competitive([0.45 - 1e-9, 0.45, 0.55, 0.55 + 1e-9]) == 2
+
+
+def test_enacted_threshold_accepts_the_first_and_the_last_district():
+    # needed 1: h = 0.6, swing 0.5 - 0.6 = -0.1; needed 2, all districts: h = 0.4, swing 0.5 - 0.4 = +0.1
+    assert m.enacted_threshold([0.6, 0.4], 1) == pytest.approx(-0.1)
+    assert m.enacted_threshold([0.6, 0.4], 2) == pytest.approx(0.1)
+
+
+def test_enacted_threshold_counts_tied_shares_one_by_one():
+    # high to low 0.6, 0.55, 0.55, 0.4: the 2nd and the 3rd highest are both 0.55 -> swing 0.5 - 0.55 = -0.05 for both
+    shares = [0.55, 0.4, 0.6, 0.55]
+    assert m.enacted_threshold(shares, 2) == pytest.approx(-0.05)
+    assert m.enacted_threshold(shares, 3) == pytest.approx(-0.05)
+    # at that swing only 0.6 lies above one half; just above it both 0.55 do: 1 district, then 3
+    swing = m.enacted_threshold(shares, 2)
+    assert m.seats_at_swing(shares, swing) == 1
+    assert m.seats_at_swing(shares, swing + 0.001) == 3
+
+
+def test_enacted_threshold_is_exact_and_not_on_the_grid():
+    # 0.5 - 0.52005 = -0.02005, not the -0.0200 of a grid of 0.0001; district 2 sits on one half to the last bit
+    shares = [0.6, 0.52005, 0.4]
+    swing = m.enacted_threshold(shares, 2)
+    assert swing == pytest.approx(-0.02005, abs=1e-12)
+    assert m.seats_at_swing(shares, swing) == 1
+    assert m.seats_at_swing(shares, swing + 1e-9) == 2
