@@ -208,6 +208,8 @@ def plan_downloads(cfg: Config, dv_files: dict[str, dict]) -> list[Download]:
             url = src["census_vest"].format(commit=cfg.census_vest_commit, st=st, kind="block")
             plan.append(Download(f"census_vest/{st}_2020_block.csv", url, None, None))
     plan.append(Download("census/cd118.zip", src["cd118"], None, None))
+    # the maps of the 2024 election, reference for the redraws (extensions design, chapter 2)
+    plan.append(Download("census/cd119.zip", src["cd119"], None, None))
     plan.append(Download("census/cd120.zip", src["cd120"], None, None))
     for p in postals:
         folder = cfg.states[p].name.replace(" ", "_")

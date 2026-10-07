@@ -294,6 +294,7 @@ COMMIT = "243c8a8134ecf8151777a9388c48323e274767e2"
 SOURCES = {
     "dataverse_api": API,
     "cd118": "https://www2.census.gov/x/cd118.zip",
+    "cd119": "https://www2.census.gov/x/cd119.zip",
     "cd120": "https://www2.census.gov/x/cd120.zip",
     "pl94171": "https://www2.census.gov/pl/{folder}/{st}2020.pl.zip",
     "census_vest": "https://raw.githubusercontent.com/alarm-redist/census-2020/{commit}/census-vest-2020/{st}_2020_{kind}.csv",
@@ -346,6 +347,8 @@ def test_plan_downloads_follows_the_data_dir_layout():
         # census-vest: only the block files of the tract states, as weights within a tract
         Download("census_vest/ca_2020_block.csv", f"{vest}/ca_2020_block.csv", None, None),
         Download("census/cd118.zip", "https://www2.census.gov/x/cd118.zip", None, None),
+        # the maps of the 2024 election, reference for the redraws (extensions design, chapter 2)
+        Download("census/cd119.zip", "https://www2.census.gov/x/cd119.zip", None, None),
         Download("census/cd120.zip", "https://www2.census.gov/x/cd120.zip", None, None),
         Download("census/pl/ca2020.pl.zip", "https://www2.census.gov/pl/California/ca2020.pl.zip", None, None),
         Download("census/pl/nv2020.pl.zip", "https://www2.census.gov/pl/Nevada/nv2020.pl.zip", None, None),

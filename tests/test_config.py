@@ -10,7 +10,7 @@ from gerry.config import (
     data_dir, interim_dir, load_config,
 )
 
-SOURCE_KEYS = ("dataverse_api", "cd118", "cd120", "pl94171", "census_vest",
+SOURCE_KEYS = ("dataverse_api", "cd118", "cd119", "cd120", "pl94171", "census_vest",
                "tiger_gpkg", "tiger_mo_cd119", "cb_states")
 
 
@@ -224,3 +224,9 @@ def test_real_config_elections(cfg):
 def test_real_config_globals(cfg):
     assert cfg.status_checked >= date(2026, 10, 3)  # moves forward with every status re-check
     assert cfg.ensemble.name == "alarm_v15" and cfg.ensemble.version == 15
+
+
+def test_real_config_has_the_block_file_of_the_2024_maps(cfg):
+    # extensions design, chapter 2: the maps of the 2024 election, Census CD119 (2024-07-29)
+    assert cfg.sources["cd119"] == ("https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/"
+                                    "119-congressional-district-befs/cd119.zip")

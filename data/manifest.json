@@ -444,6 +444,11 @@
     "size": 25922515,
     "sha256": "a2f38d0dd7c207fa144a88b66df9f59f8a6e5c27e932fbd4a32d1bcf587c5763"
   },
+  "census/cd119.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip",
+    "size": 22959130,
+    "sha256": "1433feb5178dc7b4188ee30f5f7f715851f4400740b8fe1ce606a876c6294bd6"
+  },
   "census/cd120.zip": {
     "url": "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2027/120-congressional-district-befs/cd120.zip",
     "size": 57246616,
