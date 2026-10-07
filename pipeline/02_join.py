@@ -84,7 +84,8 @@ def join_state(cfg, postal: str, root: Path) -> StateResult:
             labels = unit_of.map(units.set_index("unit_id")["cd_2020"])
             info["reference_share"] = check_reference_labels(labels, district_of,
                                                              blocks.set_index("block_id")["pop"], postal)
-    # map_changed in 03_metrics: does any block lie in another district than on the 2024 map?
+    # map_changed in 03_metrics: does any block lie in another district than on the 2024 map? CD119 is compared
+    # with the block file of the enacted map (st.bef: CD120, but CD118 for Missouri), not always with CD120.
     info["map_2024_changed_blocks"] = changed_blocks(befs["map_2024"], befs["enacted"])
     if info["map_2024_changed_blocks"]:
         log.info("%s: %d blocks lie in another district than on the 2024 map (CD119)", postal,

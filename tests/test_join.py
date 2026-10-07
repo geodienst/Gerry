@@ -78,6 +78,8 @@ def test_nevada_join_reproduces_the_reference_numbers():
     # Nevada has not redrawn since 2021: the 2024 map (CD119) is the enacted map, block for block
     assert log["map_2024_changed_blocks"] == 0
     assert shares(pick("map_2024", "block")).equals(block)
+    assert log["maps"]["map_2024"] == log["maps"]["enacted"]
+    assert shares(pick("map_2024", "whole_unit")).equals(shares(pick("enacted", "whole_unit")))
 
 
 @pytest.mark.data
@@ -93,6 +95,18 @@ def test_alabama_join_has_another_map_in_2024():
     assert int((shares(pick("enacted")) > 0.5).sum()) == 1
     # the same votes on both maps
     assert pick("map_2024")["d"].sum() == pytest.approx(pick("enacted")["d"].sum(), rel=1e-9)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not all(p.exists() for p in files_of("MO")), reason="needs the Missouri files")
+def test_missouri_2024_map_is_its_enacted_2022_map():
+    result = load_script().join_state(load_config(), "MO", data_dir())
+    enacted = result.enacted
+    pick = lambda map_id: enacted[(enacted["map_id"] == map_id) & (enacted["method"] == "block")]
+    # Missouri votes on its 2022 map (CD118), the map of 2024 (CD119): no block moved. CD120 holds HB 1 of 2025,
+    # which is blocked; against CD120 the log would say 53,433 blocks.
+    assert result.log["map_2024_changed_blocks"] == 0
+    assert shares(pick("map_2024")).equals(shares(pick("enacted")))
 
 
 @pytest.mark.data

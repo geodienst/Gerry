@@ -112,9 +112,10 @@ BAD_VALUES = [
     ("sources.cd120", None, "missing keys"),
     ("at_large.NM", {"name": "New Mexico", "fips": "35"}, "both list"),
     ("at_large.VT.fips", "29", "more than once"),
-    # map_2024 is the map id of the 2024 map in 02_join.py (Task 5.3)
-    ("states.MO.extra_maps.map_2024", {"name": "x", "status": "Blocked", "bef": "cd120", "source_label": "x",
-                                       "source_url": "https://example.org/x"}, "not a valid map id"),
+    # the map ids that 02_join.py uses itself; map_2024 is the map of the 2024 election (Task 5.3)
+    *[(f"states.MO.extra_maps.{map_id}", {"name": "x", "status": "Blocked", "bef": "cd120", "source_label": "x",
+                                          "source_url": "https://example.org/x"}, "not a valid map id")
+      for map_id in ("enacted", "check_2022", "map_2024")],
 ]
 
 
