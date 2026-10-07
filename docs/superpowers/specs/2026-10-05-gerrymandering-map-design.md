@@ -53,6 +53,7 @@ Een eenheid is het kleinste gebied met stemcijfers in ALARM's `map.rds`: meestal
 | ALARM `XX_cd_2020_map.rds`, 44 staten | Stemmen, VAP, bevolking en de referentiekaart `cd_2020` per eenheid, voor alle drie de scenario's | Dezelfde dataset en versie, gelezen met het Python-pakket `rdata` |
 | ALARM census-2020, `census-vest-2020/{st}_2020_block.csv`, alleen CA, HI, ME en OR | Stemmen per blok, alleen als gewicht om de stemmen van een tract over zijn blokken te verdelen | Commit `243c8a8134ecf8151777a9388c48323e274767e2` |
 | [Census CD118](https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip), per staat `{ss}_{ST}_CD118.txt` | Missouri (kaart van 2022, gelijk aan 2024), en de controle tegen ALARM's `cd_2020` | 16-12-2022 |
+| [Census CD119](https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip), `NationalCD119.txt` | De kaarten van de verkiezing van 2024, referentie voor de hertekeningen (uitbreidingsontwerp, hoofdstuk 2) | 29-07-2024 |
 | [Census CD120](https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2027/120-congressional-district-befs/cd120.zip), `NationalCD120.txt` | Alle andere staten, plus Missouri HB 1 | 31-08-2026 |
 | Census P.L. 94-171, `{st}2020.pl.zip`, alle 44 staten | Per blok de VAP (P0030001), de bevolking (POP100), de VTD-code en het interne punt; voor Iowa de countynamen | 2020 |
 | Census TIGER 2026, nationale GeoPackage, laag `Congressional Districts` (met spatie), veld `CD120FP` | Districtsgrenzen 2026 | 27-08-2026 |
@@ -126,6 +127,7 @@ Per staat:
 - `unit_kind`: `vtd`, `tract` (CA, HI, ME, OR) of `county` (IA, WV).
 - `extra_maps`: alleen Missouri, `mo_hb1` uit `cd120`, met `status: Blocked`, `name`, `source_label` en `source_url`.
 - `notes`: de noten die bij de staat horen en niet bij de ensembleset (`adopted_after_2024_election`, `composite_2020_only`, `blocked_map`).
+- `adopted_by` (`Legislature`, `Commission`, `Court`) en `control` (`Republican`, `Democratic`, `Bipartisan`, `Nonpartisan`), verplicht, en `adopted_note`, optioneel: wie de huidige kaart aannam en onder welke politieke controle (uitbreidingsontwerp, hoofdstuk 4). Een rechter is altijd `Nonpartisan`, een parlement nooit. `check_sources_md` vergelijkt beide met de kolom "Adoption and control" van `data/sources.md`.
 
 ### Gegevens tussen de stappen
 
@@ -134,7 +136,7 @@ Alle ID's zijn tekst. Districten zijn twee tekens met voorloopnul (`"09"`); ALAR
 `02_join` leest het landelijke CD120-bestand één keer, met de C-engine van pandas, `usecols=["GEOID","CDFP"]` en `dtype=str`, en filtert per staat op de eerste twee tekens. De pyarrow-engine haalt voorloopnullen weg en is daarom verboden. CD118 leest het per staat (`{ss}_{ST}_CD118.txt`) met `skipinitialspace=True`, omdat de header een spatie heeft (`GEOID, CDFP`). Het schrijft naar `data/interim/`:
 
 - `units/{ST}.parquet`: `unit_id`, `vap`, `pop` en de stemkolommen, uit `map.rds`.
-- `enacted_districts.parquet`: `state`, `map_id` (`enacted`, `mo_hb1`, `check_2022`), `method` (`block`, `whole_unit`), `district`, de stemkolommen.
+- `enacted_districts.parquet`: `state`, `map_id` (`enacted`, `mo_hb1`, `check_2022`, en `map_2024`: de kaart van de verkiezing van 2024 uit CD119), `method` (`block`, `whole_unit`), `district`, de stemkolommen.
 - `ensemble_districts.parquet`: `state`, `draw`, `district`, de stemkolommen. Alle rijen met `draw != "cd_2020"`.
 - `alarm_reference.parquet`: dezelfde kolommen voor de rijen met `draw == "cd_2020"`, met de districtlabels van `map.rds` (koppelregels).
 
@@ -216,6 +218,15 @@ Invulwaarden voor `core_preservation_prior_map`, in `config.yaml` onder de ensem
 | LA | the 2022 map | The current map, adopted in 2026, largely follows the 2022 lines, so the drawing effect shown here is probably closer to zero than it should be. |
 | UT | the legislature's 2021 map | A court replaced that map in 2025 with the current map. We cannot say in which direction this rule shifts the drawing effect shown here. |
 
+### Uitbreidingen
+
+Vier rekenregels staan in `docs/superpowers/specs/2026-10-06-extensions-design.md`. Ze gebruiken dezelfde stembasis, dezelfde blokverdeling en dezelfde 5.000 plannen per staat:
+
+- Meerderheidsdrempel (hoofdstuk 1): het landelijke aandeel dat Democraten nodig hebben voor 216 van de 429 districten bij een uniforme verschuiving. De zes staten met één zetel liggen vast: DE en VT Democratisch, AK, ND, SD en WY Republikeins. Exact voor Enacted, op een raster van 0,01 procentpunt voor de neutrale kaarten (de helft van de uitkomsten, met een band van 5% en 95%) en voor Proportional. De pijplijn stopt als een drempel 5 procentpunt of meer van het landelijke aandeel ligt.
+- Hertekeningen sinds de verkiezing van 2024 (hoofdstuk 2): zetels op de kaarten van CD119 met dezelfde stemmen, het verschil met Enacted, en of de blokindeling veranderde.
+- Concurrerende districten (hoofdstuk 3): een Democratisch aandeel van 45% tot en met 55%, op de vastgestelde kaart en over de plannen, landelijk door convolutie.
+- Wie de kaart aannam en onder welke controle (hoofdstuk 4): per staat `adopted_by` en `control` uit `config.yaml`, landelijk per waarde het aantal staten, de zetels en de som van de tekeneffecten. Die som is niet het landelijke tekeneffect, om dezelfde reden als bij de landelijke band.
+
 ## 6. Controles en tests
 
 Tests voor de rekenregels (pytest). De test komt steeds vóór de code. Elk geval rekenen we met de hand uit; de berekening staat als commentaar in de test:
@@ -278,8 +289,8 @@ Kruiscontroles uit CLAUDE.md:
 | Veld | Inhoud |
 |---|---|
 | `meta` | `generated` (datum), `ensemble` (naam, DOI, versie), `census_vest_commit`, `vote_basis` (`["pre_16","pre_20"]`), `status_checked` |
-| `national` | `seats` (429), `proportional`, `enacted`, `neutral` {`median`, `p5`, `p95`, `dist`: kansen voor 0 tot 429 zetels}, `position` {`fewer`, `equal`, `more`, `midrank`}, `effects` {`geographic`, `drawing`}, `outside_band`, `single_seat`: lijst van {`postal`, `fips`, `name`} |
-| `states.<postcode>` | `name`, `fips` (`"48"`), `seats`, `map_name`, `status`, `source` {`label`, `url`}, `notes`: lijst van {`key`, `text`} met de ingevulde tekst, `d_share` (staatsbreed, fractie), `proportional`, `enacted`, `neutral` {`median`, `p5`, `p95`, `dist`: aantal plannen per zetelaantal van 0 tot `seats`}, `position`, `effects`, `outside_band`, `eg` {`value`, `median`, `p5`, `p95`}, `mm` (zelfde vorm, of `null`), `districts`: lijst van {`id` (`"4809"`), `share`, `d`, `r`}, `sorted` {`enacted`, `p5`, `p50`, `p95`: lijsten met lengte `seats`}, en voor Missouri `blocked_map` {`name`, `status` (`"Blocked"`), `source` {`label`, `url`}, `enacted`, `districts`, `position`} |
+| `national` | `seats` (429), `proportional`, `enacted`, `neutral` {`median`, `p5`, `p95`, `dist`: kansen voor 0 tot 429 zetels}, `position` {`fewer`, `equal`, `more`, `midrank`}, `effects` {`geographic`, `drawing`}, `outside_band`, `single_seat`: lijst van {`postal`, `fips`, `name`}; uit het uitbreidingsontwerp (hoofdstuk 5): `majority`, `competitive`, `redraw`, `by_control`, `by_body` |
+| `states.<postcode>` | `name`, `fips` (`"48"`), `seats`, `map_name`, `status`, `source` {`label`, `url`}, `notes`: lijst van {`key`, `text`} met de ingevulde tekst, `d_share` (staatsbreed, fractie), `proportional`, `enacted`, `neutral` {`median`, `p5`, `p95`, `dist`: aantal plannen per zetelaantal van 0 tot `seats`}, `position`, `effects`, `outside_band`, `eg` {`value`, `median`, `p5`, `p95`}, `mm` (zelfde vorm, of `null`), `districts`: lijst van {`id` (`"4809"`), `share`, `d`, `r`}, `sorted` {`enacted`, `p5`, `p50`, `p95`: lijsten met lengte `seats`}, en voor Missouri `blocked_map` {`name`, `status` (`"Blocked"`), `source` {`label`, `url`}, `enacted`, `districts`, `position`}; uit het uitbreidingsontwerp (hoofdstuk 5): `adopted` {`by`, `control`, `note`}, `competitive`, `redraw` |
 
 Aandelen zijn fracties tussen 0 en 1, stemmen afgerond op hele getallen, `position` in fracties.
 
