@@ -167,9 +167,12 @@ async function sheet(t) {
   await t.js("location.hash = '#MO'");
   t.check('Missouri has the row for the blocked map', await t.until(`${HEADING} === 'Missouri'`)
     && /Blocked map.*Blocked.*would give/s.test(await t.text('#sheet')));
+  t.check('in Missouri the neutral efficiency gap names the party once',
+    /\(neutral maps: \d+\.\d points; 90% between \d+\.\d and \d+\.\d points, all toward Republicans\)/.test(await t.text('#sheet')));
   await t.js("location.hash = '#HI'");
   t.check('Hawaii shows "Not defined for two districts"', await t.until(`${HEADING} === 'Hawaii'`)
     && (await t.text('#sheet')).includes('Not defined for two districts'));
+  t.check('a band of one seat count reads "90% of maps give 2" in Hawaii', (await t.text('#sheet')).includes('90% of maps give 2'));
   // Escape from the text outside the sheet and the map, such as the page heading, keeps the state.
   await t.js("(() => { const h = document.querySelector('header h1'); h.tabIndex = -1; h.focus(); })()");
   await t.key('Escape', 27);
@@ -256,7 +259,7 @@ async function national(t) {
   })()`;
   // Text that should never reach a visitor: an em dash, a value that failed to format, an empty fill (Task 6.15).
   const broken = `(() => {
-    const bad = /\\u2014|undefined|NaN|\\[object|Infinity/;
+    const bad = /\\u2014|undefined|NaN|\\[object|Infinity|[<>]\\d+%/;
     const texts = [document.body.textContent, ...[...document.querySelectorAll('[aria-label]')].map((el) => el.getAttribute('aria-label'))];
     const hits = texts.flatMap((text) => text.split('\\n')).filter((line) => bad.test(line)).map((line) => line.trim().slice(0, 80));
     const empty = [...document.querySelectorAll('[data-fill]')].filter((el) => el.textContent.trim() === '').map((el) => 'empty ' + el.dataset.fill);
@@ -277,7 +280,7 @@ async function national(t) {
     t.check(`${width} px: no marker line runs through another label (national axis and ${states.length} states)`,
       hits.length === 0, hits.length ? `${hits.length} crossings: ${hits.join('; ')}` : '');
     if (width === 1280) {
-      t.check(`no em dash, "undefined", "NaN" or empty fill on the page or on the sheets of all ${states.length} states`,
+      t.check(`no em dash, "undefined", "NaN", "<1%", ">99%" or empty fill on the page or on the sheets of all ${states.length} states`,
         textHits.length === 0, textHits.join('; '));
     }
   }
@@ -293,6 +296,13 @@ async function method(t) {
     t.check(`the method has "${part}"`, text.includes(part));
   }
   t.check('"Known limits" has ten points', await t.js("document.querySelectorAll('#method ul > li').length === 10"));
+  t.check('the method says both ends of the competitive range count', text.includes('Competitive districts have a Democratic share from 45% to 55%, both included.'));
+  t.check('the Louisiana limit gives the plan share in words or as a plain percent',
+    /Of the [\d,]+ neutral maps, (more than 99%|less than 1%|\d+%) give \d+ Democratic seats?\./.test(text));
+  t.check('TX-15, TX-28 and TX-34 in the known limits stay on one line', await t.js(`(() => {
+    const names = [...document.querySelectorAll('#method li .nowrap')].filter((el) => getComputedStyle(el).whiteSpace === 'nowrap').map((el) => el.textContent);
+    return names.join(' ') === 'TX-15 TX-28 TX-34';
+  })()`));
   await t.js("document.querySelector('#keyline a[href=\"#method\"]').click()");
   t.check('"Method" under the title leads to the method', await t.until("location.hash === '#method'"));
   t.check('the footer names the data date, the legal status date and the ALARM version',
@@ -418,9 +428,9 @@ async function redraws(t) {
 // --- Task 6.12: competitive districts ------------------------------------------------------------
 async function competitive(t) {
   await t.load('#TX');
-  t.check('the national line on competitive districts', /^Competitive districts \(45 to 55%\): \d+ on the enacted maps, \d+ on neutral maps( \(\d+ to \d+\))?\.$/.test(await t.text('#competitive-text')));
+  t.check('the national line on competitive districts', /^Competitive districts \(45 to 55%\): \d+ on the enacted maps, \d+ on neutral maps( \(90% of neutral maps: \d+ to \d+\))?\.$/.test(await t.text('#competitive-text')));
   await t.until(`${HEADING} === 'Texas'`);
-  t.check('the Texas sheet has the line on competitive districts', /Competitive districts \(45 to 55%\): \d+ on the enacted map, \d+ on neutral maps( \(\d+ to \d+\))?\./.test(await t.text('#sheet')));
+  t.check('the Texas sheet has the line on competitive districts', /Competitive districts \(45 to 55%\): \d+ on the enacted map, \d+ on neutral maps( \(90% of neutral maps: \d+ to \d+\))?\./.test(await t.text('#sheet')));
 }
 
 // --- Task 6.13: who adopted the maps -------------------------------------------------------------

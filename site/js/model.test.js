@@ -109,7 +109,7 @@ test('positionText: fewer, the same and more, as plan shares', () => {
   assert.equal(positionText({ fewer: 0, equal: 0, more: 1 }, 5000, 'the enacted map'),
     'Of the 5,000 neutral maps, 0% give fewer Democratic seats than the enacted map, 0% the same number and 100% more.');
   assert.equal(positionText({ fewer: 0.1286, equal: 0.8692, more: 0.0022 }, 5000, 'the enacted map'),
-    'Of the 5,000 neutral maps, 13% give fewer Democratic seats than the enacted map, 87% the same number and <1% more.');
+    'Of the 5,000 neutral maps, 13% give fewer Democratic seats than the enacted map, 87% the same number and less than 1% more.');
 });
 
 test('stateSheet: heading, status, the three numbers and the effects (Texas)', () => {
@@ -161,11 +161,11 @@ test('stateSheet: efficiency gap and mean-median with their neutral context', ()
 
 test('stateSheet: two districts (Hawaii) and a band of one seat count', () => {
   const sheet = stateSheet(results(), 'HI');
-  assert.equal(sheet.trio[1].sub, '90% of maps: 2');
+  assert.equal(sheet.trio[1].sub, '90% of maps give 2');
   assert.equal(sheet.trio[2].sub, 'inside the neutral band');
   assert.deepEqual(sheet.measures[1], { label: 'Mean-median', value: 'Not defined for two districts', context: '' });
   assert.equal(sheet.status, 'In effect');
-  assert.equal(sheet.axisLabel, 'Democratic seats in Hawaii: proportional 1, neutral baseline 2 (90% of maps 2), enacted 2. '
+  assert.equal(sheet.axisLabel, 'Democratic seats in Hawaii: proportional 1, neutral baseline 2 (90% of maps give 2), enacted 2. '
     + 'Bars: share of the 5,000 neutral maps per seat count.');
   // EG median, p5 and p95 all round to 17.9 points toward Democrats: the value once, not three times
   assert.deepEqual(sheet.measures[0], {
@@ -173,9 +173,36 @@ test('stateSheet: two districts (Hawaii) and a band of one seat count', () => {
   });
 });
 
+test('stateSheet: neutral context that points one way names the party once', () => {
+  const r = results();
+  // Missouri's efficiency gap in results.json: median, p5 and p95 all toward Republicans
+  r.states.MO.eg = { value: 0.0887, median: 0.0852, p5: 0.0787, p95: 0.2032 };
+  assert.deepEqual(stateSheet(r, 'MO').measures[0], {
+    label: 'Efficiency gap', value: '8.9 points toward Republicans',
+    context: '(neutral maps: 8.5 points; 90% between 7.9 and 20.3 points, all toward Republicans)',
+  });
+  // toward Democrats p5 is the larger gap: the range runs from the smaller to the larger number of points
+  r.states.MO.mm = { value: -0.0364, median: -0.0482, p5: -0.0575, p95: -0.0292 };
+  assert.deepEqual(stateSheet(r, 'MO').measures[1], {
+    label: 'Mean-median', value: '3.6 points toward Democrats',
+    context: '(neutral maps: 4.8 points; 90% between 2.9 and 5.8 points, all toward Democrats)',
+  });
+});
+
+test('stateSheet: neutral context in two directions or around zero keeps the party at each number', () => {
+  const r = results();
+  // p5 rounds to 0.0 points, which has no direction
+  r.states.MO.eg = { value: 0.0887, median: 0.0852, p5: 0.0004, p95: 0.2032 };
+  assert.equal(stateSheet(r, 'MO').measures[0].context,
+    '(neutral maps: 8.5 points toward Republicans; 90% between less than 0.05 points either way and 20.3 points toward Republicans)');
+  // the value points the other way, the neutral maps one way: the context still names the party once
+  r.states.MO.eg = { value: -0.0246, median: 0.0836, p5: 0.0201, p95: 0.1124 };
+  assert.equal(stateSheet(r, 'MO').measures[0].context, '(neutral maps: 8.4 points; 90% between 2.0 and 11.2 points, all toward Republicans)');
+});
+
 test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
   const sheet = stateSheet(results(), 'MO');
-  assert.equal(sheet.position, 'Of the 5,000 neutral maps, 13% give fewer Democratic seats than the enacted map, 87% the same number and <1% more.');
+  assert.equal(sheet.position, 'Of the 5,000 neutral maps, 13% give fewer Democratic seats than the enacted map, 87% the same number and less than 1% more.');
   assert.deepEqual(sheet.blocked, {
     name: 'HB 1 of 2025',
     status: 'Blocked',
@@ -216,10 +243,15 @@ test('nationalView: the strip with the three numbers, the effects and the positi
   // geographic -1 -> "R+1", one seat (singular); drawing -10 -> "R+10", 10 seats
   assert.equal(view.effects, 'Geographic effect R+1: neutral maps give 1 seat toward Republicans compared with seats that follow the vote. '
     + 'Drawing effect R+10: the enacted maps give 10 seats toward Republicans compared with neutral maps.');
-  // position.more 0.9972: above 0.99 and below 1 -> ">99%"
-  assert.equal(view.position, 'In >99% of neutral outcomes Democrats win more seats than under the enacted maps.');
+  // position.more 0.9972: above 0.99 and below 1 -> "more than 99%"
+  assert.equal(view.position, 'In more than 99% of neutral outcomes Democrats win more seats than under the enacted maps.');
   assert.equal(view.axisLabel, 'Democratic seats in all states with more than one seat: proportional 224, neutral baseline 223 '
     + '(90% of outcomes 217 to 229), enacted 213. Bars: share of neutral outcomes per seat count.');
+  // a band of one seat count: "give", not a colon before a lone number
+  const one = results();
+  Object.assign(one.national.neutral, { p5: 223, p95: 223 });
+  assert.equal(nationalView(one).trio[1].sub, '90% of outcomes give 223');
+  assert.match(nationalView(one).axisLabel, /neutral baseline 223 \(90% of outcomes give 223\), enacted 213\./);
   // dist has one probability per seat count from 0 to 429: 430 entries
   assert.equal(view.axis.dist.length, 430);
   assert.equal(view.seatsTotal, 429);
@@ -240,7 +272,7 @@ test('methodFills: plans, states, ALARM version, dates and Louisiana', () => {
     'alarm-version': '15',
     'status-date': 'October 3, 2026',
     generated: 'October 6, 2026',
-    'la-share': '>99%', // 4989 of 5000 is 99.78%, which rounds to 100 but is not all plans
+    'la-share': 'more than 99%', // 4989 of 5000 is 99.78%, which rounds to 100 but is not all plans
     'la-seats': '1 Democratic seat',
   });
 });

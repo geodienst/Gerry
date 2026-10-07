@@ -64,8 +64,8 @@ export function share(fraction) {
 }
 
 /**
- * A share of plans (fraction) as a whole percent: 3086/5000 -> "62%".
- * Above 0 but rounding to 0 gives "<1%"; below 1 but rounding to 100 gives ">99%".
+ * A share of plans (fraction) as a whole percent, for use in a sentence: 3086/5000 -> "62%".
+ * Above 0 but rounding to 0 gives "less than 1%"; below 1 but rounding to 100 gives "more than 99%".
  * @param {number} fraction
  * @returns {string}
  */
@@ -74,8 +74,8 @@ export function planShare(fraction) {
   if (fraction === 0) return '0%';
   if (fraction === 1) return '100%';
   const whole = roundHalfUp(fraction, 0, 2);
-  if (whole === '0') return '<1%';
-  if (whole === '100') return '>99%';
+  if (whole === '0') return 'less than 1%';
+  if (whole === '100') return 'more than 99%';
   return `${whole}%`;
 }
 

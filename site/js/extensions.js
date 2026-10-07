@@ -81,9 +81,9 @@ export function stateExtras(results, postal) {
 
 // --- Competitive districts (Task 6.12) ----------------------------------------------------------
 
-/** "Competitive districts (45 to 55%): 2 on the enacted map, 6 on neutral maps (4 to 8)." */
+/** "Competitive districts (45 to 55%): 2 on the enacted map, 6 on neutral maps (90% of neutral maps: 4 to 8)." */
 export function competitiveText(c, maps) {
-  const band = c.p5 === c.p95 ? '' : ` (${count(c.p5)} to ${count(c.p95)})`;
+  const band = c.p5 === c.p95 ? '' : ` (90% of neutral maps: ${count(c.p5)} to ${count(c.p95)})`;
   return `Competitive districts (45 to 55%): ${count(c.enacted)} on the enacted ${maps}, ${count(c.median)} on neutral maps${band}.`;
 }
 

@@ -106,7 +106,7 @@ test('stateExtras: the adopted line under the heading, competitive districts and
   assert.deepEqual(stateExtras(r, 'TX'), {
     head: ['Adopted by: Legislature (Republican control).'],
     body: [
-      'Competitive districts (45 to 55%): 1 on the enacted map, 2 on neutral maps (1 to 3).',
+      'Competitive districts (45 to 55%): 1 on the enacted map, 2 on neutral maps (90% of neutral maps: 1 to 3).',
       '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).',
     ],
   });
@@ -118,9 +118,9 @@ test('stateExtras: the adopted line under the heading, competitive districts and
 
 test('competitiveText: per state and for the nation, without a band of one value', () => {
   assert.equal(competitiveText({ enacted: 2, median: 6, p5: 4, p95: 8 }, 'map'),
-    'Competitive districts (45 to 55%): 2 on the enacted map, 6 on neutral maps (4 to 8).');
+    'Competitive districts (45 to 55%): 2 on the enacted map, 6 on neutral maps (90% of neutral maps: 4 to 8).');
   assert.equal(competitiveText({ enacted: 81, median: 96, p5: 87, p95: 105 }, 'maps'),
-    'Competitive districts (45 to 55%): 81 on the enacted maps, 96 on neutral maps (87 to 105).');
+    'Competitive districts (45 to 55%): 81 on the enacted maps, 96 on neutral maps (90% of neutral maps: 87 to 105).');
   assert.equal(competitiveText({ enacted: 0, median: 0, p5: 0, p95: 0 }, 'map'),
     'Competitive districts (45 to 55%): 0 on the enacted map, 0 on neutral maps.');
 });

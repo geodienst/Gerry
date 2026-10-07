@@ -45,6 +45,15 @@ test('visible text has no em dashes', () => {
   }
 });
 
+test('district names in the text of the page do not break after the hyphen', () => {
+  // "TX-15" in a sentence sits in <span class="nowrap">; the style sheet keeps that span on one line.
+  const html = read('index.html');
+  const loose = html.replace(/<span class="nowrap">[A-Z]{2}-\d+<\/span>/g, '').match(/\b[A-Z]{2}-\d+\b/g) ?? [];
+  assert.deepEqual(loose, []);
+  assert.match(html, /<span class="nowrap">TX-15<\/span>/);
+  assert.match(read('style.css'), /\.nowrap\s*\{\s*white-space:\s*nowrap;\s*\}/);
+});
+
 test('the page and everything it loads stay under 1.5 MB', () => {
   const files = ['index.html', 'style.css', ...MODULES, 'vendor/d3.min.js', 'vendor/topojson-client.min.js',
     'data/results.json', 'data/map.topojson', 'img/geodienst.svg'];

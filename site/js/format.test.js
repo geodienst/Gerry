@@ -75,16 +75,17 @@ test('planShare: whole percents', () => {
 
 test('planShare: half-up at the edges, 25/5000 and 4975/5000', () => {
   assert.equal(planShare(25 / 5000), '1%'); // 0.5% rounds up to 1%
-  assert.equal(planShare(4975 / 5000), '>99%'); // 99.5% rounds up to 100%, but it is not all plans
+  assert.equal(planShare(4975 / 5000), 'more than 99%'); // 99.5% rounds up to 100%, but it is not all plans
 });
 
-test('planShare: only exact 0 and 1 give 0% and 100%', () => {
+// planShare goes into sentences, so the edges are words, not the symbols < and > (owner, October 7, 2026).
+test('planShare: only exact 0 and 1 give 0% and 100%; the edges in words', () => {
   assert.equal(planShare(0), '0%');
   assert.equal(planShare(1), '100%');
-  assert.equal(planShare(1 / 5000), '<1%');
-  assert.equal(planShare(24 / 5000), '<1%'); // 0.48%
-  assert.equal(planShare(4976 / 5000), '>99%');
-  assert.equal(planShare(4999 / 5000), '>99%');
+  assert.equal(planShare(1 / 5000), 'less than 1%');
+  assert.equal(planShare(24 / 5000), 'less than 1%'); // 0.48%
+  assert.equal(planShare(4976 / 5000), 'more than 99%');
+  assert.equal(planShare(4999 / 5000), 'more than 99%');
 });
 
 test('planShare rejects values outside 0 to 1', () => {

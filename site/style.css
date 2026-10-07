@@ -45,6 +45,8 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--
 [hidden] { display: none !important; }
 /* Read by screen readers, not shown */
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* A district name such as TX-15 in a sentence: no line break after the hyphen */
+.nowrap { white-space: nowrap; }
 .wrap { max-width: 2400px; margin: 0 auto; padding-inline: clamp(16px, 2.5vw, 56px); padding-block: 1.2rem 2.6rem; display: grid; gap: 1.2rem; }
 
 header { display: grid; gap: 0.35rem; }
@@ -69,9 +71,9 @@ a { color: var(--ink); }
 .trio .sub { font-size: 0.87rem; color: var(--muted); }
 .effects { margin: 0; font-size: 0.93rem; }
 /* On wide screens the strip and each column of its pair are far wider than a readable line, so its paragraphs
-   stop at 70ch; the axes keep the full width. The line on competitive districts (about 90 characters, under a
-   rule across the strip) keeps the full width, so its range does not wrap onto a line of its own. */
-#national p:not(#competitive-text) { max-width: 70ch; }
+   stop at 70ch; the axes keep the full width. So does the line on competitive districts (about 110 characters
+   with its labeled range); the rule above it sits on its wrapper and keeps the full width. */
+#national p { max-width: 70ch; }
 
 /* Map and sheet side by side from 900px; the sheet is at least 22rem and otherwise 30% wide. */
 .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: 1.2rem; align-items: start; }
@@ -162,7 +164,7 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
 
 /* Extensions: a rule sets the lines on competitive districts and the redraw in the sheet apart from the caption
    of "Districts, sorted", and the national line on competitive districts apart from the redraws (Task 6.12). */
-.extras, #competitive-text { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+.extras, .competitive { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
 
 /* Extensions: the tables by political control (Task 6.13). The number columns shrink to their heads,
    which are the same in both tables, so the columns line up and the first column takes the rest. */
