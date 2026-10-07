@@ -1,9 +1,9 @@
 // The sheet beside the map (site design, chapter 1): without a chosen state the list
 // "Drawing effect by state"; with a chosen state its numbers. Texts come from model.js.
 import { drawSeatAxis, drawSorted, drawNetBar } from './charts.js';
+import { EFFECT_MAX } from './colors.js';
 
 const { d3 } = globalThis;
-const EFFECT_MAX = 6;
 
 function stateRow(parent, row, colors, onSelect) {
   const button = parent.append('button').attr('type', 'button').attr('class', 'row').attr('data-postal', row.postal)

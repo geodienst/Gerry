@@ -118,10 +118,30 @@ async function list(t) {
   t.check('rows show the effect as R+n, D+n or 0', await t.js("[...document.querySelectorAll('#sheet .row .v')].every((v) => /^(0|[RD]\\+\\d+)$/.test(v.textContent))"));
   t.check('the states without a drawing effect are folded behind one line', await t.js(
     "(() => { const d = document.querySelector('#sheet details.zeros'); return d !== null && !d.open && /neutral median$/.test(d.querySelector('summary').textContent); })()"));
+  t.check('the zero states sit inside the folded line and are not rendered while it is closed', await t.js(`(() => {
+    const d = document.querySelector('#sheet details.zeros');
+    const n = Number(d.querySelector('summary').textContent.match(/^\\d+/)[0]);
+    const inside = [...d.querySelectorAll('.row')];
+    const outside = [...document.querySelectorAll('#sheet .row')].filter((r) => !d.contains(r));
+    return !d.open && inside.length === n && inside.every((r) => !r.checkVisibility())
+      && inside.every((r) => r.querySelector('.v').textContent === '0')
+      && outside.every((r) => r.querySelector('.v').textContent !== '0');
+  })()`));
   await t.js("document.querySelector('#sheet details.zeros summary').click()");
   t.check('the line with the arrow unfolds them', await t.js("document.querySelector('#sheet details.zeros').open"));
   t.check('the net bar names both sides and the net', await t.js(
     "(() => { const s = document.querySelector('#sheet .net svg'); return s !== null && s.textContent.includes('toward Republicans') && s.textContent.includes('toward Democrats') && /Net (0|[RD]\\+\\d+)/.test(s.textContent); })()"));
+  t.check('the net bar puts Republicans left in their color and Democrats right', await t.js(`(() => {
+    const s = document.querySelector('#sheet .net svg');
+    const [l, r] = s.querySelectorAll('rect');
+    const css = getComputedStyle(document.documentElement);
+    const c = s.viewBox.baseVal.width / 2;
+    const [left, right] = s.querySelectorAll('text');
+    return l.getAttribute('fill') === css.getPropertyValue('--party-r').trim()
+      && r.getAttribute('fill') === css.getPropertyValue('--party-d').trim()
+      && Number(l.getAttribute('x')) + Number(l.getAttribute('width')) <= c + 0.01 && Number(r.getAttribute('x')) >= c - 0.01
+      && left.textContent.endsWith('toward Republicans') && right.textContent.endsWith('toward Democrats');
+  })()`));
   t.check('a sentence under the net bar gives the sums', /Net: .+\.$/.test(await t.text('#sheet .net p')));
   await t.screenshot('list-1280');
 }
@@ -146,8 +166,22 @@ async function sheet(t) {
   await t.js("location.hash = '#HI'");
   t.check('Hawaii shows "Not defined for two districts"', await t.until(`${HEADING} === 'Hawaii'`)
     && (await t.text('#sheet')).includes('Not defined for two districts'));
+  // Escape from the text outside the sheet and the map, such as the page heading, keeps the state.
+  await t.js("(() => { const h = document.querySelector('header h1'); h.tabIndex = -1; h.focus(); })()");
+  await t.key('Escape', 27);
+  await t.sleep(300);
+  t.check('Escape outside the sheet and the map keeps the state', await t.js(`${HEADING} === 'Hawaii' && location.hash === '#HI'`));
+  await t.js("(() => { const h = document.querySelector('header h1'); h.blur(); h.removeAttribute('tabindex'); })()");
   await t.key('Escape', 27);
   t.check('Escape goes back to the list and drops the state from the link', await t.until(`${HEADING} === 'Drawing effect by state' && location.hash === ''`));
+  await t.load();
+  await t.until(`${HEADING} === 'Drawing effect by state'`);
+  const folded = await t.js("document.querySelector('#sheet details.zeros .row').dataset.postal");
+  await t.js(`location.hash = '#${folded}'`);
+  await t.until(`location.hash === '#${folded}' && ${HEADING} !== 'Drawing effect by state'`);
+  await t.key('Escape', 27);
+  await t.until(`${HEADING} === 'Drawing effect by state'`);
+  t.check('Escape from a folded state puts focus on the heading of the list', await t.until("document.activeElement?.id === 'sheet-title'", 2000));
   await t.js("document.querySelector('#sheet .row').focus()");
   const first = await t.js("document.querySelector('#sheet .row').dataset.postal");
   await t.key('Enter', 13, '\r');
@@ -159,8 +193,23 @@ async function sheet(t) {
   await t.until(`${HEADING} !== 'Drawing effect by state'`);
   await t.js("document.querySelector('#sheet .back').click()");
   t.check('the button "All states" goes back to the list', await t.until(`${HEADING} === 'Drawing effect by state'`));
+  await t.js("document.querySelector('#sheet details.zeros summary').click()");
+  await t.js("document.querySelector('#sheet .row').click()");
+  await t.until(`${HEADING} !== 'Drawing effect by state'`);
+  await t.js("document.querySelector('#sheet .back').click()");
+  await t.until(`${HEADING} === 'Drawing effect by state'`);
+  t.check('the zero states stay unfolded after a state and "All states"', await t.js("document.querySelector('#sheet details.zeros').open"));
   await t.load('#TX');
+  await t.until(`${HEADING} === 'Texas'`);
   await t.screenshot('texas-1280');
+  const before = await t.js("document.querySelector('#sheet svg.chart').getAttribute('viewBox')");
+  await t.tab('Emulation.setDeviceMetricsOverride', { width: 1000, height: 800, deviceScaleFactor: 1, mobile: false });
+  const redrawn = await t.until(`document.querySelector('#sheet svg.chart').getAttribute('viewBox') !== '${before}'`, 3000);
+  const fits = await t.js(`(() => { const s = document.querySelector('#sheet svg.chart'); const box = s.parentElement.getBoundingClientRect().width;
+    const root = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    return Math.abs(s.viewBox.baseVal.width - Math.round(Math.max(280, Math.min(560, box * 15 / root)))) <= 1; })()`);
+  t.check('a new window width draws the charts again at the new width', redrawn && fits);
+  await t.tab('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
 }
 
 export const GROUPS = [

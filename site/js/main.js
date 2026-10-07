@@ -84,13 +84,13 @@ async function main() {
     if (focus) $('sheet-title').focus();
   }
 
-  /** From a state back to the list; focus goes to that state's row if it is visible. */
+  /** From a state back to the list; focus goes to that state's row, or to the heading when the row is folded. */
   function back() {
     const previous = ui.selected;
     select('', { push: true });
     const row = $('sheet').querySelector(`.row[data-postal="${previous}"]`);
-    if (row && row.offsetParent !== null) row.focus();
-    else $('sheet-title').focus();
+    row?.focus(); // a row inside the folded line cannot take focus
+    if (!row || document.activeElement !== row) $('sheet-title').focus();
   }
 
   function fromLocation() {
@@ -101,8 +101,12 @@ async function main() {
   }
   window.addEventListener('popstate', fromLocation);
   window.addEventListener('hashchange', fromLocation);
+  // Escape acts from the sheet, the map, or with nothing focused; not from the State menu
+  // or from text elsewhere on the page.
   document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && ui.selected && event.target.tagName !== 'SELECT') back();
+    const from = event.target;
+    const here = from === document.body || $('sheet').contains(from) || $('mapbox').contains(from);
+    if (event.key === 'Escape' && ui.selected && here) back();
   });
 
   const pressed = (on, off) => { $(on).setAttribute('aria-pressed', 'true'); $(off).setAttribute('aria-pressed', 'false'); };
@@ -120,12 +124,15 @@ async function main() {
   $('zoom-out').addEventListener('click', () => map.zoomBy(1 / 1.8));
   $('zoom-reset').addEventListener('click', () => { select('', { push: true }); map.zoomTo('', true); });
 
-  // Charts size themselves to their box; draw them again when the width changes.
+  // Charts size themselves to their box; draw them again when the width changes, keeping keyboard focus.
   let width = window.innerWidth;
   window.addEventListener('resize', () => {
     if (window.innerWidth === width) return; // phones change only the height while scrolling
     width = window.innerWidth;
+    const focusable = () => [...$('sheet').querySelectorAll('button, summary, a[href], [tabindex]')];
+    const at = focusable().indexOf(document.activeElement);
     renderSheet();
+    if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });
 
   select(stateFromHash(location.hash, results.states), { animate: false });
