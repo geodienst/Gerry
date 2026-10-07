@@ -6,9 +6,10 @@ import { makeColors } from './colors.js';
 import {
   indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, methodFills,
 } from './model.js';
+import { majorityView, extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState } from './sheet.js';
-import { renderKeyline, renderNational } from './national.js';
+import { renderKeyline, renderNational, renderMajority } from './national.js';
 
 const { d3 } = globalThis;
 const $ = (id) => document.getElementById(id);
@@ -134,7 +135,9 @@ async function main() {
   const national = nationalView(results);
   renderKeyline($('keyline'), national);
   renderNational($('national'), national);
-  const fills = methodFills(results);
+  const majority = majorityView(results);
+  renderMajority($('majority'), majority);
+  const fills = { ...methodFills(results), ...extensionFills(results) };
   for (const el of document.querySelectorAll('[data-fill]')) {
     if (Object.hasOwn(fills, el.dataset.fill)) el.textContent = fills[el.dataset.fill];
   }
@@ -148,6 +151,7 @@ async function main() {
     const at = focusable().indexOf(document.activeElement);
     renderSheet();
     renderNational($('national'), national);
+    renderMajority($('majority'), majority);
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });
 

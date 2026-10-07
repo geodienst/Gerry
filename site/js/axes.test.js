@@ -1,7 +1,9 @@
 // Tests for site/js/axes.js. Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fitTransform, chartUnits, nationalSeatDomain, placeLabels, sortedDomain, netBar } from './axes.js';
+import {
+  fitTransform, chartUnits, nationalSeatDomain, placeLabels, sortedDomain, netBar, voteDomain, voteTicks,
+} from './axes.js';
 import { markerSegments } from './axes.js';
 
 // --- the map (Task 6.2) ---
@@ -132,4 +134,17 @@ test('markerSegments: a gap at each label in the way, 2 units around its box', (
   // the pad reaches 2 units past the box: x 131 is in reach of a box that ends at 130, x 132 is not
   assert.deepEqual(markerSegments(131, 25, 102, [row0]), [[39, 102]]);
   assert.deepEqual(markerSegments(132, 25, 102, [row0]), [[25, 102]]);
+});
+
+// --- the vote axis (Task 6.10) ---
+
+test('voteDomain: 45% to 60%, wider for a value outside', () => {
+  assert.deepEqual(voteDomain([0.5230328, 0.5115747, 0.4978747, 0.5179747]), [0.45, 0.6]);
+  assert.deepEqual(voteDomain([0.44, 0.62]), [0.44, 0.62]);
+});
+
+test('voteTicks: every 5 points inside the domain', () => {
+  assert.deepEqual(voteTicks([0.45, 0.6]), [0.45, 0.5, 0.55, 0.6]);
+  assert.deepEqual(voteTicks([0.44, 0.62]), [0.45, 0.5, 0.55, 0.6]);
+  assert.deepEqual(voteTicks([0.4, 0.66]), [0.4, 0.45, 0.5, 0.55, 0.6, 0.65]);
 });

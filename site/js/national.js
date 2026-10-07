@@ -1,7 +1,7 @@
 // The key figures under the title and the national strip below the map (site design,
 // update of October 7, 2026). Texts come from model.js; the blocks of the extensions
 // (Tasks 6.10 to 6.14) from extensions.js.
-import { drawSeatAxis } from './charts.js';
+import { drawSeatAxis, drawVoteAxis } from './charts.js';
 import { nationalSeatDomain } from './axes.js';
 
 const { d3 } = globalThis;
@@ -34,4 +34,12 @@ export function renderNational(el, view) {
   drawSeatAxis(root.select('#national-axis').node(), view.axis, nationalSeatDomain(view.axis, view.seatsTotal), view.axisLabel, NATIONAL_UNITS);
   root.select('#national-caption').text(view.caption);
   root.select('#national-effects').text(`${view.effects} ${view.position}`);
+}
+
+/** House majority: the vote axis, the sentence, and the notes (Task 6.10). */
+export function renderMajority(el, view) {
+  const root = d3.select(el);
+  drawVoteAxis(root.select('#majority-axis').node(), view.axis, view.label);
+  root.select('#majority-text').text(view.sentence);
+  root.select('#majority-note').text([view.proportionalNote, view.rule].filter(Boolean).join(' '));
 }

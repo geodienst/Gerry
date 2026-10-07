@@ -342,6 +342,19 @@ async function layout(t) {
   }
 }
 
+// --- Task 6.10: the House majority (after Phase 5) --------------------------------------------------
+async function majority(t) {
+  await t.load();
+  t.check('the House majority sentence', /^With these votes, Democrats need .+ of the two-party vote for a House majority under the enacted maps, .+ under neutral maps and .+ if seats followed the vote\. They have .+\.$/.test(await t.text('#majority-text')));
+  const axis = await t.text('#majority-axis');
+  t.check('the vote axis marks Enacted, Neutral, Proportional and the vote', ['Enacted', 'Neutral', 'Proportional', 'Vote'].every((p) => axis.includes(p)));
+  t.check('the vote axis has a text alternative', await t.js("document.querySelector('#majority-axis svg')?.getAttribute('aria-label')?.startsWith('Share of the two-party vote that Democrats need') === true"));
+  const note = await t.text('#majority-note');
+  const below = await t.js(`${DATA}.then((r) => r.national.majority.proportional.share < 0.5)`);
+  t.check('the sentence about Proportional below 50% appears exactly when it applies', below === note.includes('Proportional needs less than half of the vote'));
+  t.check('the note gives the six single-seat states their fixed party', /Delaware and Vermont for Democrats, Alaska, North Dakota, South Dakota and Wyoming for Republicans\. So Democrats need \d+ of the \d+ districts\.$/.test(note));
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
   { name: 'list', run: list },
@@ -349,4 +362,5 @@ export const GROUPS = [
   { name: 'national', run: national },
   { name: 'method', run: method },
   { name: 'layout', run: layout },
+  { name: 'majority', run: majority },
 ];

@@ -1,6 +1,8 @@
 // The charts (site design, chapter 5): the seat axis, the sorted districts and the net bar.
 // Geometry comes from axes.js, numbers from format.js; this module only draws.
-import { BASE_FONT, SEAT_AXIS, LABEL_GAP, chartUnits, placeLabels, sortedDomain, netBar } from './axes.js';
+import {
+  BASE_FONT, SEAT_AXIS, VOTE_AXIS, LABEL_GAP, chartUnits, placeLabels, sortedDomain, netBar, voteDomain, voteTicks,
+} from './axes.js';
 import { markerSegments } from './axes.js';
 import { seats, percentLabel } from './format.js';
 
@@ -122,4 +124,23 @@ export function drawNetBar(el, list, colors) {
   svg.append('text').attr('x', W - 4).attr('y', 12).attr('text-anchor', 'end').text(list.bar.right);
   svg.append('path').attr('d', `M${bar.netX},38 l-6,9 h12 z`).attr('fill', 'var(--fg)');
   svg.append('text').attr('x', bar.netX).attr('y', 60).attr('text-anchor', bar.anchor).style('font-weight', 600).text(list.bar.net);
+}
+
+/**
+ * Vote axis of the House majority (site design, chapter 5): the threshold under the enacted
+ * maps, under neutral maps (line and band) and for Proportional, and a dotted line at the
+ * actual Democratic share.
+ * @param {object} axis majorityView(results).axis
+ */
+export function drawVoteAxis(el, axis, label) {
+  const { height: H, margin: m } = VOTE_AXIS;
+  const { svg, width: W } = chartSvg(el, VOTE_AXIS.width, H, label);
+  const domain = voteDomain([axis.base, axis.low, axis.high, ...axis.marks.map((mark) => mark.value)]);
+  const x = d3.scaleLinear().domain(domain).range([m.l, W - m.r]);
+  svg.append('rect').attr('x', x(axis.low)).attr('y', m.t + 4).attr('width', x(axis.high) - x(axis.low))
+    .attr('height', H - m.b - m.t - 4).attr('fill', 'var(--band)');
+  svg.append('g').attr('class', 'axis').attr('transform', `translate(0,${H - m.b})`)
+    .call(d3.axisBottom(x).tickValues(voteTicks(domain)).tickSize(3).tickFormat((v) => percentLabel(v)));
+  const marks = [...axis.marks, { key: 'base', value: axis.base, text: axis.baseText }];
+  drawMarks(svg, marks.map((mark) => ({ ...mark, x: x(mark.value) })), W, H - m.b, m.t, 4);
 }
