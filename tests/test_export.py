@@ -176,6 +176,9 @@ def toy_state_metrics(fips, computed_notes=()):
         ],
         "sorted": {"enacted": [0.4, 0.7], "p5": [0.38, 0.6], "p50": [0.45, 0.65], "p95": [0.5, 0.71]},
         "computed_notes": list(computed_notes),
+        # extensions (Task 5.6): competitive districts and the 2024 map
+        "competitive": {"enacted": 0, "median": 1, "p5": 0, "p95": 1, "neutral_dist": [2000, 3000, 0]},
+        "redraw": {"seats_2024": 2, "change": -1, "map_changed": True},
     }
 
 
@@ -194,6 +197,20 @@ def toy_metrics():
             "position": {"fewer": 0.0, "equal": 0.7, "more": 0.3, "midrank": 0.35},
             "effects": {"geographic": 0, "drawing": 0},
             "outside_band": False,
+            # extensions (Tasks 5.7 and 5.12), passed through unchanged
+            "majority": {"seats_needed": 3, "base_share": 0.55,
+                         "enacted": {"share": 0.56, "seats_at_base": 2},
+                         "neutral": {"share": 0.53, "low": 0.5, "high": 0.57, "probability_at_base": 0.8},
+                         "proportional": {"share": 0.52}},
+            "competitive": {"enacted": 0, "median": 2, "p5": 1, "p95": 2, "neutral_dist": [0.16, 0.48, 0.36, 0.0, 0.0]},
+            "redraw": {"seats_2024": 4, "change": -2},
+            "by_control": {"Republican": {"states": 2, "seats": 4, "drawing": 0},
+                           "Democratic": {"states": 0, "seats": 0, "drawing": 0},
+                           "Bipartisan": {"states": 0, "seats": 0, "drawing": 0},
+                           "Nonpartisan": {"states": 0, "seats": 0, "drawing": 0}},
+            "by_body": {"Legislature": {"states": 2, "seats": 4, "drawing": 0},
+                        "Commission": {"states": 0, "seats": 0, "drawing": 0},
+                        "Court": {"states": 0, "seats": 0, "drawing": 0}},
         },
         "states": {"HI": toy_state_metrics("15", ["narrow_ensemble"]), "MO": mo},
         "checks": {"anything": "not exported"},
@@ -227,7 +244,11 @@ def test_build_results_national_adds_single_seat_states_sorted_by_postal():
     assert national["single_seat"] == [{"postal": "AK", "fips": "02", "name": "Alaska"},
                                        {"postal": "DE", "fips": "10", "name": "Delaware"}]
     assert list(national) == ["seats", "proportional", "enacted", "neutral", "position", "effects",
-                              "outside_band", "single_seat"]
+                              "outside_band", "majority", "competitive", "redraw", "by_control", "by_body",
+                              "single_seat"]
+    # the extensions pass through unchanged
+    for key in ("majority", "competitive", "redraw", "by_control", "by_body"):
+        assert national[key] == toy_metrics()["national"][key], key
 
 
 def test_build_results_state_entry():
@@ -236,6 +257,8 @@ def test_build_results_state_entry():
     assert results["states"]["HI"] == {
         "name": "Hawaii", "fips": "15", "seats": 2, "map_name": "Hawaii map", "status": "In effect",
         "source": {"label": "Hawaii source", "url": "https://example.org/hi"},
+        # from config.yaml (Task 5.10): the toy state's defaults
+        "adopted": {"by": "Legislature", "control": "Republican", "note": None},
         "notes": [{"key": "narrow_ensemble", "text": NOTE_TEXTS["narrow_ensemble"]}],
         "d_share": 0.55, "proportional": 1, "enacted": 1,
         "neutral": m["neutral"], "position": m["position"], "effects": m["effects"],
@@ -244,6 +267,7 @@ def test_build_results_state_entry():
         "districts": [{"id": "1501", "share": 0.7, "d": 2100, "r": 900},
                       {"id": "1502", "share": 0.4, "d": 1001, "r": 1500}],
         "sorted": m["sorted"],
+        "competitive": m["competitive"], "redraw": m["redraw"],
     }
     assert "blocked_map" not in results["states"]["HI"]
 
@@ -383,6 +407,16 @@ def test_national_and_state_checks_use_state_us():
     with pytest.raises(CheckError) as err:
         build_results(metrics, toy_results_config(), "2026-10-06")
     assert err.value.state == "US"
+
+
+def test_adopted_comes_from_the_config_with_its_note():
+    cfg = toy_results_config()
+    hawaii = dataclasses.replace(cfg.states["HI"], adopted_by="Commission", control="Bipartisan",
+                                 adopted_note="Made-up note.")
+    cfg = dataclasses.replace(cfg, states={**cfg.states, "HI": hawaii})
+    results = build_results(toy_metrics(), cfg, "2026-10-06")
+    assert results["states"]["HI"]["adopted"] == {"by": "Commission", "control": "Bipartisan", "note": "Made-up note."}
+    assert results["states"]["MO"]["adopted"] == {"by": "Legislature", "control": "Republican", "note": None}
 
 
 def test_blocked_map_district_ids_are_checked_too():

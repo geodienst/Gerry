@@ -24,10 +24,16 @@ const NOTE_KEYS = [
   'adopted_after_2024_election', 'composite_2020_only', 'blocked_map',
 ];
 const STATE_FIELDS = [
-  'name', 'fips', 'seats', 'map_name', 'status', 'source', 'notes', 'd_share',
+  'name', 'fips', 'seats', 'map_name', 'status', 'source', 'adopted', 'notes', 'd_share',
   'proportional', 'enacted', 'neutral', 'position', 'effects', 'outside_band',
-  'eg', 'mm', 'districts', 'sorted',
+  'eg', 'mm', 'districts', 'sorted', 'competitive', 'redraw',
 ];
+// Extensions design (docs/superpowers/specs/2026-10-06-extensions-design.md)
+const MAJORITY_DISTRICTS = 216;    // 218 of 435, minus DE and VT, fixed as Democratic (chapter 1)
+const MAX_SWING = 0.05;            // a threshold lies within 5 points of the base share (chapters 1 and 5)
+const GRID = 10000;                // neutral and proportional thresholds: steps of 0.01 point
+const ADOPTED_BY = ['Legislature', 'Commission', 'Court'];
+const CONTROL = ['Republican', 'Democratic', 'Bipartisan', 'Nonpartisan'];
 
 let cache;
 function data() {
@@ -285,6 +291,98 @@ test('visible text in results.json has no em dashes', { skip }, () => {
   for (const s of Object.values(data().results.states)) {
     texts.push(s.name, s.map_name, s.source.label, ...s.notes.map((n) => n.text));
     if (s.blocked_map) texts.push(s.blocked_map.name, s.blocked_map.source.label);
+    if (s.adopted.note) texts.push(s.adopted.note);
   }
   for (const text of texts) assert.ok(!text.includes('\u2014'), `em dash in: ${text}`);
+});
+
+// --- Extensions: majority threshold, competitive districts, redraws, who adopted the map ---------------------
+
+test('majority thresholds follow from the districts and lie within 5 points of the base share', { skip }, () => {
+  const { national, states } = data().results;
+  const m = national.majority;
+  const districts = Object.values(states).flatMap((s) => s.districts);
+  assert.equal(m.seats_needed, MAJORITY_DISTRICTS);
+  // one vote base: the share of all district votes (rounded to whole votes in results.json)
+  assert.ok(near(m.base_share, sum(districts.map((x) => x.d)) / sum(districts.map((x) => x.d + x.r)), 1e-6),
+    `majority.base_share ${m.base_share}`);
+  // enacted: exact, from the 216th highest district share
+  const h = districts.map((x) => x.share).sort((a, b) => b - a)[MAJORITY_DISTRICTS - 1];
+  assert.ok(near(m.enacted.share, m.base_share + 0.5 - h, 1e-12), `majority.enacted.share ${m.enacted.share}`);
+  assert.equal(m.enacted.seats_at_base, national.enacted);
+  if (m.enacted.seats_at_base < MAJORITY_DISTRICTS) assert.ok(m.enacted.share >= m.base_share, 'short of a majority: the threshold lies above the base share');
+  else assert.ok(m.enacted.share <= m.base_share, 'a majority: the threshold lies at or below the base share');
+  const grid = [m.neutral.share, m.neutral.low, m.neutral.high, m.proportional.share];
+  for (const share of [m.enacted.share, ...grid]) {
+    assert.ok(isFraction(share) && Math.abs(share - m.base_share) <= MAX_SWING + 1e-12, `threshold ${share} lies within 5 points`);
+  }
+  for (const share of grid) {
+    const steps = (share - m.base_share) * GRID;
+    assert.ok(near(steps, Math.round(steps), 1e-6), `threshold ${share} lies on the grid of 0.01 point`);
+  }
+  assert.ok(m.neutral.low <= m.neutral.share && m.neutral.share <= m.neutral.high, 'majority.neutral band order');
+  assert.ok(near(m.neutral.probability_at_base, sum(national.neutral.dist.slice(MAJORITY_DISTRICTS)), 1e-9),
+    'majority.neutral.probability_at_base follows from neutral.dist');
+});
+
+function checkCompetitive(c, length, total, where) {
+  for (const key of ['enacted', 'median', 'p5', 'p95']) assert.ok(isInt(c[key]) && c[key] >= 0 && c[key] < length, `${where}.competitive.${key}`);
+  assert.equal(c.neutral_dist.length, length, `${where}.competitive.neutral_dist length`);
+  assert.ok(near(sum(c.neutral_dist), total, 1e-6), `${where}.competitive.neutral_dist sums to ${total}`);
+  for (const [key, q] of [['p5', 0.05], ['median', 0.5], ['p95', 0.95]]) {
+    assert.equal(c[key], percentile(c.neutral_dist, q), `${where}.competitive.${key} follows from neutral_dist`);
+  }
+}
+
+test('competitive districts (45 to 55%) per state and for the nation', { skip }, () => {
+  const { national, states } = data().results;
+  for (const [postal, s] of Object.entries(states)) {
+    checkCompetitive(s.competitive, s.seats + 1, PLANS, postal);
+    const count = s.districts.filter((x) => x.share >= 0.45 && x.share <= 0.55).length;
+    assert.equal(s.competitive.enacted, count, `${postal}.competitive.enacted counts the districts from 45 to 55%`);
+  }
+  checkCompetitive(national.competitive, 430, 1, 'national');
+  assert.equal(national.competitive.enacted, sum(Object.values(states).map((s) => s.competitive.enacted)));
+});
+
+test('redraws since 2024 add up per state and for the nation', { skip }, () => {
+  const { national, states } = data().results;
+  for (const [postal, s] of Object.entries(states)) {
+    const r = s.redraw;
+    assert.ok(isInt(r.seats_2024) && r.seats_2024 >= 0 && r.seats_2024 <= s.seats, `${postal}.redraw.seats_2024`);
+    assert.equal(r.change, s.enacted - r.seats_2024, `${postal}.redraw.change`);
+    assert.equal(typeof r.map_changed, 'boolean', `${postal}.redraw.map_changed`);
+    if (!r.map_changed) assert.equal(r.change, 0, `${postal}: the same map gives the same seats`);
+  }
+  const all = Object.values(states);
+  assert.equal(national.redraw.seats_2024, sum(all.map((s) => s.redraw.seats_2024)));
+  assert.equal(national.redraw.change, sum(all.map((s) => s.redraw.change)));
+  assert.equal(national.redraw.change, national.enacted - national.redraw.seats_2024);
+});
+
+test('who adopted each map, and the overview per control and per body', { skip }, () => {
+  const { national, states } = data().results;
+  const all = Object.values(states);
+  for (const [postal, s] of Object.entries(states)) {
+    assert.ok(ADOPTED_BY.includes(s.adopted.by), `${postal}.adopted.by`);
+    assert.ok(CONTROL.includes(s.adopted.control), `${postal}.adopted.control`);
+    assert.ok(s.adopted.note === null || (typeof s.adopted.note === 'string' && s.adopted.note.length > 0), `${postal}.adopted.note`);
+    if (s.adopted.by === 'Court') assert.equal(s.adopted.control, 'Nonpartisan', `${postal}: a court is Nonpartisan`);
+    if (s.adopted.by === 'Legislature') assert.notEqual(s.adopted.control, 'Nonpartisan', `${postal}: a legislature is not Nonpartisan`);
+  }
+  for (const [field, key, values] of [['by_control', 'control', CONTROL], ['by_body', 'by', ADOPTED_BY]]) {
+    assert.deepEqual(Object.keys(national[field]), values, `${field} lists every value, in order`);
+    for (const value of values) {
+      const members = all.filter((s) => s.adopted[key] === value);
+      assert.deepEqual(national[field][value], {
+        states: members.length,
+        seats: sum(members.map((s) => s.seats)),
+        drawing: sum(members.map((s) => s.effects.drawing)),
+      }, `${field}.${value} follows from the states`);
+    }
+    // the drawing effects of the states add up; their sum need not equal national.effects.drawing (spec chapter 5)
+    const entries = Object.values(national[field]);
+    assert.equal(sum(entries.map((e) => e.states)), 44);
+    assert.equal(sum(entries.map((e) => e.seats)), 429);
+  }
 });

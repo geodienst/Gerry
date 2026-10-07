@@ -465,6 +465,504 @@
    "drawing": -10
   },
   "outside_band": true,
+  "majority": {
+   "seats_needed": 216,
+   "base_share": 0.5179747240856283,
+   "enacted": {
+    "share": 0.5230327588977108,
+    "seats_at_base": 213
+   },
+   "neutral": {
+    "share": 0.5115747240856283,
+    "low": 0.5065747240856283,
+    "high": 0.5159747240856283,
+    "probability_at_base": 0.9853454305693913
+   },
+   "proportional": {
+    "share": 0.4978747240856283
+   }
+  },
+  "competitive": {
+   "enacted": 81,
+   "median": 96,
+   "p5": 87,
+   "p95": 105,
+   "neutral_dist": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    6.592431921397461e-57,
+    3.7158283119028536e-53,
+    4.64408513417401e-50,
+    1.9257128939734728e-47,
+    3.7544228968772756e-45,
+    4.3840773627559195e-43,
+    3.4978207886672806e-41,
+    2.0648230703149137e-39,
+    9.505557947982914e-38,
+    3.541083451915971e-36,
+    1.0968552809351723e-34,
+    2.8838654734776903e-33,
+    6.540595290116473e-32,
+    1.2962785707814267e-30,
+    2.2690443961957415e-29,
+    3.539497007064525e-28,
+    4.958276054918676e-27,
+    6.279404316743479e-26,
+    7.23220994209619e-25,
+    7.61507845064849e-24,
+    7.365100989457559e-23,
+    6.571004815317336e-22,
+    5.4288138947551814e-21,
+    4.167868979644079e-20,
+    2.9828883601148935e-19,
+    1.9958543713793927e-18,
+    1.2518006503687214e-17,
+    7.377410406433238e-17,
+    4.0944567404774245e-16,
+    2.1443523645145186e-15,
+    1.0617419443476821e-14,
+    4.9787389652671787e-14,
+    2.2146125383194757e-13,
+    9.358499697238193e-13,
+    3.762299015858454e-12,
+    1.4408142719655019e-11,
+    5.2626332751775855e-11,
+    1.8354302438350343e-10,
+    6.118996619138685e-10,
+    1.951948625864528e-09,
+    5.9636561069075025e-09,
+    1.7466114076221758e-08,
+    4.9076937630642e-08,
+    1.3240056182496564e-07,
+    3.43197592927249e-07,
+    8.553225783402927e-07,
+    2.0507659227623794e-06,
+    4.733182597626911e-06,
+    1.0521434624694238e-05,
+    2.2537163679227383e-05,
+    4.654041854334412e-05,
+    9.269572058362157e-05,
+    0.0001781426512496211,
+    0.00033046487162360466,
+    0.0005919607085284257,
+    0.0010242898373422256,
+    0.0017126112043640536,
+    0.0027678035863306708,
+    0.004324914259901361,
+    0.006535824151137544,
+    0.009554486699154168,
+    0.013514175029676074,
+    0.018497981895555723,
+    0.024506131749758825,
+    0.0314259700612568,
+    0.03901205594562269,
+    0.046883826790344335,
+    0.05454628982449529,
+    0.06143510607529288,
+    0.06698194086252834,
+    0.07069038350575924,
+    0.07220873966486417,
+    0.07138502785763878,
+    0.06829226118954068,
+    0.06321813455515375,
+    0.05662103492106383,
+    0.04906167294648031,
+    0.04112451545605981,
+    0.033344311566380326,
+    0.026150306366475688,
+    0.019835342921347823,
+    0.014550763017475033,
+    0.010322630598555734,
+    0.0070815436396718,
+    0.0046975384096031815,
+    0.0030129069003337365,
+    0.0018682589105804691,
+    0.001119904856797421,
+    0.0006488844691746776,
+    0.00036336009458721406,
+    0.00019661809005755136,
+    0.00010278978496919932,
+    5.190766496461464e-05,
+    2.5314769261988692e-05,
+    1.1919957124068697e-05,
+    5.417798130311874e-06,
+    2.376292913423289e-06,
+    1.0054972421580956e-06,
+    4.103307401025409e-07,
+    1.614441796322753e-07,
+    6.122147405207797e-08,
+    2.2368225422573218e-08,
+    7.87144927164621e-09,
+    2.666970998419395e-09,
+    8.696876233398524e-10,
+    2.7285163885763587e-10,
+    8.232669709832745e-11,
+    2.387996212449341e-11,
+    6.656231261876646e-12,
+    1.7821434470812856e-12,
+    4.581295392936268e-13,
+    1.1302409380565737e-13,
+    2.6747920435538608e-14,
+    6.0692841203549045e-15,
+    1.3197701236058963e-15,
+    2.748842286728195e-16,
+    5.481021691588314e-17,
+    1.0456702378095382e-17,
+    1.9076670338522515e-18,
+    3.326056691966576e-19,
+    5.538754206621467e-20,
+    8.803948437536619e-21,
+    1.3348881808294365e-21,
+    1.9294114821578588e-22,
+    2.656559677779474e-23,
+    3.4819527673833634e-24,
+    4.341304597832115e-25,
+    5.1450404562003274e-26,
+    5.791577299550103e-27,
+    6.187335078953806e-28,
+    6.268423833985124e-29,
+    6.017264881150738e-30,
+    5.46828866512841e-31,
+    4.7003050108289964e-32,
+    3.8178289489562086e-33,
+    2.9274922443966876e-34,
+    2.1169595788133404e-35,
+    1.442070367515319e-36,
+    9.242769463804857e-38,
+    5.566760069605431e-39,
+    3.14615659909732e-40,
+    1.6659726103979188e-41,
+    8.251333994162446e-43,
+    3.815220650902623e-44,
+    1.6433000626844822e-45,
+    6.577289336102896e-47,
+    2.439387853740683e-48,
+    8.35592094564055e-50,
+    2.6334507427962547e-51,
+    7.601893876018554e-53,
+    1.9993109072292914e-54,
+    4.760684805854796e-56,
+    1.0186849497529059e-57,
+    1.9414138498612687e-59,
+    3.260481552019454e-61,
+    4.7644685116488e-63,
+    5.966676865642275e-65,
+    6.288764056633113e-67,
+    5.458274747909877e-69,
+    3.799397093060735e-71,
+    2.0526659339231932e-73,
+    8.254542471756732e-76,
+    2.335752193105708e-78,
+    4.284917568131833e-81,
+    4.444594732388156e-84,
+    1.9288990879144545e-87,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "redraw": {
+   "seats_2024": 217,
+   "change": -4
+  },
+  "by_control": {
+   "Republican": {
+    "states": 16,
+    "seats": 165,
+    "drawing": -17
+   },
+   "Democratic": {
+    "states": 8,
+    "seats": 118,
+    "drawing": 9
+   },
+   "Bipartisan": {
+    "states": 10,
+    "seats": 61,
+    "drawing": -3
+   },
+   "Nonpartisan": {
+    "states": 10,
+    "seats": 85,
+    "drawing": 1
+   }
+  },
+  "by_body": {
+   "Legislature": {
+    "states": 28,
+    "seats": 301,
+    "drawing": -9
+   },
+   "Commission": {
+    "states": 9,
+    "seats": 73,
+    "drawing": -1
+   },
+   "Court": {
+    "states": 7,
+    "seats": 55,
+    "drawing": 0
+   }
+  },
   "single_seat": [
    {
     "postal": "AK",
@@ -508,6 +1006,11 @@
    "source": {
     "label": "Alabama Secretary of State",
     "url": "https://www.sos.alabama.gov/sites/default/files/2026-5-14/Livingston%20Congressional%20Plan%203-2023%20Legal%20Description.pdf"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -645,6 +1148,27 @@
      0.5250027043708997,
      0.5655603411327639
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 2,
+    "p5": 1,
+    "p95": 2,
+    "neutral_dist": [
+     206,
+     1122,
+     3644,
+     28,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 2,
+    "change": -1,
+    "map_changed": true
    }
   },
   "AR": {
@@ -656,6 +1180,11 @@
    "source": {
     "label": "Arkansas GIS Office",
     "url": "https://gis.arkansas.gov/arcgis/rest/services/FEATURESERVICES/Boundaries/FeatureServer/6"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": "Governor Asa Hutchinson let the two identical bills become law without signing them. In Arkansas a majority of the members of each chamber can override a veto."
    },
    "notes": [],
    "d_share": 0.35752573591603787,
@@ -747,6 +1276,24 @@
      0.3719165304773975,
      0.5018561640652833
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 1,
+    "p5": 0,
+    "p95": 1,
+    "neutral_dist": [
+     1510,
+     3490,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 0,
+    "change": 0,
+    "map_changed": false
    }
   },
   "AZ": {
@@ -758,6 +1305,11 @@
    "source": {
     "label": "Arizona Independent Redistricting Commission",
     "url": "https://redistricting-irc-az.hub.arcgis.com/pages/official-maps"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Nonpartisan",
+    "note": "The commission approved the map 5-0 on 2021-12-22. After county adjustments it certified version 14.0 by 3-2 on 2022-01-18, with the independent chair and both Republican members in favor."
    },
    "notes": [
     {
@@ -913,6 +1465,29 @@
      0.6325260658867297,
      0.7188633670794582
     ]
+   },
+   "competitive": {
+    "enacted": 4,
+    "median": 4,
+    "p5": 2,
+    "p95": 5,
+    "neutral_dist": [
+     0,
+     128,
+     668,
+     1382,
+     1503,
+     1228,
+     91,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 3,
+    "change": 0,
+    "map_changed": false
    }
   },
   "CA": {
@@ -924,6 +1499,11 @@
    "source": {
     "label": "California State Assembly Elections Committee",
     "url": "https://aelc.assembly.ca.gov/proposed-congressional-map"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Democratic",
+    "note": "Voters approved Proposition 50 on 2025-11-04. It requires this map, passed by the Legislature, for elections through 2030; the Citizens Redistricting Commission draws the next map after the 2030 census."
    },
    "notes": [
     {
@@ -1556,6 +2136,72 @@
      0.8962880872092522,
      0.9208820103892021
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 9,
+    "p5": 6,
+    "p95": 12,
+    "neutral_dist": [
+     0,
+     0,
+     0,
+     0,
+     17,
+     123,
+     235,
+     566,
+     1312,
+     980,
+     916,
+     433,
+     286,
+     102,
+     21,
+     8,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 44,
+    "change": 4,
+    "map_changed": true
    }
   },
   "CO": {
@@ -1567,6 +2213,11 @@
    "source": {
     "label": "Colorado Independent Redistricting Commissions",
     "url": "https://redistricting.colorado.gov/content/congressional-final-approved"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Nonpartisan",
+    "note": "The Colorado Supreme Court approved the commission's plan on 2021-11-01. On 2022-03-18 it approved small adjustments requested by the Secretary of State and county clerks."
    },
    "notes": [
     {
@@ -1711,6 +2362,28 @@
      0.6817594692794142,
      0.8061995330132014
     ]
+   },
+   "competitive": {
+    "enacted": 2,
+    "median": 2,
+    "p5": 1,
+    "p95": 4,
+    "neutral_dist": [
+     48,
+     1268,
+     2059,
+     1151,
+     447,
+     27,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 5,
+    "change": 0,
+    "map_changed": false
    }
   },
   "CT": {
@@ -1722,6 +2395,11 @@
    "source": {
     "label": "Connecticut General Assembly",
     "url": "https://www.cga.ct.gov/rr/tfs/20210401_2021%20Redistricting%20Project/cmaps.asp"
+   },
+   "adopted": {
+    "by": "Court",
+    "control": "Nonpartisan",
+    "note": "A special master appointed by the Connecticut Supreme Court drew the plan after the Reapportionment Commission did not agree on one. The court instructed the special master to change the existing districts only as far as the law required."
    },
    "notes": [],
    "d_share": 0.5877044256815199,
@@ -1824,6 +2502,25 @@
      0.6482906492848991,
      0.6601020654930582
     ]
+   },
+   "competitive": {
+    "enacted": 2,
+    "median": 1,
+    "p5": 0,
+    "p95": 2,
+    "neutral_dist": [
+     288,
+     3198,
+     1514,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 5,
+    "change": 0,
+    "map_changed": false
    }
   },
   "FL": {
@@ -1835,6 +2532,11 @@
    "source": {
     "label": "Florida Senate",
     "url": "https://www.flsenate.gov/Session/Redistricting/Congressional"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -2203,6 +2905,48 @@
      0.7135587001946211,
      0.7489935351858832
     ]
+   },
+   "competitive": {
+    "enacted": 14,
+    "median": 7,
+    "p5": 4,
+    "p95": 9,
+    "neutral_dist": [
+     0,
+     5,
+     36,
+     120,
+     216,
+     687,
+     959,
+     1671,
+     935,
+     314,
+     54,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 10,
+    "change": -1,
+    "map_changed": true
    }
   },
   "GA": {
@@ -2214,6 +2958,11 @@
    "source": {
     "label": "Georgia Legislative and Congressional Reapportionment Office",
     "url": "https://www.legis.ga.gov/joint-office/reapportionment"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": "The General Assembly passed this map in a special session after a federal district court ruled in October 2023 that the 2021 map violated Section 2 of the Voting Rights Act. The court approved the new map on 2023-12-28."
    },
    "notes": [
     {
@@ -2420,6 +3169,34 @@
      0.8390540513723244,
      0.8670882991809028
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 3,
+    "p5": 1,
+    "p95": 5,
+    "neutral_dist": [
+     91,
+     806,
+     1143,
+     1631,
+     958,
+     321,
+     47,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 5,
+    "change": 0,
+    "map_changed": false
    }
   },
   "HI": {
@@ -2431,6 +3208,11 @@
    "source": {
     "label": "Hawaii Office of Elections",
     "url": "https://elections.hawaii.gov/about-us/boards-and-commissions/reapportionment/"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Bipartisan",
+    "note": "Democratic and Republican legislative leaders each named four members, and those eight chose the chair. Seven of the eight appointees and the chair voted for the plan."
    },
    "notes": [
     {
@@ -2500,6 +3282,22 @@
      0.6570552655527057,
      0.6952530976209825
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 0,
+    "p5": 0,
+    "p95": 0,
+    "neutral_dist": [
+     5000,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 2,
+    "change": 0,
+    "map_changed": false
    }
   },
   "IA": {
@@ -2511,6 +3309,11 @@
    "source": {
     "label": "Iowa Legislative Services Agency",
     "url": "https://services2.arcgis.com/KhKjlwEBlPJd6v51/arcgis/rest/services/RedistrictingPlan2/FeatureServer"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Bipartisan",
+    "note": "Nonpartisan staff of the Legislative Services Agency drew the plan. The Legislature could pass or reject it but could amend it only to correct errors."
    },
    "notes": [],
    "d_share": 0.4540521577927261,
@@ -2602,6 +3405,24 @@
      0.5310694439333161,
      0.539831511050494
     ]
+   },
+   "competitive": {
+    "enacted": 3,
+    "median": 2,
+    "p5": 2,
+    "p95": 3,
+    "neutral_dist": [
+     0,
+     1,
+     4076,
+     923,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 0,
+    "change": 0,
+    "map_changed": false
    }
   },
   "ID": {
@@ -2613,6 +3434,11 @@
    "source": {
     "label": "Idaho Legislature",
     "url": "https://legislature.idaho.gov/redistricting/2021/"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Bipartisan",
+    "note": "Republican and Democratic leaders each named three of the six members, and a plan needs four votes. The three Republican appointees and one Democratic appointee voted for this plan."
    },
    "notes": [
     {
@@ -2682,6 +3508,22 @@
      0.32084524050996915,
      0.3851007018258533
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 0,
+    "p5": 0,
+    "p95": 0,
+    "neutral_dist": [
+     5000,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 0,
+    "change": 0,
+    "map_changed": false
    }
   },
   "IL": {
@@ -2693,6 +3535,11 @@
    "source": {
     "label": "Redistricting Data Hub",
     "url": "https://redistrictingdatahub.org/dataset/2021-illinois-congressional-districts-approved-plan/"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Democratic",
+    "note": null
    },
    "notes": [],
    "d_share": 0.5882847899132275,
@@ -2927,6 +3774,37 @@
      0.8855545347259329,
      0.9278125132602627
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 3,
+    "p5": 1,
+    "p95": 4,
+    "neutral_dist": [
+     0,
+     593,
+     1434,
+     1996,
+     882,
+     92,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 14,
+    "change": 0,
+    "map_changed": false
    }
   },
   "IN": {
@@ -2938,6 +3816,11 @@
    "source": {
     "label": "Indiana Geographic Information Office",
     "url": "https://gisdata.in.gov/server/rest/services/Hosted/Congressional_Districts_of_Indiana_Current/FeatureServer"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [],
    "d_share": 0.4090875760453066,
@@ -3084,6 +3967,29 @@
      0.5525409838659153,
      0.6844964030617903
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 1,
+    "p5": 0,
+    "p95": 3,
+    "neutral_dist": [
+     451,
+     2054,
+     1708,
+     714,
+     73,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 2,
+    "change": 0,
+    "map_changed": false
    }
   },
   "KS": {
@@ -3095,6 +4001,11 @@
    "source": {
     "label": "Kansas Legislative Research Department",
     "url": "https://klrd.gov/redistricting/enacted-plans-2022/"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": "Democratic Governor Laura Kelly vetoed the map. Republicans held two-thirds of both chambers and completed the override on 2022-02-09."
    },
    "notes": [
     {
@@ -3195,6 +4106,24 @@
      0.4695967866522478,
      0.5034083051615129
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 2,
+    "p5": 1,
+    "p95": 2,
+    "neutral_dist": [
+     0,
+     444,
+     4556,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 0,
+    "change": 0,
+    "map_changed": false
    }
   },
   "KY": {
@@ -3206,6 +4135,11 @@
    "source": {
     "label": "Kentucky General Assembly",
     "url": "https://apps.legislature.ky.gov/record/22RS/sb3.html"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": "Democratic Governor Andy Beshear vetoed the map. Republicans held a majority of the members of both chambers, enough to override a veto in Kentucky, and overrode the veto on 2022-01-20."
    },
    "notes": [
     {
@@ -3324,6 +4258,26 @@
      0.4477513600705882,
      0.5943026599045103
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 0,
+    "p5": 0,
+    "p95": 1,
+    "neutral_dist": [
+     4520,
+     465,
+     15,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 1,
+    "change": 0,
+    "map_changed": false
    }
   },
   "LA": {
@@ -3335,6 +4289,11 @@
    "source": {
     "label": "Louisiana Legislature",
     "url": "https://redist.legis.la.gov/"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -3465,6 +4424,26 @@
      0.4640004950816001,
      0.6448658213093725
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 0,
+    "p5": 0,
+    "p95": 1,
+    "neutral_dist": [
+     4275,
+     724,
+     1,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 2,
+    "change": -1,
+    "map_changed": true
    }
   },
   "MA": {
@@ -3476,6 +4455,11 @@
    "source": {
     "label": "MassGIS",
     "url": "https://arcgisserver.digital.mass.gov/arcgisserver/rest/services/AGOL/Congress118/FeatureServer"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Bipartisan",
+    "note": "Majorities of both parties voted for the map in both chambers, and Republican Governor Charlie Baker signed it."
    },
    "notes": [
     {
@@ -3627,6 +4611,29 @@
      0.7997817996716131,
      0.8707836381849544
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 0,
+    "p5": 0,
+    "p95": 0,
+    "neutral_dist": [
+     4936,
+     64,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 9,
+    "change": 0,
+    "map_changed": false
    }
   },
   "MD": {
@@ -3638,6 +4645,11 @@
    "source": {
     "label": "Redistricting Data Hub",
     "url": "https://redistrictingdatahub.org/dataset/2021-maryland-us-congressional-adopted-plan/"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Democratic",
+    "note": "Republican Governor Larry Hogan signed the map; Democrats held the three-fifths of both chambers needed to override a veto. It replaced the 2021 plan, which a state court struck down on 2022-03-25."
    },
    "notes": [],
    "d_share": 0.6561463359249774,
@@ -3773,6 +4785,28 @@
      0.8610983585652111,
      0.9183134617672984
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 2,
+    "p5": 0,
+    "p95": 3,
+    "neutral_dist": [
+     491,
+     1859,
+     1884,
+     762,
+     4,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 7,
+    "change": 0,
+    "map_changed": false
    }
   },
   "ME": {
@@ -3784,6 +4818,11 @@
    "source": {
     "label": "Maine Office of GIS",
     "url": "https://services1.arcgis.com/RbMX0mRVOFNTdLzd/arcgis/rest/services/MaineVotingDistricts2021USCongress/FeatureServer"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Bipartisan",
+    "note": "The Apportionment Commission proposed the plan. Maine law requires two-thirds of each chamber, and the Legislature enacted it 127-0 in the House and 31-0 in the Senate."
    },
    "notes": [
     {
@@ -3853,6 +4892,22 @@
      0.4909813417776536,
      0.5960748780628867
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 1,
+    "p5": 1,
+    "p95": 1,
+    "neutral_dist": [
+     5,
+     4985,
+     10
+    ]
+   },
+   "redraw": {
+    "seats_2024": 1,
+    "change": 0,
+    "map_changed": false
    }
   },
   "MI": {
@@ -3864,6 +4919,11 @@
    "source": {
     "label": "State of Michigan GIS Open Data",
     "url": "https://gisagocss.state.mi.us/arcgis/rest/services/OpenData/michigan_geographic_framework/MapServer/23"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Nonpartisan",
+    "note": "A commission of 13 citizens drew the map. Its members were 4 Democrats, 4 Republicans and 5 affiliated with neither party, and they adopted the map 8-5, with yes votes from each group."
    },
    "notes": [
     {
@@ -4067,6 +5127,33 @@
      0.7631974374286011,
      0.8302729593380399
     ]
+   },
+   "competitive": {
+    "enacted": 5,
+    "median": 5,
+    "p5": 4,
+    "p95": 7,
+    "neutral_dist": [
+     0,
+     8,
+     44,
+     190,
+     1007,
+     1637,
+     1305,
+     691,
+     118,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 6,
+    "change": 0,
+    "map_changed": false
    }
   },
   "MN": {
@@ -4078,6 +5165,11 @@
    "source": {
     "label": "Minnesota Legislative Coordinating Commission",
     "url": "https://gis.lcc.mn.gov/redist2020/cong20.php?plname=C2022&pltype=court"
+   },
+   "adopted": {
+    "by": "Court",
+    "control": "Nonpartisan",
+    "note": "A panel of five judges drew the map after the Legislature did not pass one. A 2022 law moved one block with no residents from district 8 to district 7."
    },
    "notes": [],
    "d_share": 0.5235733438501063,
@@ -4213,6 +5305,28 @@
      0.7264637054567603,
      0.8429027689762464
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 2,
+    "p5": 1,
+    "p95": 3,
+    "neutral_dist": [
+     161,
+     1320,
+     2227,
+     1042,
+     250,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 4,
+    "change": 0,
+    "map_changed": false
    }
   },
   "MO": {
@@ -4224,6 +5338,11 @@
    "source": {
     "label": "Redistricting Data Hub",
     "url": "https://redistrictingdatahub.org/dataset/2022-missouri-congressional-districts-approved-plan/"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -4373,6 +5492,28 @@
      0.7907590621904668
     ]
    },
+   "competitive": {
+    "enacted": 0,
+    "median": 1,
+    "p5": 0,
+    "p95": 2,
+    "neutral_dist": [
+     2341,
+     1910,
+     558,
+     191,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 2,
+    "change": 0,
+    "map_changed": false
+   },
    "blocked_map": {
     "name": "HB 1 of 2025",
     "status": "Blocked",
@@ -4448,6 +5589,11 @@
    "source": {
     "label": "Redistricting Data Hub",
     "url": "https://redistrictingdatahub.org/dataset/2022-mississippi-congressional-districts-approved-plan/"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -4552,6 +5698,24 @@
      0.40206265492689847,
      0.6146317398165468
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 0,
+    "p5": 0,
+    "p95": 0,
+    "neutral_dist": [
+     4981,
+     10,
+     9,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 1,
+    "change": 0,
+    "map_changed": false
    }
   },
   "MT": {
@@ -4563,6 +5727,11 @@
    "source": {
     "label": "Montana Districting and Apportionment Commission",
     "url": "https://mtredistricting.gov/congressional-maps/"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Bipartisan",
+    "note": "Presiding officer Maylinn Smith, chosen by the Montana Supreme Court, cast the deciding vote for plan CP-12, the Republican commissioners' proposal. The two Democratic commissioners voted against the plan, which became the final map."
    },
    "notes": [
     {
@@ -4632,6 +5801,22 @@
      0.40118371361170435,
      0.46362297762400745
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 0,
+    "p5": 0,
+    "p95": 1,
+    "neutral_dist": [
+     4264,
+     736,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 0,
+    "change": 0,
+    "map_changed": false
    }
   },
   "NC": {
@@ -4643,6 +5828,11 @@
    "source": {
     "label": "North Carolina General Assembly",
     "url": "https://webservices.ncleg.gov/ViewBillDocument/2025/7669/0/SL%202025-95%20-%20Block%20Assignment%20File"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": "North Carolina's governor cannot veto bills that redraw congressional districts. Republicans held majorities in both chambers and passed the plan without Democratic votes."
    },
    "notes": [
     {
@@ -4857,6 +6047,34 @@
      0.6923688654066126,
      0.7476449451962086
     ]
+   },
+   "competitive": {
+    "enacted": 2,
+    "median": 4,
+    "p5": 3,
+    "p95": 6,
+    "neutral_dist": [
+     2,
+     62,
+     148,
+     841,
+     1578,
+     2099,
+     254,
+     15,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 4,
+    "change": -1,
+    "map_changed": true
    }
   },
   "NE": {
@@ -4868,6 +6086,11 @@
    "source": {
     "label": "State of Nebraska GIS",
     "url": "https://gis.ne.gov/Enterprise/rest/services/PoliticalBoundaries_2021/FeatureServer/1"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Bipartisan",
+    "note": "The Nebraska Legislature is officially nonpartisan, so the party counts use voter registration. Registered Republicans held 32 of 49 seats, one short of the 33 votes that end a filibuster, and 4 registered Democrats voted for the final plan."
    },
    "notes": [
     {
@@ -4957,6 +6180,23 @@
      0.4453091471786803,
      0.5255683370120027
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 1,
+    "p5": 1,
+    "p95": 1,
+    "neutral_dist": [
+     0,
+     4888,
+     112,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 1,
+    "change": 0,
+    "map_changed": false
    }
   },
   "NH": {
@@ -4968,6 +6208,11 @@
    "source": {
     "label": "NH GRANIT",
     "url": "https://ftp.granit.unh.edu/GRANIT_Data/Vector_Data/Administrative_and_Political_Boundaries/d-congressional/"
+   },
+   "adopted": {
+    "by": "Court",
+    "control": "Nonpartisan",
+    "note": "The New Hampshire Supreme Court adopted the least-change plan of its special master, Nathaniel Persily, after the governor vetoed two congressional plans from the Legislature."
    },
    "notes": [
     {
@@ -5037,6 +6282,22 @@
      0.5147540389489026,
      0.5403591529152584
     ]
+   },
+   "competitive": {
+    "enacted": 2,
+    "median": 2,
+    "p5": 2,
+    "p95": 2,
+    "neutral_dist": [
+     0,
+     0,
+     5000
+    ]
+   },
+   "redraw": {
+    "seats_2024": 2,
+    "change": 0,
+    "map_changed": false
    }
   },
   "NJ": {
@@ -5048,6 +6309,11 @@
    "source": {
     "label": "New Jersey Office of GIS",
     "url": "https://njogis-newjersey.opendata.arcgis.com/datasets/2d5a9cbb86da4519899ff56e4d094f4c_1/about"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Bipartisan",
+    "note": "John E. Wallace Jr., the commission's independent chair chosen by the New Jersey Supreme Court, cast the deciding vote for the Democratic delegation's map. All six Republican members voted against it."
    },
    "notes": [],
    "d_share": 0.5771324416206048,
@@ -5227,6 +6493,32 @@
      0.7594531215055985,
      0.8366640951110893
     ]
+   },
+   "competitive": {
+    "enacted": 2,
+    "median": 2,
+    "p5": 1,
+    "p95": 4,
+    "neutral_dist": [
+     15,
+     289,
+     2201,
+     2057,
+     425,
+     13,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 9,
+    "change": 0,
+    "map_changed": false
    }
   },
   "NM": {
@@ -5238,6 +6530,11 @@
    "source": {
     "label": "New Mexico Legislature",
     "url": "https://www.nmlegis.gov/Redistricting2021/Maps_And_Data"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Democratic",
+    "note": null
    },
    "notes": [
     {
@@ -5327,6 +6624,23 @@
      0.6025815241001331,
      0.6278724150700684
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 0,
+    "p5": 0,
+    "p95": 1,
+    "neutral_dist": [
+     4424,
+     376,
+     200,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 3,
+    "change": 0,
+    "map_changed": false
    }
   },
   "NV": {
@@ -5338,6 +6652,11 @@
    "source": {
     "label": "Nevada Legislative Counsel Bureau",
     "url": "https://services9.arcgis.com/UU5yXg9PV67U0ebq/arcgis/rest/services/2021Congressional_Final_SB1_Amd2/FeatureServer"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Democratic",
+    "note": null
    },
    "notes": [],
    "d_share": 0.5125343697173693,
@@ -5429,6 +6748,24 @@
      0.5663013742632139,
      0.6558836791738654
     ]
+   },
+   "competitive": {
+    "enacted": 3,
+    "median": 2,
+    "p5": 1,
+    "p95": 2,
+    "neutral_dist": [
+     4,
+     1066,
+     3848,
+     82,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 3,
+    "change": 0,
+    "map_changed": false
    }
   },
   "NY": {
@@ -5440,6 +6777,11 @@
    "source": {
     "label": "New York Legislative Task Force on Demographic Research and Reapportionment",
     "url": "https://latfor.state.ny.us/maps/?sec=2024_congress"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Democratic",
+    "note": "The Legislature passed this plan two days after it rejected the second plan of the Independent Redistricting Commission. In the Senate 3 Republicans voted for it and 17 against; in the Assembly 16 voted for it and 30 against."
    },
    "notes": [
     {
@@ -5778,6 +7120,46 @@
      0.9182008049334097,
      0.9394482836992265
     ]
+   },
+   "competitive": {
+    "enacted": 7,
+    "median": 8,
+    "p5": 6,
+    "p95": 10,
+    "neutral_dist": [
+     0,
+     0,
+     0,
+     0,
+     79,
+     143,
+     436,
+     982,
+     1005,
+     1315,
+     791,
+     220,
+     29,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 20,
+    "change": 0,
+    "map_changed": false
    }
   },
   "OH": {
@@ -5789,6 +7171,11 @@
    "source": {
     "label": "Ohio Secretary of State",
     "url": "https://www.ohiosos.gov/assets/uscongressionaldistricts-2026-2032-adopted-2025-10-31-equivalencyfile.xlsx"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Bipartisan",
+    "note": "Republicans held five of the seven seats on the commission. Both Democratic members voted for the plan, which passed unanimously."
    },
    "notes": [
     {
@@ -6018,6 +7405,35 @@
      0.7230570486740118,
      0.7942513908608236
     ]
+   },
+   "competitive": {
+    "enacted": 5,
+    "median": 4,
+    "p5": 3,
+    "p95": 5,
+    "neutral_dist": [
+     0,
+     0,
+     23,
+     1462,
+     2658,
+     783,
+     65,
+     9,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 4,
+    "change": -1,
+    "map_changed": true
    }
   },
   "OK": {
@@ -6029,6 +7445,11 @@
    "source": {
     "label": "Oklahoma House of Representatives",
     "url": "https://www.arcgis.com/home/item.html?id=7aeb90448393499c8367cd426ff511d1"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -6136,6 +7557,25 @@
      0.3790302641144582,
      0.4762155244920332
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 1,
+    "p5": 0,
+    "p95": 1,
+    "neutral_dist": [
+     1191,
+     3809,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 0,
+    "change": 0,
+    "map_changed": false
    }
   },
   "OR": {
@@ -6147,6 +7587,11 @@
    "source": {
     "label": "Oregon GEOHub",
     "url": "https://geohub.oregon.gov/datasets/oregon-geo::congressional-districts"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Democratic",
+    "note": null
    },
    "notes": [],
    "d_share": 0.5736877722734169,
@@ -6260,6 +7705,26 @@
      0.7024284806486816,
      0.8569723769550487
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 2,
+    "p5": 2,
+    "p95": 3,
+    "neutral_dist": [
+     14,
+     154,
+     3165,
+     1582,
+     85,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 5,
+    "change": 0,
+    "map_changed": false
    }
   },
   "PA": {
@@ -6271,6 +7736,11 @@
    "source": {
     "label": "Pennsylvania Legislative Reapportionment Commission",
     "url": "https://www.redistricting.state.pa.us/maps/"
+   },
+   "adopted": {
+    "by": "Court",
+    "control": "Nonpartisan",
+    "note": "The Pennsylvania Supreme Court voted 4-3 for a plan that a group of voters submitted in court. Governor Tom Wolf had vetoed the plan the General Assembly passed."
    },
    "notes": [
     {
@@ -6510,6 +7980,37 @@
      0.8263427870097031,
      0.9331775877214256
     ]
+   },
+   "competitive": {
+    "enacted": 5,
+    "median": 4,
+    "p5": 3,
+    "p95": 5,
+    "neutral_dist": [
+     0,
+     38,
+     193,
+     1470,
+     2598,
+     672,
+     25,
+     4,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 8,
+    "change": 0,
+    "map_changed": false
    }
   },
   "RI": {
@@ -6521,6 +8022,11 @@
    "source": {
     "label": "Rhode Island Department of State",
     "url": "https://services3.arcgis.com/KZcv0G0UvX0bPG3L/arcgis/rest/services/RI_Congressional_Districts_as_of_2022_/FeatureServer"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Democratic",
+    "note": null
    },
    "notes": [
     {
@@ -6594,6 +8100,22 @@
      0.5908874618596991,
      0.66328125
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 0,
+    "p5": 0,
+    "p95": 1,
+    "neutral_dist": [
+     4417,
+     583,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 2,
+    "change": 0,
+    "map_changed": false
    }
   },
   "SC": {
@@ -6605,6 +8127,11 @@
    "source": {
     "label": "South Carolina Senate",
     "url": "https://redistricting.scsenate.gov/"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -6742,6 +8269,27 @@
      0.5260814133653912,
      0.6094277902471462
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 2,
+    "p5": 1,
+    "p95": 3,
+    "neutral_dist": [
+     0,
+     1332,
+     2116,
+     1544,
+     8,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 1,
+    "change": 0,
+    "map_changed": false
    }
   },
   "TN": {
@@ -6753,6 +8301,11 @@
    "source": {
     "label": "Tennessee Comptroller of the Treasury",
     "url": "https://comptroller.tn.gov/maps/u-s--congress-districts.html"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -6904,6 +8457,29 @@
      0.6286401349456302,
      0.7326578619413165
     ]
+   },
+   "competitive": {
+    "enacted": 1,
+    "median": 0,
+    "p5": 0,
+    "p95": 2,
+    "neutral_dist": [
+     3322,
+     1170,
+     507,
+     0,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 1,
+    "change": -1,
+    "map_changed": true
    }
   },
   "TX": {
@@ -6915,6 +8491,11 @@
    "source": {
     "label": "Texas Legislative Council",
     "url": "https://data.capitol.texas.gov/dataset/planc2333"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -7393,6 +8974,58 @@
      0.7746327458531742,
      0.8101821181705686
     ]
+   },
+   "competitive": {
+    "enacted": 5,
+    "median": 9,
+    "p5": 4,
+    "p95": 12,
+    "neutral_dist": [
+     0,
+     0,
+     0,
+     9,
+     243,
+     403,
+     313,
+     582,
+     766,
+     994,
+     905,
+     414,
+     129,
+     208,
+     31,
+     3,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 14,
+    "change": -3,
+    "map_changed": true
    }
   },
   "UT": {
@@ -7404,6 +9037,11 @@
    "source": {
     "label": "Utah Geospatial Resource Center",
     "url": "https://gis.utah.gov/products/sgid/political/us-congressional-districts/"
+   },
+   "adopted": {
+    "by": "Court",
+    "control": "Nonpartisan",
+    "note": "A state district judge adopted a map the plaintiffs submitted, after ruling that the Legislature's map violated Proposition 4, the redistricting initiative voters passed in 2018. An order of 2025-11-21 adjusted one boundary, which gives Map 1A."
    },
    "notes": [
     {
@@ -7504,6 +9142,24 @@
      0.4740300589531929,
      0.6325441119209777
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 1,
+    "p5": 0,
+    "p95": 2,
+    "neutral_dist": [
+     2470,
+     1091,
+     1439,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 0,
+    "change": 1,
+    "map_changed": true
    }
   },
   "VA": {
@@ -7515,6 +9171,11 @@
    "source": {
     "label": "Virginia Division of Legislative Services",
     "url": "https://www.virginiaredistricting.org/"
+   },
+   "adopted": {
+    "by": "Court",
+    "control": "Nonpartisan",
+    "note": "The Supreme Court of Virginia adopted a plan drawn by two special masters, each nominated by one party's legislative leaders, after the Virginia Redistricting Commission did not submit one."
    },
    "notes": [],
    "d_share": 0.540773794171576,
@@ -7683,6 +9344,31 @@
      0.7247122407617493,
      0.7842563623957359
     ]
+   },
+   "competitive": {
+    "enacted": 3,
+    "median": 3,
+    "p5": 1,
+    "p95": 4,
+    "neutral_dist": [
+     31,
+     246,
+     1288,
+     2366,
+     1002,
+     66,
+     1,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 6,
+    "change": 0,
+    "map_changed": false
    }
   },
   "WA": {
@@ -7694,6 +9380,11 @@
    "source": {
     "label": "Washington State Redistricting Commission",
     "url": "https://www.redistricting.wa.gov/district-maps-handouts.html"
+   },
+   "adopted": {
+    "by": "Commission",
+    "control": "Bipartisan",
+    "note": "The commission's four voting members, two appointed by each party's legislative caucuses, approved the plan unanimously. In February 2022 the Legislature amended it by a two-thirds vote, and no district's population changed by more than 19 people."
    },
    "notes": [
     {
@@ -7864,6 +9555,30 @@
      0.7804111098279968,
      0.9042195587739689
     ]
+   },
+   "competitive": {
+    "enacted": 2,
+    "median": 2,
+    "p5": 1,
+    "p95": 3,
+    "neutral_dist": [
+     0,
+     1177,
+     2681,
+     1008,
+     91,
+     42,
+     1,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 7,
+    "change": 0,
+    "map_changed": false
    }
   },
   "WI": {
@@ -7875,6 +9590,11 @@
    "source": {
     "label": "Wisconsin Legislative Technology Services Bureau",
     "url": "https://gis-ltsb.hub.arcgis.com/datasets/e0c6f0979bc04c56b346042e34497f9e_0/about"
+   },
+   "adopted": {
+    "by": "Court",
+    "control": "Nonpartisan",
+    "note": "The Wisconsin Supreme Court voted 4-3 for the map Governor Tony Evers proposed in court, because it moved the fewest people to new districts. The governor had vetoed the Legislature's map."
    },
    "notes": [],
    "d_share": 0.49980235606044776,
@@ -8010,6 +9730,28 @@
      0.7168395697703616,
      0.7624097424621002
     ]
+   },
+   "competitive": {
+    "enacted": 2,
+    "median": 2,
+    "p5": 1,
+    "p95": 3,
+    "neutral_dist": [
+     167,
+     2082,
+     2374,
+     352,
+     25,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 2,
+    "change": 0,
+    "map_changed": false
    }
   },
   "WV": {
@@ -8021,6 +9763,11 @@
    "source": {
     "label": "West Virginia Legislature",
     "url": "https://www.wvlegislature.gov/redistricting.cfm"
+   },
+   "adopted": {
+    "by": "Legislature",
+    "control": "Republican",
+    "note": null
    },
    "notes": [
     {
@@ -8094,6 +9841,22 @@
      0.29843106450929424,
      0.3140273680182856
     ]
+   },
+   "competitive": {
+    "enacted": 0,
+    "median": 0,
+    "p5": 0,
+    "p95": 0,
+    "neutral_dist": [
+     5000,
+     0,
+     0
+    ]
+   },
+   "redraw": {
+    "seats_2024": 0,
+    "change": 0,
+    "map_changed": false
    }
   }
  }

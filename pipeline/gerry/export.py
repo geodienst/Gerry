@@ -7,9 +7,10 @@ from collections.abc import Sequence
 from gerry.checks import CheckError
 from gerry.config import Config, ConfigError
 
-NATIONAL_FIELDS = ("seats", "proportional", "enacted", "neutral", "position", "effects", "outside_band")
+NATIONAL_FIELDS = ("seats", "proportional", "enacted", "neutral", "position", "effects", "outside_band",
+                   "majority", "competitive", "redraw", "by_control", "by_body")
 STATE_FIELDS = ("d_share", "proportional", "enacted", "neutral", "position", "effects", "outside_band",
-                "eg", "mm", "districts", "sorted")
+                "eg", "mm", "districts", "sorted", "competitive", "redraw")
 
 # English note texts, identical to the notes table in chapter 5 of the spec.
 # Change a text in both places; tests/test_export.py compares them.
@@ -147,6 +148,8 @@ def _state_entry(postal: str, cfg: Config, m: dict) -> dict:
         "map_name": st.map_name,
         "status": st.status,
         "source": {"label": st.source_label, "url": st.source_url},
+        # extensions design, chapter 4: who adopted the map, under whose control
+        "adopted": {"by": st.adopted_by, "control": st.control, "note": st.adopted_note},
         "notes": resolve_notes(postal, cfg, m["computed_notes"]),
     }
     entry.update({key: m[key] for key in STATE_FIELDS})
