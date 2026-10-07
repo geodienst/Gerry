@@ -291,10 +291,62 @@ async function method(t) {
     kept ? '' : `${JSON.stringify(after)}, scrollY before ${reading}`);
 }
 
+// --- Task 6.9: layout, keyboard, dark mode, reduced motion -----------------------------------------
+async function layout(t) {
+  for (const [width, height, place, font] of [[375, 812, 'below', '15px'], [1280, 800, 'beside', '15px'], [2560, 1440, 'beside', '20.52px']]) {
+    await t.load('#CA', { width, height });
+    await t.until(`${HEADING} === 'California'`);
+    t.check(`${width}px: no sideways scrolling`, await t.js('document.documentElement.scrollWidth <= window.innerWidth'));
+    const where = await t.js("(() => { const m = document.querySelector('.main > section').getBoundingClientRect(); const s = document.getElementById('sheet').getBoundingClientRect(); return s.left >= m.right - 1 ? 'beside' : s.top >= m.bottom - 1 ? 'below' : 'overlap'; })()");
+    t.check(`${width}px: the sheet is ${place} the map`, where === place, where);
+    t.check(`${width}px: root font size ${font}`, (await t.js('getComputedStyle(document.documentElement).fontSize')) === font);
+    t.check(`${width}px: chart text stays at least 10px tall`, await t.js("[...document.querySelectorAll('svg.chart text')].every((el) => el.getBoundingClientRect().height >= 10)"));
+    await t.screenshot(`california-${width}`);
+  }
+
+  await t.load();
+  const order = [];
+  for (let i = 0; i < 16; i += 1) {
+    await t.key('Tab', 9);
+    order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
+  }
+  const wanted = ['view-districts', 'view-states', 'palette-party', 'palette-neutral', 'pick', 'zoom-in', 'zoom-out', 'zoom-reset', 'row'];
+  t.check('Tab reaches the view, color and zoom buttons, the State menu and the list, in that order',
+    wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
+  t.check('no shape on the map is a tab stop', !order.includes('map shape'));
+  t.check('focus reached with Tab is visible', order.at(-1) === 'row'
+    && (await t.js('getComputedStyle(document.activeElement).outlineStyle')) === 'solid');
+
+  // The State menu keeps the focus (Task 6.6); a polite live region reads the heading of the new sheet.
+  await t.load();
+  await t.js("(() => { const pick = document.getElementById('pick'); pick.focus(); pick.value = 'NV'; pick.dispatchEvent(new Event('change')); })()");
+  const heard = (await t.until(`${HEADING} === 'Nevada'`)) && await t.js(
+    "(() => { const s = document.getElementById('sheet-status'); return { focus: document.activeElement.id, live: s.getAttribute('aria-live'), text: s.textContent }; })()");
+  t.check('a state chosen with the State menu keeps the focus there and is announced',
+    heard.focus === 'pick' && heard.live === 'polite' && heard.text === 'Nevada', JSON.stringify(heard));
+
+  await t.load('', { dark: true });
+  t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(17, 19, 22)');
+  t.check('dark mode paints the map with the dark poles', (await t.js("document.querySelector('#legend linearGradient stop:last-child').getAttribute('stop-color')")) === 'rgb(57, 135, 229)');
+  await t.screenshot('dark-1280');
+
+  for (const reduce of [true, false]) {
+    await t.load('', { reduce });
+    await t.js("location.hash = '#NV'");
+    await t.sleep(150);
+    const early = await t.js(ZOOM);
+    await t.sleep(900);
+    const late = await t.js(ZOOM);
+    t.check(reduce ? 'with reduced motion the zoom jumps without animation' : 'without reduced motion the zoom animates',
+      reduce ? early === late && late > 1 : early < late, `${early} then ${late}`);
+  }
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
   { name: 'list', run: list },
   { name: 'sheet', run: sheet },
   { name: 'national', run: national },
   { name: 'method', run: method },
+  { name: 'layout', run: layout },
 ];
