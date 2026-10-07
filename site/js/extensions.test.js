@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { results } from './testdata.js';
 import {
   majorityView, extensionFills, redrawView, stateRedraw, stateExtras, competitiveText, adoptedLine, controlTables,
+  senateView,
 } from './extensions.js';
 
 /** testdata.js with the Phase 5 fields; all numbers made up, with 7 states and 429 seats nationally. */
@@ -65,7 +66,7 @@ test('majorityView: the vote axis and its text alternative', () => {
 });
 
 test('extensionFills: the numbers in the method paragraph "Extensions"', () => {
-  assert.deepEqual(extensionFills(extended()), { 'majority-seats': '216', seats: '429' });
+  assert.deepEqual(extensionFills(extended()), { 'majority-seats': '216', seats: '429', 'senate-states': '26' });
 });
 
 // --- redraws since 2024 (Task 6.11) ---
@@ -142,4 +143,13 @@ test('controlTables: every value in order, with states, seats and the summed dra
     ['Bipartisan', '1', '2', '0'], ['Nonpartisan', '2', '14', '0'],
   ]);
   assert.deepEqual(tables.byBody.map((r) => [r.label, r.drawing]), [['Legislature', 'R+2'], ['Commission', '0'], ['Court', '0']]);
+});
+
+// --- the Senate (Task 6.14) ---
+
+test('senateView: the threshold, the share and the states at the real votes', () => {
+  const view = senateView(extended());
+  assert.equal(view.sentence, "If each state's two senators went to the party that won its presidential vote, Democrats would "
+    + 'need 52.9% of the two-party vote for a Senate majority. They have 51.7% and would win 22 states.');
+  assert.equal(view.note, 'The Senate has no districts; the difference comes from each state having two senators, whatever its population.');
 });

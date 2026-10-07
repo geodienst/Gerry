@@ -398,6 +398,13 @@ async function control(t) {
   t.check('the Texas sheet says who adopted the map', /Adopted by: (Legislature|Commission|Court) \((Republican control|Democratic control|bipartisan|nonpartisan)\)\./.test(await t.text('#sheet')));
 }
 
+// --- Task 6.14: the Senate -----------------------------------------------------------------------
+async function senate(t) {
+  await t.load();
+  t.check('the Senate sentence', /^If each state's two senators went to the party that won its presidential vote, Democrats would need .+ of the two-party vote for a Senate majority\. They have .+ and would win \d+ states?\.$/.test(await t.text('#senate-text')));
+  t.check('the Senate block says it is not an effect of maps', (await t.text('#senate-note')).startsWith('The Senate has no districts'));
+}
+
 export const GROUPS = [
   { name: 'map', run: map },
   { name: 'list', run: list },
@@ -409,4 +416,5 @@ export const GROUPS = [
   { name: 'redraws', run: redraws },
   { name: 'competitive', run: competitive },
   { name: 'control', run: control },
+  { name: 'senate', run: senate },
 ];

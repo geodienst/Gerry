@@ -38,6 +38,7 @@ export function extensionFills(results) {
   return {
     'majority-seats': seats(results.national.majority.seats_needed),
     seats: seats(results.national.seats),
+    'senate-states': count(results.national.senate.states_needed),
   };
 }
 
@@ -109,5 +110,18 @@ export function controlTables(results) {
     byBody: rows(results.national.by_body, (key) => key),
     note: 'In these tables the drawing effect is the sum of the drawing effects of the states in a row. The national '
       + 'drawing effect uses the national neutral baseline instead, so the two can differ.',
+  };
+}
+
+// --- The Senate (Task 6.14) ---------------------------------------------------------------------
+
+/** The Senate block beside the House majority (extensions design, chapter 7). */
+export function senateView(results) {
+  const s = results.national.senate;
+  return {
+    sentence: `If each state's two senators went to the party that won its presidential vote, Democrats would need `
+      + `${share(s.share)} of the two-party vote for a Senate majority. They have ${share(s.base_share)} and would `
+      + `win ${count(s.states_at_base)} ${plural(s.states_at_base, 'state', 'states')}.`,
+    note: 'The Senate has no districts; the difference comes from each state having two senators, whatever its population.',
   };
 }

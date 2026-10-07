@@ -69,3 +69,10 @@ export function renderControl(el, tables) {
   }
   root.select('#control-note').text(tables.note);
 }
+
+/** The Senate block beside the House majority (Task 6.14). */
+export function renderSenate(el, view) {
+  const root = d3.select(el);
+  root.select('#senate-text').text(view.sentence);
+  root.select('#senate-note').text(view.note);
+}
