@@ -163,3 +163,18 @@ def test_overview_per_control_and_body(metrics):
     }
     assert list(metrics["national"]["by_control"]) == ["Republican", "Democratic", "Bipartisan", "Nonpartisan"]
     assert list(metrics["national"]["by_body"]) == ["Legislature", "Commission", "Court"]
+
+
+def test_senate(metrics):
+    sen = metrics["national"]["senate"]
+    # prototype run of 2026-10-07: the 44 states of the vote basis and the six single-seat states (MIT file)
+    assert (sen["states_needed"], sen["states_at_base"], sen["seats_at_base"]) == (26, 22, 44)
+    assert sen["base_share"] == pytest.approx(0.5169609, abs=5e-7)
+    # the 26th highest state share is Florida's 0.4878762: 0.5169609 + 0.5 - 0.4878762
+    assert sen["share"] == pytest.approx(0.5290847, abs=5e-7)
+    assert [t["postal"] for t in sen["tipping"]] == ["AZ", "GA", "FL", "NC", "TX"]
+    assert [t["share"] for t in sen["tipping"]] == pytest.approx(
+        [0.4929715, 0.4888521, 0.4878762, 0.4876063, 0.4635184], abs=5e-7)
+    # one vote base: a multi-seat state has the share behind its proportional seats
+    for t in sen["tipping"]:
+        assert t["share"] == metrics["states"][t["postal"]]["d_share"]

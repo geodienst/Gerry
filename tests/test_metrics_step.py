@@ -308,15 +308,20 @@ def _interim(tmp_path, join_log='{"XX": {"map_2024_changed_blocks": 12}}'):
     _ensemble().to_parquet(tmp_path / "ensemble_districts.parquet")
     _reference().to_parquet(tmp_path / "alarm_reference.parquet")
     (tmp_path / "join_log.json").write_text(join_log, encoding="utf-8")
+    # the single-seat state WY, 2016 and 2020 added up (02_join.py, Task 5.17)
+    pd.DataFrame({"state": ["WY"], "d_pre_16": [150], "r_pre_16": [350], "d_pre_20": [250], "r_pre_20": [250],
+                  "d": [400], "r": [600]}).to_parquet(tmp_path / "single_seat_votes.parquet")
     return SimpleNamespace(states={"XX": XX}, at_large={"WY": AtLargeState("WY", "Wyoming", "56")})
 
 
 def _small_house(monkeypatch):
     """A House of the 3 districts of XX plus WY: majority 3, WY fixed as Republican. national_majority is
-    replaced by a stand-in that records its arguments (its own tests are under Task 5.7)."""
+    replaced by a stand-in that records its arguments (its own tests are under Task 5.7). The Senate has the
+    two states XX and WY; senate_majority is replaced in the same way (Task 5.18 tests it)."""
     monkeypatch.setattr(step, "HOUSE_SEATS", 3 + 1)
     monkeypatch.setattr(step, "HOUSE_MAJORITY", 3)
     monkeypatch.setattr(step, "SINGLE_SEAT_PARTY", {"WY": "R"})
+    monkeypatch.setattr(step, "SENATE_STATES", 2)
     seen = {}
 
     def stand_in(**kwargs):
@@ -325,7 +330,13 @@ def _small_house(monkeypatch):
                 "neutral": {"share": 0.0, "low": 0.0, "high": 0.0, "probability_at_base": 0.0},
                 "proportional": {"share": 0.0}}
 
+    def senate_stand_in(votes, needed):
+        seen["senate"] = (dict(votes), needed)
+        return {"base_share": 0.0, "states_needed": needed, "share": 0.0, "states_at_base": 0,
+                "seats_at_base": 0, "tipping": []}
+
     monkeypatch.setattr(step, "national_majority", stand_in)
+    monkeypatch.setattr(step, "senate_majority", senate_stand_in)
     return seen
 
 
@@ -719,11 +730,14 @@ def test_compute_collects_the_inputs_of_every_state(tmp_path, monkeypatch):
     seen = _small_house(monkeypatch)
     monkeypatch.setattr(step, "HOUSE_SEATS", 6 + 1)
     monkeypatch.setattr(step, "HOUSE_MAJORITY", 6)
+    monkeypatch.setattr(step, "SENATE_STATES", 2 + 1)      # Task 5.19: XX, YY and WY
     step.compute(cfg, tmp_path)
     # 3000 D of 6000 votes; XX first (1300 / 3000), then YY (1700 / 3000)
     assert seen["base_share"] == pytest.approx(0.5)
     assert seen["state_shares"] == pytest.approx([1300 / 3000, 1700 / 3000]) and seen["state_seats"] == [3, 3]
     assert len(seen["enacted_shares"]) == 6 and [shares.shape for shares in seen["plan_shares"]] == [(4, 3), (4, 3)]
+    # the Senate block gets the unit votes of both states and WY from single_seat_votes.parquet
+    assert seen["senate"][0] == {"XX": (1300.0, 1700.0), "YY": (1700.0, 1300.0), "WY": (400.0, 600.0)}
 
 
 # --- Task 5.12: the overview per control and per body ----------------------------------------
@@ -761,3 +775,50 @@ def test_compute_adds_the_overview_per_control_and_body(tmp_path, monkeypatch):
     assert nat["by_control"]["Republican"] == {"states": 1, "seats": 3, "drawing": 0}
     assert nat["by_body"]["Legislature"] == {"states": 1, "seats": 3, "drawing": 0}
     assert sum(v["states"] for v in nat["by_control"].values()) == 1
+
+
+# --- Task 5.19: the Senate block ------------------------------------------------------------------
+
+
+def test_senate_needs_26_of_the_50_states():
+    # 51 of 100 seats; at 50-50 the vice president, a Republican since January 2025, decides; two seats per state
+    assert (step.SENATE_STATES, step.SENATE_STATES_NEEDED) == (50, 26)
+
+
+def test_read_single_seat_votes(tmp_path):
+    pd.DataFrame({"state": ["WY"], "d": [400], "r": [600]}).to_parquet(tmp_path / "single_seat_votes.parquet")
+    wyoming = {"WY": AtLargeState("WY", "Wyoming", "56")}
+    assert step.read_single_seat_votes(tmp_path, wyoming) == {"WY": (400.0, 600.0)}
+    # config.yaml and the file of 02_join.py must name the same states
+    with pytest.raises(CheckError, match="senate_states"):
+        step.read_single_seat_votes(tmp_path, {**wyoming, "AK": AtLargeState("AK", "Alaska", "02")})
+
+
+def test_read_single_seat_votes_needs_the_file_of_02_join(tmp_path):
+    with pytest.raises(CheckError, match="interim_files"):
+        step.read_single_seat_votes(tmp_path, {"WY": AtLargeState("WY", "Wyoming", "56")})
+
+
+def test_national_senate_needs_every_state():
+    with pytest.raises(CheckError, match="senate_states"):
+        step.national_senate({"AA": (1.0, 2.0)})
+
+
+def test_national_senate_uses_the_number_of_states_needed(monkeypatch):
+    # the five states of the Senate tests in tests/test_metrics.py, as if they were all the states
+    monkeypatch.setattr(step, "SENATE_STATES", 5)
+    monkeypatch.setattr(step, "SENATE_STATES_NEEDED", 3)
+    votes = {"AA": (600, 400), "BB": (300, 700), "CC": (550, 450), "DD": (480, 520), "EE": (450, 550)}
+    res = step.national_senate(votes)
+    # 0.476 + 0.5 - 0.48 = 0.496; ranks 3 - 2 to 3 + 2, high to low
+    assert (res["states_needed"], res["share"]) == (3, pytest.approx(0.496))
+    assert [t["postal"] for t in res["tipping"]] == ["AA", "CC", "DD", "EE", "BB"]
+
+
+def test_compute_adds_the_senate(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
+    seen = _small_house(monkeypatch)
+    nat = step.compute(cfg, tmp_path)["national"]
+    # XX: the votes of its units, 1300 D and 1700 R; WY: 400 D and 600 R from single_seat_votes.parquet
+    assert seen["senate"] == ({"XX": (1300.0, 1700.0), "WY": (400.0, 600.0)}, 26)
+    assert nat["senate"]["states_needed"] == 26

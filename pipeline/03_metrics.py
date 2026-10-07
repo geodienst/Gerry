@@ -19,7 +19,7 @@ from gerry.metrics import (MAX_SWING_STEPS, SWING_GRID, SwingRangeError, TieErro
                            dem_wins, distribution, effects, efficiency_gap, enacted_threshold, is_narrow,
                            largest_remainder, linear_band, mean_median, neutral_threshold, outside_band,
                            pmf_percentile, pmf_position, position, proportional_threshold, sample_percentile,
-                           seats_by_plan, sorted_band)
+                           seats_by_plan, senate_majority, sorted_band)
 from gerry.validation import build_report
 
 HOUSE_SEATS = 435
@@ -27,6 +27,10 @@ HOUSE_MAJORITY = 218
 # Owner decision 1 (extensions design, chapter 6): each single-seat state goes to the party that won it in
 # both the 2016 and the 2020 presidential election.
 SINGLE_SEAT_PARTY = {"AK": "R", "DE": "D", "ND": "R", "SD": "R", "VT": "D", "WY": "R"}
+# Senate block (extensions design, chapter 7): 51 of 100 seats; at 50-50 the vice president decides, a
+# Republican since January 2025. Each state gives both its seats to one party: Democrats need 26 states.
+SENATE_STATES = 50
+SENATE_STATES_NEEDED = 26
 WIN_COLS = ["d", "r", "d_pre_20", "r_pre_20"]
 
 
@@ -281,16 +285,38 @@ def national_by(states: Mapping[str, dict], cfg_states: Mapping[str, StateConfig
     return out
 
 
+def read_single_seat_votes(idir, at_large: Mapping[str, AtLargeState]) -> dict[str, tuple[float, float]]:
+    """(Democratic, Republican) votes of the single-seat states, 2016 and 2020 added up, as 02_join.py wrote them
+    from the statewide file of the MIT Election Data and Science Lab."""
+    path = idir / "single_seat_votes.parquet"
+    if not path.exists():
+        raise CheckError("interim_files", "US", "single_seat_votes.parquet is missing; run pipeline/02_join.py again")
+    table = pd.read_parquet(path)
+    if sorted(table["state"]) != sorted(at_large):
+        raise CheckError("senate_states", "US", f"single_seat_votes.parquet has {sorted(table['state'])}, "
+                                                f"config.yaml has {sorted(at_large)}")
+    return {row.state: (float(row.d), float(row.r)) for row in table.itertuples(index=False)}
+
+
+def national_senate(votes: Mapping[str, tuple[float, float]]) -> dict:
+    """The Senate block (extensions design, ch. 7) from the (Democratic, Republican) votes of every state."""
+    if len(votes) != SENATE_STATES:
+        raise CheckError("senate_states", "US", f"{len(votes)} states with votes, expected {SENATE_STATES}")
+    return senate_majority(votes, SENATE_STATES_NEEDED)
+
+
 def compute(cfg, idir) -> dict:
     enacted_all = pd.read_parquet(idir / "enacted_districts.parquet")
     ensemble_all = pd.read_parquet(idir / "ensemble_districts.parquet")
     reference_all = pd.read_parquet(idir / "alarm_reference.parquet")
     join_log = json.loads((idir / "join_log.json").read_text(encoding="utf-8"))
+    single_seat = read_single_seat_votes(idir, cfg.at_large)
 
     states = {}
     checks = {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "map_2024": {}, "join_log": join_log}
     # inputs of the majority thresholds, one entry per state
     votes = {"d": 0.0, "r": 0.0, "enacted_shares": [], "plan_shares": [], "state_shares": [], "state_seats": []}
+    senate = {}    # (Democratic, Republican) votes per state for the Senate block
     for postal in sorted(cfg.states):
         st = cfg.states[postal]
         enacted = enacted_all[enacted_all["state"] == postal]
@@ -307,6 +333,7 @@ def compute(cfg, idir) -> dict:
         votes["plan_shares"].append(plan_shares(ensemble, st))
         votes["state_shares"].append(d_total / (d_total + r_total))
         votes["state_seats"].append(st.seats)
+        senate[postal] = (d_total, r_total)
         changed = join_log.get(postal, {}).get("map_2024_changed_blocks")
         if changed is None:
             raise CheckError("interim_files", postal, "join_log.json has no map_2024_changed_blocks; "
@@ -348,6 +375,12 @@ def compute(cfg, idir) -> dict:
         parts = [f"{value} {e['states']} states, {e['seats']} seats, drawing {e['drawing']:+d}"
                  for value, e in national[field].items()]
         print(f"US {field}: " + "; ".join(parts))
+    national["senate"] = national_senate({**senate, **single_seat})
+    sen = national["senate"]
+    print(f"US Senate: Democrats have {sen['base_share']:.4f} of the two-party vote in the {SENATE_STATES} states "
+          f"and need {sen['share']:.4f} for {sen['states_needed']} states; at {sen['base_share']:.4f} they win "
+          f"{sen['states_at_base']} states ({sen['seats_at_base']} seats); around the threshold: "
+          + ", ".join(f"{t['postal']} {t['share']:.4f}" for t in sen["tipping"]))
     return {"national": national, "states": states, "checks": checks}
 
 
