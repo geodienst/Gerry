@@ -2,7 +2,7 @@
 # map_name, status, seats, bef and source_url must match data/sources.md
 # (checked by gerry.checks.check_sources_md).
 
-status_checked: 2026-10-03
+status_checked: 2026-10-07
 # census-vest block files of CA, HI, ME and OR: only weights within a tract.
 # The votes per unit come from ALARM's map.rds (unit_kind per state below).
 census_vest_commit: 243c8a8134ecf8151777a9388c48323e274767e2
