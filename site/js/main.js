@@ -133,7 +133,9 @@ async function main() {
   renderKeyline($('keyline'), national);
   renderNational($('national'), national);
   const fills = methodFills(results);
-  for (const el of document.querySelectorAll('[data-fill]')) el.textContent = fills[el.dataset.fill];
+  for (const el of document.querySelectorAll('[data-fill]')) {
+    if (Object.hasOwn(fills, el.dataset.fill)) el.textContent = fills[el.dataset.fill];
+  }
 
   // Charts size themselves to their box; draw them again when the width changes, keeping keyboard focus.
   let width = window.innerWidth;
