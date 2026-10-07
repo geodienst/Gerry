@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated": "2026-10-06",
+  "generated": "2026-10-07",
   "ensemble": {
    "name": "alarm_v15",
    "doi": "doi:10.7910/DVN/SLCD3E",
@@ -7399,7 +7399,7 @@
    "name": "Utah",
    "fips": "49",
    "seats": 4,
-   "map_name": "Court-adopted Map 1",
+   "map_name": "Court-adopted Map 1A",
    "status": "Challenged",
    "source": {
     "label": "Utah Geospatial Resource Center",

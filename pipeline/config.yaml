@@ -511,7 +511,7 @@ states:
     name: Utah
     fips: "49"
     seats: 4
-    map_name: "Court-adopted Map 1"
+    map_name: "Court-adopted Map 1A"
     status: Challenged
     source_label: "Utah Geospatial Resource Center"
     source_url: https://gis.utah.gov/products/sgid/political/us-congressional-districts/
