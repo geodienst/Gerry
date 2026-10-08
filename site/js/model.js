@@ -51,11 +51,13 @@ export function tapLine(index, id, postal, view) {
   return `${districtLabel(id, postal)}: ${share(index.shareOf[id])} Democratic`;
 }
 
-/** The 44 states for the "State" menu, by name. */
-export function stateOptions(results) {
-  return Object.entries(results.states)
-    .map(([postal, s]) => ({ postal, name: s.name }))
-    .sort((a, b) => a.name.localeCompare(b.name, 'en'));
+/** The states for the "State" menu, by name; with `single` also the six single-seat states (redesign, open point 6). */
+export function stateOptions(results, { single = false } = {}) {
+  const options = Object.entries(results.states).map(([postal, s]) => ({ postal, name: s.name, label: s.name }));
+  if (single) {
+    for (const s of results.national.single_seat) options.push({ postal: s.postal, name: s.name, label: `${s.name} (one seat)` });
+  }
+  return options.sort((a, b) => a.name.localeCompare(b.name, 'en'));
 }
 
 /** The hint under the map and the messages over it (site design, update of October 7). */
@@ -146,9 +148,10 @@ function measureContext(m) {
   return `(neutral maps: ${median}; 90% between ${p5} and ${p95})`;
 }
 
-function axisLabel(name, a, unit) {
+/** "Democratic seats in Texas: proportional 18, neutral-map median 17 (90% of maps 15 to 20), enacted 11." */
+export function axisLabel(name, a, unit) {
   const band = a.p5 === a.p95 ? `give ${seats(a.p5)}` : seatRange(a);
-  return `Democratic seats in ${name}: proportional ${seats(a.proportional)}, neutral baseline ${seats(a.median)} `
+  return `Democratic seats in ${name}: proportional ${seats(a.proportional)}, neutral-map median ${seats(a.median)} `
     + `(90% of ${unit} ${band}), enacted ${seats(a.enacted)}.`;
 }
 

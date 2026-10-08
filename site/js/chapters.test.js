@@ -1,8 +1,11 @@
 // Tests for site/js/chapters.js on the made-up results in testdata.js. Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { results } from './testdata.js';
-import { LABELS, SHORT_LABELS, EFFECT_LABELS, outcomesView, waffleText } from './chapters.js';
+import { results, withExtensions } from './testdata.js';
+import {
+  LABELS, SHORT_LABELS, EFFECT_LABELS, outcomesView, waffleText, LARGEST_MIN, largestEffects, recordView, singleSeatView,
+} from './chapters.js';
+import { stateSheet, AT_LARGE_TEXT } from './model.js';
 
 // --- chapter 01 (Task 7.3) ---
 
@@ -70,4 +73,77 @@ test('waffleText: the count per party and the title of the waffle', () => {
   assert.deepEqual(waffleText(view, 'enacted'), { d: '213', r: '216', label: 'Enacted maps: 213 Democratic and 216 Republican seats of 429.' });
   // neutral 223 -> 206
   assert.deepEqual(waffleText(view, 'neutral'), { d: '223', r: '206', label: 'Neutral-map median: 223 Democratic and 206 Republican seats of 429.' });
+});
+
+// --- chapter 02 (Task 7.4) ---
+
+test('largestEffects: every state at 3 seats or more, by size, then toward Republicans first, then by name', () => {
+  // testdata drawing effects: TX -2, CA 3, FL -4, NM 1, HI 0, LA 0, MO 0
+  const view = largestEffects(results());
+  assert.equal(LARGEST_MIN, 3);
+  assert.equal(view.title, 'Drawing effects of 3 seats or more');
+  assert.deepEqual(view.chips, [
+    { postal: 'FL', name: 'Florida', drawing: -4, label: 'R+4', aria: 'Florida, R+4 · 4 seats toward Republicans' },
+    { postal: 'CA', name: 'California', drawing: 3, label: 'D+3', aria: 'California, D+3 · 3 seats toward Democrats' },
+  ]);
+  // below the threshold: TX (2) and NM (1); at 0: HI, LA, MO
+  assert.equal(view.rest, 'Then 2 states at 1 or 2 seats either way, and 3 states at 0.');
+});
+
+test('largestEffects: ties, one state, and nothing below the threshold', () => {
+  const r = results();
+  r.states.NM.effects.drawing = -3; // ties with CA at 3 seats: toward Republicans first
+  r.states.TX.effects.drawing = 3; // ties with CA toward Democrats: by name, California before Texas
+  const view = largestEffects(r);
+  assert.deepEqual(view.chips.map((c) => c.postal), ['FL', 'NM', 'CA', 'TX']);
+  assert.equal(view.rest, 'Then 3 states at 0.'); // no state at 1 or 2
+  r.states.HI.effects.drawing = 1;
+  for (const postal of ['LA', 'MO']) r.states[postal].effects.drawing = 5;
+  assert.equal(largestEffects(r).rest, 'Then 1 state at 1 or 2 seats either way.'); // no state at 0
+  for (const s of Object.values(r.states)) s.effects.drawing = 4;
+  assert.equal(largestEffects(r).rest, '');
+});
+
+test('recordView: the sheet of Phase 6 plus the headline, the strip and the extras (Texas)', () => {
+  const r = withExtensions();
+  const record = recordView(r, 'TX');
+  // everything stateSheet gives stays
+  const sheet = stateSheet(r, 'TX');
+  for (const key of Object.keys(sheet)) assert.deepEqual(record[key], sheet[key], key);
+  assert.equal(record.kicker, 'State record');
+  // drawing -2 -> "R+2", "2 seats toward Republicans" with the first letter as is (a digit)
+  assert.deepEqual(record.headline, { value: 'R+2', drawing: -2, sentence: '2 seats toward Republicans compared with the state\'s neutral-map median.' });
+  // 4 seats -> ticks 0 to 4 in steps of 1 (seatTicks)
+  assert.deepEqual(record.strip.domain, [0, 4]);
+  assert.deepEqual(record.strip.ticks.map((t) => [t.value, t.text]), [[0, '0'], [1, '1'], [2, '2'], [3, '3'], [4, '4']]);
+  // the short labels of the rows of dots
+  assert.deepEqual(record.strip.rows, [
+    { key: 'proportional', label: 'Proportional', value: 2 },
+    { key: 'neutral', label: 'Neutral median', value: 2, band: [1, 3] },
+    { key: 'enacted', label: 'Enacted', value: 0, filled: true },
+  ]);
+  assert.equal(record.strip.label, 'Democratic seats in Texas: proportional 2, neutral-map median 2 (90% of maps 1 to 3), enacted 0.');
+  assert.deepEqual(record.extras, {
+    head: ['Adopted by: Legislature (Republican control).'],
+    body: ['Competitive districts (45 to 55%): 0 on the enacted map, 1 on neutral maps (90% of neutral maps: 0 to 2).',
+      '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).'],
+  });
+});
+
+test('recordView: no drawing effect, an effect toward Democrats, a band of one seat count', () => {
+  const r = withExtensions();
+  // Hawaii: drawing 0, neutral 2 with p5 = p95 = 2
+  const hawaii = recordView(r, 'HI');
+  assert.deepEqual(hawaii.headline, { value: '0', drawing: 0, sentence: 'No difference from the neutral-map median.' });
+  assert.deepEqual(hawaii.strip.rows[1].band, [2, 2]);
+  assert.equal(hawaii.strip.label, 'Democratic seats in Hawaii: proportional 1, neutral-map median 2 (90% of maps give 2), enacted 2.');
+  // California: drawing 3
+  assert.equal(recordView(r, 'CA').headline.sentence, '3 seats toward Democrats compared with the state\'s neutral-map median.');
+});
+
+test('singleSeatView: the short record of a state with one seat', () => {
+  assert.deepEqual(singleSeatView(results(), 'WY'), {
+    postal: 'WY', name: 'Wyoming', kicker: 'State record', headline: '1 seat',
+    lines: [AT_LARGE_TEXT, 'Not counted in the 429 seats compared here.'],
+  });
 });

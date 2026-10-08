@@ -2,20 +2,21 @@
 
 /**
  * The state in a location hash, or "" for the whole map.
- * "#TX", "#tx" and "#%54X" give "TX"; a single-seat state, an unknown code,
- * "#method" or a broken escape give "".
+ * "#TX", "#tx" and "#%54X" give "TX"; an unknown code, "#method" or a broken escape give "".
+ * A single-seat state gives its code only when the caller passes the six as `single` (redesign, open point 6).
  * @param {string} hash location.hash
  * @param {object} states results.json "states", keyed by postal code
+ * @param {object} [single] the single-seat states, keyed by postal code
  * @returns {string}
  */
-export function stateFromHash(hash, states) {
+export function stateFromHash(hash, states, single = {}) {
   let code;
   try {
     code = decodeURIComponent(String(hash ?? '').replace(/^#/, '')).trim().toUpperCase();
   } catch {
     return '';
   }
-  return /^[A-Z]{2}$/.test(code) && Object.hasOwn(states, code) ? code : '';
+  return /^[A-Z]{2}$/.test(code) && (Object.hasOwn(states, code) || Object.hasOwn(single, code)) ? code : '';
 }
 
 /**

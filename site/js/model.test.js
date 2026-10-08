@@ -49,6 +49,16 @@ test('stateOptions: the states with more than one seat, by name', () => {
   assert.deepEqual(stateOptions({ states }).map((o) => o.postal), ['ID', 'IA', 'NV', 'NH']);
 });
 
+test('stateOptions: with single, also the six single-seat states, marked and sorted by name', () => {
+  const options = stateOptions(results(), { single: true });
+  // 7 states plus 6: sorted by name, Alaska first and Wyoming last
+  assert.deepEqual(options.map((o) => o.postal), ['AK', 'CA', 'DE', 'FL', 'HI', 'LA', 'MO', 'NM', 'ND', 'SD', 'TX', 'VT', 'WY']);
+  assert.equal(options.find((o) => o.postal === 'WY').label, 'Wyoming (one seat)');
+  assert.equal(options.find((o) => o.postal === 'TX').label, 'Texas');
+  // without single: the label is the name
+  assert.ok(stateOptions(results()).every((o) => o.label === o.name));
+});
+
 test('mapHints: mouse, Mac and touch', () => {
   assert.deepEqual(mapHints({ touch: false, mac: false }), {
     hint: 'Click a state to zoom in on its districts. Ctrl + scroll to zoom, drag to move.',
@@ -136,7 +146,7 @@ test('stateSheet: heading, status, the three numbers and the effects (Texas)', (
 test('stateSheet: the seat axis and its text alternative (Texas)', () => {
   const sheet = stateSheet(results(), 'TX');
   assert.deepEqual(sheet.axis, { lo: 0, hi: 4, dist: [0, 300, 4000, 700, 0], proportional: 2, median: 2, p5: 1, p95: 3, enacted: 0 });
-  assert.equal(sheet.axisLabel, 'Democratic seats in Texas: proportional 2, neutral baseline 2 (90% of maps 1 to 3), enacted 0. '
+  assert.equal(sheet.axisLabel, 'Democratic seats in Texas: proportional 2, neutral-map median 2 (90% of maps 1 to 3), enacted 0. '
     + 'Bars: share of the 5,000 neutral maps per seat count.');
   assert.equal(sheet.sortedLabel, 'Texas: the 4 enacted districts from lowest to highest Democratic share, 27.0% to 46.9%, '
     + 'against the median and the 90% band of the neutral maps at each position.');
@@ -165,7 +175,7 @@ test('stateSheet: two districts (Hawaii) and a band of one seat count', () => {
   assert.equal(sheet.trio[2].sub, 'inside the neutral band');
   assert.deepEqual(sheet.measures[1], { label: 'Mean-median', value: 'Not defined for two districts', context: '' });
   assert.equal(sheet.status, 'In effect');
-  assert.equal(sheet.axisLabel, 'Democratic seats in Hawaii: proportional 1, neutral baseline 2 (90% of maps give 2), enacted 2. '
+  assert.equal(sheet.axisLabel, 'Democratic seats in Hawaii: proportional 1, neutral-map median 2 (90% of maps give 2), enacted 2. '
     + 'Bars: share of the 5,000 neutral maps per seat count.');
   // EG median, p5 and p95 all round to 17.9 points toward Democrats: the value once, not three times
   assert.deepEqual(sheet.measures[0], {
@@ -252,13 +262,13 @@ test('nationalView: the strip with the three numbers, the effects and the positi
     + 'Drawing effect R+10: the enacted maps give 10 seats toward Republicans compared with neutral maps.');
   // position.more 0.9972: above 0.99 and below 1 -> "more than 99%"
   assert.equal(view.position, 'In more than 99% of neutral outcomes Democrats win more seats than under the enacted maps.');
-  assert.equal(view.axisLabel, 'Democratic seats in all states with more than one seat: proportional 224, neutral baseline 223 '
+  assert.equal(view.axisLabel, 'Democratic seats in all states with more than one seat: proportional 224, neutral-map median 223 '
     + '(90% of outcomes 217 to 229), enacted 213. Bars: share of neutral outcomes per seat count.');
   // a band of one seat count: "give", not a colon before a lone number
   const one = results();
   Object.assign(one.national.neutral, { p5: 223, p95: 223 });
   assert.equal(nationalView(one).trio[1].sub, '90% of outcomes give 223');
-  assert.match(nationalView(one).axisLabel, /neutral baseline 223 \(90% of outcomes give 223\), enacted 213\./);
+  assert.match(nationalView(one).axisLabel, /neutral-map median 223 \(90% of outcomes give 223\), enacted 213\./);
   // dist has one probability per seat count from 0 to 429: 430 entries
   assert.equal(view.axis.dist.length, 430);
   assert.equal(view.seatsTotal, 429);

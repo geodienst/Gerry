@@ -24,3 +24,12 @@ test('linkFor puts the state in the hash, or drops the hash for the whole map', 
   assert.equal(linkFor('', '/index.html'), '/index.html');
   assert.equal(linkFor('', '/?x=1'), '/?x=1');
 });
+
+test('stateFromHash accepts a single-seat state only when the caller passes the six', () => {
+  const single = { WY: {}, VT: {} };
+  assert.equal(stateFromHash('#WY', STATES, single), 'WY');
+  assert.equal(stateFromHash('#wy', STATES, single), 'WY');
+  assert.equal(stateFromHash('#TX', STATES, single), 'TX');
+  assert.equal(stateFromHash('#AK', STATES, single), ''); // not in either list
+  assert.equal(stateFromHash('#WY', STATES), ''); // without the third argument, as before
+});
