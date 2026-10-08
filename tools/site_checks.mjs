@@ -433,9 +433,12 @@ async function layout(t) {
     && (await t.js('getComputedStyle(document.activeElement).outlineStyle')) === 'solid');
   await t.load();
   await t.key('Tab', 9);
+  t.check('the first Tab lands on the Methodology link in the byline, with a visible outline', await t.js(
+    "document.activeElement === document.querySelector('.mast .byline a') && getComputedStyle(document.activeElement).outlineStyle === 'solid'"));
+  await t.key('Tab', 9);
   const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
     outline: getComputedStyle(el).outlineStyle, group: el.parentElement.getAttribute('role'), name: el.parentElement.getAttribute('aria-label') }; })()`);
-  t.check('the first Tab lands on the chosen row of the radio group "Way of counting", with a visible outline',
+  t.check('the next Tab lands on the chosen row of the radio group "Way of counting", with a visible outline',
     radio.cls === 'choice' && radio.checked === 'true' && radio.outline === 'solid' && radio.group === 'radiogroup' && radio.name === 'Way of counting',
     JSON.stringify(radio));
   await t.key('Home', 36);
@@ -538,7 +541,11 @@ async function masthead(t) {
   t.check('the title and the heading read "Some votes are more equal than others"', await t.js(
     "document.title === 'Some votes are more equal than others' && document.querySelector('header.mast h1')?.textContent === 'Some votes are more equal than others'"));
   t.check('the line above the title names the election day', (await t.text('.mast .eyebrow')) === 'U.S. House maps for November 3, 2026');
-  t.check('the masthead names the researcher', (await t.text('.mast .byline')) === 'Research by Govert Schoof');
+  t.check('the byline gives the author, the date and a link to the method',
+    (await t.text('.mast .byline')) === 'By Govert Schoof · October 8, 2026 · Methodology'
+    && await t.js("document.querySelector('.mast .byline a').getAttribute('href') === '#method' && document.querySelector('meta[name=author]').content === 'Govert Schoof'"));
+  await t.js("document.querySelector('.mast .byline a').click()");
+  t.check('the Methodology link opens the method', await t.until("location.hash === '#method' && document.getElementById('method-details').open"));
   t.check('the meta description is the line under the title',
     await t.js("document.querySelector('meta[name=description]').content === document.querySelector('.mast .sub')?.textContent"));
   const fields = await t.js("[...document.querySelectorAll('.metastrip dt')].map((dt) => dt.textContent + ': ' + dt.nextElementSibling.textContent)");
