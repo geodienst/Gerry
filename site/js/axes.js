@@ -120,3 +120,61 @@ export function voteTicks([low, high]) {
   for (let k = Math.ceil(low * 20 - 1e-9); k <= Math.floor(high * 20 + 1e-9); k += 1) ticks.push(k / 20);
   return ticks;
 }
+
+// --- The waffle of chapter 01 (Task 7.2) ---------------------------------------------------------
+
+export const WAFFLE = { rows: 13, step: 12, size: 10, top: 16, edge: 12 }; // top: room for the tick and its number
+
+/** Columns, width and height in viewBox units of a waffle of `total` seats, filled column by column. */
+export function waffleSize(total, w = WAFFLE) {
+  const columns = Math.ceil(total / w.rows);
+  return { columns, width: columns * w.step - (w.step - w.size), height: w.top + w.rows * w.step - (w.step - w.size) };
+}
+
+/** Top left corner of seat `i` (from 0): down a column of 13, then the next column. */
+export function waffleCell(i, w = WAFFLE) {
+  return { x: Math.floor(i / w.rows) * w.step, y: w.top + (i % w.rows) * w.step };
+}
+
+/** x of the number above seat `n` (from 1), the last Democratic seat; at least 12 units from either edge. */
+export function waffleTick(n, total, w = WAFFLE) {
+  const { width } = waffleSize(total, w);
+  const x = waffleCell(Math.max(n, 1) - 1, w).x + w.size / 2;
+  return Math.min(Math.max(x, w.edge), width - w.edge);
+}
+
+/** Cells of seats lo to hi (from 1, both included): the outline of the neutral band. */
+export function waffleBand(lo, hi, w = WAFFLE) {
+  return Array.from({ length: Math.max(0, hi - lo + 1) }, (_, k) => waffleCell(lo - 1 + k, w));
+}
+
+// --- Rows of dots: the strip in the state record and the axes of chapter 03 (Task 7.2) ----------
+
+export const DOT_ROWS = { left: 112, right: 16, row: 26, top: 24, bottom: 22 }; // left: room for "Neutral median"
+
+/** Ticks from 0 to `total` seats: the smallest step of 1, 2, 5, 10, 20, 50 or 100 that gives at most `most` ticks. */
+export function seatTicks(total, most = 7) {
+  const step = [1, 2, 5, 10, 20, 50, 100].find((s) => Math.floor(total / s) + 1 <= most) ?? 100;
+  return Array.from({ length: Math.floor(total / step) + 1 }, (_, k) => k * step);
+}
+
+/**
+ * Domain on whole steps around the values, with at least `pad` to spare on each side, and a tick per step.
+ * The small epsilon keeps a value that is a whole step in floating point (0.49 / 0.01) on that step.
+ */
+export function rowDomain(values, step, pad = step / 2) {
+  const low = Math.floor((Math.min(...values) - pad) / step + 1e-9);
+  const high = Math.ceil((Math.max(...values) + pad) / step - 1e-9);
+  const at = (k) => Number((k * step).toFixed(10));
+  return { domain: [at(low), at(high)], ticks: Array.from({ length: high - low + 1 }, (_, i) => at(low + i)) };
+}
+
+/**
+ * Side of a value text next to its dot: 'end' (left of the dot) when the dashed base line lies within `gap`
+ * units to the right, so the text would run over it, or when the dot is near the right edge; else 'start'.
+ */
+export function rowTextAnchor(x, baseX, width, gap = 40, edge = 60) {
+  if (x > width - edge) return 'end';
+  if (baseX !== null && x <= baseX && x > baseX - gap) return 'end';
+  return 'start';
+}

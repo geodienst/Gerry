@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   fitTransform, chartUnits, nationalSeatDomain, placeLabels, sortedDomain, netBar, voteDomain, voteTicks,
+  WAFFLE, waffleSize, waffleCell, waffleTick, waffleBand, seatTicks, rowDomain, rowTextAnchor,
 } from './axes.js';
 import { markerSegments } from './axes.js';
 
@@ -147,4 +148,80 @@ test('voteTicks: every 5 points inside the domain', () => {
   assert.deepEqual(voteTicks([0.45, 0.6]), [0.45, 0.5, 0.55, 0.6]);
   assert.deepEqual(voteTicks([0.44, 0.62]), [0.45, 0.5, 0.55, 0.6]);
   assert.deepEqual(voteTicks([0.4, 0.66]), [0.4, 0.45, 0.5, 0.55, 0.6, 0.65]);
+});
+
+// --- the waffle of chapter 01 (Task 7.2) ---
+
+test('waffleSize: 429 seats in 13 rows give 33 columns', () => {
+  // ceil(429 / 13) = 33 columns; width 33 * 12 - 2 = 394 (no gap after the last column);
+  // height 16 for the tick on top + 13 * 12 - 2 = 170
+  assert.deepEqual(waffleSize(429), { columns: 33, width: 394, height: 170 });
+  // one full column: width is one square
+  assert.deepEqual(waffleSize(13), { columns: 1, width: 10, height: 170 });
+  assert.equal(WAFFLE.rows, 13);
+});
+
+test('waffleCell: down a column of 13, then the next column', () => {
+  assert.deepEqual(waffleCell(0), { x: 0, y: 16 });
+  assert.deepEqual(waffleCell(12), { x: 0, y: 160 }); // row 12: 16 + 12 * 12
+  assert.deepEqual(waffleCell(13), { x: 12, y: 16 }); // column 1, row 0
+  // seat 217 is index 216 = 16 * 13 + 8: column 16 (x 192), row 8 (y 16 + 96)
+  assert.deepEqual(waffleCell(216), { x: 192, y: 112 });
+  // seat 229 is index 228 = 17 * 13 + 7: column 17 (x 204), row 7 (y 16 + 84)
+  assert.deepEqual(waffleCell(228), { x: 204, y: 100 });
+});
+
+test('waffleTick: above the column of the last Democratic seat, 12 units from the edges', () => {
+  // seat 213 is index 212 = 16 * 13 + 4: column 16 at x 192, its middle 192 + 5 = 197
+  assert.equal(waffleTick(213, 429), 197);
+  // seat 1: middle 5, moved in to 12
+  assert.equal(waffleTick(1, 429), 12);
+  // seat 429 is index 428 = 32 * 13 + 12: x 384, middle 389, moved in to 394 - 12 = 382
+  assert.equal(waffleTick(429, 429), 382);
+  // no Democratic seat: the tick stays at the first column
+  assert.equal(waffleTick(0, 429), 12);
+});
+
+test('waffleBand: the cells of seats lo to hi, both included', () => {
+  const band = waffleBand(217, 229);
+  assert.equal(band.length, 13); // 229 - 217 + 1
+  assert.deepEqual(band[0], { x: 192, y: 112 }); // seat 217, as in waffleCell(216)
+  assert.deepEqual(band[12], { x: 204, y: 100 }); // seat 229, as in waffleCell(228)
+  assert.deepEqual(waffleBand(223, 223), [{ x: 204, y: 28 }]); // index 222 = 17 * 13 + 1: column 17, row 1
+  assert.deepEqual(waffleBand(5, 4), []);
+});
+
+// --- rows of dots: the strip in the state record and the axes of chapter 03 (Task 7.2) ---
+
+test('seatTicks: the smallest step of 1, 2, 5, 10, 20, 50 or 100 that gives at most 7 ticks', () => {
+  assert.deepEqual(seatTicks(2), [0, 1, 2]);
+  assert.deepEqual(seatTicks(6), [0, 1, 2, 3, 4, 5, 6]); // 7 ticks with step 1
+  assert.deepEqual(seatTicks(8), [0, 2, 4, 6, 8]); // step 1 gives 9
+  // 38: step 1 gives 39, 2 gives 20, 5 gives 8, 10 gives 4
+  assert.deepEqual(seatTicks(38), [0, 10, 20, 30]);
+  assert.deepEqual(seatTicks(52), [0, 10, 20, 30, 40, 50]);
+});
+
+test('rowDomain: whole steps around the values, at least half a step to spare', () => {
+  // vote shares: lowest 0.4978747 - 0.005 = 0.4928747 -> 49.29 steps -> floor 49 -> 0.49;
+  // highest 0.5230328 + 0.005 = 0.5280328 -> 52.80 steps -> ceil 53 -> 0.53
+  assert.deepEqual(rowDomain([0.4978747, 0.5115747, 0.5065747, 0.5159747, 0.5230328, 0.5179747], 0.01), {
+    domain: [0.49, 0.53], ticks: [0.49, 0.5, 0.51, 0.52, 0.53],
+  });
+  // competitive districts: (81 - 2.5) / 5 = 15.7 -> 15 -> 75; (105 + 2.5) / 5 = 21.5 -> 22 -> 110
+  assert.deepEqual(rowDomain([81, 96, 87, 105], 5), {
+    domain: [75, 110], ticks: [75, 80, 85, 90, 95, 100, 105, 110],
+  });
+  // a value on a step still gets room: 80 -> (77.5 / 5 = 15.5 -> 15) to (82.5 / 5 = 16.5 -> 17)
+  assert.deepEqual(rowDomain([80], 5).domain, [75, 85]);
+});
+
+test('rowTextAnchor: the value text goes left of its dot when the base line is just to the right, or at the edge', () => {
+  // width 560: right of the dot unless the base line lies within 40 units to the right, or the dot is past 500
+  assert.equal(rowTextAnchor(300, 400, 560), 'start');
+  assert.equal(rowTextAnchor(380, 400, 560), 'end'); // 20 units left of the base line
+  assert.equal(rowTextAnchor(400, 400, 560), 'end'); // on the base line
+  assert.equal(rowTextAnchor(401, 400, 560), 'start'); // right of it
+  assert.equal(rowTextAnchor(520, null, 560), 'end'); // near the right edge, no base line
+  assert.equal(rowTextAnchor(100, null, 560), 'start');
 });
