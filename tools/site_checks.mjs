@@ -3,7 +3,7 @@
 // The checks test structure and the form of the texts, not numbers that change with the data.
 
 const AT_LARGE = 'One at-large seat. No districts, so nothing to compare.';
-const HEADING = "document.querySelector('#sheet h2')?.textContent";
+const HEADING = "document.getElementById('sheet-title')?.textContent";
 const ZOOM = "Number((document.querySelector('#map > g').getAttribute('transform') || '').match(/scale\\(([\\d.e-]+)\\)/)?.[1] ?? 1)";
 const DATA = "fetch('data/results.json').then((r) => r.json())";
 const districtOf = (postal) => `[...document.querySelectorAll('#map path.district')].find((p) => p.__data__.properties.state === '${postal}')`;
@@ -12,6 +12,9 @@ const stateOf = (postal) => `[...document.querySelectorAll('#map path.statefill'
 // --- Task 6.3: the map ---------------------------------------------------------------------------
 async function map(t) {
   t.check('the page loads and draws the map', await t.load());
+  t.check('the map opens on "States: drawing effect"', await t.js(
+    "document.getElementById('view-states').getAttribute('aria-pressed') === 'true' && document.querySelector('#map path.district').parentNode.getAttribute('display') === 'none'"));
+  await t.js("document.getElementById('view-districts').click()");
   t.check('435 districts and 50 states on the map',
     await t.js("document.querySelectorAll('#map path.district').length === 435 && document.querySelectorAll('#map path.statefill').length === 50"));
   t.check('the zoom hint is hidden at the start', await t.js("getComputedStyle(document.getElementById('gesture')).display === 'none'"));
@@ -82,6 +85,7 @@ async function map(t) {
   // A phone: a tap writes the tap line without a tooltip, one finger is left to the page, two fingers zoom.
   await t.tab('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await t.load('', { width: 375, height: 800 });
+  await t.js("document.getElementById('view-districts').click()");
   const tap = await t.center(districtOf('TX'));
   await t.tab('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...tap, id: 1 }] });
   await t.tab('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
@@ -325,7 +329,7 @@ async function layout(t) {
     // clientWidth leaves out the scrollbar and, unlike innerWidth, does not grow with the overflow on a phone.
     const sideways = await t.js('({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth })');
     t.check(`${width}px: no sideways scrolling`, sideways.scrollWidth <= sideways.clientWidth, JSON.stringify(sideways));
-    const where = await t.js("(() => { const m = document.querySelector('.main > section').getBoundingClientRect(); const s = document.getElementById('sheet').getBoundingClientRect(); return s.left >= m.right - 1 ? 'beside' : s.top >= m.bottom - 1 ? 'below' : 'overlap'; })()");
+    const where = await t.js("(() => { const m = document.querySelector('.mapcol').getBoundingClientRect(); const s = document.getElementById('sheet').getBoundingClientRect(); return s.left >= m.right - 1 ? 'beside' : s.top >= m.bottom - 1 ? 'below' : 'overlap'; })()");
     t.check(`${width}px: the sheet is ${place} the map`, where === place, where);
     t.check(`${width}px: root font size ${font}`, (await t.js('getComputedStyle(document.documentElement).fontSize')) === font);
     // The font size on screen: the CSS size times the scale of the chart's viewBox.
@@ -358,12 +362,12 @@ async function layout(t) {
 
   await t.load();
   const order = [];
-  for (let i = 0; i < 16; i += 1) {
+  for (let i = 0; i < 24; i += 1) {
     await t.key('Tab', 9);
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
-  const wanted = ['view-districts', 'view-states', 'palette-party', 'palette-neutral', 'pick', 'zoom-in', 'zoom-out', 'zoom-reset', 'row'];
-  t.check('Tab reaches the view, color and zoom buttons, the State menu and the list, in that order',
+  const wanted = ['pick', 'view-states', 'view-districts', 'palette-party', 'palette-neutral', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'row'];
+  t.check('Tab reaches the State menu, the view and color buttons, the largest effects, the zoom buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
   t.check('focus reached with Tab is visible', order.at(-1) === 'row'
@@ -381,6 +385,7 @@ async function layout(t) {
   t.check('"All states" empties the live region', cleared === '', JSON.stringify(cleared));
 
   await t.load('', { dark: true });
+  await t.js("document.getElementById('view-districts').click()"); // the gradient belongs to the district legend
   t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(15, 21, 19)');
   t.check('dark mode paints the map with the dark poles', (await t.js("document.querySelector('#legend linearGradient stop:last-child').getAttribute('stop-color')")) === 'rgb(57, 135, 229)');
   await t.screenshot('dark-1280');
@@ -513,10 +518,41 @@ async function outcomes(t) {
   }
 }
 
+// --- Task 7.7: chapter 02, the largest drawing effects -------------------------------------------
+async function largest(t) {
+  await t.load();
+  // Every state at 3 seats or more, ordered as chapters.js orders them; the rest counted in one sentence.
+  const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
+    const rows = Object.entries(r.states).map(([postal, s]) => ({ postal, name: s.name, d: s.effects.drawing }));
+    const big = rows.filter((x) => Math.abs(x.d) >= 3)
+      .sort((a, b) => Math.abs(b.d) - Math.abs(a.d) || a.d - b.d || a.name.localeCompare(b.name, 'en'));
+    return { chips: big.map((x) => x.postal + f.effect(x.d)), small: rows.filter((x) => x.d !== 0 && Math.abs(x.d) < 3).length,
+      zero: rows.filter((x) => x.d === 0).length, states: rows.length };
+  })`);
+  const chips = await t.js("[...document.querySelectorAll('#largest .chip')].map((c) => c.textContent)");
+  t.check('every state at 3 seats or more has a button, by size, none left out', chips.join() === want.chips.join(), chips.join(' '));
+  const rest = await t.text('#largest .rest');
+  const counted = (pattern) => Number(pattern.exec(rest)?.[1] ?? 0);
+  t.check(`the sentence after the buttons counts the other states, so all ${want.states} are accounted for`,
+    counted(/(\d+) states? at 1 or 2/) === want.small && counted(/(\d+) states? at 0/) === want.zero
+    && want.chips.length + want.small + want.zero === want.states, rest);
+  const first = want.chips[0].slice(0, 2);
+  await t.js("document.querySelector('#largest .chip').focus()");
+  await t.key('Enter', 13, '\r');
+  t.check('a button chooses its state, keeps the focus and marks itself', await t.until(`location.hash === '#${first}'`)
+    && await t.js(`document.activeElement?.dataset?.postal === '${first}' && document.activeElement.getAttribute('aria-current') === 'true'`));
+  t.check('chapter 02 holds the tools, the buttons, the map and the sheet', await t.js(`(() => {
+    const ch = document.getElementById('states');
+    return !!ch && ['pick', 'largest', 'map', 'sheet'].every((id) => ch.contains(document.getElementById(id)))
+      && ch.querySelector('.chead h2')?.textContent === 'State by state' && document.getElementById('sheet').tagName === 'ASIDE';
+  })()`));
+}
+
 export const GROUPS = [
   { name: 'masthead', run: masthead },
   { name: 'outcomes', run: outcomes },
   { name: 'map', run: map },
+  { name: 'largest', run: largest },
   { name: 'list', run: list },
   { name: 'sheet', run: sheet },
   { name: 'national', run: national },

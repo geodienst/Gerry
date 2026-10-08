@@ -9,11 +9,11 @@ import {
   majorityView, extensionFills, redrawView, stateExtras, competitiveText, controlTables, senateView,
 } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
-import { renderList, renderState } from './sheet.js';
+import { renderList, renderState, renderLargest } from './sheet.js';
 import {
   renderNational, renderMajority, renderRedraws, renderControl, renderSenate,
 } from './national.js';
-import { outcomesView } from './chapters.js';
+import { outcomesView, largestEffects } from './chapters.js';
 import { renderOutcomes } from './outcomes.js';
 
 const { d3 } = globalThis;
@@ -52,7 +52,7 @@ async function main() {
   }
 
   const index = indexResults(results);
-  const ui = { view: 'districts', palette: 'party', selected: '', zerosOpen: false };
+  const ui = { view: 'states', palette: 'party', selected: '', zerosOpen: false };
   let colors = makeColors(d3.interpolateLab, readPoles(ui.palette));
   const hints = mapHints({
     touch: window.matchMedia('(pointer: coarse)').matches,
@@ -72,6 +72,7 @@ async function main() {
   const pick = $('pick');
   for (const option of stateOptions(results)) pick.append(new Option(option.name, option.postal));
   pick.addEventListener('change', () => select(pick.value, { push: true }));
+  const paintLargest = renderLargest($('largest'), largestEffects(results), (postal) => select(postal, { push: true }));
 
   function renderSheet() {
     if (ui.selected) renderState($('sheet'), stateSheet(results, ui.selected), colors, back, stateExtras(results, ui.selected));
@@ -81,6 +82,7 @@ async function main() {
   function paint() {
     map.paint(colors, ui.view, ui.selected);
     drawLegend($('legend'), ui.view, colors);
+    paintLargest(colors, ui.selected);
     renderSheet();
   }
 

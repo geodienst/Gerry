@@ -58,38 +58,48 @@
       </div>
     </section>
 
-    <div class="wrap legacy">
-
-    <div class="main">
-      <section class="card" aria-label="Map">
-        <div class="controls">
+    <section class="chapter" id="states" aria-labelledby="h02">
+      <div class="wrap">
+        <div class="chead">
+          <span class="no">02</span>
+          <h2 id="h02">State by state</h2>
+          <p>The drawing effect of each state: Democratic seats on the enacted map minus the neutral-map median, the middle outcome of the state's neutral maps.</p>
+        </div>
+        <div class="tools">
+          <label class="pick" for="pick">State <select id="pick"><option value="">All states</option></select></label>
           <div class="seg" role="group" aria-label="Map view">
-            <button type="button" id="view-districts" aria-pressed="true">Districts: Democratic share</button>
-            <button type="button" id="view-states" aria-pressed="false">States: drawing effect</button>
+            <button type="button" id="view-states" aria-pressed="true">States: drawing effect</button>
+            <button type="button" id="view-districts" aria-pressed="false">Districts: Democratic share</button>
           </div>
           <div class="seg" role="group" aria-label="Colors">
             <button type="button" id="palette-party" aria-pressed="true">Party colors</button>
             <button type="button" id="palette-neutral" aria-pressed="false">Neutral colors</button>
           </div>
-          <label class="pick" for="pick">State <select id="pick"><option value="">All states</option></select></label>
         </div>
-        <div class="mapbox" id="mapbox">
-          <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of the U.S. congressional districts. Choose a state with the State menu or the list."></svg>
-          <div class="zoombar">
-            <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
-            <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
-            <button type="button" id="zoom-reset" class="wide" aria-label="All states">All</button>
+        <div class="largest" id="largest"></div>
+        <div class="atlas">
+          <div class="mapcol">
+            <div class="mapbox" id="mapbox">
+              <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of the U.S. congressional districts. Choose a state with the State menu or the list."></svg>
+              <div class="zoombar">
+                <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+                <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
+                <button type="button" id="zoom-reset" class="wide" aria-label="All states">All</button>
+              </div>
+              <div class="gesture" id="gesture" hidden></div>
+              <div class="tip" id="tip" hidden></div>
+            </div>
+            <p class="tapline" id="tapline" aria-live="polite"></p>
+            <p class="maphint" id="maphint"></p>
+            <div class="legend" id="legend"></div>
           </div>
-          <div class="gesture" id="gesture" hidden></div>
-          <div class="tip" id="tip" hidden></div>
+          <aside class="record" id="sheet" aria-labelledby="sheet-title"></aside>
         </div>
-        <p class="tapline" id="tapline" aria-live="polite"></p>
-        <p class="maphint" id="maphint"></p>
-        <div class="legend" id="legend"></div>
-      </section>
-      <aside class="card" id="sheet" aria-labelledby="sheet-title"></aside>
-      <p class="visually-hidden" id="sheet-status" aria-live="polite"></p>
-    </div>
+        <p class="visually-hidden" id="sheet-status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <div class="wrap legacy">
 
     <section class="card" id="national" aria-labelledby="national-title">
       <h2 id="national-title">All states with more than one seat</h2>

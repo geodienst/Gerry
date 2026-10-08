@@ -63,7 +63,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--
 
 h1 { font: 600 clamp(1.6rem, 2.6vw, 2.4rem)/1.15 var(--font-head); margin: 0; text-wrap: balance; }
 h2 { font: 600 1.33rem/1.2 var(--font-head); margin: 0; text-wrap: balance; }
-h3 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+h3, h4 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
 .num { font-variant-numeric: tabular-nums; }
 a { color: var(--ink); }
 .load-error { margin: 0; padding: 0.7rem 1rem; border: 1px solid var(--rule); background: var(--sheet); }
@@ -81,9 +81,10 @@ a { color: var(--ink); }
    with its labeled range); the rule above it sits on its wrapper and keeps the full width. */
 #national p { max-width: 70ch; }
 
-/* Map and sheet side by side from 900px; the sheet is at least 22rem and otherwise 30% wide. */
-.main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: 1.2rem; align-items: start; }
-@media (max-width: 899.98px) { .main { grid-template-columns: minmax(0, 1fr); } }
+/* Chapter 02: map and record side by side from 900px; the record is at least 22rem and otherwise 30% wide. */
+.atlas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: clamp(1.2rem, 2.5vw, 2rem); align-items: start; }
+@media (max-width: 899.98px) { .atlas { grid-template-columns: minmax(0, 1fr); } }
+.mapcol { display: grid; gap: 0.7rem; min-width: 0; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
 .seg { display: inline-flex; border: 1px solid var(--rule); }
@@ -243,3 +244,15 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
 .eff .v { font: 700 1.1875rem/1.2 var(--font-head); font-variant-numeric: tabular-nums; }
 .eff .w { font-size: 0.94rem; }
 @media (max-width: 480px) { .eff { grid-template-columns: auto minmax(0, 1fr); } .eff .w { grid-column: 1 / -1; } }
+
+/* Chapter 02: tools, the largest effects and the record (Task 7.7) */
+.tools { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; align-items: center; }
+.largest { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+.largest .k { font-size: 0.8125rem; color: var(--muted); margin-right: 0.2rem; }
+.largest .rest { font-size: 0.8125rem; color: var(--muted); }
+.chip { font: inherit; font-size: 0.8125rem; display: inline-flex; gap: 0.45rem; align-items: center; padding: 0.3rem 0.6rem; border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
+.chip b { font-variant-numeric: tabular-nums; }
+.chip[aria-current="true"] { border-color: var(--ink); background: var(--tint); }
+.record { background: var(--sheet); border: 1px solid var(--rule); padding: 1.1rem 1.1rem 1.2rem; display: grid; gap: 0.8rem; min-width: 0; align-content: start; }
+#sheet-title { font: 700 1.5rem/1.15 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
+.record .k { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }

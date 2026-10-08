@@ -26,7 +26,7 @@ function stateRow(parent, row, colors, onSelect) {
  */
 export function renderList(el, list, colors, onSelect, ui) {
   const sheet = d3.select(el).html('');
-  sheet.append('h2').attr('id', 'sheet-title').attr('tabindex', -1).text('Drawing effect by state');
+  sheet.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text('Drawing effect by state');
   sheet.append('p').attr('class', 'note')
     .text('Seats each enacted map moves toward one party, compared with the median of its neutral maps. Select a state for its numbers.');
   const toR = sheet.append('div').attr('class', 'list');
@@ -41,9 +41,36 @@ export function renderList(el, list, colors, onSelect, ui) {
   const toD = sheet.append('div').attr('class', 'list');
   for (const row of list.toD) stateRow(toD, row, colors, onSelect);
   const net = sheet.append('div').attr('class', 'net');
-  net.append('h3').text('All states together');
+  net.append('h4').text('All states together');
   drawNetBar(net.append('div').node(), list, colors);
   net.append('p').attr('class', 'note').text(list.summary);
+}
+
+/**
+ * "Drawing effects of 3 seats or more" above the map (redesign, chapter 4): a button per state and the
+ * sentence for the rest. Drawn once, so a button keeps the focus; the returned function marks the chosen
+ * state and colors the swatches.
+ * @param {object} view largestEffects(results)
+ * @returns {(colors: object, selected: string) => void}
+ */
+export function renderLargest(el, view, onSelect) {
+  const root = d3.select(el).html('');
+  root.append('span').attr('class', 'k').text(view.title);
+  const buttons = view.chips.map((chip) => {
+    const button = root.append('button').attr('type', 'button').attr('class', 'chip').attr('data-postal', chip.postal)
+      .attr('aria-label', chip.aria).on('click', () => onSelect(chip.postal));
+    button.append('i').attr('class', 'sw').attr('aria-hidden', 'true');
+    button.append('span').text(chip.postal);
+    button.append('b').text(chip.label);
+    return { button, chip };
+  });
+  if (view.rest) root.append('span').attr('class', 'rest').text(view.rest);
+  return (colors, selected) => {
+    for (const { button, chip } of buttons) {
+      button.attr('aria-current', chip.postal === selected ? 'true' : null);
+      button.select('.sw').style('background', colors.effect(chip.drawing));
+    }
+  };
 }
 
 function definitionList(parent, items) {
@@ -81,7 +108,7 @@ export function renderState(el, sheet, colors, onBack, extras = { head: [], body
   const root = d3.select(el).html('');
   root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
   const head = root.append('div').attr('class', 'stack');
-  head.append('h2').attr('id', 'sheet-title').attr('tabindex', -1).text(sheet.name);
+  head.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(sheet.name);
   const meta = head.append('p').attr('class', 'meta');
   meta.append('span').text(sheet.mapName);
   meta.append('span').attr('class', 'pill').text(sheet.status);
@@ -97,7 +124,7 @@ export function renderState(el, sheet, colors, onBack, extras = { head: [], body
 
   if (sheet.blocked) {
     const b = root.append('div').attr('class', 'stack');
-    b.append('h3').text('Blocked map');
+    b.append('h4').text('Blocked map');
     const bm = b.append('p').attr('class', 'meta');
     bm.append('span').text(sheet.blocked.name);
     bm.append('span').attr('class', 'pill').text(sheet.blocked.status);
@@ -106,7 +133,7 @@ export function renderState(el, sheet, colors, onBack, extras = { head: [], body
   }
 
   const sorted = root.append('div').attr('class', 'stack');
-  sorted.append('h3').text('Districts, sorted');
+  sorted.append('h4').text('Districts, sorted');
   drawSorted(sorted.append('div').node(), sheet.sorted, colors, sheet.sortedLabel);
   sorted.append('p').attr('class', 'note').text(sheet.sortedCaption);
 
@@ -116,12 +143,12 @@ export function renderState(el, sheet, colors, onBack, extras = { head: [], body
   }
 
   const measures = root.append('div').attr('class', 'stack');
-  measures.append('h3').text('Other measures');
+  measures.append('h4').text('Other measures');
   definitionList(measures, sheet.measures.map((m) => ({ label: m.label, value: m.value, note: m.context })));
 
   if (sheet.notes.length > 0) {
     const notes = root.append('div').attr('class', 'stack');
-    notes.append('h3').text('Notes');
+    notes.append('h4').text('Notes');
     const ul = notes.append('ul').attr('class', 'notes');
     for (const text of sheet.notes) ul.append('li').text(text);
   }
