@@ -40,7 +40,7 @@ Het goedgekeurde ontwerp staat in `docs/superpowers/specs/2026-10-05-gerrymander
 - **Tests**: `pytest` voor alle metriekfuncties, met kleine handberekende voorbeelden.
 - **Output voor de frontend**: TopoJSON (vereenvoudigd met `mapshaper`) plus één JSON met alle cijfers per staat en district.
 - **Frontend**: vanilla JS en D3 met `geoAlbersUsa` (Alaska en Hawaii als inzet). Geen tegelservers, geen API-keys, geen trackers, geen externe diensten. Single-page, statisch te hosten.
-- **UI-taal**: Engels (Amerikaans publiek). Labels neutraal: "Proportional", "Neutral baseline", "Enacted". Geen partijdige of emotionele bewoording; de cijfers spreken.
+- **UI-taal**: Engels (Amerikaans publiek). Labels neutraal: "Vote-proportional", "Neutral-map median", "Enacted maps" (besluit van de eigenaar, 8 oktober 2026; daarvoor "Proportional", "Neutral baseline", "Enacted"). Geen partijdige of emotionele bewoording; de cijfers spreken.
 
 ## Skills
 
