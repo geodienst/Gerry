@@ -1,5 +1,7 @@
 # Siteontwerp
 
+Indeling, kop en "How to read this" zijn vervangen door het herontwerp van 8 oktober 2026 (`2026-10-08-redesign-design.md`), gebouwd in fase 7. De rest van dit ontwerp blijft gelden.
+
 Datum: 6 oktober 2026. Status: goedgekeurd door de eigenaar op 7 oktober 2026, in de vorm van versie 5 van het voorproefje en met de wijzigingen hieronder. De punten 1 tot en met 8 zijn besluiten uit de ontwerpsessie van 6 oktober 2026; de opzet van punt 9 (methodetoelichting) en punt 10 (bronlabels, "Map file:") zijn met het ontwerp goedgekeurd.
 
 **Senaat (besluit 7 oktober 2026).** Een apart blok in de landelijke sectie, naast de meerderheid in het Huis, met de drempel voor de Senaat uit hoofdstuk 7 van het uitbreidingsontwerp en één zin dat dit geen effect van kaarten is.
