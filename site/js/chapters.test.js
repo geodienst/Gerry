@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { results, withExtensions } from './testdata.js';
 import {
-  LABELS, SHORT_LABELS, EFFECT_LABELS, outcomesView, waffleText, LARGEST_MIN, largestEffects, recordView, singleSeatView,
+  LABELS, SHORT_LABELS, EFFECT_LABELS, outcomesView, waffleText, changedKey, LARGEST_MIN, largestEffects, recordView, singleSeatView,
   decideView,
 } from './chapters.js';
 import { stateSheet, AT_LARGE_TEXT } from './model.js';
@@ -39,6 +39,9 @@ test('outcomesView: three rows, the two effects between them, the band and the s
     { key: 'drawing', label: 'Drawing effect', value: 'R+10', words: '10 seats toward Republicans', detail: '10 seats toward Republicans (223 to 213)' },
   ]);
   assert.deepEqual(view.band, { lo: 217, hi: 229, key: 'Outlined: seats 217 to 229, where the Democratic seats end in 90% of neutral outcomes' });
+  // the finding beside the waffle: drawing -10, enacted 213, neutral median 223
+  assert.equal(view.finding, 'In this comparison the enacted maps shift 10 seats toward Republicans. '
+    + 'With the same votes they give Democrats 213 seats, where the neutral-map median gives 223.');
   // majority: 216 of 429 for Democrats; 435 - 429 = 6 one-seat states, 218 - 216 = 2 Democratic, 4 Republican; 429 - 216 + 1 = 214
   assert.deepEqual(view.majority, { after: 215, label: 'House majority',
     key: 'Line: House majority. Democrats need 216 of these seats, Republicans 214; the six one-seat states add 2 and 4.' });
@@ -52,6 +55,15 @@ test('outcomesView: three rows, the two effects between them, the band and the s
   assert.equal(view.neutralNote, 'The neutral maps come from the ALARM Project. For each state a computer drew 5,000 maps that follow '
     + "the state's rules, such as equal population and the Voting Rights Act, without using party data. The national figures combine the 7 states.");
   assert.equal(view.scope, '429 seats. The six states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont, Wyoming) are not counted.');
+});
+
+test('outcomesView: the finding without a drawing effect, and the key of the changed seats', () => {
+  const r = withExtensions();
+  r.national.enacted = 223;
+  r.national.effects.drawing = 0;
+  assert.equal(outcomesView(r).finding, 'In this comparison the enacted maps give Democrats 223 seats, the same as the neutral-map median.');
+  assert.equal(changedKey(11), 'Dot: the 11 seats that changed with this choice');
+  assert.equal(changedKey(1), 'Dot: the 1 seat that changed with this choice');
 });
 
 test('outcomesView: an enacted count inside or above the band, a band of one count, no effect', () => {

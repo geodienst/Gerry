@@ -2,7 +2,7 @@
 // effects between them, a waffle of the seats that follows the chosen row, and the sentences beside it.
 // Texts come from chapters.js and geometry from axes.js; this module only draws.
 import { WAFFLE, waffleSize, waffleCell, waffleTick, waffleBand, waffleLine } from './axes.js';
-import { waffleText } from './chapters.js';
+import { waffleText, changedKey } from './chapters.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const $ = (id) => document.getElementById(id);
@@ -75,7 +75,10 @@ export function renderOutcomes(view, { reduceMotion }) {
   const majority = svgNode('g', { class: 'majority', 'aria-hidden': 'true' });
   majority.append(svgNode('path', { d: line.d }),
     svgNode('text', { x: line.x, y: line.bottom + 15, 'text-anchor': 'middle' }, view.majority.label));
-  svg.append(seatLayer, band, majority, tick);
+  // Dots on the seats that changed party with the last choice of row, until the next choice.
+  const changed = svgNode('g', { class: 'changed', 'aria-hidden': 'true' });
+  svg.append(seatLayer, band, changed, majority, tick);
+  $('finding').textContent = view.finding;
   $('key-band-text').textContent = view.band.key;
   $('key-majority-text').textContent = view.majority.key;
 
@@ -106,6 +109,16 @@ export function renderOutcomes(view, { reduceMotion }) {
       rect.style.transitionDuration = motion ? '' : '0s';
       rect.setAttribute('fill', fill);
     });
+    if (shown !== null && shown !== n) {
+      const dots = [];
+      for (let i = Math.min(shown, n); i < Math.max(shown, n); i += 1) {
+        const { x, y } = waffleCell(i);
+        dots.push(svgNode('circle', { cx: x + WAFFLE.size / 2, cy: y + WAFFLE.size / 2, r: 1.8 }));
+      }
+      changed.replaceChildren(...dots);
+      $('key-changed-text').textContent = changedKey(dots.length);
+      $('key-changed').hidden = false;
+    }
     shown = n;
     band.setAttribute('display', current === 'neutral' ? 'inline' : 'none');
     $('key-band').hidden = current !== 'neutral';

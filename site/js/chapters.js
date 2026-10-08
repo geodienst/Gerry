@@ -53,6 +53,11 @@ export function outcomesView(results) {
       lo: p5, hi: p95,
       key: `Outlined: ${p5 === p95 ? 'seat' : 'seats'} ${range(p5, p95)}, where the Democratic seats end in 90% of neutral outcomes`,
     },
+    // One finding beside the waffle, said as the result of this comparison (expert feedback, October 8, 2026).
+    finding: n.effects.drawing === 0
+      ? `In this comparison the enacted maps give Democrats ${seats(n.enacted)} seats, the same as the neutral-map median.`
+      : `In this comparison the enacted maps shift ${effectWords(n.effects.drawing)}. `
+        + `With the same votes they give Democrats ${seats(n.enacted)} seats, where the neutral-map median gives ${seats(median)}.`,
     // The House majority as a line after the last seat Democrats can win without one (as in majorityView).
     majority: {
       after: needed - 1,
@@ -69,6 +74,11 @@ export function outcomesView(results) {
       + `The national figures combine the ${states} states.`,
     scope: national.note,
   };
+}
+
+/** The key of the dots on the seats that changed party with the last choice of row. */
+export function changedKey(k) {
+  return `Dot: the ${seats(k)} ${plural(k, 'seat', 'seats')} that changed with this choice`;
 }
 
 /** The line above the waffle and its title, for the chosen row. */

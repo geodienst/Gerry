@@ -4,7 +4,7 @@
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
 import {
-  indexResults, stateOptions, mapHints, effectList, nationalView, methodFills,
+  indexResults, stateOptions, mapHints, effectList, nationalView, methodFills, MAP_TITLES,
 } from './model.js';
 import { extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
@@ -83,6 +83,7 @@ async function main() {
 
   function paint() {
     map.paint(colors, ui.view, ui.selected);
+    $('map-title').textContent = MAP_TITLES[ui.view];
     drawLegend($('legend'), ui.view, colors);
     paintLargest(colors, ui.selected);
     renderSheet();

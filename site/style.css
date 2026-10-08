@@ -107,6 +107,12 @@ svg { display: block; width: 100%; height: auto; }
 .tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
 .tip b, .tip span { display: block; }
+.maphead { display: grid; gap: 0.35rem; }
+.maptitle { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; color: var(--fg); letter-spacing: 0; text-transform: none; }
+/* The color choice is a quiet setting under the map, apart from the view buttons. */
+.colors { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
+.colors button { font: inherit; padding: 0.2rem 0; border: 0; background: none; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
+.colors button[aria-pressed="true"] { color: var(--fg); font-weight: 600; text-decoration: none; }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; font-size: 0.8rem; color: var(--muted); }
 .legend svg { width: 18rem; max-width: 100%; }
 .legend text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
@@ -211,6 +217,10 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 /* On a narrow screen the waffle is scaled down to about 0.7; a larger number keeps it at 12px or more. */
 @media (max-width: 480px) { #waffle { overflow: visible; } #waffle .tick text, #waffle .majority text { font-size: 17px; } }
 #waffle .tick line { stroke: var(--fg); }
+#waffle .changed circle { fill: var(--sheet); }
+.wkey .cd { width: 0.75rem; height: 0.75rem; background: var(--fg); border-radius: 0; display: grid; place-items: center; }
+.wkey .cd::after { content: ""; width: 0.25rem; height: 0.25rem; border-radius: 50%; background: var(--sheet); }
+.finding { margin: 0; font: 600 1.125rem/1.4 var(--font-head); color: var(--fg); max-width: 46ch; }
 #waffle .majority path { fill: none; stroke: var(--fg); stroke-width: 2; }
 #waffle .majority text { fill: var(--fg); font-size: 12px; font-weight: 600; }
 .wkey .ml { width: 2px; height: 0.9rem; background: var(--fg); align-self: flex-start; margin-top: 0.15rem; }

@@ -72,9 +72,12 @@ export function mapHints({ touch, mac }) {
   };
 }
 
+/** The title above the map for each view. */
+export const MAP_TITLES = { districts: 'Democratic vote share by district', states: 'Drawing effect by state' };
+
 export const LEGEND_TEXT = {
   districts: 'Democratic share of the two-party vote.',
-  states: 'Seats the enacted map moves toward one party, compared with the neutral median.',
+  states: 'Seats the enacted map moves toward one party, compared with the neutral-map median.',
   low: 'More Republican',
   high: 'More Democratic',
   blank: 'Gray: one at-large seat.',

@@ -41,6 +41,7 @@
         <div class="outcomes">
           <div class="scen" role="radiogroup" aria-label="Way of counting" id="scen"></div>
           <div class="waffle">
+            <p class="finding" id="finding"></p>
             <div class="readout" id="readout" aria-live="polite"></div>
             <svg id="waffle" class="chart" role="img" aria-labelledby="waffle-label"><title id="waffle-label"></title></svg>
             <div class="wkey">
@@ -49,6 +50,7 @@
               <span id="key-band" hidden><i class="ol" aria-hidden="true"></i><span id="key-band-text"></span></span>
               <span>1 square = 1 seat, Democrats first</span>
               <span><i class="ml" aria-hidden="true"></i><span id="key-majority-text"></span></span>
+              <span id="key-changed" hidden><i class="cd" aria-hidden="true"></i><span id="key-changed-text"></span></span>
             </div>
           </div>
         </div>
@@ -64,7 +66,7 @@
         <div class="chead">
           <span class="no">02</span>
           <h2 id="h02">State by state</h2>
-          <p>The drawing effect of each state: Democratic seats on the enacted map minus the neutral-map median, the middle outcome of the state's neutral maps.</p>
+          <p>Choose a state on the map, in the State menu or in the list to see its three seat counts and its drawing effect: Democratic seats on the enacted map minus the neutral-map median, the middle outcome of the state's neutral maps.</p>
         </div>
         <div class="tools">
           <label class="pick" for="pick">State <select id="pick"><option value="">All states</option></select></label>
@@ -72,14 +74,14 @@
             <button type="button" id="view-districts" aria-pressed="true">Districts: Democratic share</button>
             <button type="button" id="view-states" aria-pressed="false">States: drawing effect</button>
           </div>
-          <div class="seg" role="group" aria-label="Colors">
-            <button type="button" id="palette-party" aria-pressed="true">Party colors</button>
-            <button type="button" id="palette-neutral" aria-pressed="false">Neutral colors</button>
-          </div>
         </div>
         <div class="largest" id="largest"></div>
         <div class="atlas">
           <div class="mapcol">
+            <div class="maphead">
+              <h3 class="maptitle" id="map-title">Democratic vote share by district</h3>
+              <div class="legend" id="legend"></div>
+            </div>
             <div class="mapbox" id="mapbox">
               <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of the U.S. congressional districts. Choose a state with the State menu or the list."></svg>
               <div class="zoombar">
@@ -92,7 +94,11 @@
             </div>
             <p class="tapline" id="tapline" aria-live="polite"></p>
             <p class="maphint" id="maphint"></p>
-            <div class="legend" id="legend"></div>
+            <div class="colors" role="group" aria-labelledby="colors-label">
+              <span id="colors-label">Colors</span>
+              <button type="button" id="palette-party" aria-pressed="true">Red and blue</button>
+              <button type="button" id="palette-neutral" aria-pressed="false">Teal and brown</button>
+            </div>
           </div>
           <aside class="record" id="sheet" aria-labelledby="sheet-title"></aside>
         </div>

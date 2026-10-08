@@ -14,6 +14,7 @@ async function map(t) {
   t.check('the page loads and draws the map', await t.load());
   t.check('the map opens on "Districts: Democratic share"', await t.js(
     "document.getElementById('view-districts').getAttribute('aria-pressed') === 'true' && document.getElementById('view-states').getAttribute('aria-pressed') === 'false' && document.querySelector('#map path.district').parentNode.getAttribute('display') !== 'none'"));
+  t.check('the map title above the map names the district view', (await t.text('#map-title')) === 'Democratic vote share by district');
   await t.js("document.getElementById('view-districts').click()");
   t.check('435 districts and 50 states on the map',
     await t.js("document.querySelectorAll('#map path.district').length === 435 && document.querySelectorAll('#map path.statefill').length === 50"));
@@ -70,6 +71,7 @@ async function map(t) {
     "document.querySelector('#map path.statefill').parentNode.getAttribute('display') === null"
     + " && document.querySelector('#map path.district').parentNode.getAttribute('display') === 'none'"
     + " && document.querySelectorAll('#legend rect').length === 13"));
+  t.check('the map title follows the view', (await t.text('#map-title')) === 'Drawing effect by state');
   await t.until(`${ZOOM} === 1`);
   await t.mouse('mouseMoved', await t.center(stateOf('TX')));
   t.check('pointing at a state shows its drawing effect',
@@ -81,9 +83,9 @@ async function map(t) {
   const fills = "[...document.querySelectorAll('#map path.district')].slice(0, 30).map((p) => p.getAttribute('fill')).join()";
   const party = await t.js(fills);
   await t.js("document.getElementById('palette-neutral').click()");
-  t.check('"Neutral colors" repaints the map', (await t.js(fills)) !== party);
+  t.check('"Teal and brown" repaints the map', (await t.js(fills)) !== party);
   await t.js("document.getElementById('palette-party').click()");
-  t.check('"Party colors" brings the party colors back', (await t.js(fills)) === party);
+  t.check('"Red and blue" brings the party colors back', (await t.js(fills)) === party);
   await t.screenshot('map-1280');
 
   // A phone: a tap writes the tap line without a tooltip, one finger is left to the page, two fingers zoom.
@@ -423,8 +425,8 @@ async function layout(t) {
     await t.key('Tab', 9);
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
-  const wanted = ['choice', 'pick', 'view-districts', 'view-states', 'palette-party', 'palette-neutral', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'row'];
-  t.check('Tab reaches the chosen row, the State menu, the view and color buttons, the largest effects, the zoom buttons and the list, in that order',
+  const wanted = ['choice', 'pick', 'view-districts', 'view-states', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
+  t.check('Tab reaches the chosen row, the State menu, the view buttons, the largest effects, the zoom buttons, the color buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
   t.check('focus reached with Tab is visible', order.at(-1) === 'row'
@@ -550,13 +552,16 @@ async function outcomes(t) {
   const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
     const n = r.national;
     return { values: [n.proportional, n.neutral.median, n.enacted].map(f.seats), lo: n.neutral.p5, hi: n.neutral.p95,
-      total: n.seats, enacted: n.enacted, steps: [f.effect(n.effects.geographic), f.effect(n.effects.drawing)] };
+      total: n.seats, enacted: n.enacted, neutralSeats: n.neutral.median, steps: [f.effect(n.effects.geographic), f.effect(n.effects.drawing)],
+      finding: 'In this comparison the enacted maps shift ' + f.effectWords(n.effects.drawing) + '. With the same votes they give Democrats '
+        + f.seats(n.enacted) + ' seats, where the neutral-map median gives ' + f.seats(n.neutral.median) + '.' };
   })`);
   const rows = await t.js(`[...document.querySelectorAll('#scen [role=radio]')].map((b) => ({ label: b.querySelector('.lab').textContent,
     value: b.querySelector('.big').textContent, checked: b.getAttribute('aria-checked'), tab: b.tabIndex }))`);
   t.check('three rows labeled Vote-proportional, Neutral-map median and Enacted maps, with the numbers of results.json',
     rows.map((r) => r.label).join() === 'Vote-proportional,Neutral-map median,Enacted maps' && rows.map((r) => r.value).join() === want.values.join(),
     JSON.stringify(rows));
+  t.check('the finding beside the waffle names the drawing effect and both counts', (await t.text('#finding')) === want.finding, await t.text('#finding'));
   t.check('Enacted maps is chosen at the start and is the only tab stop', rows.map((r) => `${r.checked}/${r.tab}`).join() === 'false/-1,false/-1,true/0');
   t.check('the two effects stand between the rows',
     await t.js(`[...document.querySelectorAll('#scen .step b')].map((b) => b.textContent).join() === ${JSON.stringify(want.steps.join())}`));
@@ -590,6 +595,11 @@ async function outcomes(t) {
     shown: document.querySelector('#waffle .band').getAttribute('display'), key: !document.getElementById('key-band').hidden,
     title: document.getElementById('waffle-label').textContent }; })()`);
   t.check('Arrow up chooses Neutral-map median and the focus moves with it', neutral.label === 'Neutral-map median' && neutral.checked === 'true', JSON.stringify(neutral));
+  t.check('the seats that changed from Enacted maps to Neutral-map median carry a dot, and the key counts them', await t.js(`(() => {
+    const dots = document.querySelectorAll('#waffle .changed circle').length;
+    return dots === ${want.neutralSeats} - ${want.enacted} && !document.getElementById('key-changed').hidden
+      && document.getElementById('key-changed-text').textContent === 'Dot: the ' + dots + ' seats that changed with this choice';
+  })()`));
   t.check(`with Neutral-map median the seats ${want.lo} to ${want.hi} are outlined and the key says so`,
     neutral.band === want.hi - want.lo + 1 && neutral.shown !== 'none' && neutral.key, JSON.stringify(neutral));
   t.check('the title of the waffle names the chosen row in numbers', /^Neutral-map median: \d+ Democratic and \d+ Republican seats of \d+\.$/.test(neutral.title), neutral.title);
