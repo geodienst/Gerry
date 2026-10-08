@@ -77,18 +77,34 @@ test('outcomesView: one view per point of the vote slider, the base point as the
   // geographic 203 - 217 = -14, drawing 205 - 203 = +2
   assert.deepEqual(half.steps.map((s) => [s.value, s.detail]),
     [['R+14', '14 seats toward Republicans (217 to 203)'], ['D+2', '2 seats toward Democrats (203 to 205)']]);
-  assert.equal(half.finding, 'In this comparison, at 50.0% of the vote, the enacted maps shift 2 seats toward Democrats. '
+  assert.equal(half.finding, 'In this comparison, with Democrats at 50.0% of the two-party vote, the enacted maps shift 2 seats toward Democrats. '
     + 'They give Democrats 205 seats, where the neutral-map median gives 203.');
   assert.equal(half.spread, '90% of neutral outcomes give Democrats 197 to 208 seats. The enacted maps give 205, within that range.');
   assert.equal(half.position, 'In 19% of neutral outcomes Democrats win more seats than under the enacted maps.');
   assert.equal(half.valueText, '50.0% of the two-party vote for Democrats');
   assert.equal(base.valueText, '51.8% of the two-party vote for Democrats, the 2016 and 2020 result');
-  // the slider: a tick at each majority threshold (majority block of testdata) and one sentence
-  assert.deepEqual(view.slider.ticks.map((x) => [x.key, x.share, x.text]), [
-    ['proportional', 0.4978747, 'Proportional 49.8%'], ['neutral', 0.5115747, 'Neutral median 51.2%'], ['enacted', 0.5230328, 'Enacted 52.3%']]);
+  // the slider: a tick at the first stop where each count reaches 216 districts, and one sentence.
+  // proportional 217 at 50.0%; neutral 203 at 50.0%, 223 at the base; enacted 205, 213, then 221 at 53.0%
+  assert.deepEqual(view.slider.ticks, [
+    { key: 'proportional', index: 0, name: 'Proportional', value: '50.0%' },
+    { key: 'neutral', index: 1, name: 'Neutral median', value: '51.8%' },
+    { key: 'enacted', index: 2, name: 'Enacted', value: '53.0%' }]);
   assert.equal(view.slider.label, 'Democratic share of the national two-party vote');
-  assert.equal(view.slider.majority, 'A House majority takes 49.8% of the vote if seats follow the votes, '
-    + '51.2% on neutral maps and 52.3% on the enacted maps.');
+  assert.equal(view.slider.majority, 'On the slider, a House majority starts at 50.0% of the two-party vote if seats follow '
+    + 'the votes, at 51.8% on neutral maps and at 53.0% on the enacted maps.');
+});
+
+test('outcomesView: no second stop with the label of the base, and a count that never reaches a majority', () => {
+  const r = withExtensions();
+  // a grid point at 51.8% next to the base share 0.5179747 would read 51.8% twice
+  r.national.swing.points.splice(2, 0, { ...r.national.swing.points[1], share: 0.518, base: false });
+  for (const point of r.national.swing.points) point.enacted = Math.min(point.enacted, 215);
+  const view = outcomesView(r);
+  assert.deepEqual(view.points.map((p) => p.label), ['50.0%', '51.8%', '53.0%']);
+  assert.equal(view.baseIndex, 1);
+  // enacted never reaches 216: no tick, and the sentence says so
+  assert.deepEqual(view.slider.ticks.map((x) => x.key), ['proportional', 'neutral']);
+  assert.match(view.slider.majority, /and above 53\.0% on the enacted maps\.$/);
 });
 
 test('outcomesView: the finding without a drawing effect, and the key of the changed seats', () => {

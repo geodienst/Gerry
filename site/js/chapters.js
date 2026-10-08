@@ -30,7 +30,8 @@ function pointView(p, total) {
     key, label: EFFECT_LABELS[key], value: effect(value), words: effectWords(value),
     detail: `${effectWords(value)} (${seats(from)} to ${seats(to)})`,
   });
-  const at = p.base ? `with the 2016 and 2020 votes (${sliderShare(p.share)} for Democrats)` : `at ${sliderShare(p.share)} of the vote`;
+  const at = p.base ? `with the 2016 and 2020 votes (${sliderShare(p.share)} for Democrats)`
+    : `with Democrats at ${sliderShare(p.share)} of the two-party vote`;
   return {
     share: p.share, base: p.base, label: sliderShare(p.share),
     valueText: `${sliderShare(p.share)} of the two-party vote for Democrats${p.base ? ', the 2016 and 2020 result' : ''}`,
@@ -70,11 +71,19 @@ export function outcomesView(results) {
   // the base point always takes the main numbers; the other points come from the slider grid
   const base = { share: m.base_share, proportional: n.proportional, enacted: n.enacted, base: true,
     neutral: { median: n.neutral.median, p5: n.neutral.p5, p95: n.neutral.p95 }, more: n.position.more };
-  const points = [...(n.swing?.points ?? []).filter((p) => !p.base), base].sort((a, b) => a.share - b.share)
-    .map((p) => pointView(p, n.seats));
+  // a grid point that reads like the base share (51.8% next to 0.51797) would be a second stop with the same label
+  const points = [...(n.swing?.points ?? []).filter((p) => !p.base && sliderShare(p.share) !== sliderShare(base.share)), base]
+    .sort((a, b) => a.share - b.share).map((p) => pointView(p, n.seats));
   const baseIndex = points.findIndex((p) => p.base);
   const main = points[baseIndex];
-  const tick = (key, value) => ({ key, share: value, text: `${SHORT_LABELS[key]} ${share(value)}` });
+  // A tick at the first stop where a count reaches a majority, so the label and the waffle at that stop agree.
+  const reach = (key) => points.findIndex((p) => p.rows.find((r) => r.key === key).seats >= m.seats_needed);
+  const ticks = ['proportional', 'neutral', 'enacted'].map((key) => ({ key, index: reach(key), name: SHORT_LABELS[key] }))
+    .filter((x) => x.index >= 0).map((x) => ({ ...x, value: points[x.index].label }));
+  const from = (key) => {
+    const found = ticks.find((x) => x.key === key);
+    return found ? `at ${found.value}` : `above ${points.at(-1).label}`;
+  };
   return {
     intro: `Democratic seats in the ${states} states with more than one seat, counted three ways with the same votes. `
       + 'Select a row to see it as seats.',
@@ -96,9 +105,9 @@ export function outcomesView(results) {
     baseIndex,
     slider: {
       label: 'Democratic share of the national two-party vote',
-      ticks: [tick('proportional', m.proportional.share), tick('neutral', m.neutral.share), tick('enacted', m.enacted.share)],
-      majority: `A House majority takes ${share(m.proportional.share)} of the vote if seats follow the votes, `
-        + `${share(m.neutral.share)} on neutral maps and ${share(m.enacted.share)} on the enacted maps.`,
+      ticks,
+      majority: `On the slider, a House majority starts ${from('proportional')} of the two-party vote `
+        + `if seats follow the votes, ${from('neutral')} on neutral maps and ${from('enacted')} on the enacted maps.`,
     },
   };
 }
@@ -108,7 +117,7 @@ const SINGLE_SEAT_PARTY = { DE: 'D', VT: 'D', AK: 'R', ND: 'R', SD: 'R', WY: 'R'
 const names = (list) => (list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`);
 const bothOrAll = (k) => (k === 2 ? 'both states' : `all ${['', 'one', 'two', 'three', 'four', 'five', 'six'][k] ?? k} states`);
 
-/** The House of 435 around the waffle: the framed one-seat states, the middle seat and the key. */
+/** The House of 435 around the waffle: the framed one-seat states and the key. */
 function houseView(results, needed) {
   const single = results.national.single_seat;
   const party = (p) => single.filter((s) => SINGLE_SEAT_PARTY[s.postal] === p).map((s) => s.name);

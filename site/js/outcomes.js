@@ -100,6 +100,8 @@ export function renderOutcomes(view, { reduceMotion }) {
   }
   const hideTip = () => { tip.hidden = true; };
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') hideTip(); });
+  // a tap anywhere else closes the tip on a touch screen
+  document.addEventListener('pointerdown', (event) => { if (!event.target.closest?.('#waffle .frames')) hideTip(); });
 
   function frame(seatsInFrame, text) {
     const spots = seatsInFrame.map(at);
@@ -109,9 +111,10 @@ export function renderOutcomes(view, { reduceMotion }) {
       x: Math.min(...xs) - 1.5, y: Math.min(...ys) - 1.5,
       width: Math.max(...xs) - Math.min(...xs) + HOUSE.size + 3, height: Math.max(...ys) - Math.min(...ys) + HOUSE.size + 3,
     });
-    rect.addEventListener('pointerenter', () => showTip(rect, text));
-    rect.addEventListener('pointerleave', hideTip);
-    rect.addEventListener('click', () => (tip.hidden ? showTip(rect, text) : hideTip()));
+    // a mouse shows the tip while it points at the frame; a tap or a click toggles it
+    rect.addEventListener('pointerenter', (event) => { if (event.pointerType === 'mouse') showTip(rect, text); });
+    rect.addEventListener('pointerleave', (event) => { if (event.pointerType === 'mouse') hideTip(); });
+    rect.addEventListener('click', () => (tip.hidden || tip.textContent !== text ? showTip(rect, text) : hideTip()));
     return rect;
   }
 
@@ -177,17 +180,11 @@ export function renderOutcomes(view, { reduceMotion }) {
   slider.value = String(pi);
   $('vote-label').textContent = view.slider.label;
   $('vote-majority').textContent = view.slider.majority;
-  // a share as a position along the slider, between the two points around it
-  const along = (share) => {
-    const shares = view.points.map((p) => p.share);
-    const k = Math.max(0, Math.min(shares.length - 2, shares.findIndex((s) => s > share) - 1));
-    return (k + (share - shares[k]) / (shares[k + 1] - shares[k])) / (shares.length - 1);
-  };
+  // each tick sits on the stop where its count first reaches a majority
   $('vote-ticks').replaceChildren(...view.slider.ticks.map((t) => {
-    const space = t.text.lastIndexOf(' ');
     const mark = node('span', { class: `tk ${t.key}` });
-    mark.style.setProperty('--at', String(along(t.share)));
-    mark.append(node('span', { class: 'nm' }, t.text.slice(0, space)), node('span', { class: 'pc' }, t.text.slice(space + 1)));
+    mark.style.setProperty('--at', String(t.index / (view.points.length - 1)));
+    mark.append(node('span', { class: 'nm' }, t.name), node('span', { class: 'pc' }, t.value));
     return mark;
   }));
   const back = $('vote-back');

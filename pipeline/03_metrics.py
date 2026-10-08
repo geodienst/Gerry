@@ -254,13 +254,19 @@ def national_majority(*, base_share: float, needed: int, enacted_shares, plan_sh
 
 
 def national_swing(*, base_share: float, base: dict, state_shares, state_seats, plan_shares, enacted_shares,
-                   grid) -> dict:
+                   grid, single_seat: Mapping[str, tuple[float, str]]) -> dict:
     """The three counts at every share of `grid` under a uniform swing, plus the base point with the main numbers
-    (plan 2026-10-08-vote-slider). Stops at a share 5 points or more from base_share, where the fixed result of
-    the single-seat states no longer holds, and when a count falls as the share rises."""
+    (plan 2026-10-08-vote-slider). Stops at a share 5 points or more from base_share, when one of the single-seat
+    states (postal -> Democratic share and fixed party) would change sides somewhere on the grid, and when a count
+    falls as the share rises."""
     far = [share for share in grid if abs(share - base_share) >= MAX_SWING_STEPS / SWING_GRID]
     if far:
         raise CheckError("swing_range", "US", f"shares {far} lie 5 points or more from {base_share:.4f}")
+    for postal, (share, party) in single_seat.items():
+        edge = share + (min(grid) - base_share if party == "D" else max(grid) - base_share)
+        if (edge > 0.5) != (party == "D"):
+            raise CheckError("swing_single_seat", postal, f"fixed as {party}, but its Democratic share {share:.4f} "
+                                                          f"reaches {edge:.4f} on the slider")
     points = [{"share": share, **swing_point(share - base_share, state_shares=state_shares, state_seats=state_seats,
                                              plan_shares=plan_shares, enacted_shares=enacted_shares), "base": False}
               for share in grid if share != base_share]
@@ -389,7 +395,8 @@ def compute(cfg, idir) -> dict:
     national["swing"] = national_swing(
         base_share=national["majority"]["base_share"], base=national, state_shares=votes["state_shares"],
         state_seats=votes["state_seats"], plan_shares=votes["plan_shares"],
-        enacted_shares=np.concatenate(votes["enacted_shares"]), grid=SWING_SHARES)
+        enacted_shares=np.concatenate(votes["enacted_shares"]), grid=SWING_SHARES,
+        single_seat={postal: (d / (d + r), SINGLE_SEAT_PARTY[postal]) for postal, (d, r) in single_seat.items()})
     ends = national["swing"]["points"][:1] + national["swing"]["points"][-1:]
     print("US swing: " + "; ".join(f"{p['share']:.3f}: proportional {p['proportional']}, neutral "
                                    f"{p['neutral']['median']} ({p['neutral']['p5']}-{p['neutral']['p95']}), "

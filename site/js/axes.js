@@ -110,7 +110,7 @@ export function netBar(seatsR, seatsD, width = 360) {
 // (seat 218, the majority) at the top of the column between them, in the grid like the rest. Each half fills
 // from its outer column inward, every column bottom up, so the change of color ends next to the middle seat.
 
-export const HOUSE = { half: 217, size: 10, step: 12, top: 18, gap: 2 }; // gap: as between any two squares
+export const HOUSE = { half: 217, size: 10, step: 12, top: 2, gap: 2 }; // top: room for the frames; gap: as between squares
 
 /** Columns, the seats in the inner column, the size in viewBox units and the middle seat, for `rows` rows. */
 export function houseLayout(rows, h = HOUSE) {

@@ -388,6 +388,8 @@ async function layout(t) {
     t.check(`${width}px: the sheet is ${place} the map`, where === place, where);
     const rowsWhere = await t.js("(() => { const r = document.getElementById('scen').getBoundingClientRect(); const w = document.querySelector('.waffle').getBoundingClientRect(); return w.left >= r.right - 1 ? 'beside' : w.top >= r.bottom - 1 ? 'below' : 'overlap'; })()");
     t.check(`${width}px: the waffle is ${rowsPlace} the three rows`, rowsWhere === rowsPlace, rowsWhere);
+    const houseRows = await t.js("new Set([...document.querySelectorAll('#waffle rect.seat')].map((r) => r.getAttribute('y'))).size");
+    t.check(`${width}px: the House has ${width < 768 ? 14 : 7} rows of squares`, houseRows === (width < 768 ? 14 : 7), String(houseRows));
     const metaWhere = await t.js("(() => { const tops = [...document.querySelectorAll('.metastrip dl > div')].map((d) => Math.round(d.getBoundingClientRect().top)); return new Set(tops).size === 1 ? 'in a row' : 'stacked'; })()");
     t.check(`${width}px: the three fields of the meta strip are ${metaPlace}`, metaWhere === metaPlace, metaWhere);
     t.check(`${width}px: root font size ${font}`, (await t.js('getComputedStyle(document.documentElement).fontSize')) === font);
@@ -638,34 +640,64 @@ async function outcomes(t) {
   t.check('the spread sentence places the enacted maps against the band', /^90% of neutral outcomes give Democrats \d+( to \d+)? seats\. The enacted maps give \d+, (below|within|above) that range\.$/
     .test(await t.js("document.querySelector('#spread p').textContent")));
 
-  // The vote slider (plan 2026-10-08-vote-slider): it starts at the base share and moves every count.
-  const swing = await t.js(`${DATA}.then((r) => ({ points: r.national.swing.points, majority: r.national.majority }))`);
-  const baseAt = swing.points.findIndex((p) => p.base);
+  // The vote slider (plan 2026-10-08-vote-slider): it starts at the base share and moves every count. A grid point
+  // that reads like the base share (51.8% next to 0.51797) is left out, so no two stops carry the same label.
+  const swing = await t.js(`${DATA}.then((r) => ({ points: r.national.swing.points, needed: r.national.majority.seats_needed }))`);
+  const baseShare = swing.points.find((p) => p.base).share;
+  const stops = swing.points.filter((p) => p.base || Math.abs(p.share - baseShare) >= 0.0005);
+  const baseAt = stops.findIndex((p) => p.base);
+  const setSlider = (index) => t.js(`(() => { const s = document.getElementById('vote'); s.value = '${index}'; s.dispatchEvent(new Event('input')); })()`);
   const slider = await t.js(`(() => { const s = document.getElementById('vote'); return { value: Number(s.value), max: Number(s.max),
     label: document.getElementById('vote-label').textContent, out: document.getElementById('vote-out').textContent,
     text: s.getAttribute('aria-valuetext'), back: document.getElementById('vote-back').hidden,
-    ticks: [...document.querySelectorAll('#vote-ticks .tk')].map((x) => x.textContent) }; })()`);
+    ticks: [...document.querySelectorAll('#vote-ticks .tk')].map((x) => ({ text: x.textContent, at: Number(x.style.getPropertyValue('--at')) })) }; })()`);
   t.check('the vote slider starts at the 2016 and 2020 votes, one step per point',
-    slider.value === baseAt && slider.max === swing.points.length - 1 && slider.back
+    slider.value === baseAt && slider.max === stops.length - 1 && slider.back
     && slider.label === 'Democratic share of the national two-party vote' && slider.out.endsWith(', the 2016 and 2020 votes')
     && slider.text.endsWith('of the two-party vote for Democrats, the 2016 and 2020 result'), JSON.stringify(slider));
   t.check('three ticks mark where each count reaches a House majority', slider.ticks.length === 3
-    && ['Proportional', 'Neutral median', 'Enacted'].every((name, i) => slider.ticks[i].startsWith(name)), slider.ticks.join(' | '));
-  const half = swing.points.findIndex((p) => Math.abs(p.share - 0.5) < 1e-9);
-  await t.js(`(() => { const s = document.getElementById('vote'); s.value = '${half}'; s.dispatchEvent(new Event('input')); })()`);
+    && ['Proportional', 'Neutral median', 'Enacted'].every((name, i) => slider.ticks[i].text.startsWith(name)), JSON.stringify(slider.ticks));
+  // the Enacted tick names the first stop where the enacted maps (the row shown) give a majority; one stop lower they do not
+  const enactedTick = Math.round(slider.ticks[2].at * (stops.length - 1));
+  const middleBlue = "document.querySelector('#waffle rect.middle').getAttribute('fill') === getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
+  await setSlider(enactedTick);
+  const atTick = await t.js(`({ out: document.getElementById('vote-out').textContent, blue: ${middleBlue}, democratic: ${democratic} })`);
+  await setSlider(enactedTick - 1);
+  const below = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
+  t.check('at the Enacted tick the enacted maps reach seat 218, one stop lower they do not',
+    slider.ticks[2].text.endsWith(atTick.out) && atTick.blue && atTick.democratic >= swing.needed + 2 && !below.blue
+    && below.democratic < swing.needed + 2, JSON.stringify({ tick: slider.ticks[2], atTick, below }));
+  const half = stops.findIndex((p) => Math.abs(p.share - 0.5) < 1e-9);
+  await setSlider(half);
   const moved = await t.js(`(() => ({ rows: [...document.querySelectorAll('#scen .big')].map((b) => Number(b.textContent)),
     out: document.getElementById('vote-out').textContent, back: document.getElementById('vote-back').hidden,
     finding: document.getElementById('finding').textContent, democratic: ${democratic} }))()`);
-  const p = swing.points[half];
+  const p = stops[half];
   t.check('at 50.0% the rows, the finding and the waffle follow the slider',
     moved.rows.join() === [p.proportional, p.neutral.median, p.enacted].join() && moved.out === '50.0%' && !moved.back
-    && moved.finding.startsWith('In this comparison, at 50.0% of the vote,') && moved.democratic === p.enacted + 2, JSON.stringify(moved));
+    && moved.finding.startsWith('In this comparison, with Democrats at 50.0% of the two-party vote,') && moved.democratic === p.enacted + 2,
+    JSON.stringify(moved));
   await t.js("document.getElementById('vote-back').click()");
   t.check('"Back to the 2016 and 2020 votes" returns to the base point and focuses the slider', await t.js(
     `Number(document.getElementById('vote').value) === ${baseAt} && document.activeElement.id === 'vote' && document.getElementById('vote-back').hidden`
-    + ` && ${democratic} === ${swing.points[baseAt].enacted} + 2`));
+    + ` && ${democratic} === ${stops[baseAt].enacted} + 2`));
   await t.key('ArrowLeft', 37);
   t.check('the arrow keys move the slider one point', await t.until(`Number(document.getElementById('vote').value) === ${baseAt - 1}`));
+  // a change of row dots the seats that changed; a move of the slider clears the dots
+  await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
+  const dotted = await t.js("document.querySelectorAll('#waffle .changed circle').length");
+  await setSlider(baseAt);
+  t.check('a slider move clears the dots of the last change of row', dotted > 0 && await t.js(
+    "document.querySelectorAll('#waffle .changed circle').length === 0 && document.getElementById('key-changed').hidden"), `${dotted} dots before`);
+  // a tap shows the tooltip of a frame and keeps it; a tap elsewhere closes it
+  await t.js(`(() => { const f = document.querySelectorAll('#waffle .frames rect')[1];
+    for (const type of ['pointerenter', 'pointerleave']) f.dispatchEvent(new PointerEvent(type, { pointerType: 'touch' }));
+    f.dispatchEvent(new MouseEvent('click', { bubbles: true })); })()`);
+  const tapped = await t.js("({ hidden: document.getElementById('waffle-tip').hidden, text: document.getElementById('waffle-tip').textContent })");
+  await t.js("document.getElementById('finding').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }))");
+  t.check('a tap on a frame shows its tooltip, a tap elsewhere closes it',
+    !tapped.hidden && tapped.text.startsWith('Alaska, North Dakota, South Dakota and Wyoming') && await t.js("document.getElementById('waffle-tip').hidden"),
+    JSON.stringify(tapped));
 
   for (const [width, dark] of [[375, false], [1280, false], [1280, true]]) {
     await t.load('', { width, height: 900, dark });

@@ -639,7 +639,8 @@ def test_national_majority_stops_when_a_grid_threshold_is_far_off():
 # The vote slider (plan 2026-10-08-vote-slider): the grid, the base point and the checks
 SWING_BASE = {"proportional": 2, "enacted": 2, "neutral": {"median": 1, "p5": 0, "p95": 3}, "position": {"more": 0.125}}
 SWING_ARGS = {"base_share": 0.5, "base": SWING_BASE, "state_shares": [0.72005, 0.40005], "state_seats": [2, 2],
-              "plan_shares": [AA_PLANS, BB_PLANS], "enacted_shares": [0.6, 0.47005, 0.52, 0.4], "grid": [0.52, 0.485]}
+              "plan_shares": [AA_PLANS, BB_PLANS], "enacted_shares": [0.6, 0.47005, 0.52, 0.4], "grid": [0.52, 0.485],
+              "single_seat": {"DE": (0.6, "D"), "WY": (0.3, "R")}}
 
 
 def test_national_swing_hand_example():
@@ -665,6 +666,15 @@ def test_national_swing_stops_when_a_count_falls_as_the_share_rises():
     # a base with 3 enacted districts lies above the 2 at 0.52
     with pytest.raises(CheckError, match="swing_monotone.*enacted"):
         step.national_swing(**{**SWING_ARGS, "base": {**SWING_BASE, "enacted": 3}})
+
+
+def test_national_swing_stops_when_a_one_seat_state_would_change_sides():
+    # DE at 0.51 drops to 0.51 - 0.015 = 0.495 at the lowest grid share 0.485: no longer Democratic
+    with pytest.raises(CheckError, match="swing_single_seat.*DE"):
+        step.national_swing(**{**SWING_ARGS, "single_seat": {"DE": (0.51, "D")}})
+    # WY at 0.49 rises to 0.49 + 0.02 = 0.51 at the highest grid share 0.52: no longer Republican
+    with pytest.raises(CheckError, match="swing_single_seat.*WY"):
+        step.national_swing(**{**SWING_ARGS, "single_seat": {"WY": (0.49, "R")}})
 
 
 def test_national_swing_stops_at_5_points_from_the_base_share():

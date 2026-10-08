@@ -143,25 +143,25 @@ test('houseLayout: two halves of 217 seats and a middle seat at the top, 7 rows 
   assert.equal(HOUSE.half, 217);
   // 7 rows: 31 full columns; half width 31 * 12 - 2 = 370; the middle column is the 32nd of 63 (x 31 * 12 = 372),
   // in the grid like any other; width 63 * 12 - 2 = 754
-  assert.deepEqual(houseLayout(7), { rows: 7, cols: 31, partial: 7, width: 754, height: 100, mid: { x: 372, y: 18 } });
+  assert.deepEqual(houseLayout(7), { rows: 7, cols: 31, partial: 7, width: 754, height: 84, mid: { x: 372, y: 2 } });
   // 14 rows: 16 columns, the inner one holds 217 - 15 * 14 = 7 seats; half width 16 * 12 - 2 = 190; 33 columns in all
-  assert.deepEqual(houseLayout(14), { rows: 14, cols: 16, partial: 7, width: 394, height: 184, mid: { x: 192, y: 18 } });
+  assert.deepEqual(houseLayout(14), { rows: 14, cols: 16, partial: 7, width: 394, height: 168, mid: { x: 192, y: 2 } });
 });
 
 test('houseCell: from the outer column inward, each column bottom up; the right half mirrors the left', () => {
-  // k 0: outer column, bottom row (18 + 6 * 12 = 90); k 6: same column, top row
-  assert.deepEqual(houseCell('D', 0, 7), { x: 0, y: 90 });
-  assert.deepEqual(houseCell('D', 6, 7), { x: 0, y: 18 });
-  assert.deepEqual(houseCell('D', 7, 7), { x: 12, y: 90 });
+  // k 0: outer column, bottom row (2 + 6 * 12 = 74); k 6: same column, top row
+  assert.deepEqual(houseCell('D', 0, 7), { x: 0, y: 74 });
+  assert.deepEqual(houseCell('D', 6, 7), { x: 0, y: 2 });
+  assert.deepEqual(houseCell('D', 7, 7), { x: 12, y: 74 });
   // k 216: the last seat of the half, inner column (30 * 12 = 360), top row, next to the middle seat
-  assert.deepEqual(houseCell('D', 216, 7), { x: 360, y: 18 });
+  assert.deepEqual(houseCell('D', 216, 7), { x: 360, y: 2 });
   // right half: x mirrored, width - 10 - x; its inner column (384) is one step after the middle column (372)
-  assert.deepEqual(houseCell('R', 0, 7), { x: 744, y: 90 });
-  assert.deepEqual(houseCell('R', 216, 7), { x: 384, y: 18 });
+  assert.deepEqual(houseCell('R', 0, 7), { x: 744, y: 74 });
+  assert.deepEqual(houseCell('R', 216, 7), { x: 384, y: 2 });
   // 14 rows: the inner column (15 * 12 = 180) holds k 210 to 216 in its top 7 rows, bottom up
-  assert.deepEqual(houseCell('D', 209, 14), { x: 168, y: 18 });
-  assert.deepEqual(houseCell('D', 210, 14), { x: 180, y: 90 });
-  assert.deepEqual(houseCell('D', 216, 14), { x: 180, y: 18 });
+  assert.deepEqual(houseCell('D', 209, 14), { x: 168, y: 2 });
+  assert.deepEqual(houseCell('D', 210, 14), { x: 180, y: 74 });
+  assert.deepEqual(houseCell('D', 216, 14), { x: 180, y: 2 });
 });
 
 test('housePlace: seat i of 435 counted from the Democratic side', () => {
