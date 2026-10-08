@@ -67,7 +67,7 @@ NOTE_TEXTS: dict[str, str] = {
     ),
     "narrow_ensemble": (
         "At least 95% of the neutral maps for this state give the same number of Democratic seats, so the "
-        "neutral baseline has little or no spread."
+        "neutral band has little or no spread."
     ),
     "adopted_after_2024_election": (
         "This map was adopted after the 2024 election, so the people who drew it could use 2024 results. "

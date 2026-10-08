@@ -179,8 +179,15 @@ async function main() {
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });
 
-  if (location.hash === '#method') details.open = true;
-  select(stateFromHash(location.hash, results.states, index.single), { animate: false, announce: false });
+  const start = stateFromHash(location.hash, results.states, index.single);
+  select(start, { animate: false, announce: false });
+  // The browser jumped to a chapter such as #method before the chapters above it were filled in;
+  // now that they are, jump again (and open the method for #method).
+  const anchor = !start && location.hash.length > 1 && document.getElementById(location.hash.slice(1));
+  if (anchor) {
+    if (anchor === $('method')) details.open = true;
+    anchor.scrollIntoView();
+  }
 }
 
 main();

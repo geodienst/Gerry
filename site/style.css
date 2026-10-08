@@ -243,6 +243,9 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
    (sheet.js wraps each word in .nowrap); at 22rem the three labels fit at 0.75rem. */
 .record .trio { display: grid; grid-template-columns: repeat(3, minmax(min-content, 1fr)); gap: 0.5rem; }
 .record .trio .lab { font-size: 0.75rem; }
+/* The three values on one line, also when a label such as "Neutral-map median" takes two lines */
+.record .trio > div { grid-row: span 3; grid-template-rows: subgrid; row-gap: 0; }
+.record .trio .lab { align-self: end; }
 .dotrows .grid { stroke: var(--rule); }
 .dotrows .lbl, .dotrows .baselbl { fill: var(--fg); font-weight: 600; }
 .dotrows .bandr { fill: var(--tint); stroke: var(--ink); }

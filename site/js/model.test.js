@@ -27,7 +27,7 @@ test('tooltips: a district, a state, and a single-seat state', () => {
   assert.deepEqual(districtTip(index, '4809', 'TX'), { title: 'TX-9 · Texas', lines: ['Democratic share 46.9%'] });
   assert.deepEqual(stateTip(index, 'TX'), {
     title: 'Texas',
-    lines: ['Drawing effect R+2 · 2 seats toward Republicans', 'Neutral 2, enacted 0 Democratic seats'],
+    lines: ['Drawing effect R+2 · 2 seats toward Republicans', 'Neutral-map median 2, enacted 0 Democratic seats'],
   });
   assert.deepEqual(districtTip(index, '5600', 'WY'), { title: 'Wyoming', lines: [AT_LARGE_TEXT] });
   assert.deepEqual(stateTip(index, 'WY'), { title: 'Wyoming', lines: [AT_LARGE_TEXT] });

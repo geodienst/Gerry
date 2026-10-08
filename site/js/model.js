@@ -39,7 +39,7 @@ export function stateTip(index, postal) {
     title: s.name,
     lines: [
       `Drawing effect ${effectLine(s.effects.drawing)}`,
-      `Neutral ${seats(s.neutral.median)}, enacted ${seats(s.enacted)} Democratic seats`,
+      `Neutral-map median ${seats(s.neutral.median)}, enacted ${seats(s.enacted)} Democratic seats`,
     ],
   };
 }

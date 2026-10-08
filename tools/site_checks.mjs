@@ -349,6 +349,10 @@ async function method(t) {
     await t.until("document.querySelector('#method-axis text.mark-label') !== null");
     const hits = await t.js(crossings('#method'));
     t.check(`${width}px: no marker line in the method figure runs through another label`, hits.length === 0, hits.join('; '));
+    if (width !== 2560) {
+      const top = await t.js("Math.round(document.getElementById('method').getBoundingClientRect().top) || 0"); // -0 does not come back as a value
+      t.check(`${width}px: a fresh load of #method puts the method at the top of the window`, Math.abs(top) <= 2, `top ${top}px`);
+    }
   }
   await t.load();
   await t.js("document.querySelector('#method-details summary').focus()");
