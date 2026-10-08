@@ -109,7 +109,7 @@ export function controlTables(results) {
     byControl: rows(results.national.by_control, (key) => CONTROL_LABELS[key]),
     byBody: rows(results.national.by_body, (key) => key),
     note: 'In these tables the drawing effect is the sum of the drawing effects of the states in a row. The national '
-      + 'drawing effect uses the national neutral baseline instead, so the two can differ.',
+      + 'drawing effect uses the national neutral-map median instead, so the two can differ.',
   };
 }
 

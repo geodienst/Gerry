@@ -320,6 +320,8 @@ async function decide(t) {
 // --- Task 6.8: the method and the footer ----------------------------------------------------------
 async function method(t) {
   await t.load();
+  t.check('the method is folded at the start', await t.js("document.getElementById('method-details')?.open === false"));
+  t.check('chapter 04 has its heading', (await t.text('#method .chead h2')) === 'Method, scope and uncertainty');
   t.check('every number in the method and the footer is filled in', await t.js("[...document.querySelectorAll('[data-fill]')].every((el) => el.textContent.trim() !== '')"));
   const text = await t.text('#method');
   for (const part of ['How to read the three numbers.', 'Why neutral maps are not proportional.', 'Votes.', 'The Voting Rights Act.',
@@ -337,11 +339,26 @@ async function method(t) {
   t.check('the footer names the data date, the legal status date and the ALARM version',
     /Data generated .+\. Legal status as of .+\. ALARM dataset version \d+\./.test(await t.text('footer')));
   t.check('the footer links to the Geodienst with its logo',
-    await t.js("(() => { const a = document.querySelector('footer a[href=\"https://rug.nl/geo\"]'); const img = a && a.querySelector('img'); return !!a && a.textContent.trim() === 'Geodienst' && !!img && img.complete && img.naturalWidth > 0; })()"));
+    await t.js("(() => { const a = document.querySelector('footer a[href=\"https://rug.nl/geo\"]'); const img = a && a.querySelector('img'); return !!a && a.textContent.trim() === 'Geodienst, University of Groningen' && !!img && img.complete && img.naturalWidth > 0; })()"));
+  await t.js("location.hash = '#method'");
+  t.check('a link to #method unfolds the method', await t.until("document.getElementById('method-details').open"));
+  t.check('the open method shows the national seat axis as a figure', await t.until(
+    "document.querySelector('#method-axis svg')?.getAttribute('aria-label')?.startsWith('Democratic seats in all states with more than one seat') === true"));
+  for (const width of [375, 2560, 1280]) {
+    await t.load('#method', { width, height: 900 });
+    await t.until("document.querySelector('#method-axis text.mark-label') !== null");
+    const hits = await t.js(crossings('#method'));
+    t.check(`${width}px: no marker line in the method figure runs through another label`, hits.length === 0, hits.join('; '));
+  }
+  await t.load();
+  await t.js("document.querySelector('#method-details summary').focus()");
+  await t.key('Enter', 13, '\r');
+  t.check('Enter on the summary unfolds the method', await t.until("document.getElementById('method-details').open", 2000));
   // A click on plain text leaves the focus on the body; Escape then acts only while the map or the sheet is in view.
   await t.load('#TX');
   await t.until(`${HEADING} === 'Texas'`);
-  await t.click(await t.center("document.querySelector('#method p')"));
+  await t.js("document.getElementById('method-details').open = true");
+  await t.click(await t.center("document.querySelector('#method .mbody p')"));
   const reading = await t.js('scrollY');
   await t.key('Escape', 27);
   await t.sleep(300);

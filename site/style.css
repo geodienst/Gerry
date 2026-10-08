@@ -58,8 +58,6 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--
 .nowrap { white-space: nowrap; }
 /* Every part spans the window; its content sits in a column of at most 83rem (redesign, open point 8). */
 .wrap { max-width: 83rem; margin: 0 auto; padding-inline: clamp(16px, 2.5vw, 56px); }
-/* The blocks not yet moved into a chapter (Tasks 7.6 to 7.10) */
-.legacy { display: grid; gap: 1.2rem; padding-block: 1.2rem 2.6rem; }
 
 h1 { font: 600 clamp(1.6rem, 2.6vw, 2.4rem)/1.15 var(--font-head); margin: 0; text-wrap: balance; }
 h2 { font: 600 1.33rem/1.2 var(--font-head); margin: 0; text-wrap: balance; }
@@ -140,17 +138,10 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; font-variant-numeric: tabular-nums; }
 
-/* Method and footer: one column of about 70 characters */
+/* The method: one column of about 70 characters */
 .prose { max-width: 70ch; display: grid; gap: 0.8rem; }
 .prose p, .prose ul { margin: 0; }
 .prose ul { padding-left: 1.2rem; display: grid; gap: 0.35rem; }
-footer { font-size: 0.8rem; color: var(--muted); max-width: 90ch; }
-footer p { margin: 0 0 0.3rem; }
-footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; margin-right: 0.4rem; }
-/* In dark mode the logo sits on a light tile so its red stays readable; the negative margins keep the line height. */
-@media (prefers-color-scheme: dark) {
-  footer .credit img { background: #fff; padding: 0.15rem; margin-block: -0.15rem; border-radius: 50%; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
@@ -276,3 +267,25 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
 .changes .v { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
 .tables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
 @media (max-width: 520px) { .tables { grid-template-columns: minmax(0, 1fr); } }
+
+/* Chapter 04: the method folds; the national seat axis is a figure in it (Task 7.10) */
+details.method { background: var(--sheet); border: 1px solid var(--rule); }
+details.method > summary { cursor: pointer; list-style: none; padding: 1rem 1.1rem; display: flex; gap: 0.8rem; align-items: baseline; font-weight: 600; }
+details.method > summary::-webkit-details-marker { display: none; }
+details.method > summary::before { content: "+"; font: 700 1.1rem/1 var(--font-body); color: var(--ink); width: 1rem; flex: none; }
+details.method[open] > summary::before { content: "\2212"; }
+details.method > summary span { color: var(--muted); font-weight: 400; font-size: 0.8125rem; }
+@media (max-width: 520px) { details.method > summary { flex-wrap: wrap; } details.method > summary span { flex-basis: 100%; padding-left: 1.8rem; } }
+.mbody { padding: 0 1.1rem 1.2rem 2.9rem; }
+@media (max-width: 520px) { .mbody { padding-left: 1.1rem; } }
+.figure { margin: 0; display: grid; gap: 0.4rem; }
+
+/* The footer: sources and licenses left, the Geodienst right (Task 7.10) */
+footer { padding-block: 1.8rem 2.6rem; font-size: 0.8rem; color: var(--muted); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 0.8rem 2rem; align-items: center; justify-content: space-between; }
+footer p { margin: 0 0 0.3rem; max-width: 90ch; }
+.credit { display: inline-flex; gap: 0.55rem; align-items: center; color: var(--fg); text-decoration: none; font-weight: 600; }
+.credit:hover { text-decoration: underline; }
+.credit img { width: 1.25rem; height: 1.25rem; }
+/* In dark mode the logo sits on a light disc so its red stays readable. */
+@media (prefers-color-scheme: dark) { .credit img { background: #fff; padding: 0.15rem; border-radius: 50%; } }

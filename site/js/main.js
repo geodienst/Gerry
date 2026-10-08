@@ -1,9 +1,10 @@
-// Entry point: loads site/data/results.json and site/data/map.topojson, then wires chapter 01, the map and the sheet beside it, and chapter 03.
+// Entry point: loads site/data/results.json and site/data/map.topojson, then wires chapter 01, the map and the sheet beside it,
+// chapter 03 and the figure in the method (chapter 04).
 // d3 and topojson come from site/vendor/ as globals; the page makes no other requests.
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
 import {
-  indexResults, stateOptions, mapHints, effectList, methodFills,
+  indexResults, stateOptions, mapHints, effectList, nationalView, methodFills,
 } from './model.js';
 import { extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
@@ -13,6 +14,8 @@ import {
 } from './chapters.js';
 import { renderOutcomes } from './outcomes.js';
 import { renderDecide } from './decide.js';
+import { drawSeatAxis } from './charts.js';
+import { nationalSeatDomain } from './axes.js';
 
 const { d3 } = globalThis;
 const $ = (id) => document.getElementById(id);
@@ -108,10 +111,24 @@ async function main() {
     if (!row || document.activeElement !== row) $('sheet-title').focus();
   }
 
+  // Chapter 04: the national seat axis as a figure in the method, drawn once the method is open
+  // (a closed <details> has no width to draw in), and again at a new width.
+  const national = nationalView(results);
+  const details = $('method-details');
+  $('method-caption').textContent = national.caption;
+  const drawFigure = () => {
+    if (!details.open) return;
+    drawSeatAxis($('method-axis'), national.axis, nationalSeatDomain(national.axis, national.seatsTotal), national.axisLabel, 720);
+  };
+  details.addEventListener('toggle', drawFigure);
+
   function fromLocation() {
     const postal = stateFromHash(location.hash, results.states, index.single);
     const target = location.hash.slice(1);
-    if (!postal && target && document.getElementById(target)) return; // a link to a section, such as #method
+    if (!postal && target && document.getElementById(target)) { // a link to a chapter, such as #method
+      if (target === 'method') details.open = true;
+      return;
+    }
     select(postal);
   }
   window.addEventListener('popstate', fromLocation);
@@ -158,9 +175,11 @@ async function main() {
     const at = focusable().indexOf(document.activeElement);
     renderSheet();
     renderDecide(decide);
+    drawFigure();
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });
 
+  if (location.hash === '#method') details.open = true;
   select(stateFromHash(location.hash, results.states, index.single), { animate: false, announce: false });
 }
 
