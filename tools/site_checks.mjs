@@ -18,14 +18,17 @@ async function map(t) {
   t.check('435 districts and 50 states on the map',
     await t.js("document.querySelectorAll('#map path.district').length === 435 && document.querySelectorAll('#map path.statefill').length === 50"));
   t.check('the zoom hint is hidden at the start', await t.js("getComputedStyle(document.getElementById('gesture')).display === 'none'"));
-  t.check('the State menu lists the 44 states', await t.js("document.querySelectorAll('#pick option').length === 45"));
+  t.check('the State menu lists all 50 states, the six with one seat marked', await t.js(
+    "document.querySelectorAll('#pick option').length === 51 && [...document.querySelectorAll('#pick option')].filter((o) => o.textContent.endsWith(' (one seat)')).length === 6"));
 
   const wyoming = await t.center(districtOf('WY'));
   await t.mouse('mouseMoved', wyoming);
   t.check('pointing at Wyoming shows the at-large text', (await t.text('#tip')).includes(AT_LARGE));
   await t.click(wyoming);
-  t.check('clicking Wyoming writes the tap line and keeps the whole map',
-    (await t.text('#tapline')) === `Wyoming: ${AT_LARGE}` && (await t.js('location.hash')) === '');
+  t.check('clicking Wyoming writes the tap line and opens its short record',
+    (await t.text('#tapline')) === `Wyoming: ${AT_LARGE}` && await t.until(`location.hash === '#WY' && ${HEADING} === 'Wyoming'`));
+  await t.js("document.getElementById('zoom-reset').click()");
+  await t.until(`location.hash === '' && ${ZOOM} === 1`);
 
   const texas = await t.center(districtOf('TX'));
   await t.mouse('mouseMoved', texas);
@@ -154,12 +157,23 @@ async function sheet(t) {
   await t.load('#TX');
   t.check('#TX opens the sheet for Texas', await t.until(`${HEADING} === 'Texas'`));
   const texas = await t.text('#sheet');
-  for (const part of ['All states', 'Legal status as of ', 'Vote-proportional', 'Neutral-map median', 'Enacted maps', 'Geographic effect',
+  for (const part of ['State record', 'All states', 'Legal status as of ', 'Vote-proportional', 'Neutral-map median', 'Enacted maps', 'Geographic effect',
     'Drawing effect', 'neutral maps,', 'Districts, sorted', 'Efficiency gap', 'Mean-median', 'Notes', 'Map file:']) {
     t.check(`the Texas sheet has "${part}"`, texas.includes(part));
   }
   t.check('the status reads "In effect" or "Challenged in court"', /In effect|Challenged in court/.test(texas));
   t.check('effects show their direction', /([RD]\+\d+ · \d+ seats? toward (Republicans|Democrats)|0 · no difference)/.test(texas));
+  t.check('the headline gives the drawing effect and says what it compares', await t.js(`(() => {
+    const big = document.querySelector('#sheet .headline .big')?.textContent ?? '';
+    const line = document.querySelector('#sheet .headline p')?.textContent ?? '';
+    return /^(0|[RD]\\+\\d+)$/.test(big) && /(compared with the state's neutral-map median|No difference from the neutral-map median)\\.$/.test(line);
+  })()`));
+  const strip = await t.js(`(() => { const s = document.querySelector('#sheet svg.dotrows');
+    return s && { role: s.getAttribute('role'), label: s.getAttribute('aria-label'), rows: [...s.querySelectorAll('text.lbl')].map((x) => x.textContent),
+      band: s.querySelectorAll('rect.bandr').length, filled: s.querySelectorAll('circle.mk.filled').length }; })()`);
+  t.check('the seat strip has three rows, the neutral band and Enacted as the filled dot',
+    strip?.role === 'img' && strip.label.startsWith('Democratic seats in Texas:') && strip.rows.join() === 'Proportional,Neutral median,Enacted'
+    && strip.band === 1 && strip.filled === 1, JSON.stringify(strip));
   t.check('efficiency gap in points toward a party', /points toward (Republicans|Democrats)|less than 0\.05 points either way/.test(texas));
   t.check('the seat axis and the sorted chart have a text alternative', await t.js(
     "[...document.querySelectorAll('#sheet svg.chart')].filter((s) => s.getAttribute('role') === 'img' && s.getAttribute('aria-label')).length === 2"));
@@ -223,6 +237,13 @@ async function sheet(t) {
     return Math.abs(s.viewBox.baseVal.width - Math.round(Math.max(280, Math.min(560, box * 15 / root)))) <= 1; })()`);
   t.check('a new window width draws the charts again at the new width', redrawn && fits);
   await t.tab('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+  await t.load('#WY');
+  t.check('#WY opens the short record of Wyoming', await t.until(`${HEADING} === 'Wyoming'`)
+    && (await t.text('#sheet')).includes(AT_LARGE) && (await t.text('#sheet .headline .big')) === '1 seat'
+    && (await t.js("document.getElementById('pick').value")) === 'WY');
+  await t.js("document.getElementById('sheet').scrollIntoView({ block: 'center' })");
+  await t.key('Escape', 27);
+  t.check('Escape goes from Wyoming back to the list', await t.until(`${HEADING} === 'Drawing effect by state' && location.hash === ''`));
 }
 
 // --- Task 6.7: the national section ---------------------------------------------------------------
@@ -271,10 +292,10 @@ async function national(t) {
     await t.load('', { width, height: 900 });
     const hits = (await t.js(crossings('#national'))).map((hit) => `national: ${hit}`);
     if (width === 1280) textHits.push(...(await t.js(broken)).map((hit) => `national: ${hit}`));
-    const states = await t.js("[...document.querySelectorAll('#pick option')].map((o) => o.value).filter(Boolean)");
+    const states = await t.js(`${DATA}.then((r) => Object.keys(r.states))`);
     for (const postal of states) {
       await t.js(`location.hash = '#${postal}'`);
-      await t.until(`document.getElementById('pick').value === '${postal}' && document.querySelector('#sheet text.mark-label') !== null`);
+      await t.until(`document.getElementById('pick').value === '${postal}' && document.querySelector('#sheet svg.dotrows') !== null`);
       hits.push(...(await t.js(crossings('#sheet'))).map((hit) => `${postal}: ${hit}`));
       if (width === 1280) textHits.push(...(await t.js(broken)).map((hit) => `${postal}: ${hit}`));
     }

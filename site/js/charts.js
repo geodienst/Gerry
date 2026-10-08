@@ -2,6 +2,7 @@
 // Geometry comes from axes.js, numbers from format.js; this module only draws.
 import {
   BASE_FONT, SEAT_AXIS, VOTE_AXIS, LABEL_GAP, chartUnits, placeLabels, sortedDomain, netBar, voteDomain, voteTicks,
+  DOT_ROWS, rowTextAnchor,
 } from './axes.js';
 import { markerSegments } from './axes.js';
 import { seats, percentLabel } from './format.js';
@@ -146,4 +147,45 @@ export function drawVoteAxis(el, axis, label) {
     .call(d3.axisBottom(x).tickValues(voteTicks(domain)).tickSize(3).tickFormat((v) => percentLabel(v)));
   const marks = [...axis.marks, { key: 'base', value: axis.base, text: axis.baseText }];
   drawMarks(svg, marks.map((mark) => ({ ...mark, x: x(mark.value) })), W, H - m.b, m.t, 4);
+}
+
+/**
+ * Rows of dots on one axis (redesign, chapters 4 and 5): a label per row, the band where a row has one,
+ * an open dot or a filled one (Enacted), an optional value text beside the dot, and an optional dashed
+ * base line with its label (the actual vote on the House majority axis).
+ * @param {Element} el
+ * @param {{domain: number[], ticks: {value: number, text: string}[], rows: object[], base?: {value: number, text: string}}} spec
+ * @param {string} label text alternative
+ * @param {number} maxUnits widest chart in viewBox units
+ */
+export function drawDotRows(el, spec, label, maxUnits = 560) {
+  const m = DOT_ROWS;
+  const top = spec.base ? m.top : 6;
+  const bottom = top + m.row * spec.rows.length;
+  const { svg, width: W } = chartSvg(el, maxUnits, bottom + m.bottom, label);
+  svg.classed('dotrows', true);
+  const x = d3.scaleLinear().domain(spec.domain).range([m.left, W - m.right]);
+  for (const tick of spec.ticks) {
+    svg.append('line').attr('class', 'grid').attr('x1', x(tick.value)).attr('x2', x(tick.value)).attr('y1', top).attr('y2', bottom);
+    svg.append('text').attr('x', x(tick.value)).attr('y', bottom + 15).attr('text-anchor', 'middle').text(tick.text);
+  }
+  const baseX = spec.base ? x(spec.base.value) : null;
+  spec.rows.forEach((row, i) => {
+    const cy = top + m.row * i + m.row / 2;
+    svg.append('text').attr('class', 'lbl').attr('x', 0).attr('y', cy + 4).text(row.label);
+    if (row.band && row.band[1] > row.band[0]) {
+      svg.append('rect').attr('class', 'bandr').attr('x', x(row.band[0])).attr('y', cy - 6)
+        .attr('width', x(row.band[1]) - x(row.band[0])).attr('height', 12);
+    }
+    svg.append('circle').attr('class', row.filled ? 'mk filled' : 'mk').attr('cx', x(row.value)).attr('cy', cy).attr('r', 5);
+    if (row.text) {
+      const anchor = rowTextAnchor(x(row.value), baseX, W);
+      svg.append('text').attr('x', x(row.value) + (anchor === 'start' ? 9 : -9)).attr('y', cy + 4)
+        .attr('text-anchor', anchor).text(row.text);
+    }
+  });
+  if (spec.base) {
+    svg.append('line').attr('class', 'base').attr('x1', baseX).attr('x2', baseX).attr('y1', top - 8).attr('y2', bottom);
+    svg.append('text').attr('class', 'baselbl').attr('x', baseX).attr('y', top - 11).attr('text-anchor', 'middle').text(spec.base.text);
+  }
 }

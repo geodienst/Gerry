@@ -18,7 +18,7 @@ const ZOOM_MS = 650;
  * @param {object} o.index          indexResults(results)
  * @param {object} o.topology       map.topojson
  * @param {object} o.hints          mapHints(...)
- * @param {(postal: string) => void} o.onSelect   called for a state with districts
+ * @param {(postal: string) => void} o.onSelect   called for a state, also one with a single seat (redesign, open point 6)
  * @param {() => boolean} o.reduceMotion
  */
 export function createMap({ svg, box, tip, tapline, gesture, index, topology, hints, onSelect, reduceMotion }) {
@@ -50,7 +50,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
 
   function choose(postal, districtId) {
     tapline.textContent = tapLine(index, districtId, postal, view);
-    if (index.states[postal]) onSelect(postal);
+    if (index.states[postal] || index.single[postal]) onSelect(postal);
   }
 
   // Tooltips only for a mouse; a tap gets the tap line instead (choose).

@@ -256,3 +256,16 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
 .record { background: var(--sheet); border: 1px solid var(--rule); padding: 1.1rem 1.1rem 1.2rem; display: grid; gap: 0.8rem; min-width: 0; align-content: start; }
 #sheet-title { font: 700 1.5rem/1.15 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
 .record .k { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+
+/* The record: headline, three numbers and the rows of dots (Task 7.8) */
+.headline { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.2rem 0.9rem; align-items: center; padding-block: 0.7rem; border-block: 1px solid var(--rule); }
+.headline .big { font: 700 2.6rem/1 var(--font-head); font-variant-numeric: tabular-nums; display: inline-flex; gap: 0.5rem; align-items: center; }
+.headline .big i { width: 0.9rem; height: 2.2rem; display: inline-block; }
+.headline p { margin: 0; font-size: 0.94rem; line-height: 1.4; }
+.record .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.dotrows .grid { stroke: var(--rule); }
+.dotrows .lbl, .dotrows .baselbl { fill: var(--fg); font-weight: 600; }
+.dotrows .bandr { fill: var(--tint); stroke: var(--ink); }
+.dotrows .mk { fill: var(--sheet); stroke: var(--fg); stroke-width: 1.5; }
+.dotrows .mk.filled { fill: var(--fg); }
+.dotrows .base { stroke: var(--fg); stroke-dasharray: 3 3; }

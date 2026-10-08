@@ -3,17 +3,17 @@
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
 import {
-  indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, methodFills,
+  indexResults, stateOptions, mapHints, effectList, nationalView, methodFills,
 } from './model.js';
 import {
-  majorityView, extensionFills, redrawView, stateExtras, competitiveText, controlTables, senateView,
+  majorityView, extensionFills, redrawView, competitiveText, controlTables, senateView,
 } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
-import { renderList, renderState, renderLargest } from './sheet.js';
+import { renderList, renderState, renderLargest, renderSingle } from './sheet.js';
 import {
   renderNational, renderMajority, renderRedraws, renderControl, renderSenate,
 } from './national.js';
-import { outcomesView, largestEffects } from './chapters.js';
+import { outcomesView, largestEffects, recordView, singleSeatView } from './chapters.js';
 import { renderOutcomes } from './outcomes.js';
 
 const { d3 } = globalThis;
@@ -70,12 +70,13 @@ async function main() {
   });
 
   const pick = $('pick');
-  for (const option of stateOptions(results)) pick.append(new Option(option.name, option.postal));
+  for (const option of stateOptions(results, { single: true })) pick.append(new Option(option.label, option.postal));
   pick.addEventListener('change', () => select(pick.value, { push: true }));
   const paintLargest = renderLargest($('largest'), largestEffects(results), (postal) => select(postal, { push: true }));
 
   function renderSheet() {
-    if (ui.selected) renderState($('sheet'), stateSheet(results, ui.selected), colors, back, stateExtras(results, ui.selected));
+    if (index.single[ui.selected]) renderSingle($('sheet'), singleSeatView(results, ui.selected), back);
+    else if (ui.selected) renderState($('sheet'), recordView(results, ui.selected), colors, back);
     else renderList($('sheet'), effectList(results), colors, (postal) => select(postal, { push: true, focus: true }), ui);
   }
 
@@ -110,7 +111,7 @@ async function main() {
   }
 
   function fromLocation() {
-    const postal = stateFromHash(location.hash, results.states);
+    const postal = stateFromHash(location.hash, results.states, index.single);
     const target = location.hash.slice(1);
     if (!postal && target && document.getElementById(target)) return; // a link to a section, such as #method
     select(postal);
@@ -169,7 +170,7 @@ async function main() {
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });
 
-  select(stateFromHash(location.hash, results.states), { animate: false, announce: false });
+  select(stateFromHash(location.hash, results.states, index.single), { animate: false, announce: false });
 }
 
 main();

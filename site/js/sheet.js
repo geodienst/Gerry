@@ -1,6 +1,5 @@
-// The sheet beside the map (site design, chapter 1): without a chosen state the list
-// "Drawing effect by state"; with a chosen state its numbers. Texts come from model.js.
-import { drawSeatAxis, drawSorted, drawNetBar } from './charts.js';
+// The record beside the map (redesign, chapter 4): without a chosen state the list "Drawing effect by state", with a chosen state its record, for a state with one seat a short record. Texts come from model.js and chapters.js.
+import { drawSorted, drawNetBar, drawDotRows } from './charts.js';
 import { EFFECT_MAX } from './colors.js';
 
 const { d3 } = globalThis;
@@ -99,58 +98,78 @@ function sourceLine(parent, source) {
   p.append('a').attr('href', source.url).attr('rel', 'noopener').text(source.label);
 }
 
+/** The headline: a large value with a swatch, and one or two lines of text. */
+function headline(parent, value, swatch, lines) {
+  const head = parent.append('div').attr('class', 'headline');
+  const big = head.append('span').attr('class', 'big');
+  big.append('i').attr('aria-hidden', 'true').style('background', swatch);
+  big.append('span').text(value);
+  const text = head.append('div');
+  for (const line of lines) text.append('p').text(line);
+}
+
 /**
- * One state, in the order of the site design (chapter 1).
- * @param {object} sheet stateSheet(results, postal)
- * @param {{head: string[], body: string[]}} extras stateExtras(results, postal), from Phase 5
+ * One state, in the order of the redesign (chapter 4): everything the sheet of Phase 6 showed, with the
+ * headline, and the seat strip in place of the seat axis.
+ * @param {object} record recordView(results, postal)
  */
-export function renderState(el, sheet, colors, onBack, extras = { head: [], body: [] }) {
+export function renderState(el, record, colors, onBack) {
   const root = d3.select(el).html('');
   root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
-  const head = root.append('div').attr('class', 'stack');
-  head.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(sheet.name);
-  const meta = head.append('p').attr('class', 'meta');
-  meta.append('span').text(sheet.mapName);
-  meta.append('span').attr('class', 'pill').text(sheet.status);
-  meta.append('span').text(sheet.legal);
-  meta.append('span').text(sheet.seatCount);
-  for (const line of extras.head) head.append('p').attr('class', 'meta').text(line);
+  root.append('span').attr('class', 'k').text(record.kicker);
+  root.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(record.name);
+  const meta = root.append('p').attr('class', 'meta');
+  meta.append('span').text(record.mapName);
+  meta.append('span').attr('class', 'pill').text(record.status);
+  meta.append('span').text(record.legal);
+  meta.append('span').text(record.seatCount);
+  for (const line of record.extras.head) root.append('p').attr('class', 'meta').text(line);
 
-  trio(root, sheet.trio);
-  root.append('p').attr('class', 'note').text(sheet.seatsOf);
-  drawSeatAxis(root.append('div').node(), sheet.axis, [sheet.axis.lo, sheet.axis.hi], sheet.axisLabel);
-  definitionList(root, sheet.effects);
-  root.append('p').attr('class', 'note').text(sheet.position);
+  headline(root, record.headline.value, colors.effect(record.headline.drawing), [record.headline.sentence]);
+  trio(root, record.trio);
+  root.append('p').attr('class', 'note').text(record.seatsOf);
+  drawDotRows(root.append('div').node(), record.strip, record.strip.label);
+  definitionList(root, record.effects);
+  root.append('p').attr('class', 'note').text(record.position);
 
-  if (sheet.blocked) {
+  if (record.blocked) {
     const b = root.append('div').attr('class', 'stack');
     b.append('h4').text('Blocked map');
     const bm = b.append('p').attr('class', 'meta');
-    bm.append('span').text(sheet.blocked.name);
-    bm.append('span').attr('class', 'pill').text(sheet.blocked.status);
-    b.append('p').attr('class', 'note').text(`${sheet.blocked.seatsText} ${sheet.blocked.position}`);
-    sourceLine(b, sheet.blocked.source);
+    bm.append('span').text(record.blocked.name);
+    bm.append('span').attr('class', 'pill').text(record.blocked.status);
+    b.append('p').attr('class', 'note').text(`${record.blocked.seatsText} ${record.blocked.position}`);
+    sourceLine(b, record.blocked.source);
   }
 
   const sorted = root.append('div').attr('class', 'stack');
   sorted.append('h4').text('Districts, sorted');
-  drawSorted(sorted.append('div').node(), sheet.sorted, colors, sheet.sortedLabel);
-  sorted.append('p').attr('class', 'note').text(sheet.sortedCaption);
+  drawSorted(sorted.append('div').node(), record.sorted, colors, record.sortedLabel);
+  sorted.append('p').attr('class', 'note').text(record.sortedCaption);
 
-  if (extras.body.length > 0) {
+  if (record.extras.body.length > 0) {
     const more = root.append('div').attr('class', 'stack extras');
-    for (const line of extras.body) more.append('p').attr('class', 'note').text(line);
+    for (const line of record.extras.body) more.append('p').attr('class', 'note').text(line);
   }
 
   const measures = root.append('div').attr('class', 'stack');
   measures.append('h4').text('Other measures');
-  definitionList(measures, sheet.measures.map((m) => ({ label: m.label, value: m.value, note: m.context })));
+  definitionList(measures, record.measures.map((m) => ({ label: m.label, value: m.value, note: m.context })));
 
-  if (sheet.notes.length > 0) {
+  if (record.notes.length > 0) {
     const notes = root.append('div').attr('class', 'stack');
     notes.append('h4').text('Notes');
     const ul = notes.append('ul').attr('class', 'notes');
-    for (const text of sheet.notes) ul.append('li').text(text);
+    for (const text of record.notes) ul.append('li').text(text);
   }
-  sourceLine(root, sheet.source);
+  sourceLine(root, record.source);
+}
+
+/** The short record of a state with one seat (redesign, chapter 4). */
+export function renderSingle(el, view, onBack) {
+  const root = d3.select(el).html('');
+  root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
+  root.append('span').attr('class', 'k').text(view.kicker);
+  root.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(view.name);
+  headline(root, view.headline, 'var(--blank)', view.lines);
 }
