@@ -4,7 +4,7 @@
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
 import {
-  indexResults, stateOptions, mapHints, effectList, nationalView, methodFills, MAP_TITLES,
+  indexResults, stateOptions, mapHints, effectList, nationalView, methodFills, MAP_TITLES, closeLegend,
 } from './model.js';
 import { extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
@@ -84,7 +84,7 @@ async function main() {
   function paint() {
     map.paint(colors, ui.view, ui.selected);
     $('map-title').textContent = MAP_TITLES[ui.view];
-    drawLegend($('legend'), ui.view, colors);
+    drawLegend($('legend'), ui.view, colors, closeLegend(results));
     paintLargest(colors, ui.selected);
     renderSheet();
   }
@@ -145,8 +145,14 @@ async function main() {
   });
 
   const pressed = (on, off) => { $(on).setAttribute('aria-pressed', 'true'); $(off).setAttribute('aria-pressed', 'false'); };
-  $('view-districts').addEventListener('click', () => { ui.view = 'districts'; pressed('view-districts', 'view-states'); paint(); });
-  $('view-states').addEventListener('click', () => { ui.view = 'states'; pressed('view-states', 'view-districts'); paint(); });
+  const VIEWS = ['districts', 'states', 'close'];
+  for (const view of VIEWS) {
+    $(`view-${view}`).addEventListener('click', () => {
+      ui.view = view;
+      for (const other of VIEWS) $(`view-${other}`).setAttribute('aria-pressed', String(other === view));
+      paint();
+    });
+  }
   const setPalette = (palette) => {
     ui.palette = palette;
     colors = makeColors(d3.interpolateLab, readPoles(palette));

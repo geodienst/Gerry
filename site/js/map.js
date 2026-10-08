@@ -1,9 +1,9 @@
-// The map: two views, zoom, tooltips and the tap line (site design, chapter 4 and the
-// update of October 7, 2026). Ctrl or Cmd plus scroll zooms, a plain scroll scrolls the
+// The map: three views, zoom, tooltips and the tap line (site design, chapter 4, the update of
+// October 7, 2026, and the close races of October 8). Ctrl or Cmd plus scroll zooms, a plain scroll scrolls the
 // page; on a touch screen two fingers zoom and move, one finger scrolls the page.
 import { MAP, fitTransform } from './axes.js';
 import { shareStops, shareTicks, effectBoxes } from './colors.js';
-import { districtTip, stateTip, tapLine, LEGEND_TEXT } from './model.js';
+import { districtTip, stateTip, closeTip, tapLine, isClose, isSwing, LEGEND_TEXT } from './model.js';
 
 const { d3, topojson } = globalThis;
 const ZOOM_MS = 650;
@@ -56,7 +56,10 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   // Tooltips only for a mouse; a tap gets the tap line instead (choose).
   const districts = districtLayer.selectAll('path').data(districtsGeo.features).join('path')
     .attr('class', 'district').attr('d', path)
-    .on('pointermove', (event, f) => { if (event.pointerType === 'mouse') showTip(event, districtTip(index, f.properties.id, f.properties.state)); })
+    .on('pointermove', (event, f) => {
+      if (event.pointerType !== 'mouse') return;
+      showTip(event, (view === 'close' ? closeTip : districtTip)(index, f.properties.id, f.properties.state));
+    })
     .on('pointerleave', hideTip)
     .on('click', (event, f) => choose(f.properties.state, f.properties.id));
   const states = stateLayer.selectAll('path').data(statesGeo.features).join('path')
@@ -107,13 +110,24 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
 
   const move = (animate) => root.transition().duration(animate && !reduceMotion() ? ZOOM_MS : 0);
   return {
-    /** Fill the districts or the states with the current colors and outline the chosen state. */
+    /**
+     * Fill the districts or the states with the current colors and outline the chosen state. In the view 'close' a
+     * close district takes the full color of the party it leans to, every other district the pale midpoint, and the
+     * swing states get a thick outline.
+     */
     paint(colors, nextView, selected) {
       view = nextView;
-      districts.attr('fill', (f) => (index.single[f.properties.state] ? colors.blank : colors.share(index.shareOf[f.properties.id])));
+      const fill = (id) => {
+        const share = index.shareOf[id];
+        if (view !== 'close') return colors.share(share);
+        return isClose(share) ? colors.party(share > 0.5) : colors.poles.mid;
+      };
+      districts.attr('fill', (f) => (index.single[f.properties.state] ? colors.blank : fill(f.properties.id)));
       states.attr('fill', (f) => (index.single[f.properties.postal] ? colors.blank : colors.effect(index.states[f.properties.postal].effects.drawing)));
-      districtLayer.attr('display', view === 'districts' ? null : 'none');
+      districtLayer.attr('display', view === 'states' ? 'none' : null);
       stateLayer.attr('display', view === 'states' ? null : 'none');
+      borders.classed('swing', (f) => view === 'close' && isSwing(index, f.properties.postal));
+      borders.filter((f) => view === 'close' && isSwing(index, f.properties.postal)).raise();
       borders.classed('on', (f) => f.properties.postal === selected);
       borders.filter((f) => f.properties.postal === selected).raise();
     },
@@ -134,8 +148,20 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
 }
 
 /** The legend under the map for the current view (site design, chapter 3). */
-export function drawLegend(el, view, colors) {
+export function drawLegend(el, view, colors, close) {
   const legend = d3.select(el).html('');
+  if (view === 'close') {
+    // close: { items: [{ key, text }], note } from closeLegend(results)
+    const swatch = { d: colors.party(true), r: colors.party(false), other: colors.poles.mid };
+    for (const item of close.items) {
+      const span = legend.append('span').attr('class', 'item');
+      span.append('i').attr('class', item.key === 'swing' ? 'sw outline' : 'sw').attr('aria-hidden', 'true')
+        .style('background', swatch[item.key] ?? null);
+      span.append('span').text(item.text);
+    }
+    legend.append('span').attr('class', 'note').text(close.note);
+    return;
+  }
   const width = 260;
   const svg = legend.append('svg').attr('viewBox', `0 0 ${width} 44`).attr('aria-hidden', 'true');
   if (view === 'districts') {

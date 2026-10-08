@@ -88,6 +88,34 @@ async function map(t) {
   t.check('"Red and blue" brings the party colors back', (await t.js(fills)) === party);
   await t.screenshot('map-1280');
 
+  // "Districts: close races" (owner idea, October 8): close districts in the color of the party they lean to, the
+  // rest pale, swing states outlined; the numbers come from results.json.
+  await t.js("document.getElementById('view-close').click()");
+  const closeWant = await t.js(`${DATA}.then((r) => {
+    const all = Object.values(r.states).flatMap((s) => s.districts);
+    const close = all.filter((d) => d.share >= 0.45 && d.share <= 0.55);
+    return { d: close.filter((d) => d.share > 0.5).length, r: close.filter((d) => d.share <= 0.5).length, enacted: r.national.competitive.enacted,
+      swing: Object.values(r.states).filter((s) => s.d_share >= 0.45 && s.d_share <= 0.55).length };
+  })`);
+  const closeSeen = await t.js(`(() => {
+    const css = getComputedStyle(document.documentElement);
+    const fill = [...document.querySelectorAll('#map path.district')].map((p) => p.getAttribute('fill'));
+    return { d: fill.filter((f) => f === css.getPropertyValue('--party-d').trim()).length, r: fill.filter((f) => f === css.getPropertyValue('--party-r').trim()).length,
+      swing: document.querySelectorAll('#map path.state.swing').length, title: document.getElementById('map-title').textContent,
+      pressed: ['districts', 'states', 'close'].map((v) => document.getElementById('view-' + v).getAttribute('aria-pressed')).join() };
+  })()`);
+  t.check('"Districts: close races" colors the close districts by lean and outlines the swing states',
+    closeSeen.d === closeWant.d && closeSeen.r === closeWant.r && closeWant.d + closeWant.r === closeWant.enacted
+    && closeSeen.swing === closeWant.swing && closeSeen.title === 'Close districts and swing states' && closeSeen.pressed === 'false,false,true',
+    JSON.stringify({ closeSeen, closeWant }));
+  t.check('the close-races legend names the fills, the outline and the counts', await t.js(
+    "['Close, leaning Democratic', 'Close, leaning Republican', 'Other districts', 'Thick outline', 'close districts on the enacted maps'].every((x) => document.getElementById('legend').textContent.includes(x))"));
+  await t.mouse('mouseMoved', await t.center(districtOf('TX')));
+  t.check('pointing at a district in this view adds the close districts of its state',
+    /^Close districts in Texas: \d+ on the enacted map, a median of \d+ on neutral maps$/.test(await t.js("[...document.querySelectorAll('#tip span')].at(-1)?.textContent ?? ''")));
+  await t.js("document.getElementById('view-districts').click()");
+  t.check('back to "Districts: Democratic share" drops the outlines', await t.js("document.querySelectorAll('#map path.state.swing').length === 0"));
+
   // A phone: a tap writes the tap line without a tooltip, one finger is left to the page, two fingers zoom.
   await t.tab('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await t.load('', { width: 375, height: 800 });
@@ -427,7 +455,7 @@ async function layout(t) {
     await t.key('Tab', 9);
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
-  const wanted = ['choice', 'pick', 'view-districts', 'view-states', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
+  const wanted = ['choice', 'pick', 'view-districts', 'view-states', 'view-close', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
   t.check('Tab reaches the chosen row, the State menu, the view buttons, the largest effects, the zoom buttons, the color buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));

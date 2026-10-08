@@ -44,6 +44,40 @@ export function stateTip(index, postal) {
   };
 }
 
+// --- The view "Districts: close races" (owner idea, October 8, 2026) -------------------------------
+
+/** A Democratic share from 45% to 55%, both included: the competitive range of chapter 03. */
+export const isClose = (fraction) => fraction >= 0.45 && fraction <= 0.55;
+
+/** A state whose whole two-party vote is close; the six single-seat states are left out. */
+export const isSwing = (index, postal) => Boolean(index.states[postal]) && isClose(index.states[postal].d_share);
+
+/** Tooltip in the view "Districts: close races": the district, and for its state the close districts on both kinds of map. */
+export function closeTip(index, id, postal) {
+  if (index.single[postal]) return districtTip(index, id, postal);
+  const s = index.states[postal];
+  const lines = [`Democratic share ${share(index.shareOf[id])}${isClose(index.shareOf[id]) ? ', close' : ''}`];
+  if (s.competitive) {
+    lines.push(`Close districts in ${s.name}: ${count(s.competitive.enacted)} on the enacted map, `
+      + `a median of ${count(s.competitive.median)} on neutral maps`);
+  }
+  return { title: `${districtLabel(id, postal)} · ${s.name}`, lines };
+}
+
+/** The key of the view "Districts: close races": three fills, the outline of swing states and the counts. */
+export function closeLegend(results) {
+  const c = results.national.competitive;
+  const swing = Object.values(results.states).filter((s) => isClose(s.d_share)).length;
+  return {
+    items: [
+      { key: 'd', text: 'Close, leaning Democratic' }, { key: 'r', text: 'Close, leaning Republican' },
+      { key: 'other', text: 'Other districts' }, { key: 'swing', text: 'Thick outline: 45% to 55% Democratic statewide' },
+    ],
+    note: `${count(c.enacted)} close districts on the enacted maps; neutral maps give a median of ${count(c.median)}. `
+      + `${count(swing)} ${swing === 1 ? 'state votes' : 'states vote'} 45% to 55% Democratic statewide.`,
+  };
+}
+
 /** The line under the map after a tap or click: "TX-9: 46.9% Democratic". */
 export function tapLine(index, id, postal, view) {
   if (index.single[postal]) return `${index.single[postal].name}: ${AT_LARGE_TEXT}`;
@@ -73,7 +107,9 @@ export function mapHints({ touch, mac }) {
 }
 
 /** The title above the map for each view. */
-export const MAP_TITLES = { districts: 'Democratic vote share by district', states: 'Drawing effect by state' };
+export const MAP_TITLES = {
+  districts: 'Democratic vote share by district', states: 'Drawing effect by state', close: 'Close districts and swing states',
+};
 
 export const LEGEND_TEXT = {
   districts: 'Democratic share of the two-party vote.',

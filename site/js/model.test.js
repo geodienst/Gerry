@@ -1,9 +1,10 @@
 // Tests for site/js/model.js on the made-up results in testdata.js. Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { results } from './testdata.js';
+import { results, withExtensions } from './testdata.js';
 import {
   AT_LARGE_TEXT, indexResults, districtLabel, districtTip, stateTip, tapLine, stateOptions, mapHints,
+  isClose, isSwing, closeTip, closeLegend, MAP_TITLES,
   effectList, positionText, stateSheet, nationalView, methodFills,
 } from './model.js';
 
@@ -34,10 +35,39 @@ test('tooltips: a district, a state, and a single-seat state', () => {
   assert.equal(AT_LARGE_TEXT, 'One at-large seat. No districts, so nothing to compare.');
 });
 
+test('close races: 45% to 55% Democratic, both ends included, for districts and for whole states', () => {
+  assert.deepEqual([0.4499, 0.45, 0.5, 0.55, 0.5501].map(isClose), [false, true, true, true, false]);
+  const index = indexResults(results());
+  // TX statewide 46.35%: a swing state; HI 66.03%: not
+  assert.deepEqual([isSwing(index, 'TX'), isSwing(index, 'HI'), isSwing(index, 'WY')], [true, false, false]);
+  assert.equal(MAP_TITLES.close, 'Close districts and swing states');
+});
+
+test('closeTip: the district share, marked when close, and the close districts of its state', () => {
+  // without the extension fields there is no line for the state
+  assert.deepEqual(closeTip(indexResults(results()), '4809', 'TX'), { title: 'TX-9 · Texas', lines: ['Democratic share 46.9%, close'] });
+  // HI-2 at 70.1% is not close; withExtensions gives every state 0 close districts enacted and a median of 1
+  const index = indexResults(withExtensions());
+  assert.deepEqual(closeTip(index, '1502', 'HI'), { title: 'HI-2 · Hawaii', lines: ['Democratic share 70.1%',
+    'Close districts in Hawaii: 0 on the enacted map, a median of 1 on neutral maps'] });
+  assert.deepEqual(closeTip(index, '5600', 'WY'), { title: 'Wyoming', lines: [AT_LARGE_TEXT] });
+});
+
+test('closeLegend: the three fills, the outline and the national counts', () => {
+  const legend = closeLegend(withExtensions());
+  assert.deepEqual(legend.items, [
+    { key: 'd', text: 'Close, leaning Democratic' }, { key: 'r', text: 'Close, leaning Republican' },
+    { key: 'other', text: 'Other districts' }, { key: 'swing', text: 'Thick outline: 45% to 55% Democratic statewide' }]);
+  // testdata: HI at 66.03% and TX at 46.35% set their share, the five other states keep the default 0.5 -> 6 swing states
+  assert.equal(legend.note, '81 close districts on the enacted maps; neutral maps give a median of 96. '
+    + '6 states vote 45% to 55% Democratic statewide.');
+});
+
 test('tapLine: the tapped district, nothing in the states view, the at-large text', () => {
   const index = indexResults(results());
   assert.equal(tapLine(index, '4809', 'TX', 'districts'), 'TX-9: 46.9% Democratic');
   assert.equal(tapLine(index, '4809', 'TX', 'states'), '');
+  assert.equal(tapLine(index, '4809', 'TX', 'close'), 'TX-9: 46.9% Democratic');
   assert.equal(tapLine(index, '5600', 'WY', 'districts'), `Wyoming: ${AT_LARGE_TEXT}`);
   assert.equal(tapLine(index, '5600', 'WY', 'states'), `Wyoming: ${AT_LARGE_TEXT}`);
 });
