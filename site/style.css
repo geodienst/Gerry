@@ -222,6 +222,27 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 #waffle .frames rect { fill: transparent; stroke: var(--fg); stroke-width: 1.5; cursor: help; pointer-events: all; }
 .wkey .fr { width: 0.6rem; height: 1rem; border: 1.5px solid var(--fg); }
 #waffle-tip { z-index: 2; }
+/* The vote slider (plan 2026-10-08-vote-slider): ticks where each count reaches a House majority. --thumb keeps the
+   ticks under the centre of the thumb, which travels from thumb/2 to 100% - thumb/2. */
+.vote { --thumb: 1.15rem; display: grid; gap: 0.35rem; }
+.vote-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.8rem; }
+.vote-head label { font-weight: 600; }
+#vote-majority { margin: 0; max-width: 64ch; }
+.vote-head output { font: 700 1.1875rem/1.2 var(--font-head); font-variant-numeric: tabular-nums; }
+.vote-back { font: inherit; font-size: 0.8125rem; padding: 0.15rem 0; border: 0; background: none; color: var(--fg); cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
+.vote-track { position: relative; padding: 2.2rem 0 2.4rem; }
+#vote { width: 100%; margin: 0; height: var(--thumb); appearance: none; -webkit-appearance: none; background: none; cursor: pointer; }
+#vote::-webkit-slider-runnable-track { height: 4px; background: var(--rule); }
+#vote::-moz-range-track { height: 4px; background: var(--rule); }
+#vote::-webkit-slider-thumb { -webkit-appearance: none; width: var(--thumb); height: var(--thumb); margin-top: calc(2px - var(--thumb) / 2); border-radius: 50%; background: var(--ink); border: 2px solid var(--sheet); }
+#vote::-moz-range-thumb { width: var(--thumb); height: var(--thumb); border-radius: 50%; background: var(--ink); border: 2px solid var(--sheet); }
+.vote-ticks { position: absolute; inset: calc(2.2rem + var(--thumb) / 2 + 4px) 0 0; pointer-events: none; }
+.vote-ticks .tk { position: absolute; left: calc(var(--thumb) / 2 + var(--at) * (100% - var(--thumb))); transform: translateX(-50%); display: grid; justify-items: center; font-size: 0.75rem; line-height: 1.2; color: var(--muted); white-space: nowrap; }
+.vote-ticks .tk::before { content: ""; width: 1px; height: 0.4rem; background: var(--fg); margin-bottom: 0.1rem; }
+.vote-ticks .tk .pc { color: var(--fg); font-variant-numeric: tabular-nums; }
+/* the middle threshold sits above the line, so the three labels never overlap on a phone */
+.vote-ticks .tk.neutral { top: auto; bottom: calc(100% + 8px); }
+.vote-ticks .tk.neutral::before { order: 2; margin: 0.1rem 0 0; }
 #waffle .changed circle { fill: var(--sheet); }
 .wkey .cd { width: 0.75rem; height: 0.75rem; background: var(--fg); border-radius: 0; display: grid; place-items: center; }
 .wkey .cd::after { content: ""; width: 0.25rem; height: 0.25rem; border-radius: 50%; background: var(--sheet); }

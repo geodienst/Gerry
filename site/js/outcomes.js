@@ -1,5 +1,6 @@
 // Chapter 01, "One electorate. Three outcomes." (redesign, chapter 3): three rows as a radio group with the two
-// effects between them, a waffle of the seats that follows the chosen row, and the sentences beside it.
+// effects between them, a waffle of the seats that follows the chosen row, and the sentences beside it. A vote
+// slider (plan 2026-10-08-vote-slider) moves all of it to another national vote share.
 // Texts come from chapters.js and geometry from axes.js; this module only draws.
 import { HOUSE, houseLayout, houseCell, housePlace } from './axes.js';
 import { waffleText, changedKey } from './chapters.js';
@@ -23,14 +24,19 @@ const svgNode = (tag, attrs, text = null) => node(tag, attrs, text, SVG_NS);
  */
 export function renderOutcomes(view, { reduceMotion }) {
   $('outcomes-intro').textContent = view.intro;
+  let pi = view.baseIndex; // the point of the vote slider on screen
+  const point = () => view.points[pi];
 
   // The rows: one tab stop; arrows and Home/End move the choice and the focus (redesign, chapter 8).
   const group = $('scen');
   group.replaceChildren();
+  const parts = {}; // per row: the number and the description, which follow the slider
+  const stepTexts = [];
   const rows = view.rows.map((row, i) => {
     const button = node('button', { type: 'button', class: 'choice', role: 'radio', 'aria-checked': 'false', tabindex: '-1', 'data-key': row.key });
+    parts[row.key] = { big: node('span', { class: 'big' }), desc: node('span', { class: 'desc' }) };
     button.append(node('span', { class: 'dot', 'aria-hidden': 'true' }), node('span', { class: 'lab' }, row.label),
-      node('span', { class: 'big' }, row.value), node('span', { class: 'desc' }, row.desc));
+      parts[row.key].big, parts[row.key].desc);
     button.addEventListener('click', () => select(row.key, true));
     button.addEventListener('keydown', (event) => {
       const last = view.rows.length - 1;
@@ -42,13 +48,12 @@ export function renderOutcomes(view, { reduceMotion }) {
       group.querySelector(`[data-key="${next}"]`).focus();
     });
     group.append(button);
-    const step = view.steps[i];
-    if (step) {
+    if (i < view.steps.length) {
       const line = node('div', { class: 'step' });
       const text = node('span');
-      text.append(`${step.label} `, node('b', {}, step.value), `: ${step.words}`);
       line.append(text);
       group.append(line);
+      stepTexts.push(text);
     }
     return button;
   });
@@ -66,8 +71,6 @@ export function renderOutcomes(view, { reduceMotion }) {
   const changed = svgNode('g', { class: 'changed', 'aria-hidden': 'true' });
   const frames = svgNode('g', { class: 'frames' });
   svg.append(seatLayer, band, changed, frames);
-  $('finding').textContent = view.finding;
-  $('key-band-text').textContent = view.band.key;
   $('key-fill').textContent = house.fillKey;
   $('key-single-text').textContent = house.singleKey;
 
@@ -112,6 +115,15 @@ export function renderOutcomes(view, { reduceMotion }) {
     return rect;
   }
 
+  // the band in seats of 435 at the point on screen: the one-seat Democratic states come first
+  function drawBand() {
+    const { lo, hi } = point().band;
+    band.replaceChildren(...seatsFrom(lo + house.dSingle - 1, hi + house.dSingle).map((i) => {
+      const { x, y } = at(i);
+      return svgNode('rect', { x: x + 0.7, y: y + 0.7, width: HOUSE.size - 1.4, height: HOUSE.size - 1.4 });
+    }));
+  }
+
   function build(rows) {
     layout = houseLayout(rows);
     svg.setAttribute('viewBox', `${-PAD} 0 ${layout.width + 2 * PAD} ${layout.height + PAD}`);
@@ -120,11 +132,7 @@ export function renderOutcomes(view, { reduceMotion }) {
       return svgNode('rect', { class: i === HOUSE.half ? 'seat middle' : 'seat', x, y, width: HOUSE.size, height: HOUSE.size });
     });
     seatLayer.replaceChildren(...cells);
-    // the band in seats of 435: the one-seat Democratic states come first
-    band.replaceChildren(...seatsFrom(view.band.lo + house.dSingle - 1, view.band.hi + house.dSingle).map((i) => {
-      const { x, y } = at(i);
-      return svgNode('rect', { x: x + 0.7, y: y + 0.7, width: HOUSE.size - 1.4, height: HOUSE.size - 1.4 });
-    }));
+    drawBand();
     frames.replaceChildren(frame(seatsFrom(0, house.dSingle), house.singles[0].text),
       frame(seatsFrom(2 * HOUSE.half + 1 - house.rSingle, 2 * HOUSE.half + 1), house.singles[1].text));
     changed.replaceChildren(...dots());
@@ -140,23 +148,75 @@ export function renderOutcomes(view, { reduceMotion }) {
     }
   }
 
-  // The two columns under rows and waffle.
+  // The texts that follow the slider: row numbers, the effects between and under the rows, the finding and the
+  // sentences beside the waffle.
   const effect = (step) => {
     const line = node('div', { class: 'eff' });
     line.append(node('span', { class: 'k' }, step.label), node('span', { class: 'v' }, step.value), node('span', { class: 'w' }, step.detail));
     return line;
   };
-  $('effects').replaceChildren(...view.steps.map(effect), node('p', { class: 'note' }, view.effectsNote));
-  $('spread').replaceChildren(node('p', {}, view.spread), node('p', {}, view.position),
-    node('p', { class: 'note' }, view.neutralNote), node('p', { class: 'note' }, view.scope));
+  function texts() {
+    const p = point();
+    for (const row of p.rows) {
+      parts[row.key].big.textContent = row.value;
+      parts[row.key].desc.textContent = row.desc;
+    }
+    p.steps.forEach((step, i) => stepTexts[i].replaceChildren(`${step.label} `, node('b', {}, step.value), `: ${step.words}`));
+    $('finding').textContent = p.finding;
+    $('key-band-text').textContent = p.band.key;
+    $('effects').replaceChildren(...p.steps.map(effect), node('p', { class: 'note' }, view.effectsNote));
+    $('spread').replaceChildren(node('p', {}, p.spread), node('p', {}, p.position),
+      node('p', { class: 'note' }, view.neutralNote), node('p', { class: 'note' }, view.scope));
+  }
+
+  // The vote slider: one step per point, ticks where each count reaches a House majority.
+  const slider = $('vote');
+  slider.min = '0';
+  slider.max = String(view.points.length - 1);
+  slider.step = '1';
+  slider.value = String(pi);
+  $('vote-label').textContent = view.slider.label;
+  $('vote-majority').textContent = view.slider.majority;
+  // a share as a position along the slider, between the two points around it
+  const along = (share) => {
+    const shares = view.points.map((p) => p.share);
+    const k = Math.max(0, Math.min(shares.length - 2, shares.findIndex((s) => s > share) - 1));
+    return (k + (share - shares[k]) / (shares[k + 1] - shares[k])) / (shares.length - 1);
+  };
+  $('vote-ticks').replaceChildren(...view.slider.ticks.map((t) => {
+    const space = t.text.lastIndexOf(' ');
+    const mark = node('span', { class: `tk ${t.key}` });
+    mark.style.setProperty('--at', String(along(t.share)));
+    mark.append(node('span', { class: 'nm' }, t.text.slice(0, space)), node('span', { class: 'pc' }, t.text.slice(space + 1)));
+    return mark;
+  }));
+  const back = $('vote-back');
+  function showPoint() {
+    const p = point();
+    slider.value = String(pi);
+    slider.setAttribute('aria-valuetext', p.valueText);
+    $('vote-out').textContent = p.base ? `${p.label}, the 2016 and 2020 votes` : p.label;
+    back.hidden = p.base;
+  }
+  function moveTo(index) {
+    pi = index;
+    showPoint();
+    texts();
+    drawBand();
+    draw(false, true);
+  }
+  slider.addEventListener('input', () => moveTo(Number(slider.value)));
+  back.addEventListener('click', () => { moveTo(view.baseIndex); slider.focus(); });
 
   let current = 'enacted';
   let shown = null; // the Democratic count on screen, where a change starts from
   let colors = null;
 
-  function draw(animate) {
+  // fromSlider: the count changed with the vote, not with the row, so no dots
+  function draw(animate, fromSlider = false) {
     if (!colors || !layout) return;
-    const row = view.rows.find((r) => r.key === current);
+    const here = { ...view, rows: point().rows };
+    const row = here.rows.find((r) => r.key === current);
     const n = row.seats + house.dSingle; // Democratic seats of 435
     const motion = animate && shown !== null && !reduceMotion();
     cells.forEach((rect, i) => {
@@ -167,7 +227,11 @@ export function renderOutcomes(view, { reduceMotion }) {
       rect.style.transitionDuration = motion ? '' : '0s';
       rect.setAttribute('fill', fill);
     });
-    if (shown !== null && shown !== n) {
+    if (fromSlider) {
+      moved = null;
+      changed.replaceChildren();
+      $('key-changed').hidden = true;
+    } else if (shown !== null && shown !== n) {
       moved = [Math.min(shown, n), Math.max(shown, n)];
       changed.replaceChildren(...dots());
       $('key-changed-text').textContent = changedKey(moved[1] - moved[0]);
@@ -176,7 +240,7 @@ export function renderOutcomes(view, { reduceMotion }) {
     shown = n;
     band.setAttribute('display', current === 'neutral' ? 'inline' : 'none');
     $('key-band').hidden = current !== 'neutral';
-    const text = waffleText(view, current);
+    const text = waffleText(here, current);
     const who = (name, value, toD) => {
       const span = node('span', { class: 'who' });
       const swatch = node('i', { class: 'sw', 'aria-hidden': 'true' });
@@ -198,6 +262,8 @@ export function renderOutcomes(view, { reduceMotion }) {
     draw(animate);
   }
 
+  texts();
+  showPoint();
   fit();
   new ResizeObserver(fit).observe(box);
   select(current);

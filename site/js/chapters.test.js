@@ -40,8 +40,8 @@ test('outcomesView: three rows, the two effects between them, the band and the s
   ]);
   assert.deepEqual(view.band, { lo: 217, hi: 229, key: 'Outlined: where the Democratic seats end in 90% of neutral outcomes (217 to 229 of these 429)' });
   // the finding beside the waffle: drawing -10, enacted 213, neutral median 223
-  assert.equal(view.finding, 'In this comparison the enacted maps shift 10 seats toward Republicans. '
-    + 'With the same votes they give Democrats 213 seats, where the neutral-map median gives 223.');
+  assert.equal(view.finding, 'In this comparison, with the 2016 and 2020 votes (51.8% for Democrats), the enacted maps shift '
+    + '10 seats toward Republicans. They give Democrats 213 seats, where the neutral-map median gives 223.');
   // the House of 435: 218 - 216 = 2 Democratic one-seat states (DE, VT), 4 Republican (AK, ND, SD, WY)
   assert.deepEqual(view.house, {
     dSingle: 2, rSingle: 4,
@@ -64,11 +64,39 @@ test('outcomesView: three rows, the two effects between them, the band and the s
   assert.equal(view.scope, '429 seats. The six states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont, Wyoming) are not counted.');
 });
 
+test('outcomesView: one view per point of the vote slider, the base point as the main view', () => {
+  const view = outcomesView(withExtensions());
+  assert.deepEqual(view.points.map((p) => p.label), ['50.0%', '51.8%', '53.0%']);
+  assert.equal(view.baseIndex, 1);
+  const base = view.points[1];
+  for (const key of ['rows', 'steps', 'band', 'finding', 'spread', 'position']) assert.deepEqual(base[key], view[key], key);
+  const half = view.points[0];
+  assert.deepEqual(half.rows.map((r) => [r.key, r.label, r.seats, r.value]),
+    [['proportional', 'Vote-proportional', 217, '217'], ['neutral', 'Neutral-map median', 203, '203'], ['enacted', 'Enacted maps', 205, '205']]);
+  assert.equal(half.rows[1].desc, 'The middle outcome of the neutral maps. 90% of outcomes: 197 to 208.');
+  // geographic 203 - 217 = -14, drawing 205 - 203 = +2
+  assert.deepEqual(half.steps.map((s) => [s.value, s.detail]),
+    [['R+14', '14 seats toward Republicans (217 to 203)'], ['D+2', '2 seats toward Democrats (203 to 205)']]);
+  assert.equal(half.finding, 'In this comparison, at 50.0% of the vote, the enacted maps shift 2 seats toward Democrats. '
+    + 'They give Democrats 205 seats, where the neutral-map median gives 203.');
+  assert.equal(half.spread, '90% of neutral outcomes give Democrats 197 to 208 seats. The enacted maps give 205, within that range.');
+  assert.equal(half.position, 'In 19% of neutral outcomes Democrats win more seats than under the enacted maps.');
+  assert.equal(half.valueText, '50.0% of the two-party vote for Democrats');
+  assert.equal(base.valueText, '51.8% of the two-party vote for Democrats, the 2016 and 2020 result');
+  // the slider: a tick at each majority threshold (majority block of testdata) and one sentence
+  assert.deepEqual(view.slider.ticks.map((x) => [x.key, x.share, x.text]), [
+    ['proportional', 0.4978747, 'Proportional 49.8%'], ['neutral', 0.5115747, 'Neutral median 51.2%'], ['enacted', 0.5230328, 'Enacted 52.3%']]);
+  assert.equal(view.slider.label, 'Democratic share of the national two-party vote');
+  assert.equal(view.slider.majority, 'A House majority takes 49.8% of the vote if seats follow the votes, '
+    + '51.2% on neutral maps and 52.3% on the enacted maps.');
+});
+
 test('outcomesView: the finding without a drawing effect, and the key of the changed seats', () => {
   const r = withExtensions();
   r.national.enacted = 223;
   r.national.effects.drawing = 0;
-  assert.equal(outcomesView(r).finding, 'In this comparison the enacted maps give Democrats 223 seats, the same as the neutral-map median.');
+  assert.equal(outcomesView(r).finding, 'In this comparison, with the 2016 and 2020 votes (51.8% for Democrats), '
+    + 'the enacted maps give Democrats 223 seats, the same as the neutral-map median.');
   assert.equal(changedKey(11), 'Dot: the 11 seats that changed with this choice');
   assert.equal(changedKey(1), 'Dot: the 1 seat that changed with this choice');
 });
@@ -81,14 +109,14 @@ test('outcomesView: an enacted count inside or above the band, a band of one cou
   assert.match(outcomesView(r).spread, /The enacted maps give 230, above that range\.$/);
   const one = withExtensions();
   Object.assign(one.national.neutral, { p5: 223, p95: 223 });
-  one.national.effects.geographic = 0;
+  one.national.proportional = 223; // the effects follow from the counts: 223 to 223 is no geographic effect
   const view = outcomesView(one);
   assert.equal(view.rows[1].desc, 'The middle outcome of the neutral maps. 90% of outcomes give 223.');
   assert.equal(view.spread, '90% of neutral outcomes give Democrats 223 seats. The enacted maps give 213, below that range.');
   assert.equal(view.band.key, 'Outlined: where the Democratic seats end in 90% of neutral outcomes (223 of these 429)');
-  // 224 to 223 would be wrong for an effect of 0; the numbers stay, the words say "no difference"
+  // an effect of 0 keeps both numbers; the words say "no difference"
   assert.equal(view.steps[0].value, '0');
-  assert.equal(view.steps[0].detail, 'no difference (224 to 223)');
+  assert.equal(view.steps[0].detail, 'no difference (223 to 223)');
 });
 
 test('waffleText: the count per party and the title of the waffle', () => {

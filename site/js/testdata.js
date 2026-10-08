@@ -117,6 +117,12 @@ export function withExtensions() {
     neutral: { share: 0.5115747, low: 0.5065747, high: 0.5159747, probability_at_base: 0.9853454 },
     proportional: { share: 0.4978747 },
   };
+  // three points of the vote slider: 50%, the base share and 53% (numbers as in results.json)
+  r.national.swing = { points: [
+    { share: 0.5, proportional: 217, enacted: 205, neutral: { median: 203, p5: 197, p95: 208 }, more: 0.1920764, base: false },
+    { share: 0.5179747, proportional: 224, enacted: 213, neutral: { median: 223, p5: 217, p95: 229 }, more: 0.9972, base: true },
+    { share: 0.53, proportional: 227, enacted: 221, neutral: { median: 234, p5: 228, p95: 239 }, more: 0.9998385, base: false },
+  ] };
   r.national.redraw = { seats_2024: 217, change: -4 };
   r.national.competitive = { enacted: 81, median: 96, p5: 87, p95: 105 };
   r.national.by_control = {

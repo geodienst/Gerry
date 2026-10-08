@@ -562,8 +562,9 @@ async function outcomes(t) {
     const n = r.national;
     return { values: [n.proportional, n.neutral.median, n.enacted].map(f.seats), lo: n.neutral.p5, hi: n.neutral.p95,
       total: n.seats, enacted: n.enacted, neutralSeats: n.neutral.median, steps: [f.effect(n.effects.geographic), f.effect(n.effects.drawing)],
-      finding: 'In this comparison the enacted maps shift ' + f.effectWords(n.effects.drawing) + '. With the same votes they give Democrats '
-        + f.seats(n.enacted) + ' seats, where the neutral-map median gives ' + f.seats(n.neutral.median) + '.' };
+      finding: 'In this comparison, with the 2016 and 2020 votes (' + f.sliderShare(n.majority.base_share) + ' for Democrats), the enacted maps shift '
+        + f.effectWords(n.effects.drawing) + '. They give Democrats ' + f.seats(n.enacted) + ' seats, where the neutral-map median gives '
+        + f.seats(n.neutral.median) + '.' };
   })`);
   const rows = await t.js(`[...document.querySelectorAll('#scen [role=radio]')].map((b) => ({ label: b.querySelector('.lab').textContent,
     value: b.querySelector('.big').textContent, checked: b.getAttribute('aria-checked'), tab: b.tabIndex }))`);
@@ -636,6 +637,36 @@ async function outcomes(t) {
     effects.slice(0, 160));
   t.check('the spread sentence places the enacted maps against the band', /^90% of neutral outcomes give Democrats \d+( to \d+)? seats\. The enacted maps give \d+, (below|within|above) that range\.$/
     .test(await t.js("document.querySelector('#spread p').textContent")));
+
+  // The vote slider (plan 2026-10-08-vote-slider): it starts at the base share and moves every count.
+  const swing = await t.js(`${DATA}.then((r) => ({ points: r.national.swing.points, majority: r.national.majority }))`);
+  const baseAt = swing.points.findIndex((p) => p.base);
+  const slider = await t.js(`(() => { const s = document.getElementById('vote'); return { value: Number(s.value), max: Number(s.max),
+    label: document.getElementById('vote-label').textContent, out: document.getElementById('vote-out').textContent,
+    text: s.getAttribute('aria-valuetext'), back: document.getElementById('vote-back').hidden,
+    ticks: [...document.querySelectorAll('#vote-ticks .tk')].map((x) => x.textContent) }; })()`);
+  t.check('the vote slider starts at the 2016 and 2020 votes, one step per point',
+    slider.value === baseAt && slider.max === swing.points.length - 1 && slider.back
+    && slider.label === 'Democratic share of the national two-party vote' && slider.out.endsWith(', the 2016 and 2020 votes')
+    && slider.text.endsWith('of the two-party vote for Democrats, the 2016 and 2020 result'), JSON.stringify(slider));
+  t.check('three ticks mark where each count reaches a House majority', slider.ticks.length === 3
+    && ['Proportional', 'Neutral median', 'Enacted'].every((name, i) => slider.ticks[i].startsWith(name)), slider.ticks.join(' | '));
+  const half = swing.points.findIndex((p) => Math.abs(p.share - 0.5) < 1e-9);
+  await t.js(`(() => { const s = document.getElementById('vote'); s.value = '${half}'; s.dispatchEvent(new Event('input')); })()`);
+  const moved = await t.js(`(() => ({ rows: [...document.querySelectorAll('#scen .big')].map((b) => Number(b.textContent)),
+    out: document.getElementById('vote-out').textContent, back: document.getElementById('vote-back').hidden,
+    finding: document.getElementById('finding').textContent, democratic: ${democratic} }))()`);
+  const p = swing.points[half];
+  t.check('at 50.0% the rows, the finding and the waffle follow the slider',
+    moved.rows.join() === [p.proportional, p.neutral.median, p.enacted].join() && moved.out === '50.0%' && !moved.back
+    && moved.finding.startsWith('In this comparison, at 50.0% of the vote,') && moved.democratic === p.enacted + 2, JSON.stringify(moved));
+  await t.js("document.getElementById('vote-back').click()");
+  t.check('"Back to the 2016 and 2020 votes" returns to the base point and focuses the slider', await t.js(
+    `Number(document.getElementById('vote').value) === ${baseAt} && document.activeElement.id === 'vote' && document.getElementById('vote-back').hidden`
+    + ` && ${democratic} === ${swing.points[baseAt].enacted} + 2`));
+  await t.key('ArrowLeft', 37);
+  t.check('the arrow keys move the slider one point', await t.until(`Number(document.getElementById('vote').value) === ${baseAt - 1}`));
+
   for (const [width, dark] of [[375, false], [1280, false], [1280, true]]) {
     await t.load('', { width, height: 900, dark });
     await t.screenshot(`outcomes-${width}${dark ? '-dark' : ''}`);

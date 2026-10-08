@@ -1,6 +1,6 @@
 // Texts and view models for the four chapters of the redesign (docs/superpowers/specs/2026-10-08-redesign-design.md).
 // Pure, like model.js and extensions.js: no DOM and no d3, every number through format.js, nothing new computed.
-import { share, seats, count, effect, effectWords, effectLine, percentLabel } from './format.js';
+import { share, sliderShare, planShare, seats, count, effect, effectWords, effectLine, percentLabel } from './format.js';
 import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT } from './model.js';
 import { stateExtras, majorityView, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
 import { seatTicks, rowDomain } from './axes.js';
@@ -17,54 +17,89 @@ const plural = (n, one, many) => (n === 1 ? one : many);
 
 // --- Chapter 01: one electorate, three outcomes (Task 7.3) --------------------------------------
 
-/** Everything chapter 01 shows: the three rows, the effects between them, the band and the sentences beside the waffle. */
-export function outcomesView(results) {
-  const n = results.national;
-  const national = nationalView(results);
-  const states = count(Object.keys(results.states).length);
-  const plans = count(sum(Object.values(results.states)[0].neutral.dist));
-  const { median, p5, p95 } = n.neutral;
-  const needed = n.majority.seats_needed;
+/**
+ * The rows, effects, band and sentences of chapter 01 at one point of the vote slider (plan 2026-10-08-vote-slider):
+ * a point of results.national.swing, or the base point with the main numbers.
+ */
+function pointView(p, total) {
+  const { median, p5, p95 } = p.neutral;
   const band = p5 === p95 ? `90% of outcomes give ${seats(p5)}` : `90% of outcomes: ${seats(p5)} to ${seats(p95)}`;
-  const where = n.enacted < p5 ? 'below that range' : n.enacted > p95 ? 'above that range' : 'within that range';
+  const where = p.enacted < p5 ? 'below that range' : p.enacted > p95 ? 'above that range' : 'within that range';
+  const drawing = p.enacted - median;
   const step = (key, value, from, to) => ({
     key, label: EFFECT_LABELS[key], value: effect(value), words: effectWords(value),
     detail: `${effectWords(value)} (${seats(from)} to ${seats(to)})`,
   });
+  const at = p.base ? `with the 2016 and 2020 votes (${sliderShare(p.share)} for Democrats)` : `at ${sliderShare(p.share)} of the vote`;
+  return {
+    share: p.share, base: p.base, label: sliderShare(p.share),
+    valueText: `${sliderShare(p.share)} of the two-party vote for Democrats${p.base ? ', the 2016 and 2020 result' : ''}`,
+    rows: [
+      { key: 'proportional', label: LABELS.proportional, seats: p.proportional, value: seats(p.proportional),
+        desc: "Each state's seats in proportion to its two-party vote." },
+      { key: 'neutral', label: LABELS.neutral, seats: median, value: seats(median),
+        desc: `The middle outcome of the neutral maps. ${band}.` },
+      { key: 'enacted', label: LABELS.enacted, seats: p.enacted, value: seats(p.enacted),
+        desc: 'The maps used on November 3, 2026.' },
+    ],
+    steps: [
+      step('geographic', median - p.proportional, p.proportional, median),
+      step('drawing', drawing, median, p.enacted),
+    ],
+    band: {
+      lo: p5, hi: p95,
+      key: `Outlined: where the Democratic seats end in 90% of neutral outcomes (${range(p5, p95)} of these ${seats(total)})`,
+    },
+    // One finding beside the waffle, said as the result of this comparison (expert feedback, October 8, 2026).
+    finding: drawing === 0
+      ? `In this comparison, ${at}, the enacted maps give Democrats ${seats(p.enacted)} seats, the same as the neutral-map median.`
+      : `In this comparison, ${at}, the enacted maps shift ${effectWords(drawing)}. `
+        + `They give Democrats ${seats(p.enacted)} seats, where the neutral-map median gives ${seats(median)}.`,
+    spread: `90% of neutral outcomes give Democrats ${range(p5, p95)} seats. The enacted maps give ${seats(p.enacted)}, ${where}.`,
+    position: `In ${planShare(p.more)} of neutral outcomes Democrats win more seats than under the enacted maps.`,
+  };
+}
+
+/** Everything chapter 01 shows: the three rows, the effects between them, the band and the sentences beside the waffle. */
+export function outcomesView(results) {
+  const n = results.national;
+  const m = n.majority;
+  const national = nationalView(results);
+  const states = count(Object.keys(results.states).length);
+  const plans = count(sum(Object.values(results.states)[0].neutral.dist));
+  // the base point always takes the main numbers; the other points come from the slider grid
+  const base = { share: m.base_share, proportional: n.proportional, enacted: n.enacted, base: true,
+    neutral: { median: n.neutral.median, p5: n.neutral.p5, p95: n.neutral.p95 }, more: n.position.more };
+  const points = [...(n.swing?.points ?? []).filter((p) => !p.base), base].sort((a, b) => a.share - b.share)
+    .map((p) => pointView(p, n.seats));
+  const baseIndex = points.findIndex((p) => p.base);
+  const main = points[baseIndex];
+  const tick = (key, value) => ({ key, share: value, text: `${SHORT_LABELS[key]} ${share(value)}` });
   return {
     intro: `Democratic seats in the ${states} states with more than one seat, counted three ways with the same votes. `
       + 'Select a row to see it as seats.',
     total: n.seats,
-    rows: [
-      { key: 'proportional', label: LABELS.proportional, seats: n.proportional, value: seats(n.proportional),
-        desc: "Each state's seats in proportion to its two-party vote." },
-      { key: 'neutral', label: LABELS.neutral, seats: median, value: seats(median),
-        desc: `The middle outcome of the neutral maps. ${band}.` },
-      { key: 'enacted', label: LABELS.enacted, seats: n.enacted, value: seats(n.enacted),
-        desc: 'The maps used on November 3, 2026.' },
-    ],
-    steps: [
-      step('geographic', n.effects.geographic, n.proportional, median),
-      step('drawing', n.effects.drawing, median, n.enacted),
-    ],
-    band: {
-      lo: p5, hi: p95,
-      key: `Outlined: where the Democratic seats end in 90% of neutral outcomes (${range(p5, p95)} of these ${seats(n.seats)})`,
-    },
-    // One finding beside the waffle, said as the result of this comparison (expert feedback, October 8, 2026).
-    finding: n.effects.drawing === 0
-      ? `In this comparison the enacted maps give Democrats ${seats(n.enacted)} seats, the same as the neutral-map median.`
-      : `In this comparison the enacted maps shift ${effectWords(n.effects.drawing)}. `
-        + `With the same votes they give Democrats ${seats(n.enacted)} seats, where the neutral-map median gives ${seats(median)}.`,
-    house: houseView(results, needed),
+    rows: main.rows,
+    steps: main.steps,
+    band: main.band,
+    finding: main.finding,
+    house: houseView(results, m.seats_needed),
     effectsNote: 'The geographic effect is the difference between proportional seats and neutral maps. '
       + 'The drawing effect is the difference between neutral maps and the enacted maps.',
-    spread: `90% of neutral outcomes give Democrats ${range(p5, p95)} seats. The enacted maps give ${seats(n.enacted)}, ${where}.`,
-    position: national.position,
+    spread: main.spread,
+    position: main.position,
     neutralNote: `The neutral maps come from the ALARM Project. For each state a computer drew ${plans} maps that follow `
       + "the state's rules, such as equal population and the Voting Rights Act, without using party data. "
       + `The national figures combine the ${states} states.`,
     scope: national.note,
+    points,
+    baseIndex,
+    slider: {
+      label: 'Democratic share of the national two-party vote',
+      ticks: [tick('proportional', m.proportional.share), tick('neutral', m.neutral.share), tick('enacted', m.enacted.share)],
+      majority: `A House majority takes ${share(m.proportional.share)} of the vote if seats follow the votes, `
+        + `${share(m.neutral.share)} on neutral maps and ${share(m.enacted.share)} on the enacted maps.`,
+    },
   };
 }
 

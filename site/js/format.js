@@ -64,6 +64,16 @@ export function share(fraction) {
 }
 
 /**
+ * A vote share on the slider as a percent with one decimal, also at one half: 0.5 -> "50.0%".
+ * @param {number} fraction
+ * @returns {string}
+ */
+export function sliderShare(fraction) {
+  checkFraction(fraction);
+  return `${roundHalfUp(fraction, 1, 2)}%`;
+}
+
+/**
  * A share of plans (fraction) as a whole percent, for use in a sentence: 3086/5000 -> "62%".
  * Above 0 but rounding to 0 gives "less than 1%"; below 1 but rounding to 100 gives "more than 99%".
  * @param {number} fraction
