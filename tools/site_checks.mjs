@@ -387,7 +387,7 @@ async function layout(t) {
   t.check('"All states" empties the live region', cleared === '', JSON.stringify(cleared));
 
   await t.load('', { dark: true });
-  t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(17, 19, 22)');
+  t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(15, 21, 19)');
   t.check('dark mode paints the map with the dark poles', (await t.js("document.querySelector('#legend linearGradient stop:last-child').getAttribute('stop-color')")) === 'rgb(57, 135, 229)');
   await t.screenshot('dark-1280');
 

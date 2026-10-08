@@ -12,16 +12,19 @@ function tokensAfter(marker) {
 }
 const MODES = { light: tokensAfter(':root {'), dark: tokensAfter('@media (prefers-color-scheme: dark)') };
 
-test('the tokens are those of the site design, light and dark', () => {
+test('the tokens are those of the redesign, light and dark', () => {
+  // Redesign, chapter 7: the mockup palette in the token names of the site.
   assert.deepEqual(MODES.light, {
-    bg: '#f5f6f7', sheet: '#ffffff', fg: '#16181b', muted: '#5b626b', rule: '#d7dbe0', ink: '#23324f',
+    bg: '#f1f3f0', sheet: '#fbfcfa', fg: '#18201c', muted: '#56615b', rule: '#d3d9d4', ink: '#1d5c48',
+    tint: '#e2ebe5', mast: '#143a2f', 'mast-fg': '#eef4f0', 'mast-muted': '#b2c8bd',
     'party-d': '#2a78d6', 'party-r': '#e34948', 'neutral-d': '#01665e', 'neutral-r': '#8c510a',
-    mid: '#ecebe7', blank: '#c9ccd1', water: '#e9edf2',
+    mid: '#ecebe7', blank: '#c9ccd1', water: '#e5eae6',
   });
   assert.deepEqual(MODES.dark, {
-    bg: '#111316', sheet: '#191c20', fg: '#eceef1', muted: '#a3aab3', rule: '#2d3239', ink: '#c8d3ea',
+    bg: '#0f1513', sheet: '#151d1a', fg: '#e6ece8', muted: '#9eaba4', rule: '#2a3531', ink: '#8fd0b4',
+    tint: '#1c2a25', mast: '#0b2920', 'mast-fg': '#e6efe9', 'mast-muted': '#9ab8aa',
     'party-d': '#3987e5', 'party-r': '#e66767', 'neutral-d': '#5ab4ac', 'neutral-r': '#d8b365',
-    mid: '#3a3a37', blank: '#4a4f56', water: '#20252b',
+    mid: '#3a3a37', blank: '#4a4f56', water: '#1b2421',
   });
 });
 
@@ -49,6 +52,8 @@ test('text reaches 4.5:1 on the page, the sheet and the pressed buttons', () => 
   for (const [mode, t] of Object.entries(MODES)) {
     for (const [text, background] of [
       ['fg', 'sheet'], ['fg', 'bg'], ['muted', 'sheet'], ['muted', 'bg'], ['ink', 'sheet'], ['ink', 'bg'], ['sheet', 'ink'],
+      // redesign: the chosen row and state (--tint) and the masthead (--mast)
+      ['fg', 'tint'], ['muted', 'tint'], ['mast-fg', 'mast'], ['mast-muted', 'mast'],
     ]) {
       const ratio = contrast(t[text], t[background]);
       assert.ok(ratio >= 4.5, `${mode}: --${text} on --${background} is ${ratio.toFixed(2)}:1`);
@@ -64,6 +69,8 @@ test('marks reach 3:1: poles, bars, marker lines and the outline of the chosen s
     const pairs = [
       ['party-d', t['party-d'], t.sheet], ['party-r', t['party-r'], t.sheet],
       ['neutral-d', t['neutral-d'], t.sheet], ['neutral-r', t['neutral-r'], t.sheet],
+      // the waffle of chapter 01 lies on the page background, not on a sheet
+      ['party-d on the page', t['party-d'], t.bg], ['party-r on the page', t['party-r'], t.bg],
       ['bar', bar, t.sheet], ['marker line on a bar', t.fg, bar], ['muted line', t.muted, t.sheet],
       ['outline of the chosen state', t.fg, t.water],
     ];
