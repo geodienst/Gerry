@@ -180,13 +180,16 @@ test('waffleBand: the cells of seats lo to hi, both included', () => {
 
 // --- rows of dots: the strip in the state record and the axes of chapter 03 (Task 7.2) ---
 
-test('seatTicks: the smallest step of 1, 2, 5, 10, 20, 50 or 100 that gives at most 7 ticks', () => {
+test('seatTicks: the smallest step of 1, 2, 5, 10, 20, 50 or 100 that gives at most 7 ticks, ending on the total', () => {
   assert.deepEqual(seatTicks(2), [0, 1, 2]);
   assert.deepEqual(seatTicks(6), [0, 1, 2, 3, 4, 5, 6]); // 7 ticks with step 1
   assert.deepEqual(seatTicks(8), [0, 2, 4, 6, 8]); // step 1 gives 9
-  // 38: step 1 gives 39, 2 gives 20, 5 gives 8, 10 gives 4
-  assert.deepEqual(seatTicks(38), [0, 10, 20, 30]);
-  assert.deepEqual(seatTicks(52), [0, 10, 20, 30, 40, 50]);
+  // 38: step 1 gives 39, 2 gives 20, 5 gives 8, 10 gives 4; the total 38 is added
+  assert.deepEqual(seatTicks(38), [0, 10, 20, 30, 38]);
+  // the total replaces a step tick at half a step or less from it
+  assert.deepEqual(seatTicks(52), [0, 10, 20, 30, 40, 52]);
+  assert.deepEqual(seatTicks(9), [0, 2, 4, 6, 9]);
+  assert.deepEqual(seatTicks(17), [0, 5, 10, 17]);
 });
 
 test('rowDomain: whole steps around the values, at least half a step to spare', () => {

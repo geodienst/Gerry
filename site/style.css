@@ -208,6 +208,8 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 #waffle rect.seat { transition: fill 0.35s ease; }
 #waffle .band rect { fill: none; stroke: var(--fg); stroke-width: 1.4; }
 #waffle .tick text { fill: var(--muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* On a narrow screen the waffle is scaled down to about 0.7; a larger number keeps it at 12px or more. */
+@media (max-width: 480px) { #waffle { overflow: visible; } #waffle .tick text { font-size: 17px; } }
 #waffle .tick line { stroke: var(--fg); }
 .wkey { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.8125rem; color: var(--muted); }
 .wkey > span { display: inline-flex; gap: 0.4rem; align-items: center; }
@@ -266,9 +268,10 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .figs div { display: grid; }
 .figs b { font: 700 2rem/1.05 var(--font-head); font-variant-numeric: tabular-nums; }
 .figs span { font-size: 0.8125rem; color: var(--muted); }
-.changes { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 1.4rem; font-size: 0.87rem; }
-@media (max-width: 420px) { .changes { columns: 1; } }
+/* Two columns only where a column of 22rem fits, so a name such as "North Carolina" stays on one line. */
+.changes { list-style: none; margin: 0; padding: 0; columns: 2 22rem; column-gap: 1.4rem; font-size: 0.87rem; }
 .changes li { break-inside: avoid; display: flex; justify-content: space-between; gap: 0.6rem; border-bottom: 1px solid var(--rule); padding-block: 0.25rem; }
+.changes li > :first-child { white-space: nowrap; }
 .changes .v { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
 .tables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
 @media (max-width: 520px) { .tables { grid-template-columns: minmax(0, 1fr); } }

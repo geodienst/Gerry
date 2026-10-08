@@ -136,10 +136,17 @@ export function waffleBand(lo, hi, w = WAFFLE) {
 
 export const DOT_ROWS = { left: 112, right: 16, row: 26, top: 24, bottom: 22 }; // left: room for "Neutral median"
 
-/** Ticks from 0 to `total` seats: the smallest step of 1, 2, 5, 10, 20, 50 or 100 that gives at most `most` ticks. */
+/**
+ * Ticks from 0 to `total` seats: the smallest step of 1, 2, 5, 10, 20, 50 or 100 that gives at most `most` ticks,
+ * then the total itself, which replaces a step tick at half a step or less from it.
+ */
 export function seatTicks(total, most = 7) {
   const step = [1, 2, 5, 10, 20, 50, 100].find((s) => Math.floor(total / s) + 1 <= most) ?? 100;
-  return Array.from({ length: Math.floor(total / step) + 1 }, (_, k) => k * step);
+  const ticks = Array.from({ length: Math.floor(total / step) + 1 }, (_, k) => k * step);
+  const last = ticks[ticks.length - 1];
+  if (last === total) return ticks;
+  if (last > 0 && total - last <= step / 2) ticks.pop();
+  return [...ticks, total];
 }
 
 /**
