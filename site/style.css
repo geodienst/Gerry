@@ -80,7 +80,6 @@ a { color: var(--ink); }
 @media (max-width: 899.98px) { .atlas { grid-template-columns: minmax(0, 1fr); } }
 .mapcol { display: grid; gap: 0.7rem; min-width: 0; }
 
-.controls { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
 .seg { display: inline-flex; border: 1px solid var(--rule); }
 .seg button { font: inherit; font-size: 0.87rem; padding: 0.4rem 0.65rem; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--rule); }
@@ -240,7 +239,10 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .headline .big { font: 700 2.6rem/1 var(--font-head); font-variant-numeric: tabular-nums; display: inline-flex; gap: 0.5rem; align-items: center; }
 .headline .big i { width: 0.9rem; height: 2.2rem; display: inline-block; }
 .headline p { margin: 0; font-size: 0.94rem; line-height: 1.4; }
-.record .trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+/* Each column is at least as wide as its longest word, so a label such as "Vote-proportional" stays on one line
+   (sheet.js wraps each word in .nowrap); at 22rem the three labels fit at 0.75rem. */
+.record .trio { display: grid; grid-template-columns: repeat(3, minmax(min-content, 1fr)); gap: 0.5rem; }
+.record .trio .lab { font-size: 0.75rem; }
 .dotrows .grid { stroke: var(--rule); }
 .dotrows .lbl, .dotrows .baselbl { fill: var(--fg); font-weight: 600; }
 .dotrows .bandr { fill: var(--tint); stroke: var(--ink); }

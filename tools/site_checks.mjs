@@ -370,7 +370,8 @@ async function method(t) {
 
 // --- Task 6.9: layout, keyboard, dark mode, reduced motion -----------------------------------------
 async function layout(t) {
-  for (const [width, height, place, font] of [[375, 812, 'below', '15px'], [1280, 800, 'beside', '15px'], [2560, 1440, 'beside', '20.52px']]) {
+  for (const [width, height, place, rowsPlace, metaPlace, font] of [
+    [375, 812, 'below', 'below', 'stacked', '15px'], [1280, 800, 'beside', 'beside', 'in a row', '15px'], [2560, 1440, 'beside', 'beside', 'in a row', '20.52px']]) {
     await t.load('#CA', { width, height });
     await t.until(`${HEADING} === 'California'`);
     // clientWidth leaves out the scrollbar and, unlike innerWidth, does not grow with the overflow on a phone.
@@ -378,16 +379,20 @@ async function layout(t) {
     t.check(`${width}px: no sideways scrolling`, sideways.scrollWidth <= sideways.clientWidth, JSON.stringify(sideways));
     const where = await t.js("(() => { const m = document.querySelector('.mapcol').getBoundingClientRect(); const s = document.getElementById('sheet').getBoundingClientRect(); return s.left >= m.right - 1 ? 'beside' : s.top >= m.bottom - 1 ? 'below' : 'overlap'; })()");
     t.check(`${width}px: the sheet is ${place} the map`, where === place, where);
+    const rowsWhere = await t.js("(() => { const r = document.getElementById('scen').getBoundingClientRect(); const w = document.querySelector('.waffle').getBoundingClientRect(); return w.left >= r.right - 1 ? 'beside' : w.top >= r.bottom - 1 ? 'below' : 'overlap'; })()");
+    t.check(`${width}px: the waffle is ${rowsPlace} the three rows`, rowsWhere === rowsPlace, rowsWhere);
+    const metaWhere = await t.js("(() => { const tops = [...document.querySelectorAll('.metastrip dl > div')].map((d) => Math.round(d.getBoundingClientRect().top)); return new Set(tops).size === 1 ? 'in a row' : 'stacked'; })()");
+    t.check(`${width}px: the three fields of the meta strip are ${metaPlace}`, metaWhere === metaPlace, metaWhere);
     t.check(`${width}px: root font size ${font}`, (await t.js('getComputedStyle(document.documentElement).fontSize')) === font);
     // The font size on screen: the CSS size times the scale of the chart's viewBox.
     const sizes = await t.js("[...document.querySelectorAll('svg.chart text')].map((el) => parseFloat(getComputedStyle(el).fontSize) * el.getScreenCTM().a)");
     const small = sizes.filter((size) => !(size >= 10));
     t.check(`${width}px: chart text is at least 10px on screen`, sizes.length > 0 && small.length === 0, sizes.length
       ? `${sizes.length} texts, smallest ${Math.min(...sizes).toFixed(1)}px${small.length ? `, ${small.length} below 10px` : ''}` : 'no chart text found');
-    // The paragraphs of chapters 01 and 03 keep a readable measure on wide screens (Task 6.15): characters per rendered line.
+    // The paragraphs of the page keep a readable measure on wide screens (Task 6.15): characters per rendered line.
     const lines = await t.js(`(() => {
       const most = [];
-      for (const p of document.querySelectorAll('#outcomes p, #decide p')) {
+      for (const p of document.querySelectorAll('main p')) {
         const perLine = new Map();
         const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
         for (let n = walker.nextNode(); n; n = walker.nextNode()) {
@@ -402,7 +407,7 @@ async function layout(t) {
       return most;
     })()`);
     const long = lines.filter((p) => p.chars > 100);
-    t.check(`${width}px: no line in chapters 01 and 03 is longer than 100 characters`, lines.length > 0 && long.length === 0,
+    t.check(`${width}px: no line on the page is longer than 100 characters`, lines.length > 0 && long.length === 0,
       `longest ${Math.max(...lines.map((p) => p.chars))}${long.length ? `: ${long.map((p) => `${p.id} ${p.chars}`).join(', ')}` : ''}`);
     await t.screenshot(`california-${width}`);
   }
@@ -413,12 +418,21 @@ async function layout(t) {
     await t.key('Tab', 9);
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
-  const wanted = ['pick', 'view-states', 'view-districts', 'palette-party', 'palette-neutral', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'row'];
-  t.check('Tab reaches the State menu, the view and color buttons, the largest effects, the zoom buttons and the list, in that order',
+  const wanted = ['choice', 'pick', 'view-states', 'view-districts', 'palette-party', 'palette-neutral', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'row'];
+  t.check('Tab reaches the chosen row, the State menu, the view and color buttons, the largest effects, the zoom buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
   t.check('focus reached with Tab is visible', order.at(-1) === 'row'
     && (await t.js('getComputedStyle(document.activeElement).outlineStyle')) === 'solid');
+  await t.load();
+  await t.key('Tab', 9);
+  const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
+    outline: getComputedStyle(el).outlineStyle, group: el.parentElement.getAttribute('role'), name: el.parentElement.getAttribute('aria-label') }; })()`);
+  t.check('the first Tab lands on the chosen row of the radio group "Way of counting", with a visible outline',
+    radio.cls === 'choice' && radio.checked === 'true' && radio.outline === 'solid' && radio.group === 'radiogroup' && radio.name === 'Way of counting',
+    JSON.stringify(radio));
+  await t.key('Home', 36);
+  t.check('Home chooses the first row', await t.js("document.activeElement.querySelector('.lab')?.textContent === 'Vote-proportional' && document.activeElement.getAttribute('aria-checked') === 'true'"));
 
   // The State menu keeps the focus (Task 6.6); a polite live region reads the heading of the new sheet.
   await t.load();
@@ -433,12 +447,22 @@ async function layout(t) {
 
   await t.load('', { dark: true });
   await t.js("document.getElementById('view-districts').click()"); // the gradient belongs to the district legend
-  t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(15, 21, 19)');
-  t.check('dark mode paints the map with the dark poles', (await t.js("document.querySelector('#legend linearGradient stop:last-child').getAttribute('stop-color')")) === 'rgb(57, 135, 229)');
+  t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(15, 21, 19)'
+    && (await t.js("getComputedStyle(document.querySelector('header.mast')).backgroundColor")) === 'rgb(11, 41, 32)');
+  t.check('dark mode paints the map and the waffle with the dark poles',
+    (await t.js("document.querySelector('#legend linearGradient stop:last-child').getAttribute('stop-color')")) === 'rgb(57, 135, 229)'
+    && (await t.js("document.querySelector('#waffle rect.seat').getAttribute('fill')")) === '#3987e5');
   await t.screenshot('dark-1280');
 
   for (const reduce of [true, false]) {
     await t.load('', { reduce });
+    // Choose Neutral-map median: the square right after the enacted count turns Democratic. Its transition is that of
+    // the style sheet (0.35s), or none with reduced motion; the first paint after loading never animates.
+    const enacted = Number(await t.js("document.querySelector('#readout b').textContent"));
+    await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
+    const seat = await t.js(`getComputedStyle(document.querySelectorAll('#waffle rect.seat')[${enacted}]).transitionDuration`);
+    t.check(reduce ? 'with reduced motion the waffle has no transition' : 'without reduced motion the waffle fades its squares',
+      reduce ? seat === '0s' : seat === '0.35s', seat);
     await t.js("location.hash = '#NV'");
     await t.sleep(150);
     const early = await t.js(ZOOM);
@@ -446,6 +470,11 @@ async function layout(t) {
     const late = await t.js(ZOOM);
     t.check(reduce ? 'with reduced motion the zoom jumps without animation' : 'without reduced motion the zoom animates',
       reduce ? early === late && late > 1 : early < late, `${early} then ${late}`);
+  }
+  for (const [width, height, dark] of [[375, 812, false], [1280, 800, false], [2560, 1440, false], [375, 812, true], [1280, 800, true], [2560, 1440, true]]) {
+    await t.load('#TX', { width, height, dark });
+    await t.until(`${HEADING} === 'Texas'`);
+    await t.screenshot(`page-${width}${dark ? '-dark' : ''}`);
   }
 }
 

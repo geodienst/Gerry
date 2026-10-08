@@ -87,7 +87,12 @@ function trio(parent, items) {
   const div = parent.append('div').attr('class', 'trio');
   for (const item of items) {
     const cell = div.append('div');
-    cell.append('span').attr('class', 'lab').text(item.label);
+    // Each word in its own nowrap span, so "Vote-proportional" never breaks at its hyphen; lines break at the spaces.
+    const lab = cell.append('span').attr('class', 'lab');
+    item.label.split(' ').forEach((word, i) => {
+      if (i > 0) lab.append('span').text(' ');
+      lab.append('span').attr('class', 'nowrap').text(word);
+    });
     cell.append('span').attr('class', 'val').text(item.value);
     cell.append('span').attr('class', 'sub').text(item.sub);
   }
