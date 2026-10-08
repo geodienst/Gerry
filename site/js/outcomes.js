@@ -54,7 +54,7 @@ export function renderOutcomes(view, { reduceMotion }) {
   });
 
   // The House of 435 (owner concept, October 8, 2026): seat i counted from the Democratic side, Democrats from
-  // the left, Republicans from the right, seat 218 alone at the top in the middle. The six one-seat states are
+  // the left, Republicans from the right, seat 218 at the top of the middle column. The six one-seat states are
   // the outermost seats of each side, framed, with a tooltip. Wide screens get 7 rows, narrow ones 14.
   const svg = $('waffle');
   const box = svg.parentElement;
@@ -65,12 +65,10 @@ export function renderOutcomes(view, { reduceMotion }) {
   const band = svgNode('g', { class: 'band', display: 'none' });
   const changed = svgNode('g', { class: 'changed', 'aria-hidden': 'true' });
   const frames = svgNode('g', { class: 'frames' });
-  const midLabel = svgNode('text', { class: 'midlabel', 'aria-hidden': 'true', 'text-anchor': 'middle' }, house.midLabel);
-  svg.append(seatLayer, band, changed, frames, midLabel);
+  svg.append(seatLayer, band, changed, frames);
   $('finding').textContent = view.finding;
   $('key-band-text').textContent = view.band.key;
   $('key-fill').textContent = house.fillKey;
-  $('key-mid-text').textContent = house.midKey;
   $('key-single-text').textContent = house.singleKey;
 
   const PAD = 2; // room in the viewBox for the frames around the outer seats
@@ -129,21 +127,17 @@ export function renderOutcomes(view, { reduceMotion }) {
     }));
     frames.replaceChildren(frame(seatsFrom(0, house.dSingle), house.singles[0].text),
       frame(seatsFrom(2 * HOUSE.half + 1 - house.rSingle, 2 * HOUSE.half + 1), house.singles[1].text));
-    midLabel.setAttribute('x', layout.mid.x + HOUSE.size / 2);
-    midLabel.setAttribute('y', HOUSE.top - 5);
     changed.replaceChildren(...dots());
     hideTip();
   }
 
-  // 7 rows where the waffle is at least 560px wide, else 14; the label above the middle seat stays near 12px
+  // 7 rows where the waffle is at least 560px wide, else 14
   function fit() {
     const rows = box.clientWidth >= 560 ? 7 : 14;
     if (!layout || rows !== layout.rows) {
       build(rows);
       draw(false);
     }
-    const scale = svg.clientWidth / (layout.width + 2 * PAD) || 1;
-    midLabel.style.fontSize = `${Math.max(12, 12.5 / scale)}px`; // inline, so the chart text rule of the style sheet does not win
   }
 
   // The two columns under rows and waffle.

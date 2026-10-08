@@ -44,13 +44,12 @@ test('outcomesView: three rows, the two effects between them, the band and the s
     + 'With the same votes they give Democrats 213 seats, where the neutral-map median gives 223.');
   // the House of 435: 218 - 216 = 2 Democratic one-seat states (DE, VT), 4 Republican (AK, ND, SD, WY)
   assert.deepEqual(view.house, {
-    dSingle: 2, rSingle: 4, midLabel: '218',
+    dSingle: 2, rSingle: 4,
     singles: [
       { party: 'D', text: 'Delaware and Vermont: one seat each, not part of the comparison. They count for Democrats, who won both states in 2016 and 2020.' },
       { party: 'R', text: 'Alaska, North Dakota, South Dakota and Wyoming: one seat each, not part of the comparison. They count for Republicans, who won all four states in 2016 and 2020.' },
     ],
     fillKey: '1 square = 1 seat of 435. Democrats fill from the left, Republicans from the right.',
-    midKey: 'Top middle square: seat 218 of 435. The party that holds it has a House majority.',
     singleKey: 'Framed: the six states with one seat, the same in every count.',
   });
   assert.equal(view.effectsNote, 'The geographic effect is the difference between proportional seats and neutral maps. '

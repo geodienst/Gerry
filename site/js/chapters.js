@@ -86,10 +86,9 @@ function houseView(results, needed) {
   const text = (list, who) => `${names(list)}: one seat each, not part of the comparison. They count for ${who}, `
     + `who won ${bothOrAll(list.length)} in 2016 and 2020.`;
   return {
-    dSingle: d.length, rSingle: r.length, midLabel: seats(218),
+    dSingle: d.length, rSingle: r.length,
     singles: [{ party: 'D', text: text(d, 'Democrats') }, { party: 'R', text: text(r, 'Republicans') }],
     fillKey: '1 square = 1 seat of 435. Democrats fill from the left, Republicans from the right.',
-    midKey: 'Top middle square: seat 218 of 435. The party that holds it has a House majority.',
     singleKey: 'Framed: the six states with one seat, the same in every count.',
   };
 }

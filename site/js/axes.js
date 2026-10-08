@@ -107,10 +107,10 @@ export function netBar(seatsR, seatsD, width = 360) {
 
 // --- The House of 435 in chapter 01 (owner concept, October 8, 2026) ------------------------------
 // Two halves of 217 seats, Democrats from the left and Republicans from the right, and the middle seat
-// (seat 218, the majority) at the top between them. Each half fills from its outer column inward, every
-// column bottom up, so the change of color ends next to the middle seat.
+// (seat 218, the majority) at the top of the column between them, in the grid like the rest. Each half fills
+// from its outer column inward, every column bottom up, so the change of color ends next to the middle seat.
 
-export const HOUSE = { half: 217, size: 10, step: 12, top: 18, gap: 7 };
+export const HOUSE = { half: 217, size: 10, step: 12, top: 18, gap: 2 }; // gap: as between any two squares
 
 /** Columns, the seats in the inner column, the size in viewBox units and the middle seat, for `rows` rows. */
 export function houseLayout(rows, h = HOUSE) {

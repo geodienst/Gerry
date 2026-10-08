@@ -583,13 +583,14 @@ async function outcomes(t) {
     const r = document.getElementById('readout');
     return r.getAttribute('aria-live') === 'polite' && r.textContent === 'Democrats${want.enacted}Republicans${want.total - want.enacted}';
   })()`));
-  // seat 218 sits alone at the top between the halves; the framed one-seat states show their names on hover
-  t.check('the middle square at the top is seat 218, Republican with the enacted maps', await t.js(`(() => {
-    const mid = document.querySelector('#waffle rect.middle');
-    const ys = [...document.querySelectorAll('#waffle rect.seat')].map((r) => Number(r.getAttribute('y')));
-    return mid && Number(mid.getAttribute('y')) === Math.min(...ys) && mid.getAttribute('fill') !== ${blue}
-      && document.querySelector('#waffle .midlabel').textContent === '218'
-      && document.getElementById('key-mid-text').textContent.startsWith('Top middle square: seat 218 of 435.');
+  // seat 218 is the top square of the middle column; the framed one-seat states show their names on hover
+  t.check('the square at the top of the middle column is seat 218, Republican with the enacted maps', await t.js(`(() => {
+    const seats = [...document.querySelectorAll('#waffle rect.seat')];
+    const mid = seats[217];
+    const ys = seats.map((r) => Number(r.getAttribute('y')));
+    const xs = seats.map((r) => Number(r.getAttribute('x')));
+    return mid.classList.contains('middle') && Number(mid.getAttribute('y')) === Math.min(...ys)
+      && Number(mid.getAttribute('x')) === (Math.min(...xs) + Math.max(...xs)) / 2 && mid.getAttribute('fill') !== ${blue};
   })()`));
   const frameAt = (i) => `document.querySelectorAll('#waffle .frames rect')[${i}]`;
   t.check('two frames, around 2 Democratic and 4 Republican one-seat states', await t.js(`(() => {

@@ -218,11 +218,8 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 #waffle { width: 100%; }
 #waffle rect.seat { transition: fill 0.35s ease; }
 #waffle .band rect { fill: none; stroke: var(--fg); stroke-width: 1.4; }
-/* The House of 435: seat 218 outlined at the top, the framed one-seat states with a tooltip, the label above */
-#waffle rect.middle { stroke: var(--fg); stroke-width: 1.5; }
+/* The House of 435: the framed one-seat states with a tooltip */
 #waffle .frames rect { fill: transparent; stroke: var(--fg); stroke-width: 1.5; cursor: help; pointer-events: all; }
-#waffle .midlabel { fill: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
-.wkey .mk { width: 0.75rem; height: 0.75rem; border: 1.5px solid var(--fg); background: var(--mid); }
 .wkey .fr { width: 0.6rem; height: 1rem; border: 1.5px solid var(--fg); }
 #waffle-tip { z-index: 2; }
 #waffle .changed circle { fill: var(--sheet); }
