@@ -99,52 +99,60 @@
       </div>
     </section>
 
+    <section class="chapter" id="decide" aria-labelledby="h03">
+      <div class="wrap">
+        <div class="chead">
+          <span class="no">03</span>
+          <h2 id="h03">What the maps decide</h2>
+          <p id="decide-intro"></p>
+        </div>
+        <div class="grid3">
+          <section class="wide" id="majority" aria-labelledby="majority-title">
+            <h3 id="majority-title">House majority</h3>
+            <p id="majority-text"></p>
+            <div id="majority-axis"></div>
+            <p class="note" id="majority-note"></p>
+          </section>
+          <section id="senate" aria-labelledby="senate-title">
+            <h3 id="senate-title">Senate on the same votes</h3>
+            <div class="figs" id="senate-figures"></div>
+            <p id="senate-text"></p>
+            <p class="note" id="senate-note"></p>
+          </section>
+          <section id="competitive" aria-labelledby="competitive-title">
+            <h3 id="competitive-title">Competitive districts</h3>
+            <div class="figs" id="competitive-figures"></div>
+            <div id="competitive-axis"></div>
+            <p class="note" id="competitive-text"></p>
+          </section>
+          <section class="wide" id="redraws" aria-labelledby="redraws-title">
+            <h3 id="redraws-title">Redraws since 2024</h3>
+            <div class="figs" id="redraw-figures"></div>
+            <p id="redraw-text"></p>
+            <ul class="changes" id="redraw-list"></ul>
+          </section>
+          <section class="wide" id="control" aria-labelledby="control-title">
+            <h3 id="control-title">By political control</h3>
+            <p class="note">These tables group the enacted maps by the party, if any, that could adopt them alone, and by the body that adopted them. They show who adopted a map, not the intent behind it. A map adopted under one party's control can still fall inside the neutral band.</p>
+            <div class="tables">
+              <table>
+                <caption>Political control when the map was adopted</caption>
+                <thead><tr><th scope="col">Control</th><th scope="col" class="num">States</th><th scope="col" class="num">Seats</th><th scope="col" class="num">Drawing effect</th></tr></thead>
+                <tbody id="by-control"></tbody>
+              </table>
+              <table>
+                <caption>Body that adopted the map</caption>
+                <thead><tr><th scope="col">Adopted by</th><th scope="col" class="num">States</th><th scope="col" class="num">Seats</th><th scope="col" class="num">Drawing effect</th></tr></thead>
+                <tbody id="by-body"></tbody>
+              </table>
+            </div>
+            <p class="note" id="control-note"></p>
+          </section>
+        </div>
+      </div>
+    </section>
+
     <div class="wrap legacy">
-
-    <section class="card" id="national" aria-labelledby="national-title">
-      <h2 id="national-title">All states with more than one seat</h2>
-      <p class="note" id="national-note"></p>
-      <div class="trio" id="national-trio"></div>
-      <div id="national-axis"></div>
-      <p class="note" id="national-caption"></p>
-      <p class="effects" id="national-effects"></p>
-      <div class="pair">
-        <div class="stack" id="majority">
-          <h3>House majority</h3>
-          <div id="majority-axis"></div>
-          <p class="effects" id="majority-text"></p>
-          <p class="note" id="majority-note"></p>
-        </div>
-        <div class="stack" id="senate">
-          <h3>Senate majority on the same votes</h3>
-          <p class="effects" id="senate-text"></p>
-          <p class="note" id="senate-note"></p>
-        </div>
-      </div>
-      <div class="stack" id="redraws">
-        <h3>Redraws since 2024</h3>
-        <p class="effects" id="redraw-text"></p>
-        <ul class="redraws" id="redraw-list"></ul>
-      </div>
-      <div class="competitive"><p class="effects" id="competitive-text"></p></div>
-      <p class="note"><a href="#control">Drawing effects by political control</a></p>
-    </section>
-
-    <section class="prose" id="control" aria-labelledby="control-title">
-      <h2 id="control-title">By political control</h2>
-      <p class="note">These tables group the enacted maps by the party, if any, that could adopt them alone, and by the body that adopted them. They show who adopted a map, not the intent behind it. A map adopted under one party's control can still fall inside the neutral band.</p>
-      <table>
-        <caption>Political control when the map was adopted</caption>
-        <thead><tr><th scope="col">Control</th><th scope="col" class="num">States</th><th scope="col" class="num">Seats</th><th scope="col" class="num">Drawing effect</th></tr></thead>
-        <tbody id="by-control"></tbody>
-      </table>
-      <table>
-        <caption>Body that adopted the map</caption>
-        <thead><tr><th scope="col">Adopted by</th><th scope="col" class="num">States</th><th scope="col" class="num">Seats</th><th scope="col" class="num">Drawing effect</th></tr></thead>
-        <tbody id="by-body"></tbody>
-      </table>
-      <p class="note" id="control-note"></p>
-    </section>
 
     <section class="prose" id="method" aria-labelledby="method-title">
       <h2 id="method-title">Method</h2>

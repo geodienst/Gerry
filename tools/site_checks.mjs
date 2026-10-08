@@ -246,65 +246,74 @@ async function sheet(t) {
   t.check('Escape goes from Wyoming back to the list', await t.until(`${HEADING} === 'Drawing effect by state' && location.hash === ''`));
 }
 
-// --- Task 6.7: the national section ---------------------------------------------------------------
-async function national(t) {
-  await t.load('#TX');
-  await t.until(`${HEADING} === 'Texas'`);
-  const strip = await t.text('#national');
-  t.check('the strip has the three numbers, the band and both effects',
-    ['Vote-proportional', 'Neutral-map median', 'Enacted maps', '90% of outcomes', 'Geographic effect', 'Drawing effect', 'of neutral outcomes'].every((p) => strip.includes(p)));
-  t.check('the national seat axis has a text alternative', await t.js(
-    "document.querySelector('#national-axis svg')?.getAttribute('aria-label')?.startsWith('Democratic seats in all states with more than one seat') === true"));
-  // A marker line stops at the labels of the other markers (Step 6: no line through the text).
-  const crossings = (scope) => `(() => {
-    const hits = [];
-    for (const svg of document.querySelectorAll('${scope} svg.chart')) {
-      const labels = [...svg.querySelectorAll(':scope > text.mark-label')].map((node) => ({
-        node, x: Number(node.getAttribute('x')), y: Number(node.getAttribute('y')), box: node.getBBox() }));
-      if (!labels.length) continue;
-      for (const line of svg.querySelectorAll(':scope > line')) {
-        const x = Number(line.getAttribute('x1'));
-        const half = Number(line.getAttribute('stroke-width') || 1) / 2;
-        const [y1, y2] = [Number(line.getAttribute('y1')), Number(line.getAttribute('y2'))].sort((a, b) => a - b);
-        // the line's own label is the nearest one above it at the same x
-        const own = labels.filter((l) => Math.abs(l.x - x) < 1e-6 && l.y <= y1).sort((a, b) => b.y - a.y)[0];
-        for (const l of labels) {
-          if (l === own) continue;
-          // the stroke reaches the label or its 1.5-unit halo
-          const across = x + half > l.box.x - 1.5 && x - half < l.box.x + l.box.width + 1.5;
-          const overlap = Math.min(y2, l.box.y + l.box.height) - Math.max(y1, l.box.y);
-          if (across && overlap > 0.5) hits.push((own ? own.node.textContent : 'a line') + ' runs through ' + l.node.textContent);
-        }
+// A marker line stops at the labels of the other markers (Step 6: no line through the text).
+const crossings = (scope) => `(() => {
+  const hits = [];
+  for (const svg of document.querySelectorAll('${scope} svg.chart')) {
+    const labels = [...svg.querySelectorAll(':scope > text.mark-label')].map((node) => ({
+      node, x: Number(node.getAttribute('x')), y: Number(node.getAttribute('y')), box: node.getBBox() }));
+    if (!labels.length) continue;
+    for (const line of svg.querySelectorAll(':scope > line')) {
+      const x = Number(line.getAttribute('x1'));
+      const half = Number(line.getAttribute('stroke-width') || 1) / 2;
+      const [y1, y2] = [Number(line.getAttribute('y1')), Number(line.getAttribute('y2'))].sort((a, b) => a - b);
+      // the line's own label is the nearest one above it at the same x
+      const own = labels.filter((l) => Math.abs(l.x - x) < 1e-6 && l.y <= y1).sort((a, b) => b.y - a.y)[0];
+      for (const l of labels) {
+        if (l === own) continue;
+        // the stroke reaches the label or its 1.5-unit halo
+        const across = x + half > l.box.x - 1.5 && x - half < l.box.x + l.box.width + 1.5;
+        const overlap = Math.min(y2, l.box.y + l.box.height) - Math.max(y1, l.box.y);
+        if (across && overlap > 0.5) hits.push((own ? own.node.textContent : 'a line') + ' runs through ' + l.node.textContent);
       }
     }
-    return hits;
-  })()`;
-  // Text that should never reach a visitor: an em dash, a value that failed to format, an empty fill (Task 6.15).
-  const broken = `(() => {
-    const bad = /\\u2014|undefined|NaN|\\[object|Infinity|[<>]\\d+%/;
-    const texts = [document.body.textContent, ...[...document.querySelectorAll('[aria-label]')].map((el) => el.getAttribute('aria-label'))];
-    const hits = texts.flatMap((text) => text.split('\\n')).filter((line) => bad.test(line)).map((line) => line.trim().slice(0, 80));
-    const empty = [...document.querySelectorAll('[data-fill]')].filter((el) => el.textContent.trim() === '').map((el) => 'empty ' + el.dataset.fill);
-    return [...hits, ...empty];
-  })()`;
-  const textHits = [];
-  for (const width of [375, 2560, 1280]) {
+  }
+  return hits;
+})()`;
+// Text that should never reach a visitor: an em dash, a value that failed to format, an empty fill (Task 6.15).
+const broken = `(() => {
+  const bad = /\\u2014|undefined|NaN|\\[object|Infinity|[<>]\\d+%/;
+  const texts = [document.body.textContent, ...[...document.querySelectorAll('[aria-label]')].map((el) => el.getAttribute('aria-label'))];
+  const hits = texts.flatMap((text) => text.split('\\n')).filter((line) => bad.test(line)).map((line) => line.trim().slice(0, 80));
+  const empty = [...document.querySelectorAll('[data-fill]')].filter((el) => el.textContent.trim() === '').map((el) => 'empty ' + el.dataset.fill);
+  return [...hits, ...empty];
+})()`;
+
+// --- Task 7.9: the page and the records of all states, for text that failed to format (was "national") ---
+async function sweep(t) {
+  await t.load('', { width: 1280, height: 900 });
+  const hits = (await t.js(broken)).map((hit) => `page: ${hit}`);
+  const states = await t.js(`${DATA}.then((r) => Object.keys(r.states))`);
+  for (const postal of states) {
+    await t.js(`location.hash = '#${postal}'`);
+    await t.until(`document.getElementById('pick').value === '${postal}' && document.querySelector('#sheet svg.dotrows') !== null`);
+    hits.push(...(await t.js(broken)).map((hit) => `${postal}: ${hit}`));
+  }
+  t.check(`no em dash, "undefined", "NaN", "<1%", ">99%" or empty fill on the page or on the records of all ${states.length} states`,
+    hits.length === 0, hits.join('; '));
+  t.check('the national strip is gone; its blocks are in chapters 01 and 03',
+    await t.js("document.getElementById('national') === null && document.getElementById('decide') !== null"));
+}
+
+// --- Task 7.9: chapter 03 ------------------------------------------------------------------------
+async function decide(t) {
+  await t.load();
+  t.check('chapter 03 has five cards in this order', await t.js(
+    "[...document.querySelectorAll('#decide .grid3 > section')].map((s) => s.id).join() === 'majority,senate,competitive,redraws,control'"));
+  const figs = await t.js("[...document.querySelectorAll('#decide .figs b')].map((b) => b.textContent)");
+  t.check('seven large figures, each a formatted number', figs.length === 7
+    && figs.every((v) => /^(\d+(\.\d+)?%|\d+|\d+ to \d+|0|[RD]\+\d+)$/.test(v)), figs.join(' | '));
+  const axes = await t.js(`[...document.querySelectorAll('#decide svg.dotrows')].map((s) => ({ id: s.parentElement.id, role: s.getAttribute('role'),
+    label: s.getAttribute('aria-label'), rows: [...s.querySelectorAll('text.lbl')].map((x) => x.textContent), base: s.querySelectorAll('line.base').length }))`);
+  t.check('two charts of rows of dots, each with a text alternative', axes.length === 2 && axes.every((a) => a.role === 'img' && a.label),
+    JSON.stringify(axes));
+  t.check('the House majority has Proportional, Neutral median and Enacted, and the vote as a dashed line',
+    axes[0]?.id === 'majority-axis' && axes[0].rows.join() === 'Proportional,Neutral median,Enacted' && axes[0].base === 1);
+  t.check('competitive districts have Neutral median and Enacted',
+    axes[1]?.id === 'competitive-axis' && axes[1].rows.join() === 'Neutral median,Enacted' && axes[1].base === 0);
+  for (const width of [375, 1280]) {
     await t.load('', { width, height: 900 });
-    const hits = (await t.js(crossings('#national'))).map((hit) => `national: ${hit}`);
-    if (width === 1280) textHits.push(...(await t.js(broken)).map((hit) => `national: ${hit}`));
-    const states = await t.js(`${DATA}.then((r) => Object.keys(r.states))`);
-    for (const postal of states) {
-      await t.js(`location.hash = '#${postal}'`);
-      await t.until(`document.getElementById('pick').value === '${postal}' && document.querySelector('#sheet svg.dotrows') !== null`);
-      hits.push(...(await t.js(crossings('#sheet'))).map((hit) => `${postal}: ${hit}`));
-      if (width === 1280) textHits.push(...(await t.js(broken)).map((hit) => `${postal}: ${hit}`));
-    }
-    t.check(`${width} px: no marker line runs through another label (national axis and ${states.length} states)`,
-      hits.length === 0, hits.length ? `${hits.length} crossings: ${hits.join('; ')}` : '');
-    if (width === 1280) {
-      t.check(`no em dash, "undefined", "NaN", "<1%", ">99%" or empty fill on the page or on the sheets of all ${states.length} states`,
-        textHits.length === 0, textHits.join('; '));
-    }
+    await t.screenshot(`decide-${width}`);
   }
 }
 
@@ -358,10 +367,10 @@ async function layout(t) {
     const small = sizes.filter((size) => !(size >= 10));
     t.check(`${width}px: chart text is at least 10px on screen`, sizes.length > 0 && small.length === 0, sizes.length
       ? `${sizes.length} texts, smallest ${Math.min(...sizes).toFixed(1)}px${small.length ? `, ${small.length} below 10px` : ''}` : 'no chart text found');
-    // The paragraphs of the national strip keep a readable measure on wide screens (Task 6.15): characters per rendered line.
+    // The paragraphs of chapters 01 and 03 keep a readable measure on wide screens (Task 6.15): characters per rendered line.
     const lines = await t.js(`(() => {
       const most = [];
-      for (const p of document.querySelectorAll('#national p')) {
+      for (const p of document.querySelectorAll('#outcomes p, #decide p')) {
         const perLine = new Map();
         const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
         for (let n = walker.nextNode(); n; n = walker.nextNode()) {
@@ -376,7 +385,7 @@ async function layout(t) {
       return most;
     })()`);
     const long = lines.filter((p) => p.chars > 100);
-    t.check(`${width}px: no line in the national strip is longer than 100 characters`, lines.length > 0 && long.length === 0,
+    t.check(`${width}px: no line in chapters 01 and 03 is longer than 100 characters`, lines.length > 0 && long.length === 0,
       `longest ${Math.max(...lines.map((p) => p.chars))}${long.length ? `: ${long.map((p) => `${p.id} ${p.chars}`).join(', ')}` : ''}`);
     await t.screenshot(`california-${width}`);
   }
@@ -459,7 +468,6 @@ async function control(t) {
   await t.load('#TX');
   t.check('the table by control has four rows and the one by body three', await t.js("document.querySelectorAll('#by-control tr').length === 4 && document.querySelectorAll('#by-body tr').length === 3"));
   t.check('the seven drawing effects in the tables show their direction', await t.js("((cells) => cells.length === 7 && cells.every((td) => /^(0|[RD]\\+\\d+)$/.test(td.textContent)))([...document.querySelectorAll('#control tbody td:last-child')])"));
-  t.check('the national strip links to the tables', await t.js("document.querySelector('#national a[href=\"#control\"]') !== null"));
   await t.until(`${HEADING} === 'Texas'`);
   t.check('the Texas sheet says who adopted the map', /Adopted by: (Legislature|Commission|Court) \((Republican control|Democratic control|bipartisan|nonpartisan)\)\./.test(await t.text('#sheet')));
 }
@@ -576,7 +584,8 @@ export const GROUPS = [
   { name: 'largest', run: largest },
   { name: 'list', run: list },
   { name: 'sheet', run: sheet },
-  { name: 'national', run: national },
+  { name: 'sweep', run: sweep },
+  { name: 'decide', run: decide },
   { name: 'method', run: method },
   { name: 'layout', run: layout },
   { name: 'majority', run: majority },

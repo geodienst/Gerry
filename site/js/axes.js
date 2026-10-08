@@ -105,22 +105,6 @@ export function netBar(seatsR, seatsD, width = 360) {
   };
 }
 
-// --- The vote axis of the House majority (Task 6.10) --------------------------------------------
-
-export const VOTE_AXIS = { width: 560, height: 96, margin: { l: 14, r: 14, t: 56, b: 22 }, domain: [0.45, 0.6] };
-
-/** Domain of the vote axis: about 45% to 60%, wider if a value lies outside. */
-export function voteDomain(values, [low, high] = VOTE_AXIS.domain) {
-  return [Math.min(low, ...values), Math.max(high, ...values)];
-}
-
-/** Ticks every 5 points inside the domain: [0.45, 0.6] gives 0.45, 0.5, 0.55, 0.6. */
-export function voteTicks([low, high]) {
-  const ticks = [];
-  for (let k = Math.ceil(low * 20 - 1e-9); k <= Math.floor(high * 20 + 1e-9); k += 1) ticks.push(k / 20);
-  return ticks;
-}
-
 // --- The waffle of chapter 01 (Task 7.2) ---------------------------------------------------------
 
 export const WAFFLE = { rows: 13, step: 12, size: 10, top: 16, edge: 12 }; // top: room for the tick and its number

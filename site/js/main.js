@@ -1,20 +1,18 @@
-// Entry point: loads site/data/results.json and site/data/map.topojson, then wires chapter 01, the map, the sheet beside it and the national strip.
+// Entry point: loads site/data/results.json and site/data/map.topojson, then wires chapter 01, the map and the sheet beside it, and chapter 03.
 // d3 and topojson come from site/vendor/ as globals; the page makes no other requests.
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
 import {
-  indexResults, stateOptions, mapHints, effectList, nationalView, methodFills,
+  indexResults, stateOptions, mapHints, effectList, methodFills,
 } from './model.js';
-import {
-  majorityView, extensionFills, redrawView, competitiveText, controlTables, senateView,
-} from './extensions.js';
+import { extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState, renderLargest, renderSingle } from './sheet.js';
 import {
-  renderNational, renderMajority, renderRedraws, renderControl, renderSenate,
-} from './national.js';
-import { outcomesView, largestEffects, recordView, singleSeatView } from './chapters.js';
+  outcomesView, largestEffects, recordView, singleSeatView, decideView,
+} from './chapters.js';
 import { renderOutcomes } from './outcomes.js';
+import { renderDecide } from './decide.js';
 
 const { d3 } = globalThis;
 const $ = (id) => document.getElementById(id);
@@ -144,14 +142,8 @@ async function main() {
   $('zoom-out').addEventListener('click', () => map.zoomBy(1 / 1.8));
   $('zoom-reset').addEventListener('click', () => { select('', { push: true }); map.zoomTo('', true); });
 
-  const national = nationalView(results);
-  renderNational($('national'), national);
-  const majority = majorityView(results);
-  renderMajority($('majority'), majority);
-  renderRedraws($('redraws'), redrawView(results));
-  $('competitive-text').textContent = competitiveText(results.national.competitive, 'maps');
-  renderControl($('control'), controlTables(results));
-  renderSenate($('senate'), senateView(results));
+  const decide = decideView(results);
+  renderDecide(decide);
   const fills = { ...methodFills(results), ...extensionFills(results) };
   for (const el of document.querySelectorAll('[data-fill]')) {
     if (Object.hasOwn(fills, el.dataset.fill)) el.textContent = fills[el.dataset.fill];
@@ -165,8 +157,7 @@ async function main() {
     const focusable = () => [...$('sheet').querySelectorAll('button, summary, a[href], [tabindex]')];
     const at = focusable().indexOf(document.activeElement);
     renderSheet();
-    renderNational($('national'), national);
-    renderMajority($('majority'), majority);
+    renderDecide(decide);
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });
 

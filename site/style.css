@@ -76,10 +76,6 @@ a { color: var(--ink); }
 .trio .val { font: 600 2rem/1.1 var(--font-head); font-variant-numeric: tabular-nums; }
 .trio .sub { font-size: 0.87rem; color: var(--muted); }
 .effects { margin: 0; font-size: 0.93rem; }
-/* On wide screens the strip and each column of its pair are far wider than a readable line, so its paragraphs
-   stop at 70ch; the axes keep the full width. So does the line on competitive districts (about 110 characters
-   with its labeled range); the rule above it sits on its wrapper and keeps the full width. */
-#national p { max-width: 70ch; }
 
 /* Chapter 02: map and record side by side from 900px; the record is at least 22rem and otherwise 30% wide. */
 .atlas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: clamp(1.2rem, 2.5vw, 2rem); align-items: start; }
@@ -160,18 +156,9 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 
-/* Extensions: the House majority beside the Senate (Task 6.10) */
-.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1.2rem; align-items: start; border-top: 1px solid var(--rule); padding-top: 0.9rem; }
-
-/* Extensions: redraws since 2024 (Task 6.11). The rows share one name column (subgrid) as wide as the
-   longest name, so each effect stays on one line at 375px. */
-.redraws { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 2px 0.75rem; max-width: 32rem; font-size: 0.87rem; }
-.redraws li { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; }
-.redraws .v { font-variant-numeric: tabular-nums; }
-
 /* Extensions: a rule sets the lines on competitive districts and the redraw in the sheet apart from the caption
-   of "Districts, sorted", and the national line on competitive districts apart from the redraws (Task 6.12). */
-.extras, .competitive { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+   of "Districts, sorted" (Task 6.12). */
+.extras { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
 
 /* Extensions: the tables by political control (Task 6.13). The number columns shrink to their heads,
    which are the same in both tables, so the columns line up and the first column takes the rest. */
@@ -269,3 +256,23 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
 .dotrows .mk { fill: var(--sheet); stroke: var(--fg); stroke-width: 1.5; }
 .dotrows .mk.filled { fill: var(--fg); }
 .dotrows .base { stroke: var(--fg); stroke-dasharray: 3 3; }
+
+/* Chapter 03: a grid of cards (Task 7.9). Four columns from 1280px, so a narrow card is at least 280 chart
+   units wide and its chart text stays at 10px or more; the mockup switched at 1080px. */
+.grid3 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.grid3 > section { background: var(--sheet); padding: 1.1rem 1.1rem 1.25rem; display: grid; gap: 0.7rem; align-content: start; min-width: 0; }
+.grid3 > section p { margin: 0; max-width: 70ch; }
+.grid3 .wide { grid-column: span 2; }
+@media (max-width: 1279.98px) { .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .grid3 { grid-template-columns: minmax(0, 1fr); } .grid3 .wide { grid-column: auto; } }
+.grid3 h3 { font: 700 1.1875rem/1.25 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
+.figs { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; align-items: baseline; }
+.figs div { display: grid; }
+.figs b { font: 700 2rem/1.05 var(--font-head); font-variant-numeric: tabular-nums; }
+.figs span { font-size: 0.8125rem; color: var(--muted); }
+.changes { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 1.4rem; font-size: 0.87rem; }
+@media (max-width: 420px) { .changes { columns: 1; } }
+.changes li { break-inside: avoid; display: flex; justify-content: space-between; gap: 0.6rem; border-bottom: 1px solid var(--rule); padding-block: 0.25rem; }
+.changes .v { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.tables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
+@media (max-width: 520px) { .tables { grid-template-columns: minmax(0, 1fr); } }
