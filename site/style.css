@@ -170,6 +170,7 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .eyebrow { margin: 0; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mast-muted); font-weight: 600; }
 .mast h1 { margin: 0; font: 700 clamp(1.9rem, 1.3rem + 2.6vw, 3.3rem)/1.08 var(--font-head); letter-spacing: -0.01em; max-width: 18ch; text-wrap: balance; }
 .mast .sub { margin: 0; font-size: 1.1875rem; line-height: 1.45; max-width: 52ch; }
+.mast .byline { margin: 0; font-size: 0.9375rem; font-weight: 600; color: var(--mast-muted); }
 .metastrip { border-bottom: 1px solid var(--rule); background: var(--sheet); }
 .metastrip dl { margin: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.3fr); }
 .metastrip dl > div { padding-block: 0.8rem; padding-inline: 0 1.2rem; display: grid; gap: 0.1rem; min-width: 0; }

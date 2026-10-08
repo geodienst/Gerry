@@ -538,6 +538,7 @@ async function masthead(t) {
   t.check('the title and the heading read "Some votes are more equal than others"', await t.js(
     "document.title === 'Some votes are more equal than others' && document.querySelector('header.mast h1')?.textContent === 'Some votes are more equal than others'"));
   t.check('the line above the title names the election day', (await t.text('.mast .eyebrow')) === 'U.S. House maps for November 3, 2026');
+  t.check('the masthead names the researcher', (await t.text('.mast .byline')) === 'Research by Govert Schoof');
   t.check('the meta description is the line under the title',
     await t.js("document.querySelector('meta[name=description]').content === document.querySelector('.mast .sub')?.textContent"));
   const fields = await t.js("[...document.querySelectorAll('.metastrip dt')].map((dt) => dt.textContent + ': ' + dt.nextElementSibling.textContent)");
