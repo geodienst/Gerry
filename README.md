@@ -2,11 +2,11 @@
 
 A static map of every US congressional district. For each state with more than one seat it puts three seat counts side by side:
 
-1. Proportional. Seats in proportion to the state's two-party vote.
-2. Neutral baseline. The median and the 5th to 95th percentile of Democratic seats over 5,000 simulated maps from the ALARM Project.
-3. Enacted. The seats from the map that voters use on November 3, 2026.
+1. Vote-proportional. Seats in proportion to the state's two-party vote.
+2. Neutral-map median. The median and the 5th to 95th percentile of Democratic seats over 5,000 simulated maps from the ALARM Project.
+3. Enacted maps. The seats from the map that voters use on November 3, 2026.
 
-All three count the same votes. These are the 2016 and 2020 presidential results added together, per voting district, from the ALARM Project's data. California, Hawaii, Maine and Oregon have them per census tract, Iowa and West Virginia per county. West Virginia uses 2020 only. The difference between Proportional and Neutral baseline is the geographic effect. The difference between Neutral baseline and Enacted is the drawing effect.
+All three count the same votes. These are the 2016 and 2020 presidential results added together, per voting district, from the ALARM Project's data. California, Hawaii, Maine and Oregon have them per census tract, Iowa and West Virginia per county. West Virginia uses 2020 only. The difference between Vote-proportional and Neutral-map median is the geographic effect. The difference between Neutral-map median and Enacted maps is the drawing effect.
 
 Alaska, Delaware, North Dakota, South Dakota, Vermont and Wyoming have one at-large seat each, so there is nothing to compare.
 
