@@ -56,16 +56,12 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* A district name such as TX-15 in a sentence: no line break after the hyphen */
 .nowrap { white-space: nowrap; }
-.wrap { max-width: 2400px; margin: 0 auto; padding-inline: clamp(16px, 2.5vw, 56px); padding-block: 1.2rem 2.6rem; display: grid; gap: 1.2rem; }
+/* Every part spans the window; its content sits in a column of at most 83rem (redesign, open point 8). */
+.wrap { max-width: 83rem; margin: 0 auto; padding-inline: clamp(16px, 2.5vw, 56px); }
+/* The blocks not yet moved into a chapter (Tasks 7.6 to 7.10) */
+.legacy { display: grid; gap: 1.2rem; padding-block: 1.2rem 2.6rem; }
 
-header { display: grid; gap: 0.35rem; }
 h1 { font: 600 clamp(1.6rem, 2.6vw, 2.4rem)/1.15 var(--font-head); margin: 0; text-wrap: balance; }
-.lede { margin: 0; max-width: 70ch; color: var(--muted); }
-/* The key figures as one sentence; the numbers in the heading face, the two links after it. */
-.keyline { margin: 0.2rem 0 0; max-width: 80ch; }
-.keyline b { font: 600 1.15em/1 var(--font-head); font-variant-numeric: tabular-nums; }
-.keyline .links { display: inline-flex; gap: 1rem; margin-left: 1rem; white-space: nowrap; }
-.linkbtn { font: inherit; font-size: 0.85rem; background: none; border: 0; color: var(--ink); padding: 0; cursor: pointer; text-decoration: underline; }
 h2 { font: 600 1.33rem/1.2 var(--font-head); margin: 0; text-wrap: balance; }
 h3 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
 .num { font-variant-numeric: tabular-nums; }
@@ -84,22 +80,6 @@ a { color: var(--ink); }
    stop at 70ch; the axes keep the full width. So does the line on competitive districts (about 110 characters
    with its labeled range); the rule above it sits on its wrapper and keeps the full width. */
 #national p { max-width: 70ch; }
-
-/* "How to read this": a card that folds; the three numbers on one row and the two effects on the next from 900px. */
-.explainer > summary { cursor: pointer; list-style: none; display: flex; gap: 0.6rem; align-items: center; font: 600 1.33rem/1.2 var(--font-head); }
-.explainer > summary::-webkit-details-marker { display: none; }
-.explainer > summary::before { content: ""; flex: none; width: 0.5rem; height: 0.5rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; }
-.explainer[open] > summary::before { transform: rotate(45deg); }
-.explainer-body { display: grid; gap: 0.7rem; }
-.explainer-body > p { margin: 0; max-width: 70ch; }
-.explainer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem 1.5rem; }
-.explainer li { font-size: 0.93rem; border-left: 2px solid var(--rule); padding-left: 0.65rem; max-width: 70ch; }
-.explainer li b { font-weight: 600; }
-@media (min-width: 900px) {
-  .explainer ul { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .explainer li { grid-column: span 2; }
-  .explainer li:nth-child(n+4) { grid-column: span 3; }
-}
 
 /* Map and sheet side by side from 900px; the sheet is at least 22rem and otherwise 30% wide. */
 .main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: 1.2rem; align-items: start; }
@@ -199,3 +179,67 @@ footer .credit img { width: 1.25rem; height: 1.25rem; vertical-align: -0.3rem; m
 #control th, #control td { text-align: left; padding: 0.25rem 0; border-bottom: 1px solid var(--rule); font-weight: 400; }
 #control thead th { color: var(--muted); }
 #control .num { text-align: right; font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; padding-left: 1.25rem; }
+
+/* Redesign: masthead, meta strip and chapter heads (Task 7.6) */
+.mast { background: var(--mast); color: var(--mast-fg); padding-block: clamp(1.6rem, 4vw, 3.2rem) clamp(1.4rem, 3vw, 2.4rem); }
+.mast .wrap { display: grid; gap: 0.9rem; }
+.eyebrow { margin: 0; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mast-muted); font-weight: 600; }
+.mast h1 { margin: 0; font: 700 clamp(1.9rem, 1.3rem + 2.6vw, 3.3rem)/1.08 var(--font-head); letter-spacing: -0.01em; max-width: 18ch; text-wrap: balance; }
+.mast .sub { margin: 0; font-size: 1.1875rem; line-height: 1.45; max-width: 52ch; }
+.metastrip { border-bottom: 1px solid var(--rule); background: var(--sheet); }
+.metastrip dl { margin: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.3fr); }
+.metastrip dl > div { padding-block: 0.8rem; padding-inline: 0 1.2rem; display: grid; gap: 0.1rem; min-width: 0; }
+.metastrip dl > div + div { border-left: 1px solid var(--rule); padding-left: 1.2rem; }
+.metastrip dt { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.metastrip dd { margin: 0; font-size: 0.94rem; }
+@media (max-width: 720px) {
+  .metastrip dl { grid-template-columns: minmax(0, 1fr); }
+  .metastrip dl > div + div { border-left: 0; border-top: 1px solid var(--rule); padding-left: 0; }
+}
+.chapter { padding-block: clamp(2rem, 5vw, 3.6rem); border-bottom: 1px solid var(--rule); }
+.chapter > .wrap { display: grid; gap: 1.4rem; }
+.chead { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.9rem; align-items: baseline; }
+.chead .no { font: 700 0.8125rem/1 var(--font-body); color: var(--ink); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; border: 1px solid currentColor; padding: 0.3rem 0.4rem; }
+.chead h2 { font: 700 1.5rem/1.2 var(--font-head); }
+.chead p { grid-column: 2; color: var(--muted); max-width: 64ch; margin: 0.4rem 0 0; }
+
+/* Chapter 01: the three rows, the waffle and the two columns under them (Task 7.6) */
+.outcomes { display: grid; grid-template-columns: minmax(0, 23rem) minmax(0, 1fr); gap: clamp(1.2rem, 3vw, 2.8rem); align-items: start; }
+@media (max-width: 880px) { .outcomes { grid-template-columns: minmax(0, 1fr); } }
+.scen { display: grid; }
+.choice { font: inherit; color: var(--fg); text-align: left; cursor: pointer; width: 100%; display: grid; grid-template-columns: 1.1rem minmax(0, 1fr) auto; column-gap: 0.75rem; align-items: center; padding: 0.85rem 0.9rem; border: 1px solid var(--rule); background: var(--sheet); }
+.choice .dot { width: 1rem; height: 1rem; border-radius: 50%; border: 1.5px solid var(--muted); display: grid; place-items: center; }
+.choice .dot::after { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: transparent; }
+.choice .lab { font-weight: 600; }
+.choice .desc { grid-column: 2; font-size: 0.8125rem; color: var(--muted); line-height: 1.4; }
+.choice .big { grid-row: 1 / span 2; grid-column: 3; font: 700 2rem/1 var(--font-head); font-variant-numeric: tabular-nums; }
+.choice[aria-checked="true"] { background: var(--tint); border-color: var(--ink); }
+.choice[aria-checked="true"] .dot { border-color: var(--ink); }
+.choice[aria-checked="true"] .dot::after { background: var(--ink); }
+.choice:hover { border-color: var(--ink); }
+.step { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr); column-gap: 0.75rem; padding: 0.35rem 0.9rem; font-size: 0.8125rem; color: var(--muted); }
+.step::before { content: ""; justify-self: center; width: 1px; background: var(--rule); }
+.step b { color: var(--fg); font-weight: 700; }
+.waffle { display: grid; gap: 0.8rem; min-width: 0; }
+.readout { display: flex; flex-wrap: wrap; gap: 0.3rem 1.4rem; align-items: baseline; }
+.readout .who { display: inline-flex; gap: 0.45rem; align-items: baseline; font-size: 1.1875rem; }
+.readout .who b { font: 700 1.5rem/1 var(--font-head); font-variant-numeric: tabular-nums; }
+.sw { display: inline-block; width: 0.75rem; height: 0.75rem; flex: none; }
+/* 394 x 170 units, at most 42rem wide. Its numbers are 12 units, so 10.4px in a 343px phone column. */
+#waffle { max-width: 42rem; }
+#waffle rect.seat { transition: fill 0.35s ease; }
+#waffle .band rect { fill: none; stroke: var(--fg); stroke-width: 1.4; }
+#waffle .tick text { fill: var(--muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+#waffle .tick line { stroke: var(--fg); }
+.wkey { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.8125rem; color: var(--muted); }
+.wkey > span { display: inline-flex; gap: 0.4rem; align-items: center; }
+.wkey .ol { width: 0.75rem; height: 0.75rem; border: 1.4px solid var(--fg); }
+.findings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem clamp(1.2rem, 3vw, 2.8rem); border-top: 1px solid var(--rule); padding-top: 1.2rem; }
+@media (max-width: 880px) { .findings { grid-template-columns: minmax(0, 1fr); } }
+.effectlist { display: grid; gap: 0.5rem; align-content: start; }
+.effectlist p { margin: 0; max-width: 62ch; }
+.eff { display: grid; grid-template-columns: 9.5rem auto minmax(0, 1fr); gap: 0.2rem 0.8rem; align-items: baseline; }
+.eff .k { font-size: 0.8125rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.eff .v { font: 700 1.1875rem/1.2 var(--font-head); font-variant-numeric: tabular-nums; }
+.eff .w { font-size: 0.94rem; }
+@media (max-width: 480px) { .eff { grid-template-columns: auto minmax(0, 1fr); } .eff .w { grid-column: 1 / -1; } }

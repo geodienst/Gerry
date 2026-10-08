@@ -1,10 +1,9 @@
-// Entry point: loads site/data/results.json and site/data/map.topojson, then wires the map,
-// the sheet beside it and the national strip. d3 and topojson come from site/vendor/ as
-// globals; the page makes no other requests.
+// Entry point: loads site/data/results.json and site/data/map.topojson, then wires chapter 01, the map, the sheet beside it and the national strip.
+// d3 and topojson come from site/vendor/ as globals; the page makes no other requests.
 import { stateFromHash, linkFor } from './hash.js';
 import { makeColors } from './colors.js';
 import {
-  indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, explainerView, methodFills,
+  indexResults, stateOptions, mapHints, effectList, stateSheet, nationalView, methodFills,
 } from './model.js';
 import {
   majorityView, extensionFills, redrawView, stateExtras, competitiveText, controlTables, senateView,
@@ -12,8 +11,10 @@ import {
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState } from './sheet.js';
 import {
-  renderKeyline, renderExplainer, renderNational, renderMajority, renderRedraws, renderControl, renderSenate,
+  renderNational, renderMajority, renderRedraws, renderControl, renderSenate,
 } from './national.js';
+import { outcomesView } from './chapters.js';
+import { renderOutcomes } from './outcomes.js';
 
 const { d3 } = globalThis;
 const $ = (id) => document.getElementById(id);
@@ -58,6 +59,8 @@ async function main() {
     mac: /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
   });
   $('maphint').textContent = hints.hint;
+  const outcomes = renderOutcomes(outcomesView(results), { reduceMotion: () => reduceMotion.matches });
+  outcomes.paint(colors);
 
   const map = createMap({
     svg: $('map'), box: $('mapbox'), tip: $('tip'), tapline: $('tapline'), gesture: $('gesture'),
@@ -128,6 +131,7 @@ async function main() {
   const setPalette = (palette) => {
     ui.palette = palette;
     colors = makeColors(d3.interpolateLab, readPoles(palette));
+    outcomes.paint(colors);
     paint();
   };
   $('palette-party').addEventListener('click', () => { pressed('palette-party', 'palette-neutral'); setPalette('party'); });
@@ -138,8 +142,6 @@ async function main() {
   $('zoom-reset').addEventListener('click', () => { select('', { push: true }); map.zoomTo('', true); });
 
   const national = nationalView(results);
-  renderKeyline($('keyline'), national);
-  renderExplainer($('explainer'), explainerView(results, 'TX'));
   renderNational($('national'), national);
   const majority = majorityView(results);
   renderMajority($('majority'), majority);

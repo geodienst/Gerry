@@ -1,4 +1,4 @@
-// Browser checks for tools/check_site.mjs, one group per task of docs/superpowers/plans/2026-10-07-site.md.
+// Browser checks for tools/check_site.mjs, one group per task of docs/superpowers/plans/2026-10-07-site.md and per chapter of docs/superpowers/plans/2026-10-08-redesign.md.
 // A group gets `t` with: load, js, text, until, center, mouse, click, key, tab, sleep, check, screenshot.
 // The checks test structure and the form of the texts, not numbers that change with the data.
 
@@ -150,7 +150,7 @@ async function sheet(t) {
   await t.load('#TX');
   t.check('#TX opens the sheet for Texas', await t.until(`${HEADING} === 'Texas'`));
   const texas = await t.text('#sheet');
-  for (const part of ['All states', 'Legal status as of ', 'Proportional', 'Neutral baseline', 'Enacted', 'Geographic effect',
+  for (const part of ['All states', 'Legal status as of ', 'Vote-proportional', 'Neutral-map median', 'Enacted maps', 'Geographic effect',
     'Drawing effect', 'neutral maps,', 'Districts, sorted', 'Efficiency gap', 'Mean-median', 'Notes', 'Map file:']) {
     t.check(`the Texas sheet has "${part}"`, texas.includes(part));
   }
@@ -179,6 +179,7 @@ async function sheet(t) {
   await t.sleep(300);
   t.check('Escape outside the sheet and the map keeps the state', await t.js(`${HEADING} === 'Hawaii' && location.hash === '#HI'`));
   await t.js("(() => { const h = document.querySelector('header h1'); h.blur(); h.removeAttribute('tabindex'); })()");
+  await t.js("document.getElementById('sheet').scrollIntoView({ block: 'center' })"); // as a reader scrolls to the sheet
   await t.key('Escape', 27);
   t.check('Escape goes back to the list and drops the state from the link', await t.until(`${HEADING} === 'Drawing effect by state' && location.hash === ''`));
   await t.load();
@@ -186,6 +187,7 @@ async function sheet(t) {
   const folded = await t.js("document.querySelector('#sheet details.zeros .row').dataset.postal");
   await t.js(`location.hash = '#${folded}'`);
   await t.until(`location.hash === '#${folded}' && ${HEADING} !== 'Drawing effect by state'`);
+  await t.js("document.getElementById('sheet').scrollIntoView({ block: 'center' })"); // as a reader scrolls to the sheet
   await t.key('Escape', 27);
   await t.until(`${HEADING} === 'Drawing effect by state'`);
   t.check('Escape from a folded state puts focus on the heading of the list', await t.until("document.activeElement?.id === 'sheet-title'", 2000));
@@ -223,15 +225,9 @@ async function sheet(t) {
 async function national(t) {
   await t.load('#TX');
   await t.until(`${HEADING} === 'Texas'`);
-  t.check('the line under the title gives the key figures as one sentence',
-    /^Of \d+ seats, Democrats win \d+ if seats follow the votes, \d+ on neutral maps and \d+ on the 2026 maps\. Drawing effect: (0|[RD]\+\d+)\.National pictureMethod$/.test(await t.text('#keyline')));
-  await t.js("document.querySelector('#keyline a[href=\"#national\"]').click()");
-  t.check('"National picture" leads to the national strip and keeps the state',
-    await t.until("location.hash === '#national'") && (await t.js("document.getElementById('pick').value")) === 'TX'
-    && await t.js("(() => { const top = document.getElementById('national').getBoundingClientRect().top; return top > -5 && top < innerHeight; })()"));
   const strip = await t.text('#national');
   t.check('the strip has the three numbers, the band and both effects',
-    ['Proportional', 'Neutral baseline', 'Enacted', '90% of outcomes', 'Geographic effect', 'Drawing effect', 'of neutral outcomes'].every((p) => strip.includes(p)));
+    ['Vote-proportional', 'Neutral-map median', 'Enacted maps', '90% of outcomes', 'Geographic effect', 'Drawing effect', 'of neutral outcomes'].every((p) => strip.includes(p)));
   t.check('the national seat axis has a text alternative', await t.js(
     "document.querySelector('#national-axis svg')?.getAttribute('aria-label')?.startsWith('Democratic seats in all states with more than one seat') === true"));
   // A marker line stops at the labels of the other markers (Step 6: no line through the text).
@@ -304,8 +300,6 @@ async function method(t) {
     const names = [...document.querySelectorAll('#method li .nowrap')].filter((el) => getComputedStyle(el).whiteSpace === 'nowrap').map((el) => el.textContent);
     return names.join(' ') === 'TX-15 TX-28 TX-34';
   })()`));
-  await t.js("document.querySelector('#keyline a[href=\"#method\"]').click()");
-  t.check('"Method" under the title leads to the method', await t.until("location.hash === '#method'"));
   t.check('the footer names the data date, the legal status date and the ALARM version',
     /Data generated .+\. Legal status as of .+\. ALARM dataset version \d+\./.test(await t.text('footer')));
   t.check('the footer links to the Geodienst with its logo',
@@ -451,69 +445,77 @@ async function senate(t) {
   t.check('the Senate block says it is not an effect of maps', (await t.text('#senate-note')).startsWith('The Senate has no districts'));
 }
 
-// --- Owner decision of October 7, 2026: working title, lede, keyline sentence, "How to read this" ---
-async function explainer(t) {
+// --- Task 7.6: the masthead and chapter 01 -------------------------------------------------------
+async function masthead(t) {
   await t.load();
-  t.check('the title and the heading read "Some votes are more equal than others"', await t.js("document.title === 'Some votes are more equal than others' && document.querySelector('header h1').textContent === 'Some votes are more equal than others'"));
-  t.check('the lede asks the question and names the three ways',
-    (await t.text('header .lede')).startsWith('How many U.S. House seats would Democrats win with the same votes on different maps?'));
-  t.check('the meta description is the lede', await t.js("document.querySelector('meta[name=description]').content === document.querySelector('header .lede').textContent"));
-  // The numbers the page shows, formatted in the page with its own format.js, against results.json.
+  t.check('the title and the heading read "Some votes are more equal than others"', await t.js(
+    "document.title === 'Some votes are more equal than others' && document.querySelector('header.mast h1')?.textContent === 'Some votes are more equal than others'"));
+  t.check('the line above the title names the election day', (await t.text('.mast .eyebrow')) === 'U.S. House maps for November 3, 2026');
+  t.check('the meta description is the line under the title',
+    await t.js("document.querySelector('meta[name=description]').content === document.querySelector('.mast .sub')?.textContent"));
+  const fields = await t.js("[...document.querySelectorAll('.metastrip dt')].map((dt) => dt.textContent + ': ' + dt.nextElementSibling.textContent)");
+  const scope = await t.js(`${DATA}.then((r) => 'Scope: U.S. House, ' + r.national.seats + ' seats in ' + Object.keys(r.states).length + ' states')`);
+  t.check('the meta strip has Scope, Votes and Question, Scope with the numbers of results.json',
+    fields.length === 3 && fields[0] === scope && fields[1].startsWith('Votes: ') && fields[2].startsWith('Question: '), fields.join(' | '));
+}
+
+async function outcomes(t) {
+  await t.load();
+  // The numbers the rows should show, formatted with the page's own format.js.
   const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
     const n = r.national;
-    const s = r.states.TX;
-    const plans = s.neutral.dist.reduce((a, b) => a + b, 0);
-    const band = s.neutral.p5 === s.neutral.p95 ? f.seats(s.neutral.p5) : f.seats(s.neutral.p5) + ' to ' + f.seats(s.neutral.p95);
-    const g = s.effects.geographic;
-    const d = s.effects.drawing;
-    return {
-      keyline: 'Of ' + n.seats + ' seats, Democrats win ' + n.proportional + ' if seats follow the votes, ' + n.neutral.median
-        + ' on neutral maps and ' + n.enacted + ' on the 2026 maps. Drawing effect: ' + f.effect(n.effects.drawing) + '.',
-      parts: ['Texas has ' + s.seats + ' seats, and ' + f.share(s.d_share) + ' of its two-party vote went to Democrats.',
-        'Proportional: ' + s.proportional + ' seats.', 'Neutral baseline: ' + s.neutral.median + ' seats.',
-        'The typical result of ' + f.count(plans) + " maps a computer drew under Texas's rules", '90% of those maps give ' + band + '.',
-        'Enacted: ' + s.enacted + ' seats.',
-        'Geographic effect, ' + f.effect(g) + (g === 0 ? ': no difference.' : ': from ' + s.proportional + ' to ' + s.neutral.median + '.'),
-        'Drawing effect, ' + f.effect(d) + (d === 0 ? ': no difference.' : ': from ' + s.neutral.median + ' to ' + s.enacted + '.')],
-    };
+    return { values: [n.proportional, n.neutral.median, n.enacted].map(f.seats), lo: n.neutral.p5, hi: n.neutral.p95,
+      total: n.seats, enacted: n.enacted, steps: [f.effect(n.effects.geographic), f.effect(n.effects.drawing)] };
   })`);
-  t.check('the keyline sentence has the national numbers of results.json', (await t.text('#keyline')).startsWith(want.keyline), want.keyline);
-  const body = await t.text('#explainer');
-  const missing = want.parts.filter((part) => !body.includes(part));
-  t.check('"How to read this" has the Texas numbers of results.json', missing.length === 0, missing.join(' | '));
-  const box = "document.getElementById('explainer')";
-  t.check('"How to read this" sits between the header and the map, open, with five items', await t.js(`(() => {
-    const d = ${box};
-    return d.tagName === 'DETAILS' && d.open && !d.hidden && d.checkVisibility()
-      && d.previousElementSibling.tagName === 'HEADER' && !!(d.compareDocumentPosition(document.getElementById('map')) & Node.DOCUMENT_POSITION_FOLLOWING)
-      && d.querySelector('summary').textContent === 'How to read this' && d.querySelectorAll('#explainer-items li').length === 5;
+  const rows = await t.js(`[...document.querySelectorAll('#scen [role=radio]')].map((b) => ({ label: b.querySelector('.lab').textContent,
+    value: b.querySelector('.big').textContent, checked: b.getAttribute('aria-checked'), tab: b.tabIndex }))`);
+  t.check('three rows labeled Vote-proportional, Neutral-map median and Enacted maps, with the numbers of results.json',
+    rows.map((r) => r.label).join() === 'Vote-proportional,Neutral-map median,Enacted maps' && rows.map((r) => r.value).join() === want.values.join(),
+    JSON.stringify(rows));
+  t.check('Enacted maps is chosen at the start and is the only tab stop', rows.map((r) => `${r.checked}/${r.tab}`).join() === 'false/-1,false/-1,true/0');
+  t.check('the two effects stand between the rows',
+    await t.js(`[...document.querySelectorAll('#scen .step b')].map((b) => b.textContent).join() === ${JSON.stringify(want.steps.join())}`));
+  const blue = "getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
+  const democratic = `[...document.querySelectorAll('#waffle rect.seat')].filter((r) => r.getAttribute('fill') === ${blue}).length`;
+  t.check(`the waffle has ${want.total} squares, ${want.enacted} of them Democratic`,
+    await t.js(`document.querySelectorAll('#waffle rect.seat').length === ${want.total} && ${democratic} === ${want.enacted}`));
+  t.check('the line above the waffle counts both parties and is a polite live region', await t.js(`(() => {
+    const r = document.getElementById('readout');
+    return r.getAttribute('aria-live') === 'polite' && r.textContent === 'Democrats${want.enacted}Republicans${want.total - want.enacted}';
   })()`));
-  await t.js(`${box}.querySelector('summary').click()`);
-  t.check('a click on "How to read this" folds it', await t.js(`!${box}.open && !document.getElementById('explainer-intro').checkVisibility()`));
-  await t.js(`${box}.querySelector('summary').focus()`);
-  t.check('the summary takes keyboard focus', await t.js(`document.activeElement === ${box}.querySelector('summary')`));
-  await t.key('Enter', 13, '\r');
-  t.check('Enter on the summary unfolds it', await t.until(`${box}.open`, 2000));
-  await t.key(' ', 32, ' ');
-  t.check('Space on the summary folds it again', await t.until(`!${box}.open`, 2000));
-  await t.key('Tab', 9);
-  t.check('Tab moves on from the summary to the map controls', await t.js("document.activeElement?.id === 'view-districts'"));
-  for (const [width, height] of [[375, 812], [1280, 800]]) {
-    for (const dark of [false, true]) {
-      await t.load('', { width, height, dark });
-      const fit = await t.js(`(() => { const d = ${box}.getBoundingClientRect();
-        return { open: ${box}.open, inside: d.left >= 0 && d.right <= document.documentElement.clientWidth,
-          wide: document.documentElement.scrollWidth <= document.documentElement.clientWidth,
-          card: getComputedStyle(${box}).backgroundColor === getComputedStyle(document.getElementById('sheet')).backgroundColor }; })()`);
-      t.check(`${width}px${dark ? ' dark' : ''}: "How to read this" is open, fits the width and has the card background`,
-        fit.open && fit.inside && fit.wide && fit.card, JSON.stringify(fit));
-      await t.screenshot(`explainer-${width}${dark ? '-dark' : ''}`);
-    }
+  t.check('the band is hidden while Enacted maps is chosen',
+    await t.js("document.querySelector('#waffle .band').getAttribute('display') === 'none' && document.getElementById('key-band').hidden"));
+  await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
+  await t.key('ArrowUp', 38);
+  const neutral = await t.js(`(() => { const on = document.activeElement; return { label: on.querySelector('.lab')?.textContent,
+    checked: on.getAttribute('aria-checked'), band: document.querySelectorAll('#waffle .band rect').length,
+    shown: document.querySelector('#waffle .band').getAttribute('display'), key: !document.getElementById('key-band').hidden,
+    title: document.getElementById('waffle-label').textContent }; })()`);
+  t.check('Arrow up chooses Neutral-map median and the focus moves with it', neutral.label === 'Neutral-map median' && neutral.checked === 'true', JSON.stringify(neutral));
+  t.check(`with Neutral-map median the seats ${want.lo} to ${want.hi} are outlined and the key says so`,
+    neutral.band === want.hi - want.lo + 1 && neutral.shown !== 'none' && neutral.key, JSON.stringify(neutral));
+  t.check('the title of the waffle names the chosen row in numbers', /^Neutral-map median: \d+ Democratic and \d+ Republican seats of \d+\.$/.test(neutral.title), neutral.title);
+  await t.key('End', 35);
+  t.check('End chooses the last row', (await t.js("document.activeElement.querySelector('.lab')?.textContent")) === 'Enacted maps');
+  await t.key('ArrowDown', 40);
+  t.check('Arrow down on the last row goes round to the first', (await t.js("document.activeElement.querySelector('.lab')?.textContent")) === 'Vote-proportional');
+  await t.js("document.querySelectorAll('#scen [role=radio]')[2].click()");
+  t.check('a click chooses a row and repaints the waffle', await t.until(`${democratic} === ${want.enacted}`, 2000));
+  const effects = await t.text('#effects');
+  t.check('the effects block names both effects with direction and the two numbers they lie between',
+    /Geographic effect(0|[RD]\+\d+)(no difference|\d+ seats? toward (Republicans|Democrats)) \(\d+ to \d+\)/.test(effects) && /Drawing effect(0|[RD]\+\d+)/.test(effects),
+    effects.slice(0, 160));
+  t.check('the spread sentence places the enacted maps against the band', /^90% of neutral outcomes give Democrats \d+( to \d+)? seats\. The enacted maps give \d+, (below|within|above) that range\.$/
+    .test(await t.js("document.querySelector('#spread p').textContent")));
+  for (const [width, dark] of [[375, false], [1280, false], [1280, true]]) {
+    await t.load('', { width, height: 900, dark });
+    await t.screenshot(`outcomes-${width}${dark ? '-dark' : ''}`);
   }
 }
 
 export const GROUPS = [
-  { name: 'explainer', run: explainer },
+  { name: 'masthead', run: masthead },
+  { name: 'outcomes', run: outcomes },
   { name: 'map', run: map },
   { name: 'list', run: list },
   { name: 'sheet', run: sheet },

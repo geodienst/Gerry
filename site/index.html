@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Some votes are more equal than others</title>
-  <meta name="description" content="How many U.S. House seats would Democrats win with the same votes on different maps? We count the 2016 and 2020 presidential votes three ways: in proportion to the votes, on fair maps a computer drew without looking at party, and on the maps voters use on November 3, 2026.">
+  <meta name="description" content="Same votes, three ways to count the U.S. House: in proportion to the votes, on neutral maps, and on the maps of 2026.">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
   <script defer src="vendor/d3.min.js"></script>
@@ -12,23 +12,53 @@
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
-  <div class="wrap">
-    <header>
+  <header class="mast">
+    <div class="wrap">
+      <p class="eyebrow">U.S. House maps for November 3, 2026</p>
       <h1>Some votes are more equal than others</h1>
-      <p class="lede">How many U.S. House seats would Democrats win with the same votes on different maps? We count the 2016 and 2020 presidential votes three ways: in proportion to the votes, on fair maps a computer drew without looking at party, and on the maps voters use on November 3, 2026.</p>
-      <p class="keyline" id="keyline"></p>
-    </header>
+      <p class="sub">Same votes, three ways to count the U.S. House: in proportion to the votes, on neutral maps, and on the maps of 2026.</p>
+    </div>
+  </header>
+  <div class="metastrip">
+    <div class="wrap">
+      <dl>
+        <div><dt>Scope</dt><dd>U.S. House, <span data-fill="seats"></span> seats in <span data-fill="states"></span> states</dd></div>
+        <div><dt>Votes</dt><dd>2016 + 2020 presidential, held constant</dd></div>
+        <div><dt>Question</dt><dd>How much do geography and map drawing change the seats?</dd></div>
+      </dl>
+    </div>
+  </div>
+  <p class="load-error wrap" id="load-error" role="alert" hidden></p>
 
-    <details class="card explainer" id="explainer" open hidden>
-      <summary id="explainer-title"></summary>
-      <div class="explainer-body">
-        <p id="explainer-intro"></p>
-        <ul id="explainer-items"></ul>
-        <p class="note" id="explainer-closing"></p>
+  <main>
+    <section class="chapter" id="outcomes" aria-labelledby="h01">
+      <div class="wrap">
+        <div class="chead">
+          <span class="no">01</span>
+          <h2 id="h01">One electorate. Three outcomes.</h2>
+          <p id="outcomes-intro"></p>
+        </div>
+        <div class="outcomes">
+          <div class="scen" role="radiogroup" aria-label="Way of counting" id="scen"></div>
+          <div class="waffle">
+            <div class="readout" id="readout" aria-live="polite"></div>
+            <svg id="waffle" class="chart" role="img" aria-labelledby="waffle-label"><title id="waffle-label"></title></svg>
+            <div class="wkey">
+              <span><i class="sw d" aria-hidden="true"></i>Democratic seat</span>
+              <span><i class="sw r" aria-hidden="true"></i>Republican seat</span>
+              <span id="key-band" hidden><i class="ol" aria-hidden="true"></i><span id="key-band-text"></span></span>
+              <span>1 square = 1 seat, Democrats first</span>
+            </div>
+          </div>
+        </div>
+        <div class="findings">
+          <div class="effectlist" id="effects"></div>
+          <div class="effectlist" id="spread"></div>
+        </div>
       </div>
-    </details>
+    </section>
 
-    <p class="load-error" id="load-error" role="alert" hidden></p>
+    <div class="wrap legacy">
 
     <div class="main">
       <section class="card" aria-label="Map">
@@ -108,7 +138,7 @@
 
     <section class="prose" id="method" aria-labelledby="method-title">
       <h2 id="method-title">Method</h2>
-      <p><b>How to read the three numbers.</b> All numbers count Democratic seats in the U.S. House. <i>Proportional</i> gives each state's seats in proportion to its two-party vote. <i>Neutral baseline</i> is the median of <span data-fill="plans"></span> maps per state drawn by a computer that follows each state's rules but ignores party. <i>Enacted</i> is what the maps used on November 3, 2026 produce with the same votes. The difference between the first two is the geographic effect; the difference between the last two is the drawing effect. An effect shows its direction: R+6 means 6 seats toward Republicans, D+3 means 3 seats toward Democrats.</p>
+      <p><b>How to read the three numbers.</b> All numbers count Democratic seats in the U.S. House. <i>Vote-proportional</i> gives each state's seats in proportion to its two-party vote. <i>Neutral-map median</i> is the median of <span data-fill="plans"></span> maps per state drawn by a computer that follows each state's rules but ignores party. <i>Enacted maps</i> is what the maps used on November 3, 2026 produce with the same votes. The difference between the first two is the geographic effect; the difference between the last two is the drawing effect. An effect shows its direction: R+6 means 6 seats toward Republicans, D+3 means 3 seats toward Democrats.</p>
       <p><b>Why neutral maps are not proportional.</b> Each district elects one winner, so the party with more votes in a state usually wins a larger share of its seats than of its votes. Democratic voters also live closer together, mostly in cities, so neutral maps often put many of them in a few districts that Democrats win by large margins. The geographic effect is the sum of both.</p>
       <p><b>Votes.</b> We use the 2016 and 2020 presidential results added together, by voting district (by census tract in California, Hawaii, Maine and Oregon, by county in Iowa and West Virginia; West Virginia uses 2020 only), as prepared by the ALARM Project. The enacted seats come from assigning these votes to the 2026 districts, not from House results. With these votes the enacted seats can differ from what happened in 2024.</p>
       <p><b>The Voting Rights Act.</b> The law can require districts where a minority group forms a large share of the voters. In seat counts such districts can look like packing. ALARM's neutral maps follow the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). Where a map adopted after that ruling removed such districts, the change shows up in the drawing effect. The notes per state say what ALARM did there.</p>
@@ -136,6 +166,7 @@
       <p>Map drawn with D3 and topojson-client, both under the ISC license: <a href="vendor/d3.LICENSE.txt">D3 license</a>, <a href="vendor/topojson-client.LICENSE.txt">topojson-client license</a>.</p>
       <p class="credit"><a href="https://rug.nl/geo"><img src="img/geodienst.svg" alt="" width="20" height="20">Geodienst</a></p>
     </footer>
-  </div>
+    </div>
+  </main>
 </body>
 </html>
