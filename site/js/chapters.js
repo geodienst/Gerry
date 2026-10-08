@@ -24,6 +24,9 @@ export function outcomesView(results) {
   const states = count(Object.keys(results.states).length);
   const plans = count(sum(Object.values(results.states)[0].neutral.dist));
   const { median, p5, p95 } = n.neutral;
+  // A majority is 218 of the 435 seats; the six one-seat states count as in majorityView (2 Democratic, 4 Republican).
+  const needed = n.majority.seats_needed;
+  const dSingle = 218 - needed;
   const band = p5 === p95 ? `90% of outcomes give ${seats(p5)}` : `90% of outcomes: ${seats(p5)} to ${seats(p95)}`;
   const where = n.enacted < p5 ? 'below that range' : n.enacted > p95 ? 'above that range' : 'within that range';
   const step = (key, value, from, to) => ({
@@ -49,6 +52,13 @@ export function outcomesView(results) {
     band: {
       lo: p5, hi: p95,
       key: `Outlined: ${p5 === p95 ? 'seat' : 'seats'} ${range(p5, p95)}, where the Democratic seats end in 90% of neutral outcomes`,
+    },
+    // The House majority as a line after the last seat Democrats can win without one (as in majorityView).
+    majority: {
+      after: needed - 1,
+      label: 'House majority',
+      key: `Line: House majority. Democrats need ${seats(needed)} of these seats, Republicans ${seats(n.seats - needed + 1)}; `
+        + `the six one-seat states add ${seats(dSingle)} and ${seats(6 - dSingle)}.`,
     },
     effectsNote: 'The geographic effect is the difference between proportional seats and neutral maps. '
       + 'The drawing effect is the difference between neutral maps and the enacted maps.',

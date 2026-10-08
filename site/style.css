@@ -209,8 +209,11 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 #waffle .band rect { fill: none; stroke: var(--fg); stroke-width: 1.4; }
 #waffle .tick text { fill: var(--muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 /* On a narrow screen the waffle is scaled down to about 0.7; a larger number keeps it at 12px or more. */
-@media (max-width: 480px) { #waffle { overflow: visible; } #waffle .tick text { font-size: 17px; } }
+@media (max-width: 480px) { #waffle { overflow: visible; } #waffle .tick text, #waffle .majority text { font-size: 17px; } }
 #waffle .tick line { stroke: var(--fg); }
+#waffle .majority path { fill: none; stroke: var(--fg); stroke-width: 2; }
+#waffle .majority text { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.wkey .ml { width: 2px; height: 0.9rem; background: var(--fg); align-self: flex-start; margin-top: 0.15rem; }
 .wkey { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.8125rem; color: var(--muted); }
 .wkey > span { display: inline-flex; gap: 0.4rem; align-items: center; }
 .wkey .ol { width: 0.75rem; height: 0.75rem; border: 1.4px solid var(--fg); }

@@ -12,8 +12,8 @@ const stateOf = (postal) => `[...document.querySelectorAll('#map path.statefill'
 // --- Task 6.3: the map ---------------------------------------------------------------------------
 async function map(t) {
   t.check('the page loads and draws the map', await t.load());
-  t.check('the map opens on "States: drawing effect"', await t.js(
-    "document.getElementById('view-states').getAttribute('aria-pressed') === 'true' && document.querySelector('#map path.district').parentNode.getAttribute('display') === 'none'"));
+  t.check('the map opens on "Districts: Democratic share"', await t.js(
+    "document.getElementById('view-districts').getAttribute('aria-pressed') === 'true' && document.getElementById('view-states').getAttribute('aria-pressed') === 'false' && document.querySelector('#map path.district').parentNode.getAttribute('display') !== 'none'"));
   await t.js("document.getElementById('view-districts').click()");
   t.check('435 districts and 50 states on the map',
     await t.js("document.querySelectorAll('#map path.district').length === 435 && document.querySelectorAll('#map path.statefill').length === 50"));
@@ -29,13 +29,14 @@ async function map(t) {
     (await t.text('#tapline')) === `Wyoming: ${AT_LARGE}` && await t.until(`location.hash === '#WY' && ${HEADING} === 'Wyoming'`));
   await t.js("document.getElementById('zoom-reset').click()");
   await t.until(`location.hash === '' && ${ZOOM} === 1`);
+  await t.sleep(900); // let the zoom transition and the sheet settle before measuring a point on the map
 
   const texas = await t.center(districtOf('TX'));
   await t.mouse('mouseMoved', texas);
   t.check('pointing at a district shows its name and share',
     /^TX-\d+ · Texas$/.test(await t.text('#tip b')) && (await t.text('#tip')).includes('Democratic share'));
   await t.click(texas);
-  t.check('clicking a district writes the tap line', /^TX-\d+: .+ Democratic$/.test(await t.text('#tapline')));
+  t.check('clicking a district writes the tap line', /^TX-\d+: .+ Democratic$/.test(await t.text('#tapline')), await t.text('#tapline'));
   t.check('clicking Texas puts #TX in the link and in the State menu',
     await t.until("location.hash === '#TX' && document.getElementById('pick').value === 'TX'"));
   t.check('the map zooms in on Texas', await t.until(`${ZOOM} > 2`));
@@ -422,7 +423,7 @@ async function layout(t) {
     await t.key('Tab', 9);
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
-  const wanted = ['choice', 'pick', 'view-states', 'view-districts', 'palette-party', 'palette-neutral', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'row'];
+  const wanted = ['choice', 'pick', 'view-districts', 'view-states', 'palette-party', 'palette-neutral', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'row'];
   t.check('Tab reaches the chosen row, the State menu, the view and color buttons, the largest effects, the zoom buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
@@ -566,6 +567,19 @@ async function outcomes(t) {
   t.check('the line above the waffle counts both parties and is a polite live region', await t.js(`(() => {
     const r = document.getElementById('readout');
     return r.getAttribute('aria-live') === 'polite' && r.textContent === 'Democrats${want.enacted}Republicans${want.total - want.enacted}';
+  })()`));
+  // the majority line runs in the gap after seat seats_needed - 1, and its key says what it is
+  t.check('the waffle has a House majority line after the last seat short of a majority, with its key', await t.js(`(() => {
+    const path = document.querySelector('#waffle .majority path');
+    const label = document.querySelector('#waffle .majority text');
+    const key = document.getElementById('key-majority-text').textContent;
+    const sq = [...document.querySelectorAll('#waffle rect.seat')];
+    const needed = Number(key.match(/Democrats need (\\d+) of these seats/)[1]);
+    const last = sq[needed - 2].getBBox(), first = sq[needed - 1].getBBox();
+    const line = path.getBBox();
+    return label.textContent === 'House majority' && key.startsWith('Line: House majority.')
+      && line.x >= Math.min(last.x, first.x) - 2 && line.x + line.width <= Math.max(last.x, first.x) + 12 + 2
+      && line.height > 150;
   })()`));
   t.check('the band is hidden while Enacted maps is chosen',
     await t.js("document.querySelector('#waffle .band').getAttribute('display') === 'none' && document.getElementById('key-band').hidden"));

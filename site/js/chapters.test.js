@@ -21,7 +21,7 @@ test('labels: the three ways of counting and the two effects, as CLAUDE.md names
 test('outcomesView: three rows, the two effects between them, the band and the sentences', () => {
   // testdata national: 429 seats; proportional 224, neutral 223 (p5 217, p95 229), enacted 213;
   // geographic -1, drawing -10; position.more 0.9972; seven states; Texas first with 5,000 maps
-  const view = outcomesView(results());
+  const view = outcomesView(withExtensions());
   assert.equal(view.intro, 'Democratic seats in the 7 states with more than one seat, counted three ways with the same votes. '
     + 'Select a row to see it as seats.');
   assert.equal(view.total, 429);
@@ -39,6 +39,9 @@ test('outcomesView: three rows, the two effects between them, the band and the s
     { key: 'drawing', label: 'Drawing effect', value: 'R+10', words: '10 seats toward Republicans', detail: '10 seats toward Republicans (223 to 213)' },
   ]);
   assert.deepEqual(view.band, { lo: 217, hi: 229, key: 'Outlined: seats 217 to 229, where the Democratic seats end in 90% of neutral outcomes' });
+  // majority: 216 of 429 for Democrats; 435 - 429 = 6 one-seat states, 218 - 216 = 2 Democratic, 4 Republican; 429 - 216 + 1 = 214
+  assert.deepEqual(view.majority, { after: 215, label: 'House majority',
+    key: 'Line: House majority. Democrats need 216 of these seats, Republicans 214; the six one-seat states add 2 and 4.' });
   assert.equal(view.effectsNote, 'The geographic effect is the difference between proportional seats and neutral maps. '
     + 'The drawing effect is the difference between neutral maps and the enacted maps.');
   // 213 < 217
@@ -52,12 +55,12 @@ test('outcomesView: three rows, the two effects between them, the band and the s
 });
 
 test('outcomesView: an enacted count inside or above the band, a band of one count, no effect', () => {
-  const r = results();
+  const r = withExtensions();
   r.national.enacted = 220; // 217 <= 220 <= 229
   assert.match(outcomesView(r).spread, /The enacted maps give 220, within that range\.$/);
   r.national.enacted = 230; // above 229
   assert.match(outcomesView(r).spread, /The enacted maps give 230, above that range\.$/);
-  const one = results();
+  const one = withExtensions();
   Object.assign(one.national.neutral, { p5: 223, p95: 223 });
   one.national.effects.geographic = 0;
   const view = outcomesView(one);
@@ -70,7 +73,7 @@ test('outcomesView: an enacted count inside or above the band, a band of one cou
 });
 
 test('waffleText: the count per party and the title of the waffle', () => {
-  const view = outcomesView(results());
+  const view = outcomesView(withExtensions());
   // enacted 213 of 429 -> 429 - 213 = 216 Republican seats
   assert.deepEqual(waffleText(view, 'enacted'), { d: '213', r: '216', label: 'Enacted maps: 213 Democratic and 216 Republican seats of 429.' });
   // neutral 223 -> 206

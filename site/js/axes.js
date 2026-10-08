@@ -127,6 +127,22 @@ export function waffleTick(n, total, w = WAFFLE) {
   return Math.min(Math.max(x, w.edge), width - w.edge);
 }
 
+/**
+ * The stepped line after seat `k` (from 1), in the gaps between the squares: down the gap after the column that
+ * holds seat k, across that column under seat k, then down the gap before it to 3 units past the last row.
+ */
+export function waffleLine(k, total, w = WAFFLE) {
+  const half = (w.step - w.size) / 2;
+  const column = Math.floor(k / w.rows);
+  const row = k % w.rows;
+  const top = w.top - half;
+  const bottom = waffleSize(total, w).height + 3;
+  const x = column * w.step - half;
+  if (row === 0) return { d: `M${x},${top}V${bottom}`, x, bottom };
+  const y = w.top + row * w.step - half;
+  return { d: `M${x + w.step},${top}V${y}H${x}V${bottom}`, x, bottom };
+}
+
 /** Cells of seats lo to hi (from 1, both included): the outline of the neutral band. */
 export function waffleBand(lo, hi, w = WAFFLE) {
   return Array.from({ length: Math.max(0, hi - lo + 1) }, (_, k) => waffleCell(lo - 1 + k, w));

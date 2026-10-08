@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   fitTransform, chartUnits, nationalSeatDomain, placeLabels, sortedDomain, netBar,
-  WAFFLE, waffleSize, waffleCell, waffleTick, waffleBand, seatTicks, rowDomain, rowTextAnchor,
+  WAFFLE, waffleSize, waffleCell, waffleTick, waffleBand, waffleLine, seatTicks, rowDomain, rowTextAnchor,
 } from './axes.js';
 import { markerSegments } from './axes.js';
 
@@ -176,6 +176,15 @@ test('waffleBand: the cells of seats lo to hi, both included', () => {
   assert.deepEqual(band[12], { x: 204, y: 100 }); // seat 229, as in waffleCell(228)
   assert.deepEqual(waffleBand(223, 223), [{ x: 204, y: 28 }]); // index 222 = 17 * 13 + 1: column 17, row 1
   assert.deepEqual(waffleBand(5, 4), []);
+});
+
+test('waffleLine: the stepped line after seat k, in the gaps between the squares', () => {
+  // k 215: column 16 holds seats 209 to 221, so seats 209 to 215 (7 rows) lie before the line.
+  // Down the gap after column 16 (x 203) to the gap under row 6 (y 16 + 84 - 1 = 99), left across column 16
+  // to the gap before it (x 191), then down past the last row (height 170) by 3.
+  assert.deepEqual(waffleLine(215, 429), { d: 'M203,15V99H191V173', x: 191, bottom: 173 });
+  // k 13 ends a column: a straight line in the gap after column 0
+  assert.deepEqual(waffleLine(13, 429), { d: 'M11,15V173', x: 11, bottom: 173 });
 });
 
 // --- rows of dots: the strip in the state record and the axes of chapter 03 (Task 7.2) ---

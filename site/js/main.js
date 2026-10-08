@@ -53,7 +53,7 @@ async function main() {
   }
 
   const index = indexResults(results);
-  const ui = { view: 'states', palette: 'party', selected: '', zerosOpen: false };
+  const ui = { view: 'districts', palette: 'party', selected: '', zerosOpen: false };
   let colors = makeColors(d3.interpolateLab, readPoles(ui.palette));
   const hints = mapHints({
     touch: window.matchMedia('(pointer: coarse)').matches,

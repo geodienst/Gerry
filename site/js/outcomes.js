@@ -1,7 +1,7 @@
 // Chapter 01, "One electorate. Three outcomes." (redesign, chapter 3): three rows as a radio group with the two
 // effects between them, a waffle of the seats that follows the chosen row, and the sentences beside it.
 // Texts come from chapters.js and geometry from axes.js; this module only draws.
-import { WAFFLE, waffleSize, waffleCell, waffleTick, waffleBand } from './axes.js';
+import { WAFFLE, waffleSize, waffleCell, waffleTick, waffleBand, waffleLine } from './axes.js';
 import { waffleText } from './chapters.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -56,7 +56,8 @@ export function renderOutcomes(view, { reduceMotion }) {
   // The waffle: one square per seat, column by column; the band outline; the number above the last Democratic seat.
   const size = waffleSize(view.total);
   const svg = $('waffle');
-  svg.setAttribute('viewBox', `0 0 ${size.width} ${size.height}`);
+  const line = waffleLine(view.majority.after, view.total);
+  svg.setAttribute('viewBox', `0 0 ${size.width} ${line.bottom + 20}`); // room under the squares for the majority label
   for (const g of svg.querySelectorAll('g')) g.remove();
   const seatLayer = svgNode('g');
   const squares = Array.from({ length: view.total }, (_, i) => {
@@ -70,8 +71,13 @@ export function renderOutcomes(view, { reduceMotion }) {
     band.append(svgNode('rect', { x: x + 0.7, y: y + 0.7, width: WAFFLE.size - 1.4, height: WAFFLE.size - 1.4 }));
   }
   const tick = svgNode('g', { class: 'tick', 'aria-hidden': 'true' });
-  svg.append(seatLayer, band, tick);
+  // The House majority: a fixed line in the gaps, so a change of row shows on which side the Democratic seats end.
+  const majority = svgNode('g', { class: 'majority', 'aria-hidden': 'true' });
+  majority.append(svgNode('path', { d: line.d }),
+    svgNode('text', { x: line.x, y: line.bottom + 15, 'text-anchor': 'middle' }, view.majority.label));
+  svg.append(seatLayer, band, majority, tick);
   $('key-band-text').textContent = view.band.key;
+  $('key-majority-text').textContent = view.majority.key;
 
   // The two columns under rows and waffle.
   const effect = (step) => {
