@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   fitTransform, chartUnits, nationalSeatDomain, placeLabels, sortedDomain, netBar,
-  WAFFLE, waffleSize, waffleCell, waffleTick, waffleBand, waffleLine, seatTicks, rowDomain, rowTextAnchor,
+  HOUSE, houseLayout, houseCell, housePlace, seatTicks, rowDomain, rowTextAnchor,
 } from './axes.js';
 import { markerSegments } from './axes.js';
 
@@ -137,54 +137,38 @@ test('markerSegments: a gap at each label in the way, 2 units around its box', (
   assert.deepEqual(markerSegments(132, 25, 102, [row0]), [[25, 102]]);
 });
 
-// --- the waffle of chapter 01 (Task 7.2) ---
+// --- the House of 435 in chapter 01 (owner concept, October 8, 2026) ---
 
-test('waffleSize: 429 seats in 13 rows give 33 columns', () => {
-  // ceil(429 / 13) = 33 columns; width 33 * 12 - 2 = 394 (no gap after the last column);
-  // height 16 for the tick on top + 13 * 12 - 2 = 170
-  assert.deepEqual(waffleSize(429), { columns: 33, width: 394, height: 170 });
-  // one full column: width is one square
-  assert.deepEqual(waffleSize(13), { columns: 1, width: 10, height: 170 });
-  assert.equal(WAFFLE.rows, 13);
+test('houseLayout: two halves of 217 seats and a middle seat at the top, 7 rows wide or 14 rows compact', () => {
+  assert.equal(HOUSE.half, 217);
+  // 7 rows: 31 full columns; half width 31 * 12 - 2 = 370; middle at 370 + 7 = 377; width 2 * 370 + 2 * 7 + 10
+  assert.deepEqual(houseLayout(7), { rows: 7, cols: 31, partial: 7, width: 764, height: 100, mid: { x: 377, y: 18 } });
+  // 14 rows: 16 columns, the inner one holds 217 - 15 * 14 = 7 seats; half width 16 * 12 - 2 = 190
+  assert.deepEqual(houseLayout(14), { rows: 14, cols: 16, partial: 7, width: 404, height: 184, mid: { x: 197, y: 18 } });
 });
 
-test('waffleCell: down a column of 13, then the next column', () => {
-  assert.deepEqual(waffleCell(0), { x: 0, y: 16 });
-  assert.deepEqual(waffleCell(12), { x: 0, y: 160 }); // row 12: 16 + 12 * 12
-  assert.deepEqual(waffleCell(13), { x: 12, y: 16 }); // column 1, row 0
-  // seat 217 is index 216 = 16 * 13 + 8: column 16 (x 192), row 8 (y 16 + 96)
-  assert.deepEqual(waffleCell(216), { x: 192, y: 112 });
-  // seat 229 is index 228 = 17 * 13 + 7: column 17 (x 204), row 7 (y 16 + 84)
-  assert.deepEqual(waffleCell(228), { x: 204, y: 100 });
+test('houseCell: from the outer column inward, each column bottom up; the right half mirrors the left', () => {
+  // k 0: outer column, bottom row (18 + 6 * 12 = 90); k 6: same column, top row
+  assert.deepEqual(houseCell('D', 0, 7), { x: 0, y: 90 });
+  assert.deepEqual(houseCell('D', 6, 7), { x: 0, y: 18 });
+  assert.deepEqual(houseCell('D', 7, 7), { x: 12, y: 90 });
+  // k 216: the last seat of the half, inner column (30 * 12 = 360), top row, next to the middle seat
+  assert.deepEqual(houseCell('D', 216, 7), { x: 360, y: 18 });
+  // right half: x mirrored, width - 10 - x
+  assert.deepEqual(houseCell('R', 0, 7), { x: 754, y: 90 });
+  assert.deepEqual(houseCell('R', 216, 7), { x: 394, y: 18 });
+  // 14 rows: the inner column (15 * 12 = 180) holds k 210 to 216 in its top 7 rows, bottom up
+  assert.deepEqual(houseCell('D', 209, 14), { x: 168, y: 18 });
+  assert.deepEqual(houseCell('D', 210, 14), { x: 180, y: 90 });
+  assert.deepEqual(houseCell('D', 216, 14), { x: 180, y: 18 });
 });
 
-test('waffleTick: above the column of the last Democratic seat, 12 units from the edges', () => {
-  // seat 213 is index 212 = 16 * 13 + 4: column 16 at x 192, its middle 192 + 5 = 197
-  assert.equal(waffleTick(213, 429), 197);
-  // seat 1: middle 5, moved in to 12
-  assert.equal(waffleTick(1, 429), 12);
-  // seat 429 is index 428 = 32 * 13 + 12: x 384, middle 389, moved in to 394 - 12 = 382
-  assert.equal(waffleTick(429, 429), 382);
-  // no Democratic seat: the tick stays at the first column
-  assert.equal(waffleTick(0, 429), 12);
-});
-
-test('waffleBand: the cells of seats lo to hi, both included', () => {
-  const band = waffleBand(217, 229);
-  assert.equal(band.length, 13); // 229 - 217 + 1
-  assert.deepEqual(band[0], { x: 192, y: 112 }); // seat 217, as in waffleCell(216)
-  assert.deepEqual(band[12], { x: 204, y: 100 }); // seat 229, as in waffleCell(228)
-  assert.deepEqual(waffleBand(223, 223), [{ x: 204, y: 28 }]); // index 222 = 17 * 13 + 1: column 17, row 1
-  assert.deepEqual(waffleBand(5, 4), []);
-});
-
-test('waffleLine: the stepped line after seat k, in the gaps between the squares', () => {
-  // k 215: column 16 holds seats 209 to 221, so seats 209 to 215 (7 rows) lie before the line.
-  // Down the gap after column 16 (x 203) to the gap under row 6 (y 16 + 84 - 1 = 99), left across column 16
-  // to the gap before it (x 191), then down past the last row (height 170) by 3.
-  assert.deepEqual(waffleLine(215, 429), { d: 'M203,15V99H191V173', x: 191, bottom: 173 });
-  // k 13 ends a column: a straight line in the gap after column 0
-  assert.deepEqual(waffleLine(13, 429), { d: 'M11,15V173', x: 11, bottom: 173 });
+test('housePlace: seat i of 435 counted from the Democratic side', () => {
+  assert.deepEqual(housePlace(0), { side: 'D', k: 0 });
+  assert.deepEqual(housePlace(216), { side: 'D', k: 216 });
+  assert.equal(housePlace(217), 'mid'); // seat 218, the majority
+  assert.deepEqual(housePlace(218), { side: 'R', k: 216 });
+  assert.deepEqual(housePlace(434), { side: 'R', k: 0 });
 });
 
 // --- rows of dots: the strip in the state record and the axes of chapter 03 (Task 7.2) ---

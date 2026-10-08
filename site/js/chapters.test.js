@@ -38,13 +38,21 @@ test('outcomesView: three rows, the two effects between them, the band and the s
     { key: 'geographic', label: 'Geographic effect', value: 'R+1', words: '1 seat toward Republicans', detail: '1 seat toward Republicans (224 to 223)' },
     { key: 'drawing', label: 'Drawing effect', value: 'R+10', words: '10 seats toward Republicans', detail: '10 seats toward Republicans (223 to 213)' },
   ]);
-  assert.deepEqual(view.band, { lo: 217, hi: 229, key: 'Outlined: seats 217 to 229, where the Democratic seats end in 90% of neutral outcomes' });
+  assert.deepEqual(view.band, { lo: 217, hi: 229, key: 'Outlined: where the Democratic seats end in 90% of neutral outcomes (217 to 229 of these 429)' });
   // the finding beside the waffle: drawing -10, enacted 213, neutral median 223
   assert.equal(view.finding, 'In this comparison the enacted maps shift 10 seats toward Republicans. '
     + 'With the same votes they give Democrats 213 seats, where the neutral-map median gives 223.');
-  // majority: 216 of 429 for Democrats; 435 - 429 = 6 one-seat states, 218 - 216 = 2 Democratic, 4 Republican; 429 - 216 + 1 = 214
-  assert.deepEqual(view.majority, { after: 215, label: 'House majority',
-    key: 'Line: House majority. Democrats need 216 of these seats, Republicans 214; the six one-seat states add 2 and 4.' });
+  // the House of 435: 218 - 216 = 2 Democratic one-seat states (DE, VT), 4 Republican (AK, ND, SD, WY)
+  assert.deepEqual(view.house, {
+    dSingle: 2, rSingle: 4, midLabel: '218',
+    singles: [
+      { party: 'D', text: 'Delaware and Vermont: one seat each, not part of the comparison. They count for Democrats, who won both states in 2016 and 2020.' },
+      { party: 'R', text: 'Alaska, North Dakota, South Dakota and Wyoming: one seat each, not part of the comparison. They count for Republicans, who won all four states in 2016 and 2020.' },
+    ],
+    fillKey: '1 square = 1 seat of 435. Democrats fill from the left, Republicans from the right.',
+    midKey: 'Top middle square: seat 218 of 435. The party that holds it has a House majority.',
+    singleKey: 'Framed: the six states with one seat, the same in every count.',
+  });
   assert.equal(view.effectsNote, 'The geographic effect is the difference between proportional seats and neutral maps. '
     + 'The drawing effect is the difference between neutral maps and the enacted maps.');
   // 213 < 217
@@ -78,7 +86,7 @@ test('outcomesView: an enacted count inside or above the band, a band of one cou
   const view = outcomesView(one);
   assert.equal(view.rows[1].desc, 'The middle outcome of the neutral maps. 90% of outcomes give 223.');
   assert.equal(view.spread, '90% of neutral outcomes give Democrats 223 seats. The enacted maps give 213, below that range.');
-  assert.equal(view.band.key, 'Outlined: seat 223, where the Democratic seats end in 90% of neutral outcomes');
+  assert.equal(view.band.key, 'Outlined: where the Democratic seats end in 90% of neutral outcomes (223 of these 429)');
   // 224 to 223 would be wrong for an effect of 0; the numbers stay, the words say "no difference"
   assert.equal(view.steps[0].value, '0');
   assert.equal(view.steps[0].detail, 'no difference (224 to 223)');
@@ -87,9 +95,12 @@ test('outcomesView: an enacted count inside or above the band, a band of one cou
 test('waffleText: the count per party and the title of the waffle', () => {
   const view = outcomesView(withExtensions());
   // enacted 213 of 429 -> 429 - 213 = 216 Republican seats
-  assert.deepEqual(waffleText(view, 'enacted'), { d: '213', r: '216', label: 'Enacted maps: 213 Democratic and 216 Republican seats of 429.' });
-  // neutral 223 -> 206
-  assert.deepEqual(waffleText(view, 'neutral'), { d: '223', r: '206', label: 'Neutral-map median: 223 Democratic and 206 Republican seats of 429.' });
+  // with the six one-seat states: 213 + 2 = 215 of 435, so 220 Republican and a Republican majority
+  assert.deepEqual(waffleText(view, 'enacted'), { d: '213', r: '216', house: 215,
+    label: 'Enacted maps: 213 Democratic and 216 Republican seats of 429. With the six one-seat states, 215 of 435 seats are Democratic: a Republican majority.' });
+  // neutral 223 -> 206; 225 of 435, a Democratic majority
+  assert.deepEqual(waffleText(view, 'neutral'), { d: '223', r: '206', house: 225,
+    label: 'Neutral-map median: 223 Democratic and 206 Republican seats of 429. With the six one-seat states, 225 of 435 seats are Democratic: a Democratic majority.' });
 });
 
 // --- chapter 02 (Task 7.4) ---

@@ -209,26 +209,26 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .step { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr); column-gap: 0.75rem; padding: 0.35rem 0.9rem; font-size: 0.8125rem; color: var(--muted); }
 .step::before { content: ""; justify-self: center; width: 1px; background: var(--rule); }
 .step b { color: var(--fg); font-weight: 700; }
-.waffle { display: grid; gap: 0.8rem; min-width: 0; }
+.waffle { display: grid; gap: 0.8rem; min-width: 0; position: relative; }
 .readout { display: flex; flex-wrap: wrap; gap: 0.3rem 1.4rem; align-items: baseline; }
 .readout .who { display: inline-flex; gap: 0.45rem; align-items: baseline; font-size: 1.1875rem; }
 .readout .who b { font: 700 1.5rem/1 var(--font-head); font-variant-numeric: tabular-nums; }
 .sw { display: inline-block; width: 0.75rem; height: 0.75rem; flex: none; }
 /* 394 x 170 units, at most 42rem wide. Its numbers are 12 units, so 10.4px in a 343px phone column. */
-#waffle { max-width: 42rem; }
+#waffle { width: 100%; }
 #waffle rect.seat { transition: fill 0.35s ease; }
 #waffle .band rect { fill: none; stroke: var(--fg); stroke-width: 1.4; }
-#waffle .tick text { fill: var(--muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
-/* On a narrow screen the waffle is scaled down to about 0.7; a larger number keeps it at 12px or more. */
-@media (max-width: 480px) { #waffle { overflow: visible; } #waffle .tick text, #waffle .majority text { font-size: 17px; } }
-#waffle .tick line { stroke: var(--fg); }
+/* The House of 435: seat 218 outlined at the top, the framed one-seat states with a tooltip, the label above */
+#waffle rect.middle { stroke: var(--fg); stroke-width: 1.5; }
+#waffle .frames rect { fill: transparent; stroke: var(--fg); stroke-width: 1.5; cursor: help; pointer-events: all; }
+#waffle .midlabel { fill: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.wkey .mk { width: 0.75rem; height: 0.75rem; border: 1.5px solid var(--fg); background: var(--mid); }
+.wkey .fr { width: 0.6rem; height: 1rem; border: 1.5px solid var(--fg); }
+#waffle-tip { z-index: 2; }
 #waffle .changed circle { fill: var(--sheet); }
 .wkey .cd { width: 0.75rem; height: 0.75rem; background: var(--fg); border-radius: 0; display: grid; place-items: center; }
 .wkey .cd::after { content: ""; width: 0.25rem; height: 0.25rem; border-radius: 50%; background: var(--sheet); }
 .finding { margin: 0; font: 600 1.125rem/1.4 var(--font-head); color: var(--fg); max-width: 46ch; }
-#waffle .majority path { fill: none; stroke: var(--fg); stroke-width: 2; }
-#waffle .majority text { fill: var(--fg); font-size: 12px; font-weight: 600; }
-.wkey .ml { width: 2px; height: 0.9rem; background: var(--fg); align-self: flex-start; margin-top: 0.15rem; }
 .wkey { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.8125rem; color: var(--muted); }
 .wkey > span { display: inline-flex; gap: 0.4rem; align-items: center; }
 .wkey .ol { width: 0.75rem; height: 0.75rem; border: 1.4px solid var(--fg); }

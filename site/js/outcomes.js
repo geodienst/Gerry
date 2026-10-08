@@ -1,7 +1,7 @@
 // Chapter 01, "One electorate. Three outcomes." (redesign, chapter 3): three rows as a radio group with the two
 // effects between them, a waffle of the seats that follows the chosen row, and the sentences beside it.
 // Texts come from chapters.js and geometry from axes.js; this module only draws.
-import { WAFFLE, waffleSize, waffleCell, waffleTick, waffleBand, waffleLine } from './axes.js';
+import { HOUSE, houseLayout, houseCell, housePlace } from './axes.js';
 import { waffleText, changedKey } from './chapters.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -53,34 +53,98 @@ export function renderOutcomes(view, { reduceMotion }) {
     return button;
   });
 
-  // The waffle: one square per seat, column by column; the band outline; the number above the last Democratic seat.
-  const size = waffleSize(view.total);
+  // The House of 435 (owner concept, October 8, 2026): seat i counted from the Democratic side, Democrats from
+  // the left, Republicans from the right, seat 218 alone at the top in the middle. The six one-seat states are
+  // the outermost seats of each side, framed, with a tooltip. Wide screens get 7 rows, narrow ones 14.
   const svg = $('waffle');
-  const line = waffleLine(view.majority.after, view.total);
-  svg.setAttribute('viewBox', `0 0 ${size.width} ${line.bottom + 20}`); // room under the squares for the majority label
+  const box = svg.parentElement;
+  const tip = $('waffle-tip');
+  const house = view.house;
   for (const g of svg.querySelectorAll('g')) g.remove();
   const seatLayer = svgNode('g');
-  const squares = Array.from({ length: view.total }, (_, i) => {
-    const { x, y } = waffleCell(i);
-    const rect = svgNode('rect', { class: 'seat', x, y, width: WAFFLE.size, height: WAFFLE.size });
-    seatLayer.append(rect);
-    return rect;
-  });
   const band = svgNode('g', { class: 'band', display: 'none' });
-  for (const { x, y } of waffleBand(view.band.lo, view.band.hi)) {
-    band.append(svgNode('rect', { x: x + 0.7, y: y + 0.7, width: WAFFLE.size - 1.4, height: WAFFLE.size - 1.4 }));
-  }
-  const tick = svgNode('g', { class: 'tick', 'aria-hidden': 'true' });
-  // The House majority: a fixed line in the gaps, so a change of row shows on which side the Democratic seats end.
-  const majority = svgNode('g', { class: 'majority', 'aria-hidden': 'true' });
-  majority.append(svgNode('path', { d: line.d }),
-    svgNode('text', { x: line.x, y: line.bottom + 15, 'text-anchor': 'middle' }, view.majority.label));
-  // Dots on the seats that changed party with the last choice of row, until the next choice.
   const changed = svgNode('g', { class: 'changed', 'aria-hidden': 'true' });
-  svg.append(seatLayer, band, changed, majority, tick);
+  const frames = svgNode('g', { class: 'frames' });
+  const midLabel = svgNode('text', { class: 'midlabel', 'aria-hidden': 'true', 'text-anchor': 'middle' }, house.midLabel);
+  svg.append(seatLayer, band, changed, frames, midLabel);
   $('finding').textContent = view.finding;
   $('key-band-text').textContent = view.band.key;
-  $('key-majority-text').textContent = view.majority.key;
+  $('key-fill').textContent = house.fillKey;
+  $('key-mid-text').textContent = house.midKey;
+  $('key-single-text').textContent = house.singleKey;
+
+  const PAD = 2; // room in the viewBox for the frames around the outer seats
+  let layout = null;
+  let cells = [];
+  let moved = null; // [from, to) of the seats that changed with the last choice of row
+  const at = (i) => {
+    const place = housePlace(i);
+    return place === 'mid' ? layout.mid : houseCell(place.side, place.k, layout.rows);
+  };
+  const seatsFrom = (lo, hi) => Array.from({ length: Math.max(0, hi - lo) }, (_, k) => lo + k);
+  const dots = () => (moved ? seatsFrom(...moved).map((i) => {
+    const { x, y } = at(i);
+    return svgNode('circle', { cx: x + HOUSE.size / 2, cy: y + HOUSE.size / 2, r: 1.8 });
+  }) : []);
+
+  function showTip(frame, text) {
+    tip.textContent = text;
+    tip.hidden = false;
+    const f = frame.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    const left = Math.min(Math.max(f.left - b.left + f.width / 2 - tip.offsetWidth / 2, 0), b.width - tip.offsetWidth);
+    const above = f.top - b.top - tip.offsetHeight - 8;
+    tip.style.left = `${left}px`;
+    tip.style.top = `${above >= 0 ? above : f.bottom - b.top + 8}px`;
+  }
+  const hideTip = () => { tip.hidden = true; };
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape') hideTip(); });
+
+  function frame(seatsInFrame, text) {
+    const spots = seatsInFrame.map(at);
+    const xs = spots.map((s) => s.x);
+    const ys = spots.map((s) => s.y);
+    const rect = svgNode('rect', {
+      x: Math.min(...xs) - 1.5, y: Math.min(...ys) - 1.5,
+      width: Math.max(...xs) - Math.min(...xs) + HOUSE.size + 3, height: Math.max(...ys) - Math.min(...ys) + HOUSE.size + 3,
+    });
+    rect.addEventListener('pointerenter', () => showTip(rect, text));
+    rect.addEventListener('pointerleave', hideTip);
+    rect.addEventListener('click', () => (tip.hidden ? showTip(rect, text) : hideTip()));
+    return rect;
+  }
+
+  function build(rows) {
+    layout = houseLayout(rows);
+    svg.setAttribute('viewBox', `${-PAD} 0 ${layout.width + 2 * PAD} ${layout.height + PAD}`);
+    cells = Array.from({ length: 2 * HOUSE.half + 1 }, (_, i) => {
+      const { x, y } = at(i);
+      return svgNode('rect', { class: i === HOUSE.half ? 'seat middle' : 'seat', x, y, width: HOUSE.size, height: HOUSE.size });
+    });
+    seatLayer.replaceChildren(...cells);
+    // the band in seats of 435: the one-seat Democratic states come first
+    band.replaceChildren(...seatsFrom(view.band.lo + house.dSingle - 1, view.band.hi + house.dSingle).map((i) => {
+      const { x, y } = at(i);
+      return svgNode('rect', { x: x + 0.7, y: y + 0.7, width: HOUSE.size - 1.4, height: HOUSE.size - 1.4 });
+    }));
+    frames.replaceChildren(frame(seatsFrom(0, house.dSingle), house.singles[0].text),
+      frame(seatsFrom(2 * HOUSE.half + 1 - house.rSingle, 2 * HOUSE.half + 1), house.singles[1].text));
+    midLabel.setAttribute('x', layout.mid.x + HOUSE.size / 2);
+    midLabel.setAttribute('y', HOUSE.top - 5);
+    changed.replaceChildren(...dots());
+    hideTip();
+  }
+
+  // 7 rows where the waffle is at least 560px wide, else 14; the label above the middle seat stays near 12px
+  function fit() {
+    const rows = box.clientWidth >= 560 ? 7 : 14;
+    if (!layout || rows !== layout.rows) {
+      build(rows);
+      draw(false);
+    }
+    const scale = svg.clientWidth / (layout.width + 2 * PAD) || 1;
+    midLabel.style.fontSize = `${Math.max(12, 12.5 / scale)}px`; // inline, so the chart text rule of the style sheet does not win
+  }
 
   // The two columns under rows and waffle.
   const effect = (step) => {
@@ -97,11 +161,11 @@ export function renderOutcomes(view, { reduceMotion }) {
   let colors = null;
 
   function draw(animate) {
-    if (!colors) return;
+    if (!colors || !layout) return;
     const row = view.rows.find((r) => r.key === current);
-    const n = row.seats;
+    const n = row.seats + house.dSingle; // Democratic seats of 435
     const motion = animate && shown !== null && !reduceMotion();
-    squares.forEach((rect, i) => {
+    cells.forEach((rect, i) => {
       const fill = colors.party(i < n);
       if (rect.getAttribute('fill') === fill) return;
       // squares change one after another, starting at the old count
@@ -110,23 +174,14 @@ export function renderOutcomes(view, { reduceMotion }) {
       rect.setAttribute('fill', fill);
     });
     if (shown !== null && shown !== n) {
-      const dots = [];
-      for (let i = Math.min(shown, n); i < Math.max(shown, n); i += 1) {
-        const { x, y } = waffleCell(i);
-        dots.push(svgNode('circle', { cx: x + WAFFLE.size / 2, cy: y + WAFFLE.size / 2, r: 1.8 }));
-      }
-      changed.replaceChildren(...dots);
-      $('key-changed-text').textContent = changedKey(dots.length);
+      moved = [Math.min(shown, n), Math.max(shown, n)];
+      changed.replaceChildren(...dots());
+      $('key-changed-text').textContent = changedKey(moved[1] - moved[0]);
       $('key-changed').hidden = false;
     }
     shown = n;
     band.setAttribute('display', current === 'neutral' ? 'inline' : 'none');
     $('key-band').hidden = current !== 'neutral';
-    const mid = waffleCell(Math.max(n, 1) - 1).x + WAFFLE.size / 2;
-    tick.replaceChildren(
-      svgNode('line', { x1: mid, x2: mid, y1: WAFFLE.top - 4, y2: WAFFLE.top - 1 }),
-      svgNode('text', { x: waffleTick(n, view.total), y: WAFFLE.top - 6, 'text-anchor': 'middle' }, row.value),
-    );
     const text = waffleText(view, current);
     const who = (name, value, toD) => {
       const span = node('span', { class: 'who' });
@@ -149,6 +204,8 @@ export function renderOutcomes(view, { reduceMotion }) {
     draw(animate);
   }
 
+  fit();
+  new ResizeObserver(fit).observe(box);
   select(current);
   return {
     /** Colors for the squares and the key; again after a palette or theme change. */

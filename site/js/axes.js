@@ -105,47 +105,42 @@ export function netBar(seatsR, seatsD, width = 360) {
   };
 }
 
-// --- The waffle of chapter 01 (Task 7.2) ---------------------------------------------------------
+// --- The House of 435 in chapter 01 (owner concept, October 8, 2026) ------------------------------
+// Two halves of 217 seats, Democrats from the left and Republicans from the right, and the middle seat
+// (seat 218, the majority) at the top between them. Each half fills from its outer column inward, every
+// column bottom up, so the change of color ends next to the middle seat.
 
-export const WAFFLE = { rows: 13, step: 12, size: 10, top: 16, edge: 12 }; // top: room for the tick and its number
+export const HOUSE = { half: 217, size: 10, step: 12, top: 18, gap: 7 };
 
-/** Columns, width and height in viewBox units of a waffle of `total` seats, filled column by column. */
-export function waffleSize(total, w = WAFFLE) {
-  const columns = Math.ceil(total / w.rows);
-  return { columns, width: columns * w.step - (w.step - w.size), height: w.top + w.rows * w.step - (w.step - w.size) };
+/** Columns, the seats in the inner column, the size in viewBox units and the middle seat, for `rows` rows. */
+export function houseLayout(rows, h = HOUSE) {
+  const cols = Math.ceil(h.half / rows);
+  const partial = h.half - (cols - 1) * rows;
+  const halfWidth = cols * h.step - (h.step - h.size);
+  return {
+    rows, cols, partial,
+    width: 2 * halfWidth + 2 * h.gap + h.size,
+    height: h.top + rows * h.step - (h.step - h.size),
+    mid: { x: halfWidth + h.gap, y: h.top },
+  };
 }
 
-/** Top left corner of seat `i` (from 0): down a column of 13, then the next column. */
-export function waffleCell(i, w = WAFFLE) {
-  return { x: Math.floor(i / w.rows) * w.step, y: w.top + (i % w.rows) * w.step };
+/** Top left corner of seat `k` (from 0, outer column first) of the half on `side` ('D' left, 'R' right). */
+export function houseCell(side, k, rows, h = HOUSE) {
+  const { cols, partial, width } = houseLayout(rows, h);
+  const full = (cols - 1) * rows;
+  const column = k < full ? Math.floor(k / rows) : cols - 1;
+  // full columns run bottom up over all rows; the inner column holds `partial` seats in its top rows
+  const row = k < full ? rows - 1 - (k % rows) : partial - 1 - (k - full);
+  const x = column * h.step;
+  return { x: side === 'D' ? x : width - h.size - x, y: h.top + row * h.step };
 }
 
-/** x of the number above seat `n` (from 1), the last Democratic seat; at least 12 units from either edge. */
-export function waffleTick(n, total, w = WAFFLE) {
-  const { width } = waffleSize(total, w);
-  const x = waffleCell(Math.max(n, 1) - 1, w).x + w.size / 2;
-  return Math.min(Math.max(x, w.edge), width - w.edge);
-}
-
-/**
- * The stepped line after seat `k` (from 1), in the gaps between the squares: down the gap after the column that
- * holds seat k, across that column under seat k, then down the gap before it to 3 units past the last row.
- */
-export function waffleLine(k, total, w = WAFFLE) {
-  const half = (w.step - w.size) / 2;
-  const column = Math.floor(k / w.rows);
-  const row = k % w.rows;
-  const top = w.top - half;
-  const bottom = waffleSize(total, w).height + 3;
-  const x = column * w.step - half;
-  if (row === 0) return { d: `M${x},${top}V${bottom}`, x, bottom };
-  const y = w.top + row * w.step - half;
-  return { d: `M${x + w.step},${top}V${y}H${x}V${bottom}`, x, bottom };
-}
-
-/** Cells of seats lo to hi (from 1, both included): the outline of the neutral band. */
-export function waffleBand(lo, hi, w = WAFFLE) {
-  return Array.from({ length: Math.max(0, hi - lo + 1) }, (_, k) => waffleCell(lo - 1 + k, w));
+/** Where seat `i` of 435 (from 0, counted from the Democratic side) sits: a half and its k, or 'mid'. */
+export function housePlace(i, h = HOUSE) {
+  if (i < h.half) return { side: 'D', k: i };
+  if (i === h.half) return 'mid';
+  return { side: 'R', k: 2 * h.half - i };
 }
 
 // --- Rows of dots: the strip in the state record and the axes of chapter 03 (Task 7.2) ----------

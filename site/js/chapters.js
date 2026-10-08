@@ -24,9 +24,7 @@ export function outcomesView(results) {
   const states = count(Object.keys(results.states).length);
   const plans = count(sum(Object.values(results.states)[0].neutral.dist));
   const { median, p5, p95 } = n.neutral;
-  // A majority is 218 of the 435 seats; the six one-seat states count as in majorityView (2 Democratic, 4 Republican).
   const needed = n.majority.seats_needed;
-  const dSingle = 218 - needed;
   const band = p5 === p95 ? `90% of outcomes give ${seats(p5)}` : `90% of outcomes: ${seats(p5)} to ${seats(p95)}`;
   const where = n.enacted < p5 ? 'below that range' : n.enacted > p95 ? 'above that range' : 'within that range';
   const step = (key, value, from, to) => ({
@@ -51,20 +49,14 @@ export function outcomesView(results) {
     ],
     band: {
       lo: p5, hi: p95,
-      key: `Outlined: ${p5 === p95 ? 'seat' : 'seats'} ${range(p5, p95)}, where the Democratic seats end in 90% of neutral outcomes`,
+      key: `Outlined: where the Democratic seats end in 90% of neutral outcomes (${range(p5, p95)} of these ${seats(n.seats)})`,
     },
     // One finding beside the waffle, said as the result of this comparison (expert feedback, October 8, 2026).
     finding: n.effects.drawing === 0
       ? `In this comparison the enacted maps give Democrats ${seats(n.enacted)} seats, the same as the neutral-map median.`
       : `In this comparison the enacted maps shift ${effectWords(n.effects.drawing)}. `
         + `With the same votes they give Democrats ${seats(n.enacted)} seats, where the neutral-map median gives ${seats(median)}.`,
-    // The House majority as a line after the last seat Democrats can win without one (as in majorityView).
-    majority: {
-      after: needed - 1,
-      label: 'House majority',
-      key: `Line: House majority. Democrats need ${seats(needed)} of these seats, Republicans ${seats(n.seats - needed + 1)}; `
-        + `the six one-seat states add ${seats(dSingle)} and ${seats(6 - dSingle)}.`,
-    },
+    house: houseView(results, needed),
     effectsNote: 'The geographic effect is the difference between proportional seats and neutral maps. '
       + 'The drawing effect is the difference between neutral maps and the enacted maps.',
     spread: `90% of neutral outcomes give Democrats ${range(p5, p95)} seats. The enacted maps give ${seats(n.enacted)}, ${where}.`,
@@ -73,6 +65,32 @@ export function outcomesView(results) {
       + "the state's rules, such as equal population and the Voting Rights Act, without using party data. "
       + `The national figures combine the ${states} states.`,
     scope: national.note,
+  };
+}
+
+// The six one-seat states count for the party that won them in both 2016 and 2020, as in majorityView.
+const SINGLE_SEAT_PARTY = { DE: 'D', VT: 'D', AK: 'R', ND: 'R', SD: 'R', WY: 'R' };
+const names = (list) => (list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`);
+const bothOrAll = (k) => (k === 2 ? 'both states' : `all ${['', 'one', 'two', 'three', 'four', 'five', 'six'][k] ?? k} states`);
+
+/** The House of 435 around the waffle: the framed one-seat states, the middle seat and the key. */
+function houseView(results, needed) {
+  const single = results.national.single_seat;
+  const party = (p) => single.filter((s) => SINGLE_SEAT_PARTY[s.postal] === p).map((s) => s.name);
+  const d = party('D');
+  const r = party('R');
+  // seats_needed comes from the pipeline with the same rule; a different count means the two disagree
+  if (d.length + r.length !== single.length || 218 - needed !== d.length) {
+    throw new Error(`one-seat states: ${d.length} Democratic and ${r.length} Republican do not match ${needed} districts needed`);
+  }
+  const text = (list, who) => `${names(list)}: one seat each, not part of the comparison. They count for ${who}, `
+    + `who won ${bothOrAll(list.length)} in 2016 and 2020.`;
+  return {
+    dSingle: d.length, rSingle: r.length, midLabel: seats(218),
+    singles: [{ party: 'D', text: text(d, 'Democrats') }, { party: 'R', text: text(r, 'Republicans') }],
+    fillKey: '1 square = 1 seat of 435. Democrats fill from the left, Republicans from the right.',
+    midKey: 'Top middle square: seat 218 of 435. The party that holds it has a House majority.',
+    singleKey: 'Framed: the six states with one seat, the same in every count.',
   };
 }
 
@@ -85,10 +103,14 @@ export function changedKey(k) {
 export function waffleText(view, key) {
   const row = view.rows.find((r) => r.key === key);
   const rest = view.total - row.seats;
+  const house = row.seats + view.house.dSingle;
   return {
     d: seats(row.seats),
     r: seats(rest),
-    label: `${row.label}: ${seats(row.seats)} Democratic and ${seats(rest)} Republican seats of ${seats(view.total)}.`,
+    house,
+    label: `${row.label}: ${seats(row.seats)} Democratic and ${seats(rest)} Republican seats of ${seats(view.total)}. `
+      + `With the six one-seat states, ${seats(house)} of 435 seats are Democratic: `
+      + `a ${house >= 218 ? 'Democratic' : 'Republican'} majority.`,
   };
 }
 

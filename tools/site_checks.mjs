@@ -468,7 +468,8 @@ async function layout(t) {
     await t.load('', { reduce });
     // Choose Neutral-map median: the square right after the enacted count turns Democratic. Its transition is that of
     // the style sheet (0.35s), or none with reduced motion; the first paint after loading never animates.
-    const enacted = Number(await t.js("document.querySelector('#readout b').textContent"));
+    // Seats of 435 start with the two Democratic one-seat states.
+    const enacted = Number(await t.js("document.querySelector('#readout b').textContent")) + 2;
     await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
     const seat = await t.js(`getComputedStyle(document.querySelectorAll('#waffle rect.seat')[${enacted}]).transitionDuration`);
     t.check(reduce ? 'with reduced motion the waffle has no transition' : 'without reduced motion the waffle fades its squares',
@@ -575,25 +576,36 @@ async function outcomes(t) {
     await t.js(`[...document.querySelectorAll('#scen .step b')].map((b) => b.textContent).join() === ${JSON.stringify(want.steps.join())}`));
   const blue = "getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
   const democratic = `[...document.querySelectorAll('#waffle rect.seat')].filter((r) => r.getAttribute('fill') === ${blue}).length`;
-  t.check(`the waffle has ${want.total} squares, ${want.enacted} of them Democratic`,
-    await t.js(`document.querySelectorAll('#waffle rect.seat').length === ${want.total} && ${democratic} === ${want.enacted}`));
+  // the House of 435: these districts plus the six one-seat states, two of them Democratic
+  t.check(`the waffle has 435 squares, ${want.enacted} + 2 of them Democratic`,
+    await t.js(`document.querySelectorAll('#waffle rect.seat').length === 435 && ${democratic} === ${want.enacted} + 2`));
   t.check('the line above the waffle counts both parties and is a polite live region', await t.js(`(() => {
     const r = document.getElementById('readout');
     return r.getAttribute('aria-live') === 'polite' && r.textContent === 'Democrats${want.enacted}Republicans${want.total - want.enacted}';
   })()`));
-  // the majority line runs in the gap after seat seats_needed - 1, and its key says what it is
-  t.check('the waffle has a House majority line after the last seat short of a majority, with its key', await t.js(`(() => {
-    const path = document.querySelector('#waffle .majority path');
-    const label = document.querySelector('#waffle .majority text');
-    const key = document.getElementById('key-majority-text').textContent;
-    const sq = [...document.querySelectorAll('#waffle rect.seat')];
-    const needed = Number(key.match(/Democrats need (\\d+) of these seats/)[1]);
-    const last = sq[needed - 2].getBBox(), first = sq[needed - 1].getBBox();
-    const line = path.getBBox();
-    return label.textContent === 'House majority' && key.startsWith('Line: House majority.')
-      && line.x >= Math.min(last.x, first.x) - 2 && line.x + line.width <= Math.max(last.x, first.x) + 12 + 2
-      && line.height > 150;
+  // seat 218 sits alone at the top between the halves; the framed one-seat states show their names on hover
+  t.check('the middle square at the top is seat 218, Republican with the enacted maps', await t.js(`(() => {
+    const mid = document.querySelector('#waffle rect.middle');
+    const ys = [...document.querySelectorAll('#waffle rect.seat')].map((r) => Number(r.getAttribute('y')));
+    return mid && Number(mid.getAttribute('y')) === Math.min(...ys) && mid.getAttribute('fill') !== ${blue}
+      && document.querySelector('#waffle .midlabel').textContent === '218'
+      && document.getElementById('key-mid-text').textContent.startsWith('Top middle square: seat 218 of 435.');
   })()`));
+  const frameAt = (i) => `document.querySelectorAll('#waffle .frames rect')[${i}]`;
+  t.check('two frames, around 2 Democratic and 4 Republican one-seat states', await t.js(`(() => {
+    const fr = document.querySelectorAll('#waffle .frames rect');
+    const inside = (f) => [...document.querySelectorAll('#waffle rect.seat')].filter((r) => {
+      const a = f.getBBox(), b = r.getBBox();
+      return b.x >= a.x && b.y >= a.y && b.x + b.width <= a.x + a.width && b.y + b.height <= a.y + a.height;
+    });
+    return fr.length === 2 && inside(fr[0]).length === 2 && inside(fr[1]).length === 4
+      && inside(fr[0]).every((r) => r.getAttribute('fill') === ${blue}) && inside(fr[1]).every((r) => r.getAttribute('fill') !== ${blue});
+  })()`));
+  await t.mouse('mouseMoved', await t.center(frameAt(0)));
+  t.check('pointing at the Democratic frame names Delaware and Vermont', await t.until(
+    "!document.getElementById('waffle-tip').hidden && document.getElementById('waffle-tip').textContent.startsWith('Delaware and Vermont: one seat each')"));
+  await t.mouse('mouseMoved', { x: 2, y: 2 });
+  t.check('the tooltip goes when the pointer leaves', await t.until("document.getElementById('waffle-tip').hidden"));
   t.check('the band is hidden while Enacted maps is chosen',
     await t.js("document.querySelector('#waffle .band').getAttribute('display') === 'none' && document.getElementById('key-band').hidden"));
   await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
@@ -610,13 +622,13 @@ async function outcomes(t) {
   })()`));
   t.check(`with Neutral-map median the seats ${want.lo} to ${want.hi} are outlined and the key says so`,
     neutral.band === want.hi - want.lo + 1 && neutral.shown !== 'none' && neutral.key, JSON.stringify(neutral));
-  t.check('the title of the waffle names the chosen row in numbers', /^Neutral-map median: \d+ Democratic and \d+ Republican seats of \d+\.$/.test(neutral.title), neutral.title);
+  t.check('the title of the waffle names the chosen row in numbers and the majority', /^Neutral-map median: \d+ Democratic and \d+ Republican seats of \d+\. With the six one-seat states, \d+ of 435 seats are Democratic: a (Democratic|Republican) majority\.$/.test(neutral.title), neutral.title);
   await t.key('End', 35);
   t.check('End chooses the last row', (await t.js("document.activeElement.querySelector('.lab')?.textContent")) === 'Enacted maps');
   await t.key('ArrowDown', 40);
   t.check('Arrow down on the last row goes round to the first', (await t.js("document.activeElement.querySelector('.lab')?.textContent")) === 'Vote-proportional');
   await t.js("document.querySelectorAll('#scen [role=radio]')[2].click()");
-  t.check('a click chooses a row and repaints the waffle', await t.until(`${democratic} === ${want.enacted}`, 2000));
+  t.check('a click chooses a row and repaints the waffle', await t.until(`${democratic} === ${want.enacted} + 2`, 2000));
   const effects = await t.text('#effects');
   t.check('the effects block names both effects with direction and the two numbers they lie between',
     /Geographic effect(0|[RD]\+\d+)(no difference|\d+ seats? toward (Republicans|Democrats)) \(\d+ to \d+\)/.test(effects) && /Drawing effect(0|[RD]\+\d+)/.test(effects),
