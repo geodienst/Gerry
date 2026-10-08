@@ -4,8 +4,10 @@ import assert from 'node:assert/strict';
 import { results, withExtensions } from './testdata.js';
 import {
   LABELS, SHORT_LABELS, EFFECT_LABELS, outcomesView, waffleText, LARGEST_MIN, largestEffects, recordView, singleSeatView,
+  decideView,
 } from './chapters.js';
 import { stateSheet, AT_LARGE_TEXT } from './model.js';
+import { majorityView, senateView, redrawView, controlTables } from './extensions.js';
 
 // --- chapter 01 (Task 7.3) ---
 
@@ -146,4 +148,55 @@ test('singleSeatView: the short record of a state with one seat', () => {
     postal: 'WY', name: 'Wyoming', kicker: 'State record', headline: '1 seat',
     lines: [AT_LARGE_TEXT, 'Not counted in the 429 seats compared here.'],
   });
+});
+
+// --- chapter 03 (Task 7.5) ---
+
+test('decideView: the House majority with its rows of dots', () => {
+  const r = withExtensions();
+  const view = decideView(r);
+  assert.equal(view.intro, 'The same votes, read for control of the House and the Senate, for redraws since 2024 and for close districts.');
+  // the texts of Phase 6 stay
+  const m = majorityView(r);
+  for (const key of ['sentence', 'proportionalNote', 'rule', 'label']) assert.equal(view.majority[key], m[key], key);
+  // domain: see rowDomain in axes.test.js, 0.49 to 0.53 in whole points
+  assert.deepEqual(view.majority.dots.domain, [0.49, 0.53]);
+  assert.deepEqual(view.majority.dots.ticks.map((t) => t.text), ['49%', '50%', '51%', '52%', '53%']);
+  // shares with one decimal: 49.787 -> 49.8, 51.157 -> 51.2, 52.303 -> 52.3; the vote 51.797 -> 51.8
+  assert.deepEqual(view.majority.dots.rows, [
+    { key: 'proportional', label: 'Proportional', value: 0.4978747, text: '49.8%' },
+    { key: 'neutral', label: 'Neutral median', value: 0.5115747, text: '51.2%', band: [0.5065747, 0.5159747] },
+    { key: 'enacted', label: 'Enacted', value: 0.5230328, text: '52.3%', filled: true },
+  ]);
+  assert.deepEqual(view.majority.dots.base, { value: 0.5179747, text: 'Vote 51.8%' });
+});
+
+test('decideView: Senate, competitive districts, redraws and the tables', () => {
+  const r = withExtensions();
+  const view = decideView(r);
+  // Senate: share 0.5291 -> 52.9%, base 0.5172 -> 51.7%, 22 states of the 26 needed
+  assert.deepEqual(view.senate.figures, [
+    { value: '52.9%', label: 'needed for a majority' }, { value: '51.7%', label: 'Democratic share' },
+    { value: '22', label: 'states won, 26 needed' },
+  ]);
+  const s = senateView(r);
+  assert.equal(view.senate.sentence, s.sentence);
+  assert.equal(view.senate.note, s.note);
+  // competitive: enacted 81, median 96, band 87 to 105; domain 75 to 110 in steps of 5 (rowDomain)
+  assert.deepEqual(view.competitive.figures, [{ value: '81', label: 'enacted maps' }, { value: '96', label: 'neutral median' }]);
+  assert.deepEqual(view.competitive.dots.domain, [75, 110]);
+  assert.deepEqual(view.competitive.dots.ticks.map((t) => t.text), ['75', '80', '85', '90', '95', '100', '105', '110']);
+  assert.deepEqual(view.competitive.dots.rows, [
+    { key: 'neutral', label: 'Neutral median', value: 96, band: [87, 105] },
+    { key: 'enacted', label: 'Enacted', value: 81, filled: true },
+  ]);
+  assert.equal(view.competitive.label, 'Competitive districts: 81 on the enacted maps and 96 on neutral maps, '
+    + 'with 90% of neutral maps between 87 and 105.');
+  assert.equal(view.competitive.text, 'Competitive districts (45 to 55%): 81 on the enacted maps, 96 on neutral maps (90% of neutral maps: 87 to 105).');
+  // redraws: 217 on the 2024 maps, 213 on the 2026 maps, change -4
+  assert.deepEqual(view.redraws.figures, [
+    { value: '217 to 213', label: 'Democratic seats, 2024 maps to 2026 maps' }, { value: 'R+4', label: '4 seats toward Republicans' },
+  ]);
+  assert.deepEqual({ sentence: view.redraws.sentence, rows: view.redraws.rows }, redrawView(r));
+  assert.deepEqual(view.control, controlTables(r));
 });

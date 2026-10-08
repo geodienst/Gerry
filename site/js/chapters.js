@@ -1,9 +1,9 @@
 // Texts and view models for the four chapters of the redesign (docs/superpowers/specs/2026-10-08-redesign-design.md).
 // Pure, like model.js and extensions.js: no DOM and no d3, every number through format.js, nothing new computed.
-import { seats, count, effect, effectWords, effectLine } from './format.js';
+import { share, seats, count, effect, effectWords, effectLine, percentLabel } from './format.js';
 import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT } from './model.js';
-import { stateExtras } from './extensions.js';
-import { seatTicks } from './axes.js';
+import { stateExtras, majorityView, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
+import { seatTicks, rowDomain } from './axes.js';
 
 export const LABELS = { proportional: 'Vote-proportional', neutral: 'Neutral-map median', enacted: 'Enacted maps' };
 // The rows of dots (drawDotRows) have 112 units for a label: there the short forms (owner decision, October 8, 2026).
@@ -138,5 +138,67 @@ export function singleSeatView(results, postal) {
     kicker: 'State record',
     headline: '1 seat',
     lines: [AT_LARGE_TEXT, `Not counted in the ${seats(results.national.seats)} seats compared here.`],
+  };
+}
+
+// --- Chapter 03: what the maps decide (Task 7.5) ------------------------------------------------
+
+/** A spec for drawDotRows: the domain on whole steps around the values, ticks with their text, and the rows. */
+function dots(values, step, tickText, rows, base = undefined) {
+  const { domain, ticks } = rowDomain(values, step);
+  return { domain, ticks: ticks.map((value) => ({ value, text: tickText(value) })), rows, ...(base ? { base } : {}) };
+}
+
+/** The cards of chapter 03: the texts of the extensions (Phase 6) with large figures and rows of dots. */
+export function decideView(results) {
+  const n = results.national;
+  const majority = majorityView(results);
+  const m = n.majority;
+  const c = n.competitive;
+  const s = n.senate;
+  const senate = senateView(results);
+  const redraws = redrawView(results);
+  return {
+    intro: 'The same votes, read for control of the House and the Senate, for redraws since 2024 and for close districts.',
+    majority: {
+      ...majority,
+      dots: dots(
+        [m.proportional.share, m.neutral.share, m.neutral.low, m.neutral.high, m.enacted.share, m.base_share], 0.01, percentLabel,
+        [
+          { key: 'proportional', label: SHORT_LABELS.proportional, value: m.proportional.share, text: share(m.proportional.share) },
+          { key: 'neutral', label: SHORT_LABELS.neutral, value: m.neutral.share, text: share(m.neutral.share), band: [m.neutral.low, m.neutral.high] },
+          { key: 'enacted', label: SHORT_LABELS.enacted, value: m.enacted.share, text: share(m.enacted.share), filled: true },
+        ],
+        { value: m.base_share, text: majority.axis.baseText },
+      ),
+    },
+    senate: {
+      figures: [
+        { value: share(s.share), label: 'needed for a majority' },
+        { value: share(s.base_share), label: 'Democratic share' },
+        { value: count(s.states_at_base), label: `states won, ${count(s.states_needed)} needed` },
+      ],
+      sentence: senate.sentence,
+      note: senate.note,
+    },
+    competitive: {
+      figures: [{ value: count(c.enacted), label: 'enacted maps' }, { value: count(c.median), label: 'neutral median' }],
+      dots: dots([c.enacted, c.median, c.p5, c.p95], 5, count, [
+        { key: 'neutral', label: SHORT_LABELS.neutral, value: c.median, band: [c.p5, c.p95] },
+        { key: 'enacted', label: SHORT_LABELS.enacted, value: c.enacted, filled: true },
+      ]),
+      label: `Competitive districts: ${count(c.enacted)} on the enacted maps and ${count(c.median)} on neutral maps, `
+        + `with 90% of neutral maps between ${count(c.p5)} and ${count(c.p95)}.`,
+      text: competitiveText(c, 'maps'),
+    },
+    redraws: {
+      figures: [
+        { value: `${seats(n.redraw.seats_2024)} to ${seats(n.enacted)}`, label: 'Democratic seats, 2024 maps to 2026 maps' },
+        { value: effect(n.redraw.change), label: effectWords(n.redraw.change) },
+      ],
+      sentence: redraws.sentence,
+      rows: redraws.rows,
+    },
+    control: controlTables(results),
   };
 }
