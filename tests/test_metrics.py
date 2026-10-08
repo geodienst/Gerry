@@ -612,6 +612,38 @@ def test_proportional_at_swing_guard_has_two_sides_and_keeps_the_edges():
     assert m.proportional_at_swing([0.0, 1.0], [3, 2], 0.0) == 2
 
 
+# The vote slider (plan 2026-10-08-vote-slider)
+
+SWING_ENACTED = [0.6, 0.49, 0.45, 0.52]   # four enacted districts over the two states of AA_PLANS and BB_PLANS
+
+
+def test_swing_point_at_the_base():
+    point = m.swing_point(0.0, state_shares=[0.55005, 0.38005], state_seats=[2, 2],
+                          plan_shares=[AA_PLANS, BB_PLANS], enacted_shares=SWING_ENACTED)
+    # proportional: 2 * 0.55005 = 1.1001 -> 1; 2 * 0.38005 = 0.7601, remainder 0.7601 beats 0.2399 -> 1; together 2
+    assert point["proportional"] == 2
+    # enacted: 0.6 and 0.52 lie above one half
+    assert point["enacted"] == 2
+    # neutral, from test_majority_probability_convolves_the_states: P = [0.125, 0.375, 0.375, 0.125, 0]
+    # cumulative 0.125, 0.5, 0.875, 1 -> 5th percentile 0, median 1, 95th percentile 3
+    assert point["neutral"] == {"median": 1, "p5": 0, "p95": 3}
+    # outcomes with more than 2 Democratic districts: P(3) = 0.125
+    assert point["more"] == pytest.approx(0.125)
+
+
+def test_swing_point_moves_every_count_with_the_swing():
+    point = m.swing_point(0.02, state_shares=[0.55005, 0.38005], state_seats=[2, 2],
+                          plan_shares=[AA_PLANS, BB_PLANS], enacted_shares=SWING_ENACTED)
+    # proportional: 2 * 0.57005 = 1.1401 -> 1; 2 * 0.40005 = 0.8001 -> 1; together 2
+    assert point["proportional"] == 2
+    # enacted: 0.62, 0.51, 0.47, 0.54 -> 3
+    assert point["enacted"] == 3
+    # neutral: AA [0.25, 0.25, 0.5], BB always 1 -> P = [0, 0.25, 0.25, 0.5, 0]; cumulative 0, 0.25, 0.5, 1
+    assert point["neutral"] == {"median": 2, "p5": 1, "p95": 3}
+    # nothing above 3
+    assert point["more"] == pytest.approx(0.0)
+
+
 # Task 5.18: the Senate block
 
 # five made-up states with their (Democratic, Republican) votes

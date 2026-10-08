@@ -335,9 +335,25 @@ def _small_house(monkeypatch):
         return {"base_share": 0.0, "states_needed": needed, "share": 0.0, "states_at_base": 0,
                 "seats_at_base": 0, "tipping": []}
 
+    def swing_stand_in(**kwargs):
+        seen["swing"] = kwargs
+        return {"points": []}
+
     monkeypatch.setattr(step, "national_majority", stand_in)
     monkeypatch.setattr(step, "senate_majority", senate_stand_in)
+    monkeypatch.setattr(step, "national_swing", swing_stand_in)   # its own tests: test_national_swing_*
     return seen
+
+
+def test_compute_passes_the_slider_grid_and_the_base(tmp_path, monkeypatch):
+    cfg = _interim(tmp_path)
+    seen = _small_house(monkeypatch)
+    national = step.compute(cfg, tmp_path)["national"]
+    assert seen["swing"]["grid"] == step.SWING_SHARES
+    assert seen["swing"]["base"] is national and seen["swing"]["base_share"] == 0.0   # from the majority stand-in
+    assert national["swing"] == {"points": []}
+    # 47.0% to 56.0% in steps of 0.1 point
+    assert (step.SWING_SHARES[0], step.SWING_SHARES[-1], len(step.SWING_SHARES)) == (0.47, 0.56, 91)
 
 
 def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
@@ -618,6 +634,43 @@ def test_national_majority_stops_when_a_grid_threshold_is_far_off():
     # reaches 2: 3 seats are out of reach within +5 points
     with pytest.raises(CheckError, match="majority_threshold.*proportional"):
         step.national_majority(**{**MAJORITY_ARGS, "state_shares": [0.72005, 0.15005]})
+
+
+# The vote slider (plan 2026-10-08-vote-slider): the grid, the base point and the checks
+SWING_BASE = {"proportional": 2, "enacted": 2, "neutral": {"median": 1, "p5": 0, "p95": 3}, "position": {"more": 0.125}}
+SWING_ARGS = {"base_share": 0.5, "base": SWING_BASE, "state_shares": [0.72005, 0.40005], "state_seats": [2, 2],
+              "plan_shares": [AA_PLANS, BB_PLANS], "enacted_shares": [0.6, 0.47005, 0.52, 0.4], "grid": [0.52, 0.485]}
+
+
+def test_national_swing_hand_example():
+    points = step.national_swing(**SWING_ARGS)["points"]
+    # sorted by share, the base point between the two grid points
+    assert [p["share"] for p in points] == [0.485, 0.5, 0.52]
+    assert [p["base"] for p in points] == [False, True, False]
+    low, base, high = points
+    # -0.015: enacted 0.585, 0.45505, 0.505, 0.385 -> 2; proportional 2 * 0.70505 -> 1, 2 * 0.38505 = 0.7701 -> 1
+    # AA plans 1, 2, 0, 0 -> [0.5, 0.25, 0.25]; BB 1, 0 -> [0.5, 0.5]; sum [0.25, 0.375, 0.25, 0.125, 0]
+    # cumulative 0.25, 0.625, 0.875, 1 -> 5th 0, median 1, 95th 3; more than 2: 0.125
+    assert (low["proportional"], low["enacted"], low["neutral"]) == (2, 2, {"median": 1, "p5": 0, "p95": 3})
+    assert low["more"] == pytest.approx(0.125)
+    # the base point takes the main numbers
+    assert (base["proportional"], base["enacted"], base["neutral"], base["more"]) == (2, 2, SWING_BASE["neutral"], 0.125)
+    # +0.02: enacted 0.62, 0.49005, 0.54, 0.42 -> 2; proportional 2 * 0.74005 = 1.4801 -> 1, 2 * 0.42005 -> 1
+    # neutral as in test_majority_probability_convolves_the_states at +0.02: [0, 0.25, 0.25, 0.5, 0]
+    assert (high["proportional"], high["enacted"], high["neutral"]) == (2, 2, {"median": 2, "p5": 1, "p95": 3})
+    assert high["more"] == pytest.approx(0.5)
+
+
+def test_national_swing_stops_when_a_count_falls_as_the_share_rises():
+    # a base with 3 enacted districts lies above the 2 at 0.52
+    with pytest.raises(CheckError, match="swing_monotone.*enacted"):
+        step.national_swing(**{**SWING_ARGS, "base": {**SWING_BASE, "enacted": 3}})
+
+
+def test_national_swing_stops_at_5_points_from_the_base_share():
+    # 0.44 lies 6 points below 0.5, outside the range of the fixed one-seat states
+    with pytest.raises(CheckError, match="swing_range"):
+        step.national_swing(**{**SWING_ARGS, "grid": [0.44, 0.52]})
 
 
 def test_national_competitive_convolves_the_states():

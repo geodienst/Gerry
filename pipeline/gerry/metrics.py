@@ -287,6 +287,22 @@ def proportional_at_swing(state_shares: Sequence[float], seats: Sequence[int], s
     return total
 
 
+def swing_point(swing: float, *, state_shares: Sequence[float], state_seats: Sequence[int],
+                plan_shares: Sequence[np.ndarray], enacted_shares) -> dict:
+    """All three counts when `swing` is added to every share (plan 2026-10-08-vote-slider): proportional seats,
+    enacted districts, the neutral median and 5th and 95th percentile (states convolved as independent), and the
+    share of neutral outcomes with more Democratic districts than the enacted maps."""
+    pmf = convolve([np.bincount(seats_at_swing(shares, swing), minlength=shares.shape[1] + 1)
+                    for shares in plan_shares])
+    enacted = int(seats_at_swing(enacted_shares, swing))
+    return {
+        "proportional": proportional_at_swing(state_shares, state_seats, swing),
+        "enacted": enacted,
+        "neutral": {"median": pmf_percentile(pmf, 50), "p5": pmf_percentile(pmf, 5), "p95": pmf_percentile(pmf, 95)},
+        "more": pmf_position(pmf, enacted)["more"],
+    }
+
+
 def proportional_threshold(state_shares: Sequence[float], seats: Sequence[int], needed: int) -> float:
     """Smallest grid swing at which largest remainder per state gives at least `needed` seats in total."""
     return smallest_swing(lambda swing: proportional_at_swing(state_shares, seats, swing) >= needed)

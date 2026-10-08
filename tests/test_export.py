@@ -202,6 +202,9 @@ def toy_metrics():
                          "enacted": {"share": 0.56, "seats_at_base": 2},
                          "neutral": {"share": 0.53, "low": 0.5, "high": 0.57, "probability_at_base": 0.8},
                          "proportional": {"share": 0.52}},
+            # the vote slider (plan 2026-10-08-vote-slider), passed through unchanged
+            "swing": {"points": [{"share": 0.55, "proportional": 2, "enacted": 2, "neutral": {"median": 2, "p5": 2, "p95": 3},
+                                  "more": 0.3, "base": True}]},
             "competitive": {"enacted": 0, "median": 2, "p5": 1, "p95": 2, "neutral_dist": [0.16, 0.48, 0.36, 0.0, 0.0]},
             "redraw": {"seats_2024": 4, "change": -2},
             "by_control": {"Republican": {"states": 2, "seats": 4, "drawing": 0},
@@ -247,10 +250,10 @@ def test_build_results_national_adds_single_seat_states_sorted_by_postal():
     assert national["single_seat"] == [{"postal": "AK", "fips": "02", "name": "Alaska"},
                                        {"postal": "DE", "fips": "10", "name": "Delaware"}]
     assert list(national) == ["seats", "proportional", "enacted", "neutral", "position", "effects",
-                              "outside_band", "majority", "competitive", "redraw", "by_control", "by_body",
+                              "outside_band", "majority", "swing", "competitive", "redraw", "by_control", "by_body",
                               "senate", "single_seat"]
     # the extensions pass through unchanged
-    for key in ("majority", "competitive", "redraw", "by_control", "by_body", "senate"):
+    for key in ("majority", "swing", "competitive", "redraw", "by_control", "by_body", "senate"):
         assert national[key] == toy_metrics()["national"][key], key
 
 

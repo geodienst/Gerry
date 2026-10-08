@@ -19,7 +19,7 @@ from gerry.metrics import (MAX_SWING_STEPS, SWING_GRID, SwingRangeError, TieErro
                            dem_wins, distribution, effects, efficiency_gap, enacted_threshold, is_narrow,
                            largest_remainder, linear_band, mean_median, neutral_threshold, outside_band,
                            pmf_percentile, pmf_position, position, proportional_threshold, sample_percentile,
-                           seats_by_plan, senate_majority, sorted_band)
+                           seats_by_plan, senate_majority, sorted_band, swing_point)
 from gerry.validation import build_report
 
 HOUSE_SEATS = 435
@@ -32,6 +32,8 @@ SINGLE_SEAT_PARTY = {"AK": "R", "DE": "D", "ND": "R", "SD": "R", "VT": "D", "WY"
 SENATE_STATES = 50
 SENATE_STATES_NEEDED = 26
 WIN_COLS = ["d", "r", "d_pre_20", "r_pre_20"]
+# The vote slider (plan 2026-10-08-vote-slider, owner decision): 47.0% to 56.0% in steps of 0.1 point.
+SWING_SHARES = [round(0.47 + k / 1000, 3) for k in range(91)]
 
 
 def district_wins(rows: pd.DataFrame, label: str) -> np.ndarray:
@@ -251,6 +253,32 @@ def national_majority(*, base_share: float, needed: int, enacted_shares, plan_sh
     }
 
 
+def national_swing(*, base_share: float, base: dict, state_shares, state_seats, plan_shares, enacted_shares,
+                   grid) -> dict:
+    """The three counts at every share of `grid` under a uniform swing, plus the base point with the main numbers
+    (plan 2026-10-08-vote-slider). Stops at a share 5 points or more from base_share, where the fixed result of
+    the single-seat states no longer holds, and when a count falls as the share rises."""
+    far = [share for share in grid if abs(share - base_share) >= MAX_SWING_STEPS / SWING_GRID]
+    if far:
+        raise CheckError("swing_range", "US", f"shares {far} lie 5 points or more from {base_share:.4f}")
+    points = [{"share": share, **swing_point(share - base_share, state_shares=state_shares, state_seats=state_seats,
+                                             plan_shares=plan_shares, enacted_shares=enacted_shares), "base": False}
+              for share in grid if share != base_share]
+    points.append({"share": base_share, "proportional": base["proportional"], "enacted": base["enacted"],
+                   "neutral": {key: base["neutral"][key] for key in ("median", "p5", "p95")},
+                   "more": base["position"]["more"], "base": True})
+    points.sort(key=lambda p: p["share"])
+    series = {"proportional": lambda p: p["proportional"], "enacted": lambda p: p["enacted"],
+              "neutral median": lambda p: p["neutral"]["median"], "neutral 5th percentile": lambda p: p["neutral"]["p5"],
+              "neutral 95th percentile": lambda p: p["neutral"]["p95"]}
+    for name, value in series.items():
+        for a, b in zip(points, points[1:]):
+            if value(b) < value(a):
+                raise CheckError("swing_monotone", "US", f"{name}: {value(a)} at {a['share']:.4f} but {value(b)} "
+                                                         f"at {b['share']:.4f}")
+    return {"points": points}
+
+
 def national_competitive(states: Mapping[str, dict]) -> dict:
     """Competitive districts for the nation: the sum over the enacted maps, and the convolution of the
     states' plan distributions (states independent, as for the seats)."""
@@ -358,6 +386,14 @@ def compute(cfg, idir) -> dict:
         enacted_shares=np.concatenate(votes["enacted_shares"]), plan_shares=votes["plan_shares"],
         state_shares=votes["state_shares"], state_seats=votes["state_seats"],
         seats_at_base=national["enacted"], neutral_pmf=national["neutral"]["dist"])
+    national["swing"] = national_swing(
+        base_share=national["majority"]["base_share"], base=national, state_shares=votes["state_shares"],
+        state_seats=votes["state_seats"], plan_shares=votes["plan_shares"],
+        enacted_shares=np.concatenate(votes["enacted_shares"]), grid=SWING_SHARES)
+    ends = national["swing"]["points"][:1] + national["swing"]["points"][-1:]
+    print("US swing: " + "; ".join(f"{p['share']:.3f}: proportional {p['proportional']}, neutral "
+                                   f"{p['neutral']['median']} ({p['neutral']['p5']}-{p['neutral']['p95']}), "
+                                   f"enacted {p['enacted']}" for p in ends))
     national["competitive"] = national_competitive(states)
     national["redraw"] = national_redraw(states)
     maj, comp, red = national["majority"], national["competitive"], national["redraw"]

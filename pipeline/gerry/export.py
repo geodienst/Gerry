@@ -8,7 +8,7 @@ from gerry.checks import CheckError
 from gerry.config import Config, ConfigError
 
 NATIONAL_FIELDS = ("seats", "proportional", "enacted", "neutral", "position", "effects", "outside_band",
-                   "majority", "competitive", "redraw", "by_control", "by_body", "senate")
+                   "majority", "swing", "competitive", "redraw", "by_control", "by_body", "senate")
 STATE_FIELDS = ("d_share", "proportional", "enacted", "neutral", "position", "effects", "outside_band",
                 "eg", "mm", "districts", "sorted", "competitive", "redraw")
 

@@ -315,6 +315,37 @@ function largestRemainder(d, seats) {
   return d > 1 - d ? floorD + 1 : floorD;
 }
 
+test('the vote slider: 47.0% to 56.0% by 0.1 point plus the base, counts that rise with the share', { skip }, () => {
+  const { national, states } = data().results;
+  const points = national.swing.points;
+  const grid = points.filter((p) => !p.base);
+  assert.equal(grid.length, 91);
+  grid.forEach((p, k) => assert.ok(near(p.share, 0.47 + k / 1000, 1e-9), `share ${p.share} at ${k}`));
+  // one base point, at the base share, with the main numbers
+  const base = points.filter((p) => p.base);
+  assert.equal(base.length, 1);
+  assert.equal(base[0].share, national.majority.base_share);
+  assert.deepEqual([base[0].proportional, base[0].enacted, base[0].neutral],
+    [national.proportional, national.enacted, { median: national.neutral.median, p5: national.neutral.p5, p95: national.neutral.p95 }]);
+  assert.equal(base[0].more, national.position.more);
+  // the enacted count at a grid point follows from the district shares (uniform swing; one half is Republican)
+  const shares = Object.values(states).flatMap((s) => s.districts.map((x) => x.share));
+  for (const p of grid) {
+    const swing = p.share - national.majority.base_share;
+    assert.equal(p.enacted, shares.filter((s) => s + swing > 0.5).length, `enacted at ${p.share}`);
+  }
+  for (let i = 1; i < points.length; i += 1) {
+    const [a, b] = [points[i - 1], points[i]];
+    assert.ok(b.share > a.share, 'sorted by share');
+    for (const key of ['proportional', 'enacted']) assert.ok(b[key] >= a[key], `${key} falls at ${b.share}`);
+    for (const key of ['p5', 'median', 'p95']) assert.ok(b.neutral[key] >= a.neutral[key], `neutral ${key} falls at ${b.share}`);
+  }
+  for (const p of points) {
+    assert.ok(p.neutral.p5 <= p.neutral.median && p.neutral.median <= p.neutral.p95, `band at ${p.share}`);
+    assert.ok(p.more >= 0 && p.more <= 1, `more at ${p.share}`);
+  }
+});
+
 test('majority thresholds follow from the districts and lie within 5 points of the base share', { skip }, () => {
   const { national, states } = data().results;
   const m = national.majority;
