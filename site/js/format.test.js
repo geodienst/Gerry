@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  roundHalfUp, share, sliderShare, planShare, advantage, seats,
+  roundHalfUp, share, sliderShare, neededShare, planShare, advantage, seats,
   effect, effectWords, effectLine, count, percentLabel, longDate,
 } from './format.js';
 
@@ -31,6 +31,14 @@ test('roundHalfUp rejects negative and non-finite input', () => {
   for (const bad of [-0.1, Number.NaN, Infinity, '0.5', null, undefined]) {
     assert.throws(() => roundHalfUp(bad, 1), TypeError, String(bad));
   }
+});
+
+test('neededShare: a threshold rounds up to the next 0.1 point, so the share it names is enough (owner, October 8)', () => {
+  assert.equal(neededShare(0.5230328), '52.4%'); // 52.303 is not reached at 52.3
+  assert.equal(neededShare(0.5115747), '51.2%');
+  assert.equal(neededShare(0.4978747), '49.8%');
+  assert.equal(neededShare(0.5291), '53.0%');
+  assert.equal(neededShare(0.523), '52.3%'); // exactly on a tenth stays
 });
 
 test('sliderShare: always one decimal, also at one half', () => {

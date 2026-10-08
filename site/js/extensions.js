@@ -1,6 +1,6 @@
 // Texts and view models for the extensions (docs/superpowers/specs/2026-10-06-extensions-design.md,
 // chapters 1 to 4 and 7), from the results.json fields of Phase 5. Pure, like model.js.
-import { share, seats, count, effect, effectLine } from './format.js';
+import { share, neededShare, seats, count, effect, effectLine } from './format.js';
 
 // --- Majority threshold (Task 6.10) -------------------------------------------------------------
 
@@ -9,8 +9,8 @@ export function majorityView(results) {
   const m = results.national.majority;
   const states = count(Object.keys(results.states).length);
   return {
-    sentence: `With these votes, Democrats need ${share(m.enacted.share)} of the two-party vote for a House majority `
-      + `under the enacted maps, ${share(m.neutral.share)} under neutral maps and ${share(m.proportional.share)} `
+    sentence: `With these votes, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House majority `
+      + `under the enacted maps, ${neededShare(m.neutral.share)} under neutral maps and ${neededShare(m.proportional.share)} `
       + `if seats followed the vote. They have ${share(m.base_share)}.`,
     proportionalNote: m.proportional.share < 0.5
       ? `Proportional needs less than half of the vote because each state rounds its seats to whole numbers on its own, and over ${states} states those roundings do not cancel out.`
@@ -21,15 +21,15 @@ export function majorityView(results) {
     axis: {
       base: m.base_share, low: m.neutral.low, high: m.neutral.high,
       marks: [
-        { key: 'proportional', value: m.proportional.share, text: `Proportional ${share(m.proportional.share)}` },
-        { key: 'neutral', value: m.neutral.share, text: `Neutral ${share(m.neutral.share)}` },
-        { key: 'enacted', value: m.enacted.share, text: `Enacted ${share(m.enacted.share)}` },
+        { key: 'proportional', value: m.proportional.share, text: `Proportional ${neededShare(m.proportional.share)}` },
+        { key: 'neutral', value: m.neutral.share, text: `Neutral ${neededShare(m.neutral.share)}` },
+        { key: 'enacted', value: m.enacted.share, text: `Enacted ${neededShare(m.enacted.share)}` },
       ],
       baseText: `Vote ${share(m.base_share)}`,
     },
-    label: `Share of the two-party vote that Democrats need for a House majority: enacted maps ${share(m.enacted.share)}, `
-      + `neutral maps ${share(m.neutral.share)} (90% of outcomes between ${share(m.neutral.low)} and ${share(m.neutral.high)}), `
-      + `proportional ${share(m.proportional.share)}. Their share is ${share(m.base_share)}.`,
+    label: `Share of the two-party vote that Democrats need for a House majority: enacted maps ${neededShare(m.enacted.share)}, `
+      + `neutral maps ${neededShare(m.neutral.share)} (90% of outcomes between ${neededShare(m.neutral.low)} and ${neededShare(m.neutral.high)}), `
+      + `proportional ${neededShare(m.proportional.share)}. Their share is ${share(m.base_share)}.`,
   };
 }
 
@@ -120,7 +120,7 @@ export function senateView(results) {
   const s = results.national.senate;
   return {
     sentence: `If each state's two senators went to the party that won its presidential vote, Democrats would need `
-      + `${share(s.share)} of the two-party vote for a Senate majority. They have ${share(s.base_share)} and would `
+      + `${neededShare(s.share)} of the two-party vote for a Senate majority. They have ${share(s.base_share)} and would `
       + `win ${count(s.states_at_base)} ${plural(s.states_at_base, 'state', 'states')}.`,
     note: 'The Senate has no districts, so this is not an effect of maps. The gap comes from each state having two senators, '
       + 'whatever its population. These shares count the votes of every state; the House block leaves out the votes of the '

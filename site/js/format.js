@@ -74,6 +74,17 @@ export function sliderShare(fraction) {
 }
 
 /**
+ * A share Democrats need, such as a majority threshold, rounded up to one decimal (owner decision, October 8, 2026):
+ * the share it names is always enough. 0.5230328 -> "52.4%" (52.3% falls just short); 0.523 -> "52.3%".
+ * @param {number} fraction
+ * @returns {string}
+ */
+export function neededShare(fraction) {
+  checkFraction(fraction);
+  return `${(Math.ceil(fraction * 1000 - 1e-9) / 10).toFixed(1)}%`;
+}
+
+/**
  * A share of plans (fraction) as a whole percent, for use in a sentence: 3086/5000 -> "62%".
  * Above 0 but rounding to 0 gives "less than 1%"; below 1 but rounding to 100 gives "more than 99%".
  * @param {number} fraction

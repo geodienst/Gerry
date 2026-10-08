@@ -231,11 +231,11 @@ test('decideView: the House majority with its rows of dots', () => {
   // domain: see rowDomain in axes.test.js, 0.49 to 0.53 in whole points
   assert.deepEqual(view.majority.dots.domain, [0.49, 0.53]);
   assert.deepEqual(view.majority.dots.ticks.map((t) => t.text), ['49%', '50%', '51%', '52%', '53%']);
-  // shares with one decimal: 49.787 -> 49.8, 51.157 -> 51.2, 52.303 -> 52.3; the vote 51.797 -> 51.8
+  // thresholds rounded up to one decimal: 49.787 -> 49.8, 51.157 -> 51.2, 52.303 -> 52.4; the vote 51.797 -> 51.8
   assert.deepEqual(view.majority.dots.rows, [
     { key: 'proportional', label: 'Proportional', value: 0.4978747, text: '49.8%' },
     { key: 'neutral', label: 'Neutral median', value: 0.5115747, text: '51.2%', band: [0.5065747, 0.5159747] },
-    { key: 'enacted', label: 'Enacted', value: 0.5230328, text: '52.3%', filled: true },
+    { key: 'enacted', label: 'Enacted', value: 0.5230328, text: '52.4%', filled: true },
   ]);
   assert.deepEqual(view.majority.dots.base, { value: 0.5179747, text: 'Vote 51.8%' });
 });
@@ -243,9 +243,9 @@ test('decideView: the House majority with its rows of dots', () => {
 test('decideView: Senate, competitive districts, redraws and the tables', () => {
   const r = withExtensions();
   const view = decideView(r);
-  // Senate: share 0.5291 -> 52.9%, base 0.5172 -> 51.7%, 22 states of the 26 needed
+  // Senate: share 0.5291 rounded up -> 53.0%, base 0.5172 -> 51.7%, 22 states of the 26 needed
   assert.deepEqual(view.senate.figures, [
-    { value: '52.9%', label: 'needed for a majority' }, { value: '51.7%', label: 'Democratic share' },
+    { value: '53.0%', label: 'needed for a majority' }, { value: '51.7%', label: 'Democratic share' },
     { value: '22', label: 'states won, 26 needed' },
   ]);
   const s = senateView(r);

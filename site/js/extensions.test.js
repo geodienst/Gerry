@@ -41,7 +41,7 @@ function extended() {
 
 test('majorityView: the sentence of the extensions design with the four shares', () => {
   const view = majorityView(extended());
-  assert.equal(view.sentence, 'With these votes, Democrats need 52.3% of the two-party vote for a House majority under the enacted maps, '
+  assert.equal(view.sentence, 'With these votes, Democrats need 52.4% of the two-party vote for a House majority under the enacted maps, '
     + '51.2% under neutral maps and 49.8% if seats followed the vote. They have 51.8%.');
   assert.equal(view.rule, 'A majority is 218 of the 435 seats. The six states with one seat count for the party that won them in both '
     + '2016 and 2020: Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming for Republicans. '
@@ -58,10 +58,10 @@ test('majorityView: the sentence for Proportional below 50%, and none at or abov
 
 test('majorityView: the vote axis and its text alternative', () => {
   const view = majorityView(extended());
-  assert.deepEqual(view.axis.marks.map((m) => m.text), ['Proportional 49.8%', 'Neutral 51.2%', 'Enacted 52.3%']);
+  assert.deepEqual(view.axis.marks.map((m) => m.text), ['Proportional 49.8%', 'Neutral 51.2%', 'Enacted 52.4%']);
   assert.equal(view.axis.baseText, 'Vote 51.8%');
   assert.deepEqual([view.axis.low, view.axis.high, view.axis.base], [0.5065747, 0.5159747, 0.5179747]);
-  assert.equal(view.label, 'Share of the two-party vote that Democrats need for a House majority: enacted maps 52.3%, '
+  assert.equal(view.label, 'Share of the two-party vote that Democrats need for a House majority: enacted maps 52.4%, '
     + 'neutral maps 51.2% (90% of outcomes between 50.7% and 51.6%), proportional 49.8%. Their share is 51.8%.');
 });
 
@@ -148,11 +148,11 @@ test('controlTables: every value in order, with states, seats and the summed dra
 // --- the Senate (Task 6.14) ---
 
 test('senateView: the threshold, the share and the states at the real votes', () => {
-  // By hand: share(0.5291) -> 52.91% -> "52.9%" (needed); share(0.5172) -> 51.72% -> "51.7%" (base share);
+  // By hand: neededShare(0.5291) -> 52.91% rounded up -> "53.0%" (needed); share(0.5172) -> 51.72% -> "51.7%" (base share);
   // states_at_base 22 -> "22 states".
   const view = senateView(extended());
   assert.equal(view.sentence, "If each state's two senators went to the party that won its presidential vote, Democrats would "
-    + 'need 52.9% of the two-party vote for a Senate majority. They have 51.7% and would win 22 states.');
+    + 'need 53.0% of the two-party vote for a Senate majority. They have 51.7% and would win 22 states.');
   assert.equal(view.note, 'The Senate has no districts, so this is not an effect of maps. The gap comes from each state having two '
     + 'senators, whatever its population. These shares count the votes of every state; the House block leaves out the votes '
     + 'of the six states with one seat.');

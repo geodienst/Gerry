@@ -1,6 +1,6 @@
 // Texts and view models for the four chapters of the redesign (docs/superpowers/specs/2026-10-08-redesign-design.md).
 // Pure, like model.js and extensions.js: no DOM and no d3, every number through format.js, nothing new computed.
-import { share, sliderShare, planShare, seats, count, effect, effectWords, effectLine, percentLabel } from './format.js';
+import { share, sliderShare, neededShare, planShare, seats, count, effect, effectWords, effectLine, percentLabel } from './format.js';
 import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT } from './model.js';
 import { stateExtras, majorityView, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
 import { seatTicks, rowDomain } from './axes.js';
@@ -250,16 +250,16 @@ export function decideView(results) {
       dots: dots(
         [m.proportional.share, m.neutral.share, m.neutral.low, m.neutral.high, m.enacted.share, m.base_share], 0.01, percentLabel,
         [
-          { key: 'proportional', label: SHORT_LABELS.proportional, value: m.proportional.share, text: share(m.proportional.share) },
-          { key: 'neutral', label: SHORT_LABELS.neutral, value: m.neutral.share, text: share(m.neutral.share), band: [m.neutral.low, m.neutral.high] },
-          { key: 'enacted', label: SHORT_LABELS.enacted, value: m.enacted.share, text: share(m.enacted.share), filled: true },
+          { key: 'proportional', label: SHORT_LABELS.proportional, value: m.proportional.share, text: neededShare(m.proportional.share) },
+          { key: 'neutral', label: SHORT_LABELS.neutral, value: m.neutral.share, text: neededShare(m.neutral.share), band: [m.neutral.low, m.neutral.high] },
+          { key: 'enacted', label: SHORT_LABELS.enacted, value: m.enacted.share, text: neededShare(m.enacted.share), filled: true },
         ],
         { value: m.base_share, text: majority.axis.baseText },
       ),
     },
     senate: {
       figures: [
-        { value: share(s.share), label: 'needed for a majority' },
+        { value: neededShare(s.share), label: 'needed for a majority' },
         { value: share(s.base_share), label: 'Democratic share' },
         { value: count(s.states_at_base), label: `states won, ${count(s.states_needed)} needed` },
       ],
