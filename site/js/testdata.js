@@ -104,3 +104,38 @@ const BASE = {
 export function results() {
   return structuredClone(BASE);
 }
+
+/**
+ * results() plus the fields of Phase 5, made up, for chapters.test.js: the national blocks of chapter 03 and,
+ * per state, who adopted the map, competitive districts and the redraw. extensions.test.js keeps its own copy.
+ */
+export function withExtensions() {
+  const r = results();
+  r.national.majority = {
+    seats_needed: 216, base_share: 0.5179747,
+    enacted: { share: 0.5230328, seats_at_base: 213 },
+    neutral: { share: 0.5115747, low: 0.5065747, high: 0.5159747, probability_at_base: 0.9853454 },
+    proportional: { share: 0.4978747 },
+  };
+  r.national.redraw = { seats_2024: 217, change: -4 };
+  r.national.competitive = { enacted: 81, median: 96, p5: 87, p95: 105 };
+  r.national.by_control = {
+    Republican: { states: 2, seats: 6, drawing: -6 }, Democratic: { states: 2, seats: 4, drawing: 4 },
+    Bipartisan: { states: 1, seats: 2, drawing: 0 }, Nonpartisan: { states: 2, seats: 14, drawing: 0 },
+  };
+  r.national.by_body = {
+    Legislature: { states: 5, seats: 16, drawing: -2 }, Commission: { states: 1, seats: 2, drawing: 0 },
+    Court: { states: 1, seats: 8, drawing: 0 },
+  };
+  r.national.senate = {
+    base_share: 0.5172, states_needed: 26, share: 0.5291, states_at_base: 22, seats_at_base: 44,
+    tipping: [{ postal: 'WI', share: 0.5051 }],
+  };
+  for (const s of Object.values(r.states)) {
+    s.adopted = { by: 'Legislature', control: 'Republican', note: null };
+    s.competitive = { enacted: 0, median: 1, p5: 0, p95: 2 };
+    s.redraw = { seats_2024: s.enacted, change: 0, map_changed: false };
+  }
+  r.states.TX.redraw = { seats_2024: 3, change: -3, map_changed: true }; // enacted 0
+  return r;
+}
