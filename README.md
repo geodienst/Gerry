@@ -66,7 +66,7 @@ make serve
 
 Then open http://127.0.0.1:8000. Without Make, run `python -m http.server 8000 --bind 127.0.0.1 --directory site`.
 
-The page has four numbered chapters: the national count three ways with a waffle of the 429 seats (01), a map with a record per state (02), what the maps decide for the House, the Senate, close districts and redraws (03), and the method, folded (04). `#TX` in the address opens a state; `#method` opens the method.
+The page has four numbered chapters: the national count three ways with a waffle of the House of 435 seats and a slider for the national vote share (01), a map with a record per state (02), what the maps decide for the House, the Senate, close districts and redraws (03), and the method, folded (04). `#TX` in the address opens a state; `#method` opens the method.
 
 ## Sources and licenses
 
