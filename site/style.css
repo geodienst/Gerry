@@ -78,9 +78,12 @@ a { color: var(--ink); }
 .effects { margin: 0; font-size: 0.93rem; }
 
 /* Chapter 02: map and record side by side from 900px; the record is at least 22rem and otherwise 30% wide. */
-.atlas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: clamp(1.2rem, 2.5vw, 2rem); align-items: start; }
+.atlas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: clamp(1.2rem, 2.5vw, 2rem); align-items: stretch; }
 @media (max-width: 899.98px) { .atlas { grid-template-columns: minmax(0, 1fr); } }
-.mapcol { display: grid; gap: 0.7rem; min-width: 0; }
+/* The map column in three boxes like the record beside it: title and key, the map, and the hints under it;
+   the last box stretches to the bottom of the record. */
+.mapcol { display: grid; grid-template-rows: auto auto 1fr; gap: 0.7rem; min-width: 0; }
+.mapfoot { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.5rem; align-content: start; }
 
 .seg { display: inline-flex; border: 1px solid var(--rule); }
 .seg button { font: inherit; font-size: 0.87rem; padding: 0.4rem 0.65rem; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
@@ -91,7 +94,7 @@ select { font: inherit; font-size: 0.87rem; padding: 0.3rem 0.4rem; background: 
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 [tabindex="-1"]:focus { outline: none; }
 
-.mapbox { position: relative; background: var(--water); }
+.mapbox { position: relative; background: var(--water); border: 1px solid var(--rule); }
 svg { display: block; width: 100%; height: auto; }
 #map { touch-action: pan-y; cursor: grab; }
 #map.dragging, #map.dragging path { cursor: grabbing; }
@@ -114,7 +117,7 @@ svg { display: block; width: 100%; height: auto; }
 .tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
 .tip b, .tip span { display: block; }
-.maphead { display: grid; gap: 0.35rem; }
+.maphead { display: grid; gap: 0.35rem; background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; }
 .maptitle { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; color: var(--fg); letter-spacing: 0; text-transform: none; }
 /* The color choice is a quiet setting under the map, apart from the view buttons. */
 .colors { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
