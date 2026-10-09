@@ -2,7 +2,7 @@
 // and no d3, so node --test covers every sentence the site shows. Every number
 // goes through format.js; nothing here computes a new statistic.
 import {
-  share, planShare, advantage, seats, count, effect, effectWords, effectLine, longDate,
+  share, planShare, advantage, seats, count, effect, effectWords, effectLine, longDate, margin,
 } from './format.js';
 
 // --- The map (Task 6.2) -------------------------------------------------------------------------
@@ -49,14 +49,24 @@ export function stateTip(index, postal) {
 /** A Democratic share from 45% to 55%, both included: the competitive range of chapter 03. */
 export const isClose = (fraction) => fraction >= 0.45 && fraction <= 0.55;
 
-/** A state whose whole two-party vote is close; the six single-seat states are left out. */
-export const isSwing = (index, postal) => Boolean(index.states[postal]) && isClose(index.states[postal].d_share);
+/**
+ * A swing state: 48.5% to 51.5% Democratic statewide on the 2016 and 2020 votes (owner decision, October 9, 2026:
+ * the seven battleground states of 2024 plus Florida). The six single-seat states are left out.
+ */
+export const isSwing = (index, postal) => Boolean(index.states[postal]) && Math.abs(index.states[postal].d_share - 0.5) <= 0.015;
+
+/** How close a district is, by the margin between the parties: 'tight' under 2 points, 'near' 2 to 5, else null. */
+export function closeness(fraction) {
+  const gap = Math.abs(2 * fraction - 1);
+  return gap < 0.02 ? 'tight' : gap < 0.05 ? 'near' : null;
+}
 
 /** Tooltip in the view "Districts: close races": the district, and for its state the close districts on both kinds of map. */
 export function closeTip(index, id, postal) {
   if (index.single[postal]) return districtTip(index, id, postal);
   const s = index.states[postal];
-  const lines = [`Democratic share ${share(index.shareOf[id])}${isClose(index.shareOf[id]) ? ', close' : ''}`];
+  const value = index.shareOf[id];
+  const lines = [`Democratic share ${share(value)}${isClose(value) ? `, a margin of ${margin(value)}` : ''}`];
   if (s.competitive) {
     lines.push(`Close districts in ${s.name}: ${count(s.competitive.enacted)} on the enacted map, `
       + `a median of ${count(s.competitive.median)} on neutral maps`);
@@ -64,17 +74,19 @@ export function closeTip(index, id, postal) {
   return { title: `${districtLabel(id, postal)} · ${s.name}`, lines };
 }
 
-/** The key of the view "Districts: close races": three fills, the outline of swing states and the counts. */
+/** The key of the view "Districts: close races": two fills, two dots, the pale rest, the swing states and the counts. */
 export function closeLegend(results) {
   const c = results.national.competitive;
-  const swing = Object.values(results.states).filter((s) => isClose(s.d_share)).length;
+  const index = { states: results.states };
+  const swing = Object.keys(results.states).filter((postal) => isSwing(index, postal)).length;
   return {
     items: [
       { key: 'd', text: 'Close, leaning Democratic' }, { key: 'r', text: 'Close, leaning Republican' },
-      { key: 'other', text: 'Other districts' }, { key: 'swing', text: 'Thick outline: 45% to 55% Democratic statewide' },
+      { key: 'tight', text: 'Margin under 2 points' }, { key: 'near', text: 'Margin 2 to 5 points' },
+      { key: 'other', text: 'Not close' }, { key: 'swing', text: 'Thick outline: swing state, 48.5% to 51.5% Democratic statewide' },
     ],
-    note: `${count(c.enacted)} close districts on the enacted maps; neutral maps give a median of ${count(c.median)}. `
-      + `${count(swing)} ${swing === 1 ? 'state votes' : 'states vote'} 45% to 55% Democratic statewide.`,
+    note: `${count(c.enacted)} close districts (45% to 55% Democratic) on the enacted maps; neutral maps give a median `
+      + `of ${count(c.median)}. ${count(swing)} swing ${swing === 1 ? 'state' : 'states'}, counted on the 2016 and 2020 votes.`,
   };
 }
 

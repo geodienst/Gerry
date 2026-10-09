@@ -64,6 +64,16 @@ export function share(fraction) {
 }
 
 /**
+ * The gap between the two parties in a district, in points with one decimal: 0.4691 -> "6.2 points".
+ * @param {number} fraction the Democratic share of the two-party vote
+ * @returns {string}
+ */
+export function margin(fraction) {
+  checkFraction(fraction);
+  return `${roundHalfUp(Math.abs(2 * fraction - 1), 1, 2)} points`;
+}
+
+/**
  * A vote share on the slider as a percent with one decimal, also at one half: 0.5 -> "50.0%".
  * @param {number} fraction
  * @returns {string}

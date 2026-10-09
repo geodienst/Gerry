@@ -3,7 +3,7 @@
 // page; on a touch screen two fingers zoom and move, one finger scrolls the page.
 import { MAP, fitTransform } from './axes.js';
 import { shareStops, shareTicks, effectBoxes } from './colors.js';
-import { districtTip, stateTip, closeTip, tapLine, isClose, isSwing, LEGEND_TEXT } from './model.js';
+import { districtTip, stateTip, closeTip, tapLine, isClose, isSwing, closeness, LEGEND_TEXT } from './model.js';
 
 const { d3, topojson } = globalThis;
 const ZOOM_MS = 650;
@@ -69,6 +69,17 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     .on('click', (event, f) => choose(f.properties.postal, null));
   const borders = borderLayer.selectAll('path').data(statesGeo.features).join('path')
     .attr('class', 'state').attr('d', path);
+  // The view 'close': a dot on each district with a margin under 5 points, larger under 2 points. The dots keep their
+  // size on screen while the map zooms.
+  const DOT = { tight: 4.8, near: 2.8, ring: 0.8 };
+  const dotLayer = layer.append('g').attr('class', 'dots').attr('display', 'none');
+  const dots = dotLayer.selectAll('circle')
+    .data(districtsGeo.features.filter((f) => !index.single[f.properties.state] && closeness(index.shareOf[f.properties.id])))
+    .join('circle')
+    .attr('class', (f) => closeness(index.shareOf[f.properties.id]))
+    .attr('cx', (f) => path.centroid(f)[0]).attr('cy', (f) => path.centroid(f)[1]);
+  const sizeDots = (k) => dots.attr('r', (f) => DOT[closeness(index.shareOf[f.properties.id])] / k).attr('stroke-width', DOT.ring / k);
+  sizeDots(1);
 
   // Zoom: wheel only with Ctrl or Cmd, touch only with two fingers, drag with the mouse.
   // The wheel delta is d3's, clamped to [-1, 1]: d3 multiplies it by 10 while Ctrl is held, which would make
@@ -84,7 +95,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     })
     .on('start', (event) => { if (event.sourceEvent && event.sourceEvent.type === 'mousedown') svg.classList.add('dragging'); })
     .on('end', () => svg.classList.remove('dragging'))
-    .on('zoom', (event) => layer.attr('transform', event.transform));
+    .on('zoom', (event) => { layer.attr('transform', event.transform); sizeDots(event.transform.k); });
   root.call(zoom).on('dblclick.zoom', null);
 
   let timer;
@@ -117,12 +128,17 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
      */
     paint(colors, nextView, selected) {
       view = nextView;
+      const close = view === 'close';
       const fill = (id) => {
         const share = index.shareOf[id];
-        if (view !== 'close') return colors.share(share);
+        if (!close) return colors.share(share);
         return isClose(share) ? colors.party(share > 0.5) : colors.poles.mid;
       };
-      districts.attr('fill', (f) => (index.single[f.properties.state] ? colors.blank : fill(f.properties.id)));
+      // in the view 'close' everything that is not close, the single-seat states too, is the same pale gray
+      districts.attr('fill', (f) => (index.single[f.properties.state] ? (close ? colors.poles.mid : colors.blank) : fill(f.properties.id)))
+        .classed('quiet', (f) => close && (index.single[f.properties.state] || !isClose(index.shareOf[f.properties.id])));
+      root.classed('calm', close);
+      dotLayer.attr('display', close ? null : 'none');
       states.attr('fill', (f) => (index.single[f.properties.postal] ? colors.blank : colors.effect(index.states[f.properties.postal].effects.drawing)));
       districtLayer.attr('display', view === 'states' ? 'none' : null);
       stateLayer.attr('display', view === 'states' ? null : 'none');
@@ -153,9 +169,10 @@ export function drawLegend(el, view, colors, close) {
   if (view === 'close') {
     // close: { items: [{ key, text }], note } from closeLegend(results)
     const swatch = { d: colors.party(true), r: colors.party(false), other: colors.poles.mid };
+    const kind = { swing: 'sw outline', tight: 'sw dot tight', near: 'sw dot near', other: 'sw pale' };
     for (const item of close.items) {
       const span = legend.append('span').attr('class', 'item');
-      span.append('i').attr('class', item.key === 'swing' ? 'sw outline' : 'sw').attr('aria-hidden', 'true')
+      span.append('i').attr('class', kind[item.key] ?? 'sw').attr('aria-hidden', 'true')
         .style('background', swatch[item.key] ?? null);
       span.append('span').text(item.text);
     }

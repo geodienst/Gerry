@@ -97,7 +97,11 @@ svg { display: block; width: 100%; height: auto; }
 #map path { vector-effect: non-scaling-stroke; }
 .district { stroke: var(--sheet); stroke-width: 0.4; cursor: pointer; }
 .state { fill: none; stroke: var(--sheet); stroke-width: 1.2; pointer-events: none; }
-.state.swing { stroke: var(--fg); stroke-width: 1.6; }
+/* The view "Districts: close races": the rest pale and without inner lines, thin state lines, dots on the tightest */
+.district.quiet { stroke: none; }
+.calm .state { stroke-width: 0.6; }
+.dots circle { fill: var(--fg); stroke: var(--sheet); pointer-events: none; }
+.calm .state.swing { stroke: var(--fg); stroke-width: 1.6; }
 .state.on { stroke: var(--fg); stroke-width: 2.2; }
 .statefill { stroke: var(--sheet); stroke-width: 0.8; cursor: pointer; }
 .zoombar { position: absolute; top: 0.5rem; right: 0.5rem; display: grid; gap: 0.25rem; }
@@ -120,6 +124,10 @@ svg { display: block; width: 100%; height: auto; }
 .legend .item { display: inline-flex; align-items: center; gap: 0.4rem; }
 .legend .sw { width: 0.75rem; height: 0.75rem; }
 .legend .sw.outline { width: 0.9rem; border: 2px solid var(--fg); }
+.legend .sw.pale { border: 1px solid var(--rule); }
+.legend .sw.dot { border-radius: 50%; background: var(--fg); }
+.legend .sw.dot.tight { width: 0.6rem; height: 0.6rem; }
+.legend .sw.dot.near { width: 0.36rem; height: 0.36rem; }
 .legend .note { flex-basis: 100%; }
 
 /* The sheet */
