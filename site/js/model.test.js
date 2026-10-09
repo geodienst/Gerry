@@ -59,10 +59,12 @@ test('closeTip: the district share, marked when close, and the close districts o
 
 test('closeLegend: the three fills, the outline and the national counts', () => {
   const legend = closeLegend(withExtensions());
+  // two layers, each with one job (expert feedback, October 9): gold outlines for swing states, rings for close calls
   assert.deepEqual(legend.items, [
-    { key: 'd', text: 'Close, leaning Democratic' }, { key: 'r', text: 'Close, leaning Republican' },
-    { key: 'tight', text: 'Margin under 2 points' }, { key: 'near', text: 'Margin 2 to 5 points' },
-    { key: 'other', text: 'Not close' }, { key: 'swing', text: 'Thick outline: swing state, 48.5% to 51.5% Democratic statewide' }]);
+    { key: 'swing', text: 'Gold outline: swing state, 48.5% to 51.5% Democratic statewide' },
+    { key: 'tight', text: 'Thick ring: close call, under 2 points apart' }, { key: 'near', text: 'Thin ring: 2 to 5 points apart' },
+    { key: 'd', text: 'Close district, Democrats ahead' }, { key: 'r', text: 'Close district, Republicans ahead' },
+    { key: 'other', text: 'Gray: not close, more than 10 points apart' }]);
   // testdata: HI at 66.03% and TX at 46.35% set their share, the five other states keep the default 0.5 -> 5 swing states
   assert.equal(legend.note, '81 close districts (45% to 55% Democratic) on the enacted maps; neutral maps give a median of 96. '
     + '5 swing states, counted on the 2016 and 2020 votes.');

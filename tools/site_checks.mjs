@@ -113,7 +113,15 @@ async function map(t) {
     && closeSeen.shown && closeSeen.dots === closeWant.dots && closeSeen.tight === closeWant.tight,
     JSON.stringify({ closeSeen, closeWant }));
   t.check('the close-races legend names the fills, the outline and the counts', await t.js(
-    "['Close, leaning Democratic', 'Close, leaning Republican', 'Margin under 2 points', 'Margin 2 to 5 points', 'Not close', 'Thick outline: swing state', 'close districts (45% to 55% Democratic) on the enacted maps'].every((x) => document.getElementById('legend').textContent.includes(x))"));
+    "['Gold outline: swing state', 'Thick ring: close call, under 2 points apart', 'Thin ring: 2 to 5 points apart', 'Close district, Democrats ahead', 'Close district, Republicans ahead', 'Gray: not close, more than 10 points apart'].every((x) => document.getElementById('legend').textContent.includes(x))"));
+  t.check('each ring takes the color of the party ahead and the swing states a gold outline', await t.js(`(() => {
+    const css = getComputedStyle(document.documentElement);
+    const rings = [...document.querySelectorAll('#map .dots circle')];
+    const party = new Set([css.getPropertyValue('--party-d').trim(), css.getPropertyValue('--party-r').trim()]);
+    const swing = document.querySelector('#map path.state.swing');
+    return rings.length > 0 && rings.every((c) => party.has(c.getAttribute('fill')))
+      && getComputedStyle(swing).stroke === getComputedStyle(document.querySelector('.legend .sw.gold')).borderTopColor;
+  })()`));
   await t.mouse('mouseMoved', await t.center(districtOf('TX')));
   t.check('pointing at a district in this view adds the close districts of its state',
     /^Close districts in Texas: \d+ on the enacted map, a median of \d+ on neutral maps$/.test(await t.js("[...document.querySelectorAll('#tip span')].at(-1)?.textContent ?? ''")));

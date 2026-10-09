@@ -69,16 +69,17 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     .on('click', (event, f) => choose(f.properties.postal, null));
   const borders = borderLayer.selectAll('path').data(statesGeo.features).join('path')
     .attr('class', 'state').attr('d', path);
-  // The view 'close': a dot on each district with a margin under 5 points, larger under 2 points. The dots keep their
-  // size on screen while the map zooms.
-  const DOT = { tight: 4.8, near: 2.8, ring: 0.8 };
+  // The view 'close': a ring on each district with a margin under 5 points, filled with the color of the party ahead;
+  // thick under 2 points. The rings keep their size on screen while the map zooms.
+  const DOT = { tight: 5, near: 3.6, ring: { tight: 1.8, near: 0.9 } };
   const dotLayer = layer.append('g').attr('class', 'dots').attr('display', 'none');
   const dots = dotLayer.selectAll('circle')
     .data(districtsGeo.features.filter((f) => !index.single[f.properties.state] && closeness(index.shareOf[f.properties.id])))
     .join('circle')
     .attr('class', (f) => closeness(index.shareOf[f.properties.id]))
     .attr('cx', (f) => path.centroid(f)[0]).attr('cy', (f) => path.centroid(f)[1]);
-  const sizeDots = (k) => dots.attr('r', (f) => DOT[closeness(index.shareOf[f.properties.id])] / k).attr('stroke-width', DOT.ring / k);
+  const sizeDots = (k) => dots.attr('r', (f) => DOT[closeness(index.shareOf[f.properties.id])] / k)
+    .attr('stroke-width', (f) => DOT.ring[closeness(index.shareOf[f.properties.id])] / k);
   sizeDots(1);
 
   // Zoom: wheel only with Ctrl or Cmd, touch only with two fingers, drag with the mouse.
@@ -139,6 +140,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
         .classed('quiet', (f) => close && (index.single[f.properties.state] || !isClose(index.shareOf[f.properties.id])));
       root.classed('calm', close);
       dotLayer.attr('display', close ? null : 'none');
+      dots.attr('fill', (f) => colors.party(index.shareOf[f.properties.id] > 0.5));
       states.attr('fill', (f) => (index.single[f.properties.postal] ? colors.blank : colors.effect(index.states[f.properties.postal].effects.drawing)));
       districtLayer.attr('display', view === 'states' ? 'none' : null);
       stateLayer.attr('display', view === 'states' ? null : 'none');
@@ -169,7 +171,7 @@ export function drawLegend(el, view, colors, close) {
   if (view === 'close') {
     // close: { items: [{ key, text }], note } from closeLegend(results)
     const swatch = { d: colors.party(true), r: colors.party(false), other: colors.poles.mid };
-    const kind = { swing: 'sw outline', tight: 'sw dot tight', near: 'sw dot near', other: 'sw pale' };
+    const kind = { swing: 'sw gold', tight: 'sw ring tight', near: 'sw ring near', other: 'sw pale' };
     for (const item of close.items) {
       const span = legend.append('span').attr('class', 'item');
       span.append('i').attr('class', kind[item.key] ?? 'sw').attr('aria-hidden', 'true')
