@@ -386,7 +386,7 @@ async function method(t) {
   await t.js("location.hash = '#method'");
   t.check('a link to #method unfolds the method', await t.until("document.getElementById('method-details').open"));
   t.check('the open method shows the national seat axis as a figure', await t.until(
-    "document.querySelector('#method-axis svg')?.getAttribute('aria-label')?.startsWith('Democratic seats in all states with more than one seat') === true"));
+    "document.querySelector('#method-axis svg')?.getAttribute('aria-label')?.startsWith('Democratic seats in the House of 435') === true"));
   for (const width of [375, 2560, 1280]) {
     await t.load('#method', { width, height: 900 });
     await t.until("document.querySelector('#method-axis text.mark-label') !== null");
@@ -541,7 +541,7 @@ async function majority(t) {
   const note = await t.text('#majority-note');
   const below = await t.js(`${DATA}.then((r) => r.national.majority.proportional.share < 0.5)`);
   t.check('the sentence about Proportional below 50% appears exactly when it applies', below === note.includes('Proportional needs less than half of the vote'));
-  t.check('the note gives the six single-seat states their fixed party', /Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming for Republicans\. So Democrats need \d+ of the \d+ districts\.$/.test(note));
+  t.check('the note gives the six single-seat states their fixed party', /Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming for Republicans\.$/.test(note));
 }
 
 // --- Task 6.11: redraws since 2024 ---------------------------------------------------------------
@@ -592,7 +592,8 @@ async function masthead(t) {
   t.check('the meta description is the line under the title',
     await t.js("document.querySelector('meta[name=description]').content === document.querySelector('.mast .sub')?.textContent"));
   const fields = await t.js("[...document.querySelectorAll('.metastrip dt')].map((dt) => dt.textContent + ': ' + dt.nextElementSibling.textContent)");
-  const scope = await t.js(`${DATA}.then((r) => 'Scope: U.S. House, ' + r.national.seats + ' seats in ' + Object.keys(r.states).length + ' states')`);
+  const scope = await t.js(`${DATA}.then((r) => 'Scope: U.S. House, ' + (r.national.seats + r.national.single_seat.length) + ' seats in '
+    + (Object.keys(r.states).length + r.national.single_seat.length) + ' states')`);
   t.check('the meta strip has Scope, Votes and Question, Scope with the numbers of results.json',
     fields.length === 3 && fields[0] === scope && fields[1].startsWith('Votes: ') && fields[2].startsWith('Question: '), fields.join(' | '));
 }
@@ -602,15 +603,17 @@ async function outcomes(t) {
   // The numbers the rows should show, formatted with the page's own format.js.
   const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
     const n = r.national;
-    return { values: [n.proportional, n.neutral.median, n.enacted].map(f.seats), lo: n.neutral.p5, hi: n.neutral.p95,
+    // every count is shown in the House of 435: the districts plus the 2 Democratic single seats (Delaware, Vermont)
+    const plus = (v) => f.seats(v + 2);
+    return { values: [n.proportional, n.neutral.median, n.enacted].map(plus), lo: n.neutral.p5, hi: n.neutral.p95,
       total: n.seats, enacted: n.enacted, neutralSeats: n.neutral.median, steps: [f.effect(n.effects.geographic), f.effect(n.effects.drawing)],
       finding: 'In this comparison, with the 2016 and 2020 votes (' + f.sliderShare(n.majority.base_share) + ' for Democrats), the enacted maps shift '
-        + f.effectWords(n.effects.drawing) + '. They give Democrats ' + f.seats(n.enacted) + ' seats, where the neutral-map median gives '
-        + f.seats(n.neutral.median) + '.' };
+        + f.effectWords(n.effects.drawing) + '. They give Democrats ' + plus(n.enacted) + ' seats, where the neutral-map median gives '
+        + plus(n.neutral.median) + '.' };
   })`);
   const rows = await t.js(`[...document.querySelectorAll('#scen [role=radio]')].map((b) => ({ label: b.querySelector('.lab').textContent,
     value: b.querySelector('.big').textContent, checked: b.getAttribute('aria-checked'), tab: b.tabIndex }))`);
-  t.check('three rows labeled Vote-proportional, Neutral-map median and Enacted maps, with the numbers of results.json',
+  t.check('three rows labeled Vote-proportional, Neutral-map median and Enacted maps, with the numbers of results.json plus Delaware and Vermont',
     rows.map((r) => r.label).join() === 'Vote-proportional,Neutral-map median,Enacted maps' && rows.map((r) => r.value).join() === want.values.join(),
     JSON.stringify(rows));
   t.check('the finding beside the waffle names the drawing effect and both counts', (await t.text('#finding')) === want.finding, await t.text('#finding'));
@@ -622,9 +625,9 @@ async function outcomes(t) {
   // the House of 435: these districts plus the six one-seat states, two of them Democratic
   t.check(`the waffle has 435 squares, ${want.enacted} + 2 of them Democratic`,
     await t.js(`document.querySelectorAll('#waffle rect.seat').length === 435 && ${democratic} === ${want.enacted} + 2`));
-  t.check('the line above the waffle counts both parties and is a polite live region', await t.js(`(() => {
+  t.check('the line above the waffle counts both parties of the House of 435 and is a polite live region', await t.js(`(() => {
     const r = document.getElementById('readout');
-    return r.getAttribute('aria-live') === 'polite' && r.textContent === 'Democrats${want.enacted}Republicans${want.total - want.enacted}';
+    return r.getAttribute('aria-live') === 'polite' && r.textContent === 'Democrats${want.enacted + 2}Republicans${435 - want.enacted - 2}';
   })()`));
   // seat 218 is the top square of the middle column; the framed one-seat states show their names on hover
   t.check('the square at the top of the middle column is seat 218, Republican with the enacted maps', await t.js(`(() => {
@@ -666,7 +669,7 @@ async function outcomes(t) {
   })()`));
   t.check(`with Neutral-map median the seats ${want.lo} to ${want.hi} are outlined and the key says so`,
     neutral.band === want.hi - want.lo + 1 && neutral.shown !== 'none' && neutral.key, JSON.stringify(neutral));
-  t.check('the title of the waffle names the chosen row in numbers and the majority', /^Neutral-map median: \d+ Democratic and \d+ Republican seats of \d+\. With the six one-seat states, \d+ of 435 seats are Democratic: a (Democratic|Republican) majority\.$/.test(neutral.title), neutral.title);
+  t.check('the title of the waffle names the chosen row in numbers and the majority', /^Neutral-map median: \d+ Democratic and \d+ Republican seats of 435: a (Democratic|Republican) majority\.$/.test(neutral.title), neutral.title);
   await t.key('End', 35);
   t.check('End chooses the last row', (await t.js("document.activeElement.querySelector('.lab')?.textContent")) === 'Enacted maps');
   await t.key('ArrowDown', 40);
@@ -690,23 +693,31 @@ async function outcomes(t) {
   const slider = await t.js(`(() => { const s = document.getElementById('vote'); return { value: Number(s.value), max: Number(s.max),
     label: document.getElementById('vote-label').textContent, out: document.getElementById('vote-out').textContent,
     text: s.getAttribute('aria-valuetext'), back: document.getElementById('vote-back').hidden,
-    ticks: [...document.querySelectorAll('#vote-ticks .tk')].map((x) => ({ text: x.textContent, at: Number(x.style.getPropertyValue('--at')) })) }; })()`);
+    ticks: [...document.querySelectorAll('#vote-ticks .tk')].map((x) => ({ text: x.textContent, base: x.classList.contains('base'),
+      at: Number(x.style.getPropertyValue('--at')) })), sentence: document.getElementById('vote-majority').textContent }; })()`);
   t.check('the vote slider starts at the 2016 and 2020 votes, one step per point',
     slider.value === baseAt && slider.max === stops.length - 1 && slider.back
     && slider.label === 'Democratic share of the national two-party vote' && slider.out.endsWith(', the 2016 and 2020 votes')
     && slider.text.endsWith('of the two-party vote for Democrats, the 2016 and 2020 result'), JSON.stringify(slider));
-  t.check('three ticks mark where each count reaches a House majority', slider.ticks.length === 3
-    && ['Proportional', 'Neutral median', 'Enacted'].every((name, i) => slider.ticks[i].text.startsWith(name)), JSON.stringify(slider.ticks));
-  // the Enacted tick names the first stop where the enacted maps (the row shown) give a majority; one stop lower they do not
-  const enactedTick = Math.round(slider.ticks[2].at * (stops.length - 1));
+  // a plain scale: every whole percent from 47% to 56% under the stop with that share, and one mark at the base
+  const scale = slider.ticks.filter((x) => !x.base);
+  const baseMark = slider.ticks.filter((x) => x.base);
+  t.check('under the slider a plain scale from 47% to 56%, each number under its stop, and a mark at the 2016 and 2020 votes',
+    scale.map((x) => x.text).join() === Array.from({ length: 10 }, (_, k) => `${47 + k}%`).join()
+    && scale.every((x) => Math.abs(stops[Math.round(x.at * (stops.length - 1))].share * 100 - Number.parseInt(x.text, 10)) < 1e-6)
+    && baseMark.length === 1 && baseMark[0].text === '2016 + 2020' && Math.round(baseMark[0].at * (stops.length - 1)) === baseAt,
+    JSON.stringify(slider.ticks));
+  // the sentence names the first stop where the enacted maps (the row shown) reach 218 of 435; one stop lower they do not
+  const enactedAt = Number(/at (\d+\.\d)% on the enacted maps/.exec(slider.sentence)?.[1]);
+  const enactedStop = stops.findIndex((p) => !p.base && Math.abs(p.share * 100 - enactedAt) < 1e-6);
   const middleBlue = "document.querySelector('#waffle rect.middle').getAttribute('fill') === getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
-  await setSlider(enactedTick);
-  const atTick = await t.js(`({ out: document.getElementById('vote-out').textContent, blue: ${middleBlue}, democratic: ${democratic} })`);
-  await setSlider(enactedTick - 1);
+  await setSlider(enactedStop);
+  const atStop = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
+  await setSlider(enactedStop - 1);
   const below = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
-  t.check('at the Enacted tick the enacted maps reach seat 218, one stop lower they do not',
-    slider.ticks[2].text.endsWith(atTick.out) && atTick.blue && atTick.democratic >= swing.needed + 2 && !below.blue
-    && below.democratic < swing.needed + 2, JSON.stringify({ tick: slider.ticks[2], atTick, below }));
+  t.check('at the stop the sentence names for the enacted maps they reach seat 218, one stop lower they do not',
+    enactedStop > 0 && atStop.blue && atStop.democratic >= swing.needed + 2 && !below.blue && below.democratic < swing.needed + 2,
+    JSON.stringify({ enactedAt, enactedStop, atStop, below }));
   const half = stops.findIndex((p) => Math.abs(p.share - 0.5) < 1e-9);
   await setSlider(half);
   const moved = await t.js(`(() => ({ rows: [...document.querySelectorAll('#scen .big')].map((b) => Number(b.textContent)),
@@ -714,7 +725,7 @@ async function outcomes(t) {
     finding: document.getElementById('finding').textContent, democratic: ${democratic} }))()`);
   const p = stops[half];
   t.check('at 50.0% the rows, the finding and the waffle follow the slider',
-    moved.rows.join() === [p.proportional, p.neutral.median, p.enacted].join() && moved.out === '50.0%' && !moved.back
+    moved.rows.join() === [p.proportional, p.neutral.median, p.enacted].map((v) => v + 2).join() && moved.out === '50.0%' && !moved.back
     && moved.finding.startsWith('In this comparison, with Democrats at 50.0% of the two-party vote,') && moved.democratic === p.enacted + 2,
     JSON.stringify(moved));
   await t.js("document.getElementById('vote-back').click()");

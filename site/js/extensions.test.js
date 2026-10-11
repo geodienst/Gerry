@@ -44,8 +44,7 @@ test('majorityView: the sentence of the extensions design with the four shares',
   assert.equal(view.sentence, 'With these votes, Democrats need 52.4% of the two-party vote for a House majority under the enacted maps, '
     + '51.2% under neutral maps and 49.8% if seats followed the vote. They have 51.8%.');
   assert.equal(view.rule, 'A majority is 218 of the 435 seats. The six states with one seat count for the party that won them in both '
-    + '2016 and 2020: Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming for Republicans. '
-    + 'So Democrats need 216 of the 429 districts.');
+    + '2016 and 2020: Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming for Republicans.');
 });
 
 test('majorityView: the sentence for Proportional below 50%, and none at or above 50%', () => {
@@ -66,14 +65,16 @@ test('majorityView: the vote axis and its text alternative', () => {
 });
 
 test('extensionFills: the numbers in the method paragraph "Extensions"', () => {
-  assert.deepEqual(extensionFills(extended()), { 'majority-seats': '216', seats: '429', 'senate-states': '26' });
+  // the House of 435 and its majority of 218 (seats_needed 216 of the districts + the 2 Democratic single seats)
+  assert.deepEqual(extensionFills(extended()), { 'house-seats': '435', 'house-majority': '218', 'senate-states': '26' });
 });
 
 // --- redraws since 2024 (Task 6.11) ---
 
 test('redrawView: the net change and the states with another seat count', () => {
   const view = redrawView(extended());
-  assert.equal(view.sentence, 'With these votes, the maps of the 2024 election give Democrats 217 seats and the 2026 maps 213. '
+  // seats of 435: 217 and 213 of the districts + the 2 Democratic single seats
+  assert.equal(view.sentence, 'With these votes, the maps of the 2024 election give Democrats 219 seats and the 2026 maps 215. '
     + 'Net change: R+4 · 4 seats toward Republicans.');
   assert.deepEqual(view.rows.map((r) => [r.postal, r.text]), [
     ['TX', 'R+3 · 3 seats toward Republicans'], ['CA', 'D+1 · 1 seat toward Democrats'],

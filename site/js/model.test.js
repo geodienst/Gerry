@@ -5,7 +5,7 @@ import { results, withExtensions } from './testdata.js';
 import {
   AT_LARGE_TEXT, indexResults, districtLabel, districtTip, stateTip, tapLine, stateOptions, mapHints,
   isClose, isSwing, closeness, closeTip, closeLegend, MAP_TITLES,
-  effectList, positionText, stateSheet, nationalView, methodFills,
+  effectList, positionText, stateSheet, nationalView, methodFills, houseOf,
 } from './model.js';
 
 // --- the map (Task 6.2) ---
@@ -268,33 +268,43 @@ test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
 
 // --- the national section (Task 6.7) ---
 
+test('houseOf: the House of 435, the districts plus the single-seat states with their fixed party', () => {
+  // 429 districts + 6 single-seat states; DE and VT Democratic, AK, ND, SD and WY Republican
+  assert.deepEqual(houseOf(results()), { total: 435, dSingle: 2, rSingle: 4 });
+});
+
 test('nationalView: the strip with the three numbers, the effects and the position', () => {
   const view = nationalView(results());
-  // 6 entries in single_seat -> "six"; their names sorted alphabetically
-  assert.equal(view.note, '429 seats. The six states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont, Wyoming) are not counted.');
-  // the band runs from p5 217 to p95 229
-  assert.deepEqual(view.trio.map((t) => [t.value, t.sub]), [['224', 'seats follow the vote'], ['223', '90% of outcomes: 217 to 229'], ['213', 'maps used in 2026']]);
+  // 6 entries in single_seat -> "six"; their names sorted alphabetically; 429 + 6 = 435 seats
+  assert.equal(view.note, '435 seats. The six states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont, '
+    + 'Wyoming) count the same in all three ways, for the party that won them in 2016 and 2020; they cannot be redrawn.');
+  // every count of 429 plus the 2 Democratic single-seat states (owner decision, October 11): 224 -> 226, the band
+  // 217 to 229 -> 219 to 231, 213 -> 215; the effects stay as they are
+  assert.deepEqual(view.trio.map((t) => [t.value, t.sub]), [['226', 'seats follow the vote'], ['225', '90% of outcomes: 219 to 231'], ['215', 'maps used in 2026']]);
   // geographic -1 -> "R+1", one seat (singular); drawing -10 -> "R+10", 10 seats
   assert.equal(view.effects, 'Geographic effect R+1: neutral maps give 1 seat toward Republicans compared with seats that follow the vote. '
     + 'Drawing effect R+10: the enacted maps give 10 seats toward Republicans compared with neutral maps.');
   // position.more 0.9972: above 0.99 and below 1 -> "more than 99%"
   assert.equal(view.position, 'In more than 99% of neutral outcomes Democrats win more seats than under the enacted maps.');
-  assert.equal(view.axisLabel, 'Democratic seats in all states with more than one seat: proportional 224, neutral-map median 223 '
-    + '(90% of outcomes 217 to 229), enacted 213. Bars: share of neutral outcomes per seat count.');
+  assert.equal(view.axisLabel, 'Democratic seats in the House of 435: proportional 226, neutral-map median 225 '
+    + '(90% of outcomes 219 to 231), enacted 215. Bars: share of neutral outcomes per seat count.');
   // a band of one seat count: "give", not a colon before a lone number
   const one = results();
   Object.assign(one.national.neutral, { p5: 223, p95: 223 });
-  assert.equal(nationalView(one).trio[1].sub, '90% of outcomes give 223');
-  assert.match(nationalView(one).axisLabel, /neutral-map median 223 \(90% of outcomes give 223\), enacted 213\./);
-  // dist has one probability per seat count from 0 to 429: 430 entries
-  assert.equal(view.axis.dist.length, 430);
-  assert.equal(view.seatsTotal, 429);
+  assert.equal(nationalView(one).trio[1].sub, '90% of outcomes give 225');
+  assert.match(nationalView(one).axisLabel, /neutral-map median 225 \(90% of outcomes give 225\), enacted 215\./);
+  // dist had one probability per seat count from 0 to 429; shifted by the 2 Democratic single seats: 0 to 431
+  assert.equal(view.axis.dist.length, 432);
+  assert.deepEqual(view.axis.dist.slice(0, 2), [0, 0]);
+  assert.equal(view.axis.dist[225], 1); // testdata puts all neutral outcomes at 223 of 429
+  assert.equal(view.seatsTotal, 435);
   // the count comes from single_seat: 5 entries -> "five"; above ten as digits, 11 -> "11"
   const r = results();
   r.national.single_seat = r.national.single_seat.slice(0, 5);
-  assert.equal(nationalView(r).note, '429 seats. The five states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont) are not counted.');
+  assert.equal(nationalView(r).note, '434 seats. The five states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, '
+    + 'Vermont) count the same in all three ways, for the party that won them in 2016 and 2020; they cannot be redrawn.');
   r.national.single_seat = Array.from({ length: 11 }, (_, k) => ({ postal: `S${k}`, name: `State ${k}` }));
-  assert.match(nationalView(r).note, /^429 seats\. The 11 states with one at-large seat \(State 0, /);
+  assert.match(nationalView(r).note, /^440 seats\. The 11 states with one at-large seat \(State 0, /);
 });
 
 // --- the method and the footer (Task 6.8) ---
@@ -303,6 +313,7 @@ test('methodFills: plans, states, ALARM version, dates and Louisiana', () => {
   assert.deepEqual(methodFills(results()), {
     plans: '5,000',
     states: '7',
+    'all-states': '13', // 7 states with more than one seat + 6 with one
     'alarm-version': '15',
     'status-date': 'October 3, 2026',
     generated: 'October 6, 2026',

@@ -118,10 +118,10 @@ export function renderOutcomes(view, { reduceMotion }) {
     return rect;
   }
 
-  // the band in seats of 435 at the point on screen: the one-seat Democratic states come first
+  // the band at the point on screen, in seats of 435 like every count of chapter 01
   function drawBand() {
     const { lo, hi } = point().band;
-    band.replaceChildren(...seatsFrom(lo + house.dSingle - 1, hi + house.dSingle).map((i) => {
+    band.replaceChildren(...seatsFrom(lo - 1, hi).map((i) => {
       const { x, y } = at(i);
       return svgNode('rect', { x: x + 0.7, y: y + 0.7, width: HOUSE.size - 1.4, height: HOUSE.size - 1.4 });
     }));
@@ -172,7 +172,7 @@ export function renderOutcomes(view, { reduceMotion }) {
       node('p', { class: 'note' }, view.neutralNote), node('p', { class: 'note' }, view.scope));
   }
 
-  // The vote slider: one step per point, ticks where each count reaches a House majority.
+  // The vote slider: one step per point, a plain scale of whole percents and a mark at the 2016 and 2020 votes.
   const slider = $('vote');
   slider.min = '0';
   slider.max = String(view.points.length - 1);
@@ -180,13 +180,13 @@ export function renderOutcomes(view, { reduceMotion }) {
   slider.value = String(pi);
   $('vote-label').textContent = view.slider.label;
   $('vote-majority').textContent = view.slider.majority;
-  // each tick sits on the stop where its count first reaches a majority
-  $('vote-ticks').replaceChildren(...view.slider.ticks.map((t) => {
-    const mark = node('span', { class: `tk ${t.key}` });
-    mark.style.setProperty('--at', String(t.index / (view.points.length - 1)));
-    mark.append(node('span', { class: 'nm' }, t.name), node('span', { class: 'pc' }, t.value));
-    return mark;
-  }));
+  const mark = (cls, { index, label }) => {
+    const tick = node('span', { class: cls });
+    tick.style.setProperty('--at', String(index / (view.points.length - 1)));
+    tick.append(node('span', {}, label));
+    return tick;
+  };
+  $('vote-ticks').replaceChildren(...view.slider.scale.map((t) => mark('tk', t)), mark('tk base', view.slider.base));
   const back = $('vote-back');
   function showPoint() {
     const p = point();
@@ -214,7 +214,7 @@ export function renderOutcomes(view, { reduceMotion }) {
     if (!colors || !layout) return;
     const here = { ...view, rows: point().rows };
     const row = here.rows.find((r) => r.key === current);
-    const n = row.seats + house.dSingle; // Democratic seats of 435
+    const n = row.seats; // Democratic seats of 435
     const motion = animate && shown !== null && !reduceMotion();
     cells.forEach((rect, i) => {
       const fill = colors.party(i < n);

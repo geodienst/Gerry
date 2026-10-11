@@ -1,6 +1,7 @@
 // Texts and view models for the extensions (docs/superpowers/specs/2026-10-06-extensions-design.md,
 // chapters 1 to 4 and 7), from the results.json fields of Phase 5. Pure, like model.js.
 import { share, neededShare, seats, count, effect, effectLine } from './format.js';
+import { houseOf } from './model.js';
 
 // --- Majority threshold (Task 6.10) -------------------------------------------------------------
 
@@ -17,7 +18,7 @@ export function majorityView(results) {
       : '',
     rule: 'A majority is 218 of the 435 seats. The six states with one seat count for the party that won them '
       + 'in both 2016 and 2020: Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming '
-      + `for Republicans. So Democrats need ${seats(m.seats_needed)} of the ${seats(results.national.seats)} districts.`,
+      + 'for Republicans.',
     axis: {
       base: m.base_share, low: m.neutral.low, high: m.neutral.high,
       marks: [
@@ -36,8 +37,9 @@ export function majorityView(results) {
 /** Text for the [data-fill] spans that the extensions add to the method section. */
 export function extensionFills(results) {
   return {
-    'majority-seats': seats(results.national.majority.seats_needed),
-    seats: seats(results.national.seats),
+    // the House of 435 and its majority: the districts Democrats need plus the Democratic single seats
+    'house-seats': seats(houseOf(results).total),
+    'house-majority': seats(results.national.majority.seats_needed + houseOf(results).dSingle),
     'senate-states': count(results.national.senate.states_needed),
   };
 }
@@ -49,13 +51,14 @@ const plural = (n, one, many) => (n === 1 ? one : many);
 /** National: the net change and the states whose seat count changed, from large R to large D. */
 export function redrawView(results) {
   const n = results.national.redraw;
+  const { dSingle } = houseOf(results); // seats of the House of 435, as in chapter 01
   const rows = Object.entries(results.states)
     .filter(([, s]) => s.redraw.change !== 0)
     .map(([postal, s]) => ({ postal, name: s.name, change: s.redraw.change, text: effectLine(s.redraw.change) }))
     .sort((a, b) => a.change - b.change || a.name.localeCompare(b.name, 'en'));
   return {
-    sentence: `With these votes, the maps of the 2024 election give Democrats ${seats(n.seats_2024)} seats and the 2026 maps `
-      + `${seats(results.national.enacted)}. Net change: ${effectLine(n.change)}.`,
+    sentence: `With these votes, the maps of the 2024 election give Democrats ${seats(n.seats_2024 + dSingle)} seats and the `
+      + `2026 maps ${seats(results.national.enacted + dSingle)}. Net change: ${effectLine(n.change)}.`,
     rows,
   };
 }

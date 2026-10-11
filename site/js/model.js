@@ -261,27 +261,45 @@ export function stateSheet(results, postal) {
 // --- The national section (Task 6.7) ------------------------------------------------------------
 
 // A count of up to ten in a sentence, as a word: "The six states". Larger counts as digits.
-const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+export const COUNT_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 
-/** The national strip: the three numbers, the seat axis, the effects and the position. */
+// The six single-seat states count for the party that won them in both 2016 and 2020 (extensions design, chapter 6).
+export const SINGLE_SEAT_PARTY = { DE: 'D', VT: 'D', AK: 'R', ND: 'R', SD: 'R', WY: 'R' };
+
+/**
+ * The House: the districts of results.json plus the single-seat states, and how many of those go to each party. The
+ * national counts are shown in this House (owner decision, October 11, 2026): the single-seat states add the same
+ * seats to every count, so the effects stay as they are.
+ */
+export function houseOf(results) {
+  const single = results.national.single_seat;
+  const of = (party) => single.filter((s) => SINGLE_SEAT_PARTY[s.postal] === party).length;
+  return { total: results.national.seats + single.length, dSingle: of('D'), rSingle: of('R') };
+}
+
+/** The national strip: the three numbers, the seat axis, the effects and the position, in the House of 435. */
 export function nationalView(results) {
   const n = results.national;
+  const { total, dSingle } = houseOf(results);
   const names = n.single_seat.map((s) => s.name).sort((a, b) => a.localeCompare(b, 'en'));
   const howMany = COUNT_WORDS[names.length] ?? count(names.length);
+  const neutral = { median: n.neutral.median + dSingle, p5: n.neutral.p5 + dSingle, p95: n.neutral.p95 + dSingle };
+  // the distribution moves up by the Democratic single seats: index = Democratic seats of the House
   const axis = {
-    dist: n.neutral.dist, proportional: n.proportional, median: n.neutral.median,
-    p5: n.neutral.p5, p95: n.neutral.p95, enacted: n.enacted,
+    dist: [...Array(dSingle).fill(0), ...n.neutral.dist], proportional: n.proportional + dSingle, ...neutral,
+    enacted: n.enacted + dSingle,
   };
   return {
-    note: `${seats(n.seats)} seats. The ${howMany} states with one at-large seat (${names.join(', ')}) are not counted.`,
+    note: `${seats(total)} seats. The ${howMany} states with one at-large seat (${names.join(', ')}) count the same in all `
+      + 'three ways, for the party that won them in 2016 and 2020; they cannot be redrawn.',
     trio: [
-      { label: 'Vote-proportional', value: seats(n.proportional), sub: 'seats follow the vote' },
-      { label: 'Neutral-map median', value: seats(n.neutral.median), sub: bandText(n.neutral, 'outcomes') },
-      { label: 'Enacted maps', value: seats(n.enacted), sub: 'maps used in 2026' },
+      { label: 'Vote-proportional', value: seats(axis.proportional), sub: 'seats follow the vote' },
+      { label: 'Neutral-map median', value: seats(axis.median), sub: bandText(neutral, 'outcomes') },
+      { label: 'Enacted maps', value: seats(axis.enacted), sub: 'maps used in 2026' },
     ],
     axis,
-    seatsTotal: n.seats,
-    axisLabel: `${axisLabel('all states with more than one seat', axis, 'outcomes')} Bars: share of neutral outcomes per seat count.`,
+    seatsTotal: total,
+    axisLabel: `${axisLabel(`the House of ${seats(total)}`, axis, 'outcomes')} Bars: share of neutral outcomes per seat count.`,
     effects: `Geographic effect ${effect(n.effects.geographic)}: neutral maps give ${effectWords(n.effects.geographic)} `
       + `compared with seats that follow the vote. Drawing effect ${effect(n.effects.drawing)}: the enacted maps give `
       + `${effectWords(n.effects.drawing)} compared with neutral maps.`,
@@ -299,6 +317,7 @@ export function methodFills(results) {
   return {
     plans: count(sum(Object.values(states)[0].neutral.dist)),
     states: count(Object.keys(states).length),
+    'all-states': count(Object.keys(states).length + results.national.single_seat.length),
     'alarm-version': count(meta.ensemble.version),
     'status-date': longDate(meta.status_checked),
     generated: longDate(meta.generated),

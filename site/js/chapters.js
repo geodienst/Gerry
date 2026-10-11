@@ -1,7 +1,7 @@
 // Texts and view models for the four chapters of the redesign (docs/superpowers/specs/2026-10-08-redesign-design.md).
 // Pure, like model.js and extensions.js: no DOM and no d3, every number through format.js, nothing new computed.
 import { share, sliderShare, neededShare, planShare, seats, count, effect, effectWords, effectLine, percentLabel } from './format.js';
-import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT } from './model.js';
+import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS } from './model.js';
 import { stateExtras, majorityView, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
 import { seatTicks, rowDomain } from './axes.js';
 
@@ -19,9 +19,14 @@ const plural = (n, one, many) => (n === 1 ? one : many);
 
 /**
  * The rows, effects, band and sentences of chapter 01 at one point of the vote slider (plan 2026-10-08-vote-slider):
- * a point of results.national.swing, or the base point with the main numbers.
+ * a point of results.national.swing, or the base point with the main numbers. Every count is shown in the House of
+ * `total` seats: the districts plus `offset`, the single-seat states fixed as Democratic (owner decision, October 11).
  */
-function pointView(p, total) {
+function pointView(raw, { offset, total }) {
+  const p = {
+    ...raw, proportional: raw.proportional + offset, enacted: raw.enacted + offset,
+    neutral: { median: raw.neutral.median + offset, p5: raw.neutral.p5 + offset, p95: raw.neutral.p95 + offset },
+  };
   const { median, p5, p95 } = p.neutral;
   const band = p5 === p95 ? `90% of outcomes give ${seats(p5)}` : `90% of outcomes: ${seats(p5)} to ${seats(p95)}`;
   const where = p.enacted < p5 ? 'below that range' : p.enacted > p95 ? 'above that range' : 'within that range';
@@ -49,7 +54,7 @@ function pointView(p, total) {
     ],
     band: {
       lo: p5, hi: p95,
-      key: `Outlined: where the Democratic seats end in 90% of neutral outcomes (${range(p5, p95)} of these ${seats(total)})`,
+      key: `Outlined: where the Democratic seats end in 90% of neutral outcomes (${range(p5, p95)} of ${seats(total)})`,
     },
     // One finding beside the waffle, said as the result of this comparison (expert feedback, October 8, 2026).
     finding: drawing === 0
@@ -66,28 +71,34 @@ export function outcomesView(results) {
   const n = results.national;
   const m = n.majority;
   const national = nationalView(results);
+  const house = houseOf(results);
+  const majority = m.seats_needed + house.dSingle; // 218 of 435
   const states = count(Object.keys(results.states).length);
+  const singles = COUNT_WORDS[n.single_seat.length] ?? count(n.single_seat.length);
   const plans = count(sum(Object.values(results.states)[0].neutral.dist));
   // the base point always takes the main numbers; the other points come from the slider grid
   const base = { share: m.base_share, proportional: n.proportional, enacted: n.enacted, base: true,
     neutral: { median: n.neutral.median, p5: n.neutral.p5, p95: n.neutral.p95 }, more: n.position.more };
   // a grid point that reads like the base share (51.8% next to 0.51797) would be a second stop with the same label
   const points = [...(n.swing?.points ?? []).filter((p) => !p.base && sliderShare(p.share) !== sliderShare(base.share)), base]
-    .sort((a, b) => a.share - b.share).map((p) => pointView(p, n.seats));
+    .sort((a, b) => a.share - b.share).map((p) => pointView(p, { offset: house.dSingle, total: house.total }));
   const baseIndex = points.findIndex((p) => p.base);
   const main = points[baseIndex];
-  // A tick at the first stop where a count reaches a majority, so the label and the waffle at that stop agree.
-  const reach = (key) => points.findIndex((p) => p.rows.find((r) => r.key === key).seats >= m.seats_needed);
-  const ticks = ['proportional', 'neutral', 'enacted'].map((key) => ({ key, index: reach(key), name: SHORT_LABELS[key] }))
-    .filter((x) => x.index >= 0).map((x) => ({ ...x, value: points[x.index].label }));
+  // The sentence under the slider names the first stop where each count reaches a majority, so the sentence and the
+  // waffle at that stop agree.
   const from = (key) => {
-    const found = ticks.find((x) => x.key === key);
-    return found ? `at ${found.value}` : `above ${points.at(-1).label}`;
+    const index = points.findIndex((p) => p.rows.find((r) => r.key === key).seats >= majority);
+    return index >= 0 ? `at ${points[index].label}` : `above ${points.at(-1).label}`;
   };
+  // A plain scale under the slider: the stops at whole percents, and a mark at the 2016 and 2020 votes (feedback of
+  // October 11: labels per count looked like choices between the counts).
+  const scale = points.map((p, index) => ({ p, index }))
+    .filter(({ p }) => !p.base && Math.abs(p.share * 100 - Math.round(p.share * 100)) < 1e-6)
+    .map(({ p, index }) => ({ index, label: percentLabel(p.share) }));
   return {
-    intro: `Democratic seats in the ${states} states with more than one seat, counted three ways with the same votes. `
+    intro: `Democratic seats in the House of ${seats(house.total)}, counted three ways with the same votes. `
       + 'Select a row to see it as seats.',
-    total: n.seats,
+    total: house.total,
     rows: main.rows,
     steps: main.steps,
     band: main.band,
@@ -99,21 +110,20 @@ export function outcomesView(results) {
     position: main.position,
     neutralNote: `The neutral maps come from the ALARM Project. For each state a computer drew ${plans} maps that follow `
       + "the state's rules, such as equal population and the Voting Rights Act, without using party data. "
-      + `The national figures combine the ${states} states.`,
+      + `The national figures combine the ${states} states with more than one seat and add the ${singles} states with one seat.`,
     scope: national.note,
     points,
     baseIndex,
     slider: {
       label: 'Democratic share of the national two-party vote',
-      ticks,
+      scale,
+      base: { index: baseIndex, label: '2016 + 2020' },
       majority: `On the slider, a House majority starts ${from('proportional')} of the two-party vote `
         + `if seats follow the votes, ${from('neutral')} on neutral maps and ${from('enacted')} on the enacted maps.`,
     },
   };
 }
 
-// The six one-seat states count for the party that won them in both 2016 and 2020, as in majorityView.
-const SINGLE_SEAT_PARTY = { DE: 'D', VT: 'D', AK: 'R', ND: 'R', SD: 'R', WY: 'R' };
 const names = (list) => (list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`);
 const bothOrAll = (k) => (k === 2 ? 'both states' : `all ${['', 'one', 'two', 'three', 'four', 'five', 'six'][k] ?? k} states`);
 
@@ -146,14 +156,11 @@ export function changedKey(k) {
 export function waffleText(view, key) {
   const row = view.rows.find((r) => r.key === key);
   const rest = view.total - row.seats;
-  const house = row.seats + view.house.dSingle;
   return {
     d: seats(row.seats),
     r: seats(rest),
-    house,
-    label: `${row.label}: ${seats(row.seats)} Democratic and ${seats(rest)} Republican seats of ${seats(view.total)}. `
-      + `With the six one-seat states, ${seats(house)} of 435 seats are Democratic: `
-      + `a ${house >= 218 ? 'Democratic' : 'Republican'} majority.`,
+    label: `${row.label}: ${seats(row.seats)} Democratic and ${seats(rest)} Republican seats of ${seats(view.total)}: `
+      + `a ${row.seats > view.total / 2 ? 'Democratic' : 'Republican'} majority.`,
   };
 }
 
@@ -222,7 +229,8 @@ export function singleSeatView(results, postal) {
     name: s.name,
     kicker: 'State record',
     headline: '1 seat',
-    lines: [AT_LARGE_TEXT, `Not counted in the ${seats(results.national.seats)} seats compared here.`],
+    lines: [AT_LARGE_TEXT, `In all three counts this seat goes to ${SINGLE_SEAT_PARTY[postal] === 'D' ? 'Democrats' : 'Republicans'}, `
+      + `who won ${s.name} in 2016 and 2020.`],
   };
 }
 
@@ -243,6 +251,7 @@ export function decideView(results) {
   const s = n.senate;
   const senate = senateView(results);
   const redraws = redrawView(results);
+  const offset = houseOf(results).dSingle; // seats of the House of 435, as in chapter 01
   return {
     intro: 'The same votes, read for control of the House and the Senate, for redraws since 2024 and for close districts.',
     majority: {
@@ -278,7 +287,7 @@ export function decideView(results) {
     },
     redraws: {
       figures: [
-        { value: `${seats(n.redraw.seats_2024)} to ${seats(n.enacted)}`, label: 'Democratic seats, 2024 maps to 2026 maps' },
+        { value: `${seats(n.redraw.seats_2024 + offset)} to ${seats(n.enacted + offset)}`, label: 'Democratic seats, 2024 maps to 2026 maps' },
         { value: effect(n.redraw.change), label: effectWords(n.redraw.change) },
       ],
       sentence: redraws.sentence,
