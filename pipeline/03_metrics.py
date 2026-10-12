@@ -1,7 +1,8 @@
 """Step 3: seats, neutral baseline, EG and MM per state and for the nation.
 
-Reads data/interim/ (written by 02_join.py), pipeline/config.yaml, data/crosscheck/ and
-data/validation_notes.yaml. Writes data/interim/metrics.json and docs/validation.md.
+Reads data/interim/ (written by 02_join.py), pipeline/config.yaml, data/crosscheck/,
+data/validation_notes.yaml and the MIT presidential file in the raw data folder (for the national
+shares of 2016, 2020 and 2024). Writes data/interim/metrics.json and docs/validation.md.
 Run from the repo root: python pipeline/03_metrics.py
 """
 from __future__ import annotations
@@ -13,8 +14,9 @@ import numpy as np
 import pandas as pd
 
 from gerry.checks import CheckError
-from gerry.config import (ADOPTED_BY_VALUES, CONTROL_VALUES, REPO_ROOT, AtLargeState, StateConfig, interim_dir,
-                          load_config)
+from gerry.config import (ADOPTED_BY_VALUES, CONTROL_VALUES, REPO_ROOT, AtLargeState, StateConfig, data_dir,
+                          interim_dir, load_config)
+from gerry.president import national_share, read_president
 from gerry.metrics import (MAX_SWING_STEPS, SWING_GRID, SwingRangeError, TieError, competitive, convolve,
                            dem_wins, distribution, effects, efficiency_gap, enacted_threshold, is_narrow,
                            largest_remainder, linear_band, mean_median, neutral_threshold, outside_band,
@@ -285,6 +287,13 @@ def national_swing(*, base_share: float, base: dict, state_shares, state_seats, 
     return {"points": points}
 
 
+def national_president(root) -> dict:
+    """The Democratic share of the national two-party presidential vote in 2016, 2020 and 2024, from the MIT file.
+    The maps use 2016 and 2020; 2024 is the example the site gives for the vote slider."""
+    table = read_president(root / "medsl" / "1976-2024-president.csv")
+    return {year: national_share(table, year) for year in ("2016", "2020", "2024")}
+
+
 def national_competitive(states: Mapping[str, dict]) -> dict:
     """Competitive districts for the nation: the sum over the enacted maps, and the convolution of the
     states' plan distributions (states independent, as for the seats)."""
@@ -392,6 +401,9 @@ def compute(cfg, idir) -> dict:
         enacted_shares=np.concatenate(votes["enacted_shares"]), plan_shares=votes["plan_shares"],
         state_shares=votes["state_shares"], state_seats=votes["state_seats"],
         seats_at_base=national["enacted"], neutral_pmf=national["neutral"]["dist"])
+    national["president"] = national_president(data_dir())
+    pres = national["president"]
+    print("US presidential vote, Democratic two-party share: " + ", ".join(f"{y} {s:.4f}" for y, s in pres.items()))
     national["swing"] = national_swing(
         base_share=national["majority"]["base_share"], base=national, state_shares=votes["state_shares"],
         state_seats=votes["state_seats"], plan_shares=votes["plan_shares"],

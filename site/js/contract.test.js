@@ -315,6 +315,15 @@ function largestRemainder(d, seats) {
   return d > 1 - d ? floorD + 1 : floorD;
 }
 
+test('the national presidential shares of 2016, 2020 and 2024 lie within the slider and near the vote basis', { skip }, () => {
+  const { national } = data().results;
+  const p = national.president;
+  assert.deepEqual(Object.keys(p), ['2016', '2020', '2024']);
+  for (const share of Object.values(p)) assert.ok(share > 0.47 && share < 0.56, `share ${share} outside the slider`);
+  // the vote basis adds 2016 and 2020 in the states with more than one seat; their national shares lie close to it
+  assert.ok(Math.abs((p['2016'] + p['2020']) / 2 - national.majority.base_share) < 0.01, `2016 and 2020 against ${national.majority.base_share}`);
+});
+
 test('the vote slider: 47.0% to 56.0% by 0.1 point plus the base, counts that rise with the share', { skip }, () => {
   const { national, states } = data().results;
   const points = national.swing.points;

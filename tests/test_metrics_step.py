@@ -339,9 +339,14 @@ def _small_house(monkeypatch):
         seen["swing"] = kwargs
         return {"points": []}
 
+    def president_stand_in(root):
+        seen["president"] = root
+        return {"2016": 0.51, "2020": 0.52, "2024": 0.49}
+
     monkeypatch.setattr(step, "national_majority", stand_in)
     monkeypatch.setattr(step, "senate_majority", senate_stand_in)
     monkeypatch.setattr(step, "national_swing", swing_stand_in)   # its own tests: test_national_swing_*
+    monkeypatch.setattr(step, "national_president", president_stand_in)   # its own tests: test_president.py
     return seen
 
 
@@ -352,6 +357,8 @@ def test_compute_passes_the_slider_grid_and_the_base(tmp_path, monkeypatch):
     assert seen["swing"]["grid"] == step.SWING_SHARES
     assert seen["swing"]["base"] is national and seen["swing"]["base_share"] == 0.0   # from the majority stand-in
     assert national["swing"] == {"points": []}
+    # the national presidential shares come from the raw data folder
+    assert national["president"] == {"2016": 0.51, "2020": 0.52, "2024": 0.49}
     # 47.0% to 56.0% in steps of 0.1 point
     assert (step.SWING_SHARES[0], step.SWING_SHARES[-1], len(step.SWING_SHARES)) == (0.47, 0.56, 91)
 

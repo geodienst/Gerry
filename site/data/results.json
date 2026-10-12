@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated": "2026-10-08",
+  "generated": "2026-10-12",
   "ensemble": {
    "name": "alarm_v15",
    "doi": "doi:10.7910/DVN/SLCD3E",
@@ -1589,6 +1589,11 @@
      "base": false
     }
    ]
+  },
+  "president": {
+   "2016": 0.5111329467495482,
+   "2020": 0.5217662333878798,
+   "2024": 0.4924994613156773
   },
   "competitive": {
    "enacted": 81,

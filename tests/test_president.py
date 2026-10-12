@@ -112,3 +112,32 @@ def test_single_seat_states_match_the_official_results():
         got = votes.loc[postal]
         assert (got["d_pre_16"], got["r_pre_16"], got["d_pre_20"], got["r_pre_20"]) == (d16, r16, d20, r20), postal
         assert (got["d"], got["r"]) == (d16 + d20, r16 + r20), postal
+
+
+# The national two-party share of a year, for the 2024 example on the vote slider (Mark Thompson's question, October 12)
+
+def test_national_share_adds_the_nominees_on_every_line_in_every_state(tmp_path):
+    from gerry.president import national_share
+    path = write(tmp_path, [
+        # AA: Harris on two lines (60 + 15), Trump 70, a write-in and another candidate that do not count
+        row(2024, "AA", "HARRIS, KAMALA D.", "DEMOCRAT", "False", 60),
+        row(2024, "AA", "HARRIS, KAMALA D.", "WORKING FAMILIES / DEMOCRAT", "False", 15),
+        row(2024, "AA", "TRUMP, DONALD J.", "REPUBLICAN", "False", 70),
+        row(2024, "AA", "HARRIS, KAMALA D.", "DEMOCRAT", "True", 9),
+        row(2024, "AA", "STEIN, JILL", "GREEN", "False", 4),
+        # BB: Harris on a line with another name, Trump on an empty line
+        row(2024, "BB", "HARRIS, KAMALA D.", "DFL", "False", 25),
+        row(2024, "BB", "TRUMP, DONALD J.", "", "False", 30),
+        # another year does not count
+        row(2020, "AA", "BIDEN, JOSEPH R. JR", "DEMOCRAT", "False", 500),
+    ])
+    # Democratic 60 + 15 + 25 = 100, Republican 70 + 30 = 100 -> 0.5
+    assert national_share(read_president(path), "2024", states=2) == pytest.approx(0.5)
+
+
+def test_national_share_needs_every_state(tmp_path):
+    from gerry.president import national_share
+    path = write(tmp_path, [row(2024, "AA", "HARRIS, KAMALA D.", "DEMOCRAT", "False", 60),
+                            row(2024, "AA", "TRUMP, DONALD J.", "REPUBLICAN", "False", 70)])
+    with pytest.raises(PresidentError, match="2024: 1 states in the file, expected 51"):
+        national_share(read_president(path), "2024")
