@@ -777,6 +777,57 @@ async function outcomes(t) {
   }
 }
 
+// --- The explainer of chapter 01 (Mark Thompson's feedback, October 12, 2026) ------------------------
+async function tour(t) {
+  // ?notour, the default of t.load, leaves the explainer out
+  await t.load();
+  t.check('with ?notour the explainer is left out', await t.js("document.getElementById('tour').hidden"));
+  // 400 ms a step for the check; it plays once the rows and the waffle are in view
+  await t.load('', { query: 'tourms=400' });
+  await t.js("document.querySelector('#outcomes .outcomes').scrollIntoView({ block: 'center' })");
+  const state = `(() => ({ count: document.getElementById('tour-count').textContent, play: document.getElementById('tour-play').textContent,
+    text: document.getElementById('tour-text').textContent, row: document.querySelector('#scen [aria-checked=true] .lab').textContent,
+    out: document.getElementById('vote-out').textContent, skip: document.getElementById('tour-skip').hidden }))()`;
+  t.check('the explainer starts by itself in view, with Pause and Skip', await t.until(
+    "document.getElementById('tour-count').textContent === '1 / 5' && document.getElementById('tour-play').textContent === 'Pause' && !document.getElementById('tour-skip').hidden", 4000));
+  await t.until("document.getElementById('tour-count').textContent === '3 / 5'", 4000);
+  const third = await t.js(state);
+  t.check('step 3 explains the neutral maps and chooses their row', third.row === 'Neutral-map median' && third.text.startsWith('Neutral-map median: a computer drew'), JSON.stringify(third));
+  await t.until("document.getElementById('tour-count').textContent === '5 / 5'", 4000);
+  const fifth = await t.js(state);
+  t.check('step 5 moves the slider to the 2024 share and says so', fifth.out === '49.2%' && fifth.text.includes('the Democratic share of the 2024 presidential vote'), JSON.stringify(fifth));
+  await t.until("document.getElementById('tour-play').textContent === 'Replay'", 4000);
+  const end = await t.js(state);
+  t.check('at the end the chapter returns to the enacted maps at the 2016 and 2020 votes, with Replay',
+    end.row === 'Enacted maps' && end.out.endsWith(', the 2016 and 2020 votes') && end.count === '' && end.skip
+    && end.text === 'That is the comparison. Choose a row or move the slider to explore it yourself.', JSON.stringify(end));
+  // Replay, Pause holds the step, Skip ends it
+  await t.js("document.getElementById('tour-play').click()");
+  await t.until("document.getElementById('tour-count').textContent === '2 / 5'", 4000);
+  await t.js("document.getElementById('tour-play').click()");
+  const paused = await t.js(state);
+  await t.sleep(900);
+  const later = await t.js(state);
+  t.check('Pause holds the step', paused.play === 'Play' && later.count === paused.count, JSON.stringify({ paused, later }));
+  await t.js("document.getElementById('tour-skip').click()");
+  const skipped = await t.js(state);
+  t.check('Skip ends the explainer at the enacted maps', skipped.play === 'Replay' && skipped.row === 'Enacted maps', JSON.stringify(skipped));
+  // a reader who chooses a row takes over: the explainer stops and the choice stays
+  await t.js("document.getElementById('tour-play').click()");
+  await t.until("document.getElementById('tour-count').textContent === '1 / 5'", 4000);
+  await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
+  await t.sleep(900);
+  const taken = await t.js(state);
+  t.check('a click on a row stops the explainer and keeps the row', taken.play === 'Replay' && taken.row === 'Neutral-map median', JSON.stringify(taken));
+  // with reduced motion it waits for Play
+  await t.load('', { query: 'tourms=400', reduce: true });
+  await t.js("document.querySelector('#outcomes .outcomes').scrollIntoView({ block: 'center' })");
+  await t.sleep(1200);
+  const still = await t.js(state);
+  t.check('with reduced motion the explainer waits for Play', still.count === '' && still.play === 'Play'
+    && still.text === 'A short tour of this chapter in five steps.', JSON.stringify(still));
+}
+
 // --- Task 7.7: chapter 02, the largest drawing effects -------------------------------------------
 async function largest(t) {
   await t.load();
@@ -823,4 +874,5 @@ export const GROUPS = [
   { name: 'competitive', run: competitive },
   { name: 'control', run: control },
   { name: 'senate', run: senate },
+  { name: 'tour', run: tour },
 ];

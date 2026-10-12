@@ -27,6 +27,8 @@ const BASE = {
   },
   national: {
     seats: 429, proportional: 224, enacted: 213,
+    // the national two-party presidential shares, as in results.json
+    president: { 2016: 0.511133, 2020: 0.521766, 2024: 0.492499 },
     // dist: 430 probabilities; the axis tests only read its length
     neutral: { median: 223, p5: 217, p95: 229, dist: Array.from({ length: 430 }, (_, k) => (k === 223 ? 1 : 0)) },
     position: { fewer: 0.00108, equal: 0.00172, more: 0.9972, midrank: 0.00194 },

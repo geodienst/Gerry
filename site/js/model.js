@@ -323,5 +323,7 @@ export function methodFills(results) {
     generated: longDate(meta.generated),
     'la-share': planShare(la.dist[la.median] / sum(la.dist)),
     'la-seats': `${seats(la.median)} Democratic ${plural(la.median, 'seat', 'seats')}`,
+    // the Democratic share of the 2024 presidential vote (MIT), named in the method next to the vote slider
+    ...(results.national.president ? { 'share-2024': share(results.national.president['2024']) } : {}),
   };
 }

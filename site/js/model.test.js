@@ -319,5 +319,6 @@ test('methodFills: plans, states, ALARM version, dates and Louisiana', () => {
     generated: 'October 6, 2026',
     'la-share': 'more than 99%', // 4989 of 5000 is 99.78%, which rounds to 100 but is not all plans
     'la-seats': '1 Democratic seat',
+    'share-2024': '49.2%', // the Democratic share of the 2024 presidential vote, for the method
   });
 });

@@ -89,14 +89,46 @@ export function outcomesView(results) {
   const reach = Object.fromEntries(['proportional', 'neutral', 'enacted'].map((key) => [key,
     points.findIndex((p) => p.rows.find((r) => r.key === key).seats >= majority)]));
   const from = (key) => (reach[key] >= 0 ? `at ${points[reach[key]].label}` : `above ${points.at(-1).label}`);
+  // Why presidential votes of 2016 and 2020, and the explainer at the top of the chapter (Mark Thompson's feedback,
+  // October 12). The fifth step goes to the stop nearest the Democratic share of the 2024 presidential vote.
+  const p2024 = n.president?.['2024'];
+  const near2024 = p2024 === undefined ? -1
+    : points.reduce((best, p, i) => (Math.abs(p.share - p2024) < Math.abs(points[best].share - p2024) ? i : best), 0);
+  const why = {
+    summary: 'Why these votes?',
+    text: 'House results depend on the maps themselves: in safe districts one party often has no candidate, and incumbents '
+      + 'run ahead of their party. Presidential votes are cast everywhere for the same two candidates, so they can be counted '
+      + `on any map, including the ${plans} neutral maps per state. The ALARM Project provides them by voting district for `
+      + '2016 and 2020; adding both evens out the candidates of a single year.'
+      + (p2024 === undefined ? '' : ` In 2024 Democrats won ${share(p2024)} of the two-party presidential vote. `
+        + 'Move the slider there to see a year like it.'),
+  };
+  const seatsOf = (point, key) => point.rows.find((r) => r.key === key).value;
+  const steps = [
+    { key: 'enacted', index: baseIndex, text: `Each square is one seat in the U.S. House, ${seats(house.total)} in all. `
+      + `The party with ${seats(majority)} seats has the majority.` },
+    { key: 'proportional', index: baseIndex, text: "Vote-proportional: if each state's seats followed its two-party vote, "
+      + `Democrats would win ${seatsOf(main, 'proportional')} seats.` },
+    { key: 'neutral', index: baseIndex, text: `Neutral-map median: a computer drew ${plans} legal maps per state without using `
+      + `party data. Their middle outcome gives Democrats ${seatsOf(main, 'neutral')} seats, ${main.steps[0].words} compared `
+      + 'with the votes. That is the geographic effect.' },
+    { key: 'enacted', index: baseIndex, text: 'Enacted maps: the maps the states drew for November 3, 2026 give Democrats '
+      + `${seatsOf(main, 'enacted')} seats, ${main.steps[1].words} compared with neutral maps. That is the drawing effect.` },
+  ];
+  if (near2024 >= 0) {
+    const q = points[near2024];
+    steps.push({ key: 'enacted', index: near2024, text: `The slider moves the national vote. At ${q.label}, `
+      + `${q.label === sliderShare(p2024) ? '' : 'near '}the Democratic share of the 2024 presidential vote, the enacted maps `
+      + `give Democrats ${seatsOf(q, 'enacted')} seats and neutral maps ${seatsOf(q, 'neutral')}.` });
+  }
   // A plain scale under the slider: the stops at whole percents, and a mark at the 2016 and 2020 votes (feedback of
   // October 11: labels per count looked like choices between the counts).
   const scale = points.map((p, index) => ({ p, index }))
     .filter(({ p }) => !p.base && Math.abs(p.share * 100 - Math.round(p.share * 100)) < 1e-6)
     .map(({ p, index }) => ({ index, label: percentLabel(p.share) }));
   return {
-    intro: `Democratic seats in the House of ${seats(house.total)}, counted three ways with the same votes. `
-      + 'Select a row to see it as seats.',
+    intro: `One set of votes, three ways to turn them into seats. Choose a row to see how many of the ${seats(house.total)} `
+      + 'seats Democrats would win. Move the slider to see what changes when the national vote shifts.',
     total: house.total,
     rows: main.rows,
     steps: main.steps,
@@ -113,8 +145,18 @@ export function outcomesView(results) {
     scope: national.note,
     points,
     baseIndex,
+    why,
+    tour: {
+      label: 'How to read this',
+      intro: `A short tour of this chapter in ${COUNT_WORDS[steps.length]} steps.`,
+      end: 'That is the comparison. Choose a row or move the slider to explore it yourself.',
+      base: baseIndex,
+      steps,
+    },
     slider: {
       label: 'Democratic share of the national two-party vote',
+      how: `Every district moves by the same number of points. The slider starts at ${sliderShare(base.share)}, `
+        + 'the 2016 and 2020 votes together.',
       scale,
       base: { index: baseIndex, label: '2016 + 2020' },
       reach,

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Some votes are more equal than others</title>
-  <meta name="description" content="Same votes, three ways to count the U.S. House: in proportion to the votes, on neutral maps, and on the maps of 2026.">
+  <meta name="description" content="The same votes, three ways to divide the 435 House seats: by each party&#39;s share of the vote, on neutral maps drawn by computer, and on the maps the states drew for 2026.">
   <meta name="author" content="Govert Schoof">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
@@ -17,7 +17,7 @@
     <div class="wrap">
       <p class="eyebrow">U.S. House maps for November 3, 2026</p>
       <h1>Some votes are more equal than others</h1>
-      <p class="sub">Same votes, three ways to count the U.S. House: in proportion to the votes, on neutral maps, and on the maps of 2026.</p>
+      <p class="sub">The same votes, three ways to divide the 435 House seats: by each party&#39;s share of the vote, on neutral maps drawn by computer, and on the maps the states drew for 2026.</p>
       <p class="byline">By <span class="author">Govert Schoof</span><span aria-hidden="true"> · </span><time datetime="2026-10-08">October 8, 2026</time><span aria-hidden="true"> · </span><a href="#method">Methodology</a></p>
     </div>
   </header>
@@ -40,6 +40,14 @@
           <h2 id="h01">One electorate. Three outcomes.</h2>
           <p id="outcomes-intro"></p>
         </div>
+        <div class="tour" id="tour">
+          <div class="tour-head">
+            <span class="tour-label" id="tour-label"></span><span class="tour-count" id="tour-count"></span>
+            <button type="button" id="tour-play">Play</button><button type="button" id="tour-skip" hidden>Skip</button>
+          </div>
+          <p class="tour-text" id="tour-text" aria-live="polite"></p>
+          <div class="tour-bar" aria-hidden="true"><i id="tour-progress"></i></div>
+        </div>
         <div class="outcomes">
           <div class="scen" role="radiogroup" aria-label="Way of counting" id="scen"></div>
           <div class="waffle">
@@ -51,7 +59,9 @@
                 <input type="range" id="vote">
                 <div class="vote-ticks" id="vote-ticks" aria-hidden="true"></div>
               </div>
+              <p class="note" id="vote-how"></p>
               <p class="note" id="vote-majority"></p>
+              <details class="why"><summary id="vote-why-summary"></summary><p class="note" id="vote-why-text"></p></details>
             </div>
             <p class="finding" id="finding"></p>
             <div class="readout" id="readout" aria-live="polite"></div>
@@ -187,7 +197,7 @@
             <p><b>How to read the three numbers.</b> All numbers count Democratic seats in the U.S. House. <i>Vote-proportional</i> gives each state's seats in proportion to its two-party vote. <i>Neutral-map median</i> is the median of <span data-fill="plans"></span> maps per state drawn by a computer that follows each state's rules but ignores party. <i>Enacted maps</i> is what the maps used on November 3, 2026 produce with the same votes. The difference between the first two is the geographic effect; the difference between the last two is the drawing effect. An effect shows its direction: R+6 means 6 seats toward Republicans, D+3 means 3 seats toward Democrats.</p>
             <p><b>The six states with one seat.</b> Alaska, Delaware, North Dakota, South Dakota, Vermont and Wyoming elect one representative for the whole state. There is nothing to draw, so all three counts give the same result: the party that won the state in 2016 and 2020, Democrats in Delaware and Vermont and Republicans in the other four. The national numbers include these six seats; they do not change the effects. On the vote slider none of the six changes sides, which the pipeline checks at every step.</p>
             <p><b>Why neutral maps are not proportional.</b> Each district elects one winner, so the party with more votes in a state usually wins a larger share of its seats than of its votes. Democratic voters also live closer together, mostly in cities, so neutral maps often put many of them in a few districts that Democrats win by large margins. The geographic effect is the sum of both.</p>
-            <p><b>Votes.</b> We use the 2016 and 2020 presidential results added together, by voting district (by census tract in California, Hawaii, Maine and Oregon, by county in Iowa and West Virginia; West Virginia uses 2020 only), as prepared by the ALARM Project. The enacted seats come from assigning these votes to the 2026 districts, not from House results. With these votes the enacted seats can differ from what happened in 2024.</p>
+            <p><b>Votes.</b> We use the 2016 and 2020 presidential results added together, by voting district (by census tract in California, Hawaii, Maine and Oregon, by county in Iowa and West Virginia; West Virginia uses 2020 only), as prepared by the ALARM Project. The enacted seats come from assigning these votes to the 2026 districts, not from House results. With these votes the enacted seats can differ from what happened in 2024. We use presidential votes because House results depend on the maps themselves: in safe districts one party often has no candidate, and incumbents run ahead of their party. Presidential votes are cast everywhere for the same two candidates, so they can be counted on any map. Adding 2016 and 2020 evens out the candidates of a single year. In 2024 Democrats won <span data-fill="share-2024"></span> of the two-party presidential vote; the vote slider in chapter 01 shows a year like that.</p>
             <p><b>The Voting Rights Act.</b> The law can require districts where a minority group forms a large share of the voters. In seat counts such districts can look like packing. ALARM's neutral maps follow the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). Where a map adopted after that ruling removed such districts, the change shows up in the drawing effect. The notes per state say what ALARM did there.</p>
             <p><b>Neutral maps that keep old district cores.</b> In Kansas and Nebraska, ALARM's neutral maps keep the cores of the districts drawn after the 2010 census. In Louisiana, New Mexico and Utah they keep those of the 2021 or 2022 map. In New Mexico, and largely in Louisiana, that pulls the drawing effect toward zero.</p>
             <p><b>The national band.</b> The national neutral-map median combines the <span data-fill="states"></span> states as if their neutral maps were drawn independently. The national effects therefore differ slightly from the sum of the state effects.</p>
@@ -209,7 +219,7 @@
               <li>With the 2016 and 2020 presidential votes, <span class="nowrap">TX-15</span>, <span class="nowrap">TX-28</span> and <span class="nowrap">TX-34</span> count as Democratic districts. On the same lines, all three voted Republican for president in 2024, according to the <a href="https://data.capitol.texas.gov/dataset/planc2333">Texas Legislative Council</a>.</li>
               <li>In Louisiana the Voting Rights Act requirement and the kept district cores together nearly fix the outcome. Of the <span data-fill="plans"></span> neutral maps, <span data-fill="la-share"></span> give <span data-fill="la-seats"></span>.</li>
             </ul>
-            <p><b>Sources.</b> Neutral maps and votes: ALARM Project, 50-State Redistricting Simulations, version <span data-fill="alarm-version"></span> (McCartan, Imai and others; Harvard Dataverse, <a href="https://doi.org/10.7910/DVN/SLCD3E">doi:10.7910/DVN/SLCD3E</a>), CC0. ALARM's vote data build on precinct results from the Voting and Election Science Team (CC BY 4.0). Block votes for splitting tracts in California, Hawaii, Maine and Oregon: ALARM Project, census-2020 files (CC BY-SA 4.0). Boundaries and block files: U.S. Census Bureau, TIGER/Line 2026 (2025 for Missouri), the 2025 cartographic boundary file for the state outlines, and the block equivalency files for the 118th, 119th and 120th Congress (public domain). Presidential results of the six states with one seat, for the Senate block: MIT Election Data and Science Lab, U.S. President 1976-2024, version 10.1 (Harvard Dataverse, <a href="https://doi.org/10.7910/DVN/42MVDX">doi:10.7910/DVN/42MVDX</a>), CC0. Legal status as of <span data-fill="status-date"></span>. Cross-checked against PlanScore for seven states.</p>
+            <p><b>Sources.</b> Neutral maps and votes: ALARM Project, 50-State Redistricting Simulations, version <span data-fill="alarm-version"></span> (McCartan, Imai and others; Harvard Dataverse, <a href="https://doi.org/10.7910/DVN/SLCD3E">doi:10.7910/DVN/SLCD3E</a>), CC0. ALARM's vote data build on precinct results from the Voting and Election Science Team (CC BY 4.0). Block votes for splitting tracts in California, Hawaii, Maine and Oregon: ALARM Project, census-2020 files (CC BY-SA 4.0). Boundaries and block files: U.S. Census Bureau, TIGER/Line 2026 (2025 for Missouri), the 2025 cartographic boundary file for the state outlines, and the block equivalency files for the 118th, 119th and 120th Congress (public domain). Presidential results of the six states with one seat, for the Senate block, and the national shares of 2016, 2020 and 2024: MIT Election Data and Science Lab, U.S. President 1976-2024, version 10.1 (Harvard Dataverse, <a href="https://doi.org/10.7910/DVN/42MVDX">doi:10.7910/DVN/42MVDX</a>), CC0. Legal status as of <span data-fill="status-date"></span>. Cross-checked against PlanScore for seven states.</p>
           </div>
         </details>
       </div>

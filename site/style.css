@@ -242,6 +242,20 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 #waffle .frames rect { fill: transparent; stroke: var(--fg); stroke-width: 1.5; cursor: help; pointer-events: all; }
 .wkey .fr { width: 0.6rem; height: 1rem; border: 1.5px solid var(--fg); }
 #waffle-tip { z-index: 2; }
+/* The explainer at the top of chapter 01 (Mark Thompson's feedback, October 12): five steps that play by themselves */
+.tour { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.45rem; margin-bottom: 1.2rem; }
+.tour-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
+.tour-label { font-weight: 700; color: var(--ink); letter-spacing: 0.06em; text-transform: uppercase; }
+.tour-count { font-variant-numeric: tabular-nums; }
+.tour-head button { font: inherit; font-weight: 600; padding: 0.2rem 0.6rem; border: 1px solid var(--rule); background: var(--bg); color: var(--fg); cursor: pointer; }
+.tour-head button:first-of-type { margin-left: auto; }
+.tour-text { margin: 0; font: 600 1.0625rem/1.45 var(--font-head); color: var(--fg); min-height: 2.9em; max-width: 70ch; }
+.tour-bar { height: 3px; background: var(--rule); }
+.tour-bar i { display: block; height: 100%; width: 0; background: var(--ink); }
+@keyframes tourbar { from { width: 0; } to { width: 100%; } }
+.why summary { cursor: pointer; font-size: 0.8125rem; font-weight: 600; color: var(--fg); }
+.why p { margin: 0.35rem 0 0; max-width: 64ch; }
+#vote-how { margin: 0; max-width: 64ch; }
 /* The vote slider (plan 2026-10-08-vote-slider): ticks where each count reaches a House majority. --thumb keeps the
    ticks under the centre of the thumb, which travels from thumb/2 to 100% - thumb/2. */
 .vote { --thumb: 1.15rem; display: grid; gap: 0.35rem; }

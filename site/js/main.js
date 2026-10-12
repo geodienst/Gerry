@@ -13,6 +13,7 @@ import {
   outcomesView, largestEffects, recordView, singleSeatView, decideView,
 } from './chapters.js';
 import { renderOutcomes } from './outcomes.js';
+import { createTour } from './tour.js';
 import { renderDecide } from './decide.js';
 import { drawSeatAxis } from './charts.js';
 import { nationalSeatDomain } from './axes.js';
@@ -60,7 +61,9 @@ async function main() {
     mac: /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
   });
   $('maphint').textContent = hints.hint;
-  const outcomes = renderOutcomes(outcomesView(results), { reduceMotion: () => reduceMotion.matches });
+  const outcomesData = outcomesView(results);
+  const outcomes = renderOutcomes(outcomesData, { reduceMotion: () => reduceMotion.matches });
+  createTour(outcomesData.tour, outcomes, { reduceMotion: () => reduceMotion.matches });
   outcomes.paint(colors);
 
   const map = createMap({

@@ -41,13 +41,14 @@ export function renderOutcomes(view, { reduceMotion }) {
       node('span', { class: 'visually-hidden' }, ' Democratic seats'));
     button.append(node('span', { class: 'dot', 'aria-hidden': 'true' }), node('span', { class: 'lab' }, row.label),
       big, parts[row.key].desc);
-    button.addEventListener('click', () => select(row.key, true));
+    button.addEventListener('click', () => { userHook(); select(row.key, true); });
     button.addEventListener('keydown', (event) => {
       const last = view.rows.length - 1;
       const to = { ArrowDown: i + 1, ArrowRight: i + 1, ArrowUp: i - 1, ArrowLeft: i - 1, Home: 0, End: last }[event.key];
       if (to === undefined) return;
       event.preventDefault();
       const next = view.rows[(to + view.rows.length) % view.rows.length].key;
+      userHook();
       select(next, true);
       group.querySelector(`[data-key="${next}"]`).focus();
     });
@@ -184,6 +185,9 @@ export function renderOutcomes(view, { reduceMotion }) {
   slider.value = String(pi);
   $('vote-label').textContent = view.slider.label;
   $('vote-majority').textContent = view.slider.majority;
+  $('vote-how').textContent = view.slider.how;
+  $('vote-why-summary').textContent = view.why.summary;
+  $('vote-why-text').textContent = view.why.text;
   const mark = (cls, { index, label }) => {
     const tick = node('span', { class: cls });
     tick.style.setProperty('--at', String(index / (view.points.length - 1)));
@@ -213,10 +217,11 @@ export function renderOutcomes(view, { reduceMotion }) {
     drawBand();
     draw(false, true);
   }
-  slider.addEventListener('input', () => moveTo(Number(slider.value)));
-  back.addEventListener('click', () => { moveTo(view.baseIndex); slider.focus(); });
+  slider.addEventListener('input', () => { userHook(); moveTo(Number(slider.value)); });
+  back.addEventListener('click', () => { userHook(); moveTo(view.baseIndex); slider.focus(); });
 
   let current = 'enacted';
+  let userHook = () => {}; // set by the explainer: a click on a row or a move of the slider by the reader
   let shown = null; // the Democratic count on screen, where a change starts from
   let colors = null;
 
@@ -284,5 +289,9 @@ export function renderOutcomes(view, { reduceMotion }) {
       draw(false);
     },
     select,
+    /** Move the slider to stop `index` (the explainer). */
+    moveTo,
+    /** Call `fn` when the reader chooses a row or moves the slider; changes made through select and moveTo do not. */
+    onUser(fn) { userHook = fn; },
   };
 }

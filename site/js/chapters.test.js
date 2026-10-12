@@ -23,8 +23,9 @@ test('outcomesView: three rows, the two effects between them, the band and the s
   // drawing -10; position.more 0.9972; seven states; Texas first with 5,000 maps. Every count is shown in the House of
   // 435 (owner decision, October 11): plus the 2 Democratic single-seat states -> 226, 225 (219 to 231), 215.
   const view = outcomesView(withExtensions());
-  assert.equal(view.intro, 'Democratic seats in the House of 435, counted three ways with the same votes. '
-    + 'Select a row to see it as seats.');
+  // the intro names the rows and the slider (Mark Thompson's feedback, October 12)
+  assert.equal(view.intro, 'One set of votes, three ways to turn them into seats. Choose a row to see how many of the 435 '
+    + 'seats Democrats would win. Move the slider to see what changes when the national vote shifts.');
   assert.equal(view.total, 435);
   assert.deepEqual(view.rows.map((r) => [r.key, r.label, r.seats, r.value]), [
     ['proportional', 'Vote-proportional', 226, '226'], ['neutral', 'Neutral-map median', 225, '225'], ['enacted', 'Enacted maps', 215, '215'],
@@ -92,12 +93,50 @@ test('outcomesView: one view per point of the vote slider, the base point as the
   assert.deepEqual(view.slider.scale, [{ index: 0, label: '50%' }, { index: 2, label: '53%' }]);
   assert.deepEqual(view.slider.base, { index: 1, label: '2016 + 2020' });
   assert.equal(view.slider.label, 'Democratic share of the national two-party vote');
+  assert.equal(view.slider.how, 'Every district moves by the same number of points. The slider starts at 51.8%, '
+    + 'the 2016 and 2020 votes together.');
+  // why presidential votes of 2016 and 2020; plans 5,000 per state; 2024 at 49.2499% -> 49.2%
+  assert.deepEqual(view.why, { summary: 'Why these votes?', text: 'House results depend on the maps themselves: in safe '
+    + 'districts one party often has no candidate, and incumbents run ahead of their party. Presidential votes are cast '
+    + 'everywhere for the same two candidates, so they can be counted on any map, including the 5,000 neutral maps per '
+    + 'state. The ALARM Project provides them by voting district for 2016 and 2020; adding both evens out the candidates '
+    + 'of a single year. In 2024 Democrats won 49.2% of the two-party presidential vote. Move the slider there to see a '
+    + 'year like it.' });
   // the sentence names the first stop where each count reaches 218 of 435:
   // proportional 219 at 50.0%; neutral 205 at 50.0%, 225 at the base; enacted 207, 215, then 223 at 53.0%
   // a short line on the slider at the first stop where the chosen row reaches 218 of 435, and the sentence that explains it
   assert.deepEqual(view.slider.reach, { proportional: 0, neutral: 1, enacted: 2 });
   assert.equal(view.slider.majority, 'The short line marks where the chosen count reaches a majority, 218 of 435 seats. '
     + 'That happens at 50.0% of the two-party vote if seats follow the votes, at 51.8% on neutral maps and at 53.0% on the enacted maps.');
+});
+
+test('outcomesView: the explainer in five steps, each with a row and a stop of the slider', () => {
+  const view = outcomesView(withExtensions());
+  const { tour } = view;
+  assert.equal(tour.label, 'How to read this');
+  assert.equal(tour.base, view.baseIndex);
+  // the first four steps stay at the 2016 and 2020 votes; the fifth goes to the stop nearest 2024 (49.25%): in testdata
+  // the stops are 50%, the base and 53%, so 50.0%, where the enacted maps give 205 + 2 and neutral maps 203 + 2
+  assert.deepEqual(tour.steps.map((s) => [s.key, s.index]), [['enacted', 1], ['proportional', 1], ['neutral', 1], ['enacted', 1], ['enacted', 0]]);
+  assert.deepEqual(tour.steps.map((s) => s.text), [
+    'Each square is one seat in the U.S. House, 435 in all. The party with 218 seats has the majority.',
+    "Vote-proportional: if each state's seats followed its two-party vote, Democrats would win 226 seats.",
+    'Neutral-map median: a computer drew 5,000 legal maps per state without using party data. Their middle outcome gives '
+      + 'Democrats 225 seats, 1 seat toward Republicans compared with the votes. That is the geographic effect.',
+    'Enacted maps: the maps the states drew for November 3, 2026 give Democrats 215 seats, 10 seats toward Republicans '
+      + 'compared with neutral maps. That is the drawing effect.',
+    'The slider moves the national vote. At 50.0%, near the Democratic share of the 2024 presidential vote, the enacted maps '
+      + 'give Democrats 207 seats and neutral maps 205.',
+  ]);
+  assert.equal(tour.intro, 'A short tour of this chapter in five steps.');
+  assert.equal(tour.end, 'That is the comparison. Choose a row or move the slider to explore it yourself.');
+  // without the presidential shares the tour has four steps and the 2024 sentence is left out
+  const r = withExtensions();
+  delete r.national.president;
+  const four = outcomesView(r);
+  assert.equal(four.tour.steps.length, 4);
+  assert.equal(four.tour.intro, 'A short tour of this chapter in four steps.');
+  assert.ok(!four.why.text.includes('2024'));
 });
 
 test('outcomesView: no second stop with the label of the base, and a count that never reaches a majority', () => {

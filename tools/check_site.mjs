@@ -154,8 +154,11 @@ async function main() {
       return false;
     },
     text: (selector) => js(`document.querySelector(${JSON.stringify(selector)})?.textContent ?? ''`),
-    /** Open the page at `hash` with a window size and media features; waits until the map is drawn. */
-    async load(hash = '', { width = 1280, height = 800, dark = false, reduce = false } = {}) {
+    /**
+     * Open the page at `hash` with a window size and media features; waits until the map is drawn. `query` goes before
+     * the hash: by default ?notour, so the explainer of chapter 01 does not play while the other checks run.
+     */
+    async load(hash = '', { width = 1280, height = 800, dark = false, reduce = false, query = 'notour' } = {}) {
       await tab('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 768 });
       await tab('Emulation.setEmulatedMedia', { features: [
         { name: 'prefers-color-scheme', value: dark ? 'dark' : 'light' },
@@ -164,7 +167,7 @@ async function main() {
       // A URL that differs from the current one only after # is a same-document navigation, which
       // keeps the old page; leave it first so every load starts fresh.
       await tab('Page.navigate', { url: 'about:blank' });
-      await tab('Page.navigate', { url: `${base}${hash}` });
+      await tab('Page.navigate', { url: `${base}${query ? `?${query}` : ''}${hash}` });
       await sleep(300);
       return this.until("document.querySelectorAll('#map path.district').length > 0 && document.querySelector('#map > g') !== null");
     },
