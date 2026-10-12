@@ -220,7 +220,8 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .choice .dot::after { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: transparent; }
 .choice .lab { font-weight: 600; }
 .choice .desc { grid-column: 2; font-size: 0.8125rem; color: var(--muted); line-height: 1.4; }
-.choice .big { grid-row: 1 / span 2; grid-column: 3; font: 700 2rem/1 var(--font-head); font-variant-numeric: tabular-nums; }
+.choice .big { grid-row: 1 / span 2; grid-column: 3; display: grid; justify-items: center; gap: 0.35rem; }
+.choice .big .n { font: 700 2rem/1 var(--font-head); font-variant-numeric: tabular-nums; }
 .choice[aria-checked="true"] { background: var(--tint); border-color: var(--ink); }
 .choice[aria-checked="true"] .dot { border-color: var(--ink); }
 .choice[aria-checked="true"] .dot::after { background: var(--ink); }
@@ -250,7 +251,10 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .vote-head output { font: 700 1.1875rem/1.2 var(--font-head); font-variant-numeric: tabular-nums; }
 .vote-back { font: inherit; font-size: 0.8125rem; padding: 0.15rem 0; border: 0; background: none; color: var(--fg); cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
 .vote-track { position: relative; padding: 1.5rem 0 1.6rem; }
-#vote { width: 100%; margin: 0; height: var(--thumb); appearance: none; -webkit-appearance: none; background: none; cursor: pointer; }
+#vote { position: relative; z-index: 1; width: 100%; margin: 0; height: var(--thumb); appearance: none; -webkit-appearance: none; background: none; cursor: pointer; }
+/* the short line where the chosen row reaches a majority, across the track and under the thumb */
+.vote-tip { position: absolute; top: calc(1.5rem + var(--thumb) / 2 - 0.55rem); height: 1.1rem; width: 2px; left: calc(var(--thumb) / 2 + var(--at) * (100% - var(--thumb))); transform: translateX(-50%); background: var(--fg); pointer-events: none; }
+.vote-tip[hidden] { display: none; }
 #vote::-webkit-slider-runnable-track { height: 4px; background: var(--rule); }
 #vote::-moz-range-track { height: 4px; background: var(--rule); }
 #vote::-webkit-slider-thumb { -webkit-appearance: none; width: var(--thumb); height: var(--thumb); margin-top: calc(2px - var(--thumb) / 2); border-radius: 50%; background: var(--ink); border: 2px solid var(--sheet); }

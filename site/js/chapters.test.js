@@ -94,8 +94,10 @@ test('outcomesView: one view per point of the vote slider, the base point as the
   assert.equal(view.slider.label, 'Democratic share of the national two-party vote');
   // the sentence names the first stop where each count reaches 218 of 435:
   // proportional 219 at 50.0%; neutral 205 at 50.0%, 225 at the base; enacted 207, 215, then 223 at 53.0%
-  assert.equal(view.slider.majority, 'On the slider, a House majority starts at 50.0% of the two-party vote if seats follow '
-    + 'the votes, at 51.8% on neutral maps and at 53.0% on the enacted maps.');
+  // a short line on the slider at the first stop where the chosen row reaches 218 of 435, and the sentence that explains it
+  assert.deepEqual(view.slider.reach, { proportional: 0, neutral: 1, enacted: 2 });
+  assert.equal(view.slider.majority, 'The short line marks where the chosen count reaches a majority, 218 of 435 seats. '
+    + 'That happens at 50.0% of the two-party vote if seats follow the votes, at 51.8% on neutral maps and at 53.0% on the enacted maps.');
 });
 
 test('outcomesView: no second stop with the label of the base, and a count that never reaches a majority', () => {
@@ -106,7 +108,8 @@ test('outcomesView: no second stop with the label of the base, and a count that 
   const view = outcomesView(r);
   assert.deepEqual(view.points.map((p) => p.label), ['50.0%', '51.8%', '53.0%']);
   assert.equal(view.baseIndex, 1);
-  // enacted never reaches 218 of 435 (at most 215 + 2): the sentence says so
+  // enacted never reaches 218 of 435 (at most 215 + 2): no line for it, and the sentence says so
+  assert.equal(view.slider.reach.enacted, -1);
   assert.match(view.slider.majority, /and above 53\.0% on the enacted maps\.$/);
   // the scale leaves out the base; the dropped stop at 51.8% does not count
   assert.deepEqual(view.slider.scale, [{ index: 0, label: '50%' }, { index: 2, label: '53%' }]);

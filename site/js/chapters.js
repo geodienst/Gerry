@@ -84,12 +84,11 @@ export function outcomesView(results) {
     .sort((a, b) => a.share - b.share).map((p) => pointView(p, { offset: house.dSingle, total: house.total }));
   const baseIndex = points.findIndex((p) => p.base);
   const main = points[baseIndex];
-  // The sentence under the slider names the first stop where each count reaches a majority, so the sentence and the
-  // waffle at that stop agree.
-  const from = (key) => {
-    const index = points.findIndex((p) => p.rows.find((r) => r.key === key).seats >= majority);
-    return index >= 0 ? `at ${points[index].label}` : `above ${points.at(-1).label}`;
-  };
+  // The first stop where each count reaches a majority: a short line on the slider for the chosen row, and the sentence
+  // under the slider, so the line, the sentence and the waffle at that stop agree. -1: not within the slider.
+  const reach = Object.fromEntries(['proportional', 'neutral', 'enacted'].map((key) => [key,
+    points.findIndex((p) => p.rows.find((r) => r.key === key).seats >= majority)]));
+  const from = (key) => (reach[key] >= 0 ? `at ${points[reach[key]].label}` : `above ${points.at(-1).label}`);
   // A plain scale under the slider: the stops at whole percents, and a mark at the 2016 and 2020 votes (feedback of
   // October 11: labels per count looked like choices between the counts).
   const scale = points.map((p, index) => ({ p, index }))
@@ -118,8 +117,10 @@ export function outcomesView(results) {
       label: 'Democratic share of the national two-party vote',
       scale,
       base: { index: baseIndex, label: '2016 + 2020' },
-      majority: `On the slider, a House majority starts ${from('proportional')} of the two-party vote `
-        + `if seats follow the votes, ${from('neutral')} on neutral maps and ${from('enacted')} on the enacted maps.`,
+      reach,
+      majority: `The short line marks where the chosen count reaches a majority, ${seats(majority)} of ${seats(house.total)} seats. `
+        + `That happens ${from('proportional')} of the two-party vote if seats follow the votes, ${from('neutral')} on neutral maps `
+        + `and ${from('enacted')} on the enacted maps.`,
     },
   };
 }

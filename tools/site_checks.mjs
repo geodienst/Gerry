@@ -612,10 +612,16 @@ async function outcomes(t) {
         + plus(n.neutral.median) + '.' };
   })`);
   const rows = await t.js(`[...document.querySelectorAll('#scen [role=radio]')].map((b) => ({ label: b.querySelector('.lab').textContent,
-    value: b.querySelector('.big').textContent, checked: b.getAttribute('aria-checked'), tab: b.tabIndex }))`);
+    value: b.querySelector('.big .n').textContent, checked: b.getAttribute('aria-checked'), tab: b.tabIndex }))`);
   t.check('three rows labeled Vote-proportional, Neutral-map median and Enacted maps, with the numbers of results.json plus Delaware and Vermont',
     rows.map((r) => r.label).join() === 'Vote-proportional,Neutral-map median,Enacted maps' && rows.map((r) => r.value).join() === want.values.join(),
     JSON.stringify(rows));
+  t.check('a block in the Democratic color under each number of the three rows, and words for screen readers', await t.js(`(() => {
+    const legend = getComputedStyle(document.querySelector('#outcomes .wkey .sw.d')).backgroundColor;
+    const blocks = [...document.querySelectorAll('#scen .big .sw.d')];
+    return blocks.length === 3 && blocks.every((b) => getComputedStyle(b).backgroundColor === legend)
+      && [...document.querySelectorAll('#scen .big .visually-hidden')].every((s) => s.textContent.trim() === 'Democratic seats');
+  })()`));
   t.check('the finding beside the waffle names the drawing effect and both counts', (await t.text('#finding')) === want.finding, await t.text('#finding'));
   t.check('Enacted maps is chosen at the start and is the only tab stop', rows.map((r) => `${r.checked}/${r.tab}`).join() === 'false/-1,false/-1,true/0');
   t.check('the two effects stand between the rows',
@@ -718,9 +724,24 @@ async function outcomes(t) {
   t.check('at the stop the sentence names for the enacted maps they reach seat 218, one stop lower they do not',
     enactedStop > 0 && atStop.blue && atStop.democratic >= swing.needed + 2 && !below.blue && below.democratic < swing.needed + 2,
     JSON.stringify({ enactedAt, enactedStop, atStop, below }));
+  // the short line marks the stop where the chosen row reaches 218 of 435: the enacted maps at the start, then neutral maps
+  const stopOf = (name) => {
+    const at = Number(new RegExp(`at (\\d+\\.\\d)% ${name}`).exec(slider.sentence)?.[1]);
+    return stops.findIndex((p) => Math.abs(p.share * 100 - at) < 0.05);
+  };
+  const tipAt = () => t.js(`(() => { const l = document.getElementById('vote-tip');
+    return l.hidden ? -1 : Math.round(Number(l.style.getPropertyValue('--at')) * Number(document.getElementById('vote').max)); })()`);
+  const tipEnacted = await tipAt();
+  await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
+  const tipNeutral = await tipAt();
+  await t.js("document.querySelectorAll('#scen [role=radio]')[2].click()");
+  t.check('the short line on the slider sits at the stop where the chosen row reaches a majority, and moves with the row',
+    tipEnacted === stopOf('on the enacted maps') && tipNeutral === stopOf('on neutral maps') && tipEnacted !== tipNeutral
+    && slider.sentence.startsWith('The short line marks where the chosen count reaches a majority, 218 of 435 seats.'),
+    JSON.stringify({ tipEnacted, tipNeutral, sentence: slider.sentence }));
   const half = stops.findIndex((p) => Math.abs(p.share - 0.5) < 1e-9);
   await setSlider(half);
-  const moved = await t.js(`(() => ({ rows: [...document.querySelectorAll('#scen .big')].map((b) => Number(b.textContent)),
+  const moved = await t.js(`(() => ({ rows: [...document.querySelectorAll('#scen .big .n')].map((b) => Number(b.textContent)),
     out: document.getElementById('vote-out').textContent, back: document.getElementById('vote-back').hidden,
     finding: document.getElementById('finding').textContent, democratic: ${democratic} }))()`);
   const p = stops[half];

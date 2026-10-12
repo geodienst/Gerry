@@ -34,9 +34,13 @@ export function renderOutcomes(view, { reduceMotion }) {
   const stepTexts = [];
   const rows = view.rows.map((row, i) => {
     const button = node('button', { type: 'button', class: 'choice', role: 'radio', 'aria-checked': 'false', tabindex: '-1', 'data-key': row.key });
-    parts[row.key] = { big: node('span', { class: 'big' }), desc: node('span', { class: 'desc' }) };
+    // the number with a block in the Democratic color under it: these are Democratic seats (owner, October 12)
+    parts[row.key] = { num: node('span', { class: 'n' }), desc: node('span', { class: 'desc' }) };
+    const big = node('span', { class: 'big' });
+    big.append(parts[row.key].num, node('i', { class: 'sw d', 'aria-hidden': 'true' }),
+      node('span', { class: 'visually-hidden' }, ' Democratic seats'));
     button.append(node('span', { class: 'dot', 'aria-hidden': 'true' }), node('span', { class: 'lab' }, row.label),
-      parts[row.key].big, parts[row.key].desc);
+      big, parts[row.key].desc);
     button.addEventListener('click', () => select(row.key, true));
     button.addEventListener('keydown', (event) => {
       const last = view.rows.length - 1;
@@ -161,7 +165,7 @@ export function renderOutcomes(view, { reduceMotion }) {
   function texts() {
     const p = point();
     for (const row of p.rows) {
-      parts[row.key].big.textContent = row.value;
+      parts[row.key].num.textContent = row.value;
       parts[row.key].desc.textContent = row.desc;
     }
     p.steps.forEach((step, i) => stepTexts[i].replaceChildren(`${step.label} `, node('b', {}, step.value), `: ${step.words}`));
@@ -187,6 +191,13 @@ export function renderOutcomes(view, { reduceMotion }) {
     return tick;
   };
   $('vote-ticks').replaceChildren(...view.slider.scale.map((t) => mark('tk', t)), mark('tk base', view.slider.base));
+  // the short line where the chosen row reaches a majority; it moves with the choice of row
+  const tipLine = $('vote-tip');
+  const placeTipLine = () => {
+    const index = view.slider.reach[current];
+    tipLine.hidden = index < 0;
+    tipLine.style.setProperty('--at', String(Math.max(index, 0) / (view.points.length - 1)));
+  };
   const back = $('vote-back');
   function showPoint() {
     const p = point();
@@ -251,6 +262,7 @@ export function renderOutcomes(view, { reduceMotion }) {
 
   function select(key, animate = false) {
     current = key;
+    placeTipLine();
     for (const button of rows) {
       const on = button.dataset.key === key;
       button.setAttribute('aria-checked', String(on));
@@ -268,7 +280,7 @@ export function renderOutcomes(view, { reduceMotion }) {
     /** Colors for the squares and the key; again after a palette or theme change. */
     paint(next) {
       colors = next;
-      for (const swatch of document.querySelectorAll('#outcomes .wkey .sw')) swatch.style.background = colors.party(swatch.classList.contains('d'));
+      for (const swatch of document.querySelectorAll('#outcomes .sw.d, #outcomes .sw.r')) swatch.style.background = colors.party(swatch.classList.contains('d'));
       draw(false);
     },
     select,
