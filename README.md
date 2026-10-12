@@ -73,6 +73,6 @@ The page has four numbered chapters: the national count three ways, with a short
 - ALARM Project, 50-State Redistricting Simulations, Harvard Dataverse, doi:10.7910/DVN/SLCD3E, version 15. CC0 1.0.
 - ALARM census-2020 files, with election data from the Voting and Election Science Team. The election data is CC BY 4.0, the census-2020 files are CC BY-SA 4.0.
 - US Census Bureau block equivalency files for the 118th, 119th and 120th Congress, P.L. 94-171 redistricting data, TIGER/Line files and cartographic boundary files. Public domain.
-- MIT Election Data and Science Lab, U.S. President 1976-2024, Harvard Dataverse, doi:10.7910/DVN/42MVDX, version 10.1. CC0 1.0. The Senate block takes the 2016 and 2020 votes of the six states with one seat from it.
+- MIT Election Data and Science Lab, U.S. President 1976-2024, Harvard Dataverse, doi:10.7910/DVN/42MVDX, version 10.1. CC0 1.0. The Senate block takes the 2016 and 2020 votes of the six states with one seat from it, and the site the national two-party shares of 2016, 2020 and 2024.
 - D3 and topojson-client, ISC license. Copies with their license files are in `site/vendor/`.
 - The site footer credits the Geodienst of the University of Groningen, with its logo from `site/img/geodienst.svg` and a link to https://rug.nl/geo.
