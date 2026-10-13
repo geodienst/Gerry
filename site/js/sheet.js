@@ -63,7 +63,6 @@ export function renderLargest(el, view, onSelect) {
     button.append('b').text(chip.label);
     return { button, chip };
   });
-  if (view.rest) root.append('span').attr('class', 'rest').text(view.rest);
   return (colors, selected) => {
     for (const { button, chip } of buttons) {
       button.attr('aria-current', chip.postal === selected ? 'true' : null);

@@ -4,7 +4,7 @@ import {
   share, sliderShare, neededShare, neededGap, roundHalfUp, planShare, seats, count, effect, effectWords, effectLine, percentLabel,
 } from './format.js';
 import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS } from './model.js';
-import { stateExtras, majorityView, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
+import { stateExtras, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
 import { seatTicks, rowDomain } from './axes.js';
 
 export const LABELS = { proportional: 'Vote-proportional', neutral: 'Neutral-map median', enacted: 'Enacted maps' };
@@ -125,10 +125,9 @@ export function outcomesView(results) {
   }
   // The key sentence of the chapter: the threshold, which does not depend on one result (a data reviewer, October 13).
   const gap = neededGap(m.enacted.share, m.neutral.share);
-  const lead = `With these maps, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House majority. `
-    + `On neutral maps they would need ${neededShare(m.neutral.share)}. `
-    + (gap > 0 ? `The difference, ${roundHalfUp(gap, 1)} points, comes from how the maps are drawn.`
-      : gap === 0 ? 'The maps make no difference.' : `The enacted maps ask ${roundHalfUp(-gap, 1)} points less.`);
+  const lead = `With these maps, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House majority, `
+    + (gap > 0 ? `${roundHalfUp(gap, 1)} points more than on neutral maps.`
+      : gap === 0 ? 'the same as on neutral maps.' : `${roundHalfUp(-gap, 1)} points less than on neutral maps.`);
   // The drawing effect at every stop of the slider, with a few examples (same reviewer): the effect is not one number.
   const seatsAt = (point, key) => point.rows.find((r) => r.key === key).seats;
   const bars = points.map((p, index) => {
@@ -162,6 +161,8 @@ export function outcomesView(results) {
       + `${where} Each bar shows the drawing effect at one position of the vote slider in chapter 01; the dark line marks where the slider stands.`,
     axis: 'Democratic share of the national two-party vote',
     bars, examples, line,
+    // where the effect turns, for the key findings: below `below` toward Democrats, from `from` on toward Republicans
+    cross: { below: turn > 0 && even > 0 ? bars[even].label : null, from: turn > 0 ? bars[turn].label : null },
     label: `Drawing effect at each point of the vote slider, from ${points[0].label} to ${points.at(-1).label}. ${line}.`,
     max: Math.max(5, Math.ceil(Math.max(...bars.map((b) => Math.abs(b.drawing))) / 5) * 5),
   };
@@ -171,8 +172,7 @@ export function outcomesView(results) {
     .filter(({ p }) => !p.base && Math.abs(p.share * 100 - Math.round(p.share * 100)) < 1e-6)
     .map(({ p, index }) => ({ index, label: percentLabel(p.share) }));
   return {
-    intro: `One set of votes, three ways to turn them into seats. Choose a row to see how many of the ${seats(house.total)} `
-      + 'seats Democrats would win. Move the slider to see what changes when the national vote shifts.',
+    intro: 'Choose an option to see how the seats will be divided. On top of that, move the slider to change the national vote share.',
     total: house.total,
     rows: main.rows,
     steps: main.steps,
@@ -193,7 +193,6 @@ export function outcomesView(results) {
     byVote,
     why,
     tour: {
-      label: 'How to read this',
       intro: `A short tour of this chapter in ${COUNT_WORDS[steps.length]} steps.`,
       end: 'That is the comparison. Choose a row or move the slider to explore it yourself.',
       base: baseIndex,
@@ -201,8 +200,8 @@ export function outcomesView(results) {
     },
     slider: {
       label: 'Democratic share of the national two-party vote',
-      how: `Every district moves by the same number of points. The slider starts at ${sliderShare(base.share)}, `
-        + 'the 2016 and 2020 votes together.',
+      how: `The slider starts at ${sliderShare(base.share)}, the 2016 and 2020 presidential votes together. It moves every `
+        + 'district by the same number of points. The results are not a forecast.',
       scale,
       base: { index: baseIndex, label: '2016 + 2020' },
       reach,
@@ -255,11 +254,11 @@ export function waffleText(view, key) {
 
 // --- Chapter 02: state by state (Task 7.4) ------------------------------------------------------
 
-export const LARGEST_MIN = 3; // seats; every state at or above it is listed, the rest is counted
+export const LARGEST_MIN = 3; // seats; every state at or above it is listed
 
 /**
  * "Drawing effects of 3 seats or more": every state at or above the threshold, by size, toward Republicans
- * first at equal size, then by name; and one sentence that counts the states below it.
+ * first at equal size, then by name.
  */
 export function largestEffects(results, min = LARGEST_MIN) {
   const rows = Object.entries(results.states).map(([postal, s]) => ({ postal, name: s.name, drawing: s.effects.drawing }));
@@ -267,17 +266,7 @@ export function largestEffects(results, min = LARGEST_MIN) {
     .filter((r) => Math.abs(r.drawing) >= min)
     .sort((a, b) => Math.abs(b.drawing) - Math.abs(a.drawing) || a.drawing - b.drawing || a.name.localeCompare(b.name, 'en'))
     .map((r) => ({ ...r, label: effect(r.drawing), aria: `${r.name}, ${effectLine(r.drawing)}` }));
-  const small = rows.filter((r) => r.drawing !== 0 && Math.abs(r.drawing) < min).length;
-  const zero = rows.filter((r) => r.drawing === 0).length;
-  const under = min === 2 ? '1 seat' : min === 3 ? '1 or 2 seats' : `1 to ${count(min - 1)} seats`;
-  const parts = [];
-  if (small > 0) parts.push(`${count(small)} ${plural(small, 'state', 'states')} at ${under} either way`);
-  if (zero > 0) parts.push(`${count(zero)} ${plural(zero, 'state', 'states')} at 0`);
-  return {
-    title: `Drawing effects of ${count(min)} seats or more`,
-    chips,
-    rest: parts.length > 0 ? `Then ${parts.join(', and ')}.` : '',
-  };
+  return { title: `Drawing effects of ${count(min)} seats or more`, chips };
 }
 
 /** The state record: the sheet of Phase 6 (stateSheet, stateExtras) with the headline and the seat strip. */
@@ -331,29 +320,35 @@ function dots(values, step, tickText, rows, base = undefined) {
   return { domain, ticks: ticks.map((value) => ({ value, text: tickText(value) })), rows, ...(base ? { base } : {}) };
 }
 
+/** The answer under the question in the masthead (owner, October 13, 2026): four findings on the 2016 and 2020 votes.
+ *  `outcomes` is outcomesView(results), for the share where the drawing effect turns. */
+export function keyFindings(results, outcomes) {
+  const n = results.national;
+  const m = n.majority;
+  const d = n.effects.drawing;
+  const { below, from } = outcomes.byVote.cross;
+  const control = n.by_control;
+  return [
+    `With the maps the states drew for 2026, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House `
+      + `majority; on neutral maps, ${neededShare(m.neutral.share)}.`,
+    (d === 0 ? 'With the 2016 and 2020 votes, the maps give the same number of seats as neutral maps.'
+      : `With the 2016 and 2020 votes, the maps move ${effectWords(d)} compared with neutral maps.`)
+      + (below && from ? ` The direction depends on the vote: below ${below} the maps favor Democrats, from ${from} on Republicans.` : ''),
+    `Maps adopted under Republican control move ${effectWords(control.Republican.drawing)}; maps adopted under Democratic `
+      + `control, ${effectWords(control.Democratic.drawing)}.`,
+    `The maps have ${count(n.competitive.enacted)} competitive districts (45% to 55% Democratic); neutral maps have about `
+      + `${count(n.competitive.median)}.`,
+  ];
+}
+
 /** The cards of chapter 03: the texts of the extensions (Phase 6) with large figures and rows of dots. */
 export function decideView(results) {
   const n = results.national;
-  const majority = majorityView(results);
-  const m = n.majority;
   const c = n.competitive;
   const senate = senateView(results);
   const redraws = redrawView(results);
   const offset = houseOf(results).dSingle; // seats of the House of 435, as in chapter 01
   return {
-    intro: 'The same votes, read for control of the House and the Senate, for redraws since 2024 and for close districts.',
-    majority: {
-      ...majority,
-      dots: dots(
-        [m.proportional.share, m.neutral.share, m.neutral.low, m.neutral.high, m.enacted.share, m.base_share], 0.01, percentLabel,
-        [
-          { key: 'proportional', label: SHORT_LABELS.proportional, value: m.proportional.share, text: neededShare(m.proportional.share) },
-          { key: 'neutral', label: SHORT_LABELS.neutral, value: m.neutral.share, text: neededShare(m.neutral.share), band: [m.neutral.low, m.neutral.high] },
-          { key: 'enacted', label: SHORT_LABELS.enacted, value: m.enacted.share, text: neededShare(m.enacted.share), filled: true },
-        ],
-        { value: m.base_share, text: majority.axis.baseText },
-      ),
-    },
     senate,
     competitive: {
       figures: [{ value: count(c.enacted), label: 'enacted maps' }, { value: count(c.median), label: 'neutral median' }],

@@ -28,7 +28,6 @@ export function createTour(tour, outcomes, { reduceMotion }) {
   const play = $('tour-play');
   const skip = $('tour-skip');
   const bar = $('tour-progress');
-  $('tour-label').textContent = tour.label;
   let step = -1;
   let timer = null;
   let state = 'idle'; // idle, playing, paused or done

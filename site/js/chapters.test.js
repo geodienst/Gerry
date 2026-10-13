@@ -4,10 +4,10 @@ import assert from 'node:assert/strict';
 import { results, withExtensions } from './testdata.js';
 import {
   LABELS, SHORT_LABELS, EFFECT_LABELS, outcomesView, waffleText, changedKey, LARGEST_MIN, largestEffects, recordView, singleSeatView,
-  decideView,
+  decideView, keyFindings,
 } from './chapters.js';
 import { stateSheet, AT_LARGE_TEXT } from './model.js';
-import { majorityView, senateView, redrawView, controlTables } from './extensions.js';
+import { senateView, redrawView, controlTables } from './extensions.js';
 
 // --- chapter 01 (Task 7.3) ---
 
@@ -24,11 +24,12 @@ test('outcomesView: three rows, the two effects between them, the band and the s
   // 435 (owner decision, October 11): plus the 2 Democratic single-seat states -> 226, 225 (219 to 231), 215.
   const view = outcomesView(withExtensions());
   // the threshold as the key sentence of the chapter (a data reviewer, October 13): 52.4% against 51.2%
-  assert.equal(view.lead, 'With these maps, Democrats need 52.4% of the two-party vote for a House majority. On neutral '
-    + 'maps they would need 51.2%. The difference, 1.2 points, comes from how the maps are drawn.');
-  // the intro names the rows and the slider (Mark Thompson's feedback, October 12)
-  assert.equal(view.intro, 'One set of votes, three ways to turn them into seats. Choose a row to see how many of the 435 '
-    + 'seats Democrats would win. Move the slider to see what changes when the national vote shifts.');
+  // shorter since the key findings stand above it (owner, October 13)
+  assert.equal(view.lead, 'With these maps, Democrats need 52.4% of the two-party vote for a House majority, 1.2 points '
+    + 'more than on neutral maps.');
+  // the intro names the rows and the slider, in the owner's words (October 13)
+  assert.equal(view.intro, 'Choose an option to see how the seats will be divided. On top of that, move the slider to change '
+    + 'the national vote share.');
   assert.equal(view.total, 435);
   assert.deepEqual(view.rows.map((r) => [r.key, r.label, r.seats, r.value]), [
     ['proportional', 'Vote-proportional', 226, '226'], ['neutral', 'Neutral-map median', 225, '225'], ['enacted', 'Enacted maps', 215, '215'],
@@ -96,8 +97,9 @@ test('outcomesView: one view per point of the vote slider, the base point as the
   assert.deepEqual(view.slider.scale, [{ index: 0, label: '50%' }, { index: 2, label: '53%' }]);
   assert.deepEqual(view.slider.base, { index: 1, label: '2016 + 2020' });
   assert.equal(view.slider.label, 'Democratic share of the national two-party vote');
-  assert.equal(view.slider.how, 'Every district moves by the same number of points. The slider starts at 51.8%, '
-    + 'the 2016 and 2020 votes together.');
+  // the votes and "not a forecast", from the meta strip that is gone (owner, October 13)
+  assert.equal(view.slider.how, 'The slider starts at 51.8%, the 2016 and 2020 presidential votes together. It moves every '
+    + 'district by the same number of points. The results are not a forecast.');
   // why presidential votes of 2016 and 2020; plans 5,000 per state; 2024 at 49.2499% -> 49.2%
   assert.deepEqual(view.why, { summary: 'Why these votes?', text: 'House results depend on the maps themselves: in safe '
     + 'districts one party often has no candidate, and incumbents run ahead of their party. Presidential votes are cast '
@@ -135,12 +137,13 @@ test('outcomesView: the drawing effect at every stop of the slider, with a few e
   assert.equal(byVote.label, 'Drawing effect at each point of the vote slider, from 50.0% to 53.0%. 50.0%: D+2 · '
     + '51.8% (2016 + 2020): R+10 · 53.0%: R+13.');
   assert.equal(byVote.max, 15); // the largest effect, 13, rounded up to 5
+  // the effect turns at the base: no stop with 0 before it
+  assert.deepEqual(byVote.cross, { below: '51.8%', from: '51.8%' });
 });
 
 test('outcomesView: the explainer in five steps, each with a row and a stop of the slider', () => {
   const view = outcomesView(withExtensions());
   const { tour } = view;
-  assert.equal(tour.label, 'How to read this');
   assert.equal(tour.base, view.baseIndex);
   // the first four steps stay at the 2016 and 2020 votes; the fifth goes to the stop nearest 2024 (49.25%): in testdata
   // the stops are 50%, the base and 53%, so 50.0%, where the enacted maps give 205 + 2 and neutral maps 203 + 2
@@ -230,22 +233,14 @@ test('largestEffects: every state at 3 seats or more, by size, then toward Repub
     { postal: 'FL', name: 'Florida', drawing: -4, label: 'R+4', aria: 'Florida, R+4 · 4 seats toward Republicans' },
     { postal: 'CA', name: 'California', drawing: 3, label: 'D+3', aria: 'California, D+3 · 3 seats toward Democrats' },
   ]);
-  // below the threshold: TX (2) and NM (1); at 0: HI, LA, MO
-  assert.equal(view.rest, 'Then 2 states at 1 or 2 seats either way, and 3 states at 0.');
 });
 
-test('largestEffects: ties, one state, and nothing below the threshold', () => {
+test('largestEffects: ties', () => {
   const r = results();
   r.states.NM.effects.drawing = -3; // ties with CA at 3 seats: toward Republicans first
   r.states.TX.effects.drawing = 3; // ties with CA toward Democrats: by name, California before Texas
   const view = largestEffects(r);
   assert.deepEqual(view.chips.map((c) => c.postal), ['FL', 'NM', 'CA', 'TX']);
-  assert.equal(view.rest, 'Then 3 states at 0.'); // no state at 1 or 2
-  r.states.HI.effects.drawing = 1;
-  for (const postal of ['LA', 'MO']) r.states[postal].effects.drawing = 5;
-  assert.equal(largestEffects(r).rest, 'Then 1 state at 1 or 2 seats either way.'); // no state at 0
-  for (const s of Object.values(r.states)) s.effects.drawing = 4;
-  assert.equal(largestEffects(r).rest, '');
 });
 
 test('recordView: the sheet of Phase 6 plus the headline, the strip and the extras (Texas)', () => {
@@ -294,23 +289,23 @@ test('singleSeatView: the short record of a state with one seat', () => {
 
 // --- chapter 03 (Task 7.5) ---
 
-test('decideView: the House majority with its rows of dots', () => {
+test('keyFindings: the answer under the question in the masthead', () => {
   const r = withExtensions();
-  const view = decideView(r);
-  assert.equal(view.intro, 'The same votes, read for control of the House and the Senate, for redraws since 2024 and for close districts.');
-  // the texts of Phase 6 stay
-  const m = majorityView(r);
-  for (const key of ['sentence', 'proportionalNote', 'rule', 'label']) assert.equal(view.majority[key], m[key], key);
-  // domain: see rowDomain in axes.test.js, 0.49 to 0.53 in whole points
-  assert.deepEqual(view.majority.dots.domain, [0.49, 0.53]);
-  assert.deepEqual(view.majority.dots.ticks.map((t) => t.text), ['49%', '50%', '51%', '52%', '53%']);
-  // thresholds rounded up to one decimal: 49.787 -> 49.8, 51.157 -> 51.2, 52.303 -> 52.4; the vote 51.797 -> 51.8
-  assert.deepEqual(view.majority.dots.rows, [
-    { key: 'proportional', label: 'Proportional', value: 0.4978747, text: '49.8%' },
-    { key: 'neutral', label: 'Neutral median', value: 0.5115747, text: '51.2%', band: [0.5065747, 0.5159747] },
-    { key: 'enacted', label: 'Enacted', value: 0.5230328, text: '52.4%', filled: true },
+  // thresholds 52.4% and 51.2%; drawing effect -10; the effect turns at the base, 51.8%; by control: Republican -6,
+  // Democratic 4; competitive districts 81 against a median of 96
+  assert.deepEqual(keyFindings(r, outcomesView(r)), [
+    'With the maps the states drew for 2026, Democrats need 52.4% of the two-party vote for a House majority; on neutral '
+      + 'maps, 51.2%.',
+    'With the 2016 and 2020 votes, the maps move 10 seats toward Republicans compared with neutral maps. The direction '
+      + 'depends on the vote: below 51.8% the maps favor Democrats, from 51.8% on Republicans.',
+    'Maps adopted under Republican control move 6 seats toward Republicans; maps adopted under Democratic control, 4 seats '
+      + 'toward Democrats.',
+    'The maps have 81 competitive districts (45% to 55% Democratic); neutral maps have about 96.',
   ]);
-  assert.deepEqual(view.majority.dots.base, { value: 0.5179747, text: 'Vote 51.8%' });
+  // no turn on the slider: no second sentence
+  const view = outcomesView(r);
+  view.byVote.cross = { below: null, from: null };
+  assert.ok(keyFindings(r, view)[1].endsWith('compared with neutral maps.'));
 });
 
 test('decideView: Senate, competitive districts, redraws and the tables', () => {

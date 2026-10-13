@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { results } from './testdata.js';
 import {
-  majorityView, extensionFills, redrawView, stateRedraw, stateExtras, competitiveText, adoptedLine, controlTables,
+  extensionFills, redrawView, stateRedraw, stateExtras, competitiveText, adoptedLine, controlTables,
   senateView,
 } from './extensions.js';
 
@@ -44,33 +44,6 @@ function extended() {
   };
   return r;
 }
-
-// --- majority threshold (Task 6.10) ---
-
-test('majorityView: the sentence of the extensions design with the four shares', () => {
-  const view = majorityView(extended());
-  assert.equal(view.sentence, 'With these votes, Democrats need 52.4% of the two-party vote for a House majority under the enacted maps, '
-    + '51.2% under neutral maps and 49.8% if seats followed the vote. They have 51.8%.');
-  assert.equal(view.rule, 'A majority is 218 of the 435 seats. The six states with one seat count for the party that won them in both '
-    + '2016 and 2020: Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming for Republicans.');
-});
-
-test('majorityView: the sentence for Proportional below 50%, and none at or above 50%', () => {
-  assert.equal(majorityView(extended()).proportionalNote, 'Proportional needs less than half of the vote because each state '
-    + 'rounds its seats to whole numbers on its own, and over 7 states those roundings do not cancel out.');
-  const r = extended();
-  r.national.majority.proportional.share = 0.5012;
-  assert.equal(majorityView(r).proportionalNote, '');
-});
-
-test('majorityView: the vote axis and its text alternative', () => {
-  const view = majorityView(extended());
-  assert.deepEqual(view.axis.marks.map((m) => m.text), ['Proportional 49.8%', 'Neutral 51.2%', 'Enacted 52.4%']);
-  assert.equal(view.axis.baseText, 'Vote 51.8%');
-  assert.deepEqual([view.axis.low, view.axis.high, view.axis.base], [0.5065747, 0.5159747, 0.5179747]);
-  assert.equal(view.label, 'Share of the two-party vote that Democrats need for a House majority: enacted maps 52.4%, '
-    + 'neutral maps 51.2% (90% of outcomes between 50.7% and 51.6%), proportional 49.8%. Their share is 51.8%.');
-});
 
 test('extensionFills: the numbers in the method paragraph "Extensions"', () => {
   // the House of 435 and its majority of 218 (seats_needed 216 of the districts + the 2 Democratic single seats)

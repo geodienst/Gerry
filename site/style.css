@@ -186,7 +186,6 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 /* Redesign: masthead, meta strip and chapter heads (Task 7.6) */
 .mast { background: var(--mast); color: var(--mast-fg); padding-block: clamp(1.6rem, 4vw, 3.2rem) clamp(1.4rem, 3vw, 2.4rem); }
 .mast .wrap { display: grid; gap: 0.9rem; }
-.eyebrow { margin: 0; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mast-muted); font-weight: 600; }
 .mast h1 { margin: 0; font: 700 clamp(1.9rem, 1.3rem + 2.6vw, 3.3rem)/1.08 var(--font-head); letter-spacing: -0.01em; max-width: 18ch; text-wrap: balance; }
 .mast .sub { margin: 0; font-size: 1.1875rem; line-height: 1.45; max-width: 52ch; }
 /* The byline as a news story has it: author, date, and a link to the method. */
@@ -204,15 +203,15 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .about p { max-width: 64ch; margin: 0.45rem 0 0; }
 .mast .byline a { color: var(--mast-fg); text-underline-offset: 0.2em; }
 .mast a:focus-visible { outline-color: var(--mast-fg); }
-.metastrip { border-bottom: 1px solid var(--rule); background: var(--sheet); }
-.metastrip dl { margin: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.3fr); }
-.metastrip dl > div { padding-block: 0.8rem; padding-inline: 0 1.2rem; display: grid; gap: 0.1rem; min-width: 0; }
-.metastrip dl > div + div { border-left: 1px solid var(--rule); padding-left: 1.2rem; }
-.metastrip dt { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-.metastrip dd { margin: 0; font-size: 0.94rem; }
-@media (max-width: 720px) {
-  .metastrip dl { grid-template-columns: minmax(0, 1fr); }
-  .metastrip dl > div + div { border-left: 0; border-top: 1px solid var(--rule); padding-left: 0; }
+/* The key findings under the masthead: the answer to its question (owner, October 13, 2026) */
+.keyfacts { border-bottom: 1px solid var(--rule); background: var(--sheet); }
+.keyfacts .wrap { padding-block: 1rem 1.1rem; display: grid; gap: 0.5rem; }
+.keyfacts h2 { margin: 0; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.keyfacts ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; }
+.keyfacts li { position: relative; padding-left: 1.1rem; max-width: 78ch; }
+.keyfacts li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.4rem; height: 0.4rem; background: var(--ink); }
+/* the Senate card in chapter 03: a line above its title that sets it apart from the maps */
+.grid3 .kicker { margin: 0 0 -0.4rem; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 }
 .chapter { padding-block: clamp(2rem, 5vw, 3.6rem); border-bottom: 1px solid var(--rule); }
 .chapter > .wrap { display: grid; gap: 1.4rem; }
@@ -270,7 +269,6 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 /* The explainer at the top of chapter 01 (Mark Thompson's feedback, October 12): five steps that play by themselves */
 .tour { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.45rem; margin-bottom: 1.2rem; }
 .tour-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
-.tour-label { font-weight: 700; color: var(--ink); letter-spacing: 0.06em; text-transform: uppercase; }
 .tour-count { font-variant-numeric: tabular-nums; }
 .tour-head button { font: inherit; font-weight: 600; padding: 0.2rem 0.6rem; border: 1px solid var(--rule); background: var(--bg); color: var(--fg); cursor: pointer; }
 .tour-head button:first-of-type { margin-left: auto; }
@@ -328,7 +326,6 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .tools { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; align-items: center; }
 .largest { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
 .largest .k { font-size: 0.8125rem; color: var(--muted); margin-right: 0.2rem; }
-.largest .rest { font-size: 0.8125rem; color: var(--muted); }
 .chip { font: inherit; font-size: 0.8125rem; display: inline-flex; gap: 0.45rem; align-items: center; padding: 0.3rem 0.6rem; border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
 .chip b { font-variant-numeric: tabular-nums; }
 .chip[aria-current="true"] { border-color: var(--ink); background: var(--tint); }

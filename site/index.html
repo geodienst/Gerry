@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Some votes are more equal than others</title>
-  <meta name="description" content="The same votes, three ways to divide the 435 House seats: by each party&#39;s share of the vote, on neutral maps drawn by computer, and on the maps the states drew for 2026.">
+  <meta name="description" content="What if we used the same votes to divide the 435 House seats in three different ways: using the maps the states drew for 2026, neutral maps drawn by a computer, or each party&#39;s share of the vote? Would the outcome change?">
   <meta name="author" content="Govert Schoof">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
@@ -16,21 +16,17 @@
   <header class="mast">
     <div class="wrap">
       <img class="mast-art" src="img/justice.webp" alt="">
-      <p class="eyebrow">U.S. House maps for November 3, 2026</p>
       <h1>Some votes are more equal than others</h1>
-      <p class="sub">The same votes, three ways to divide the 435 House seats: by each party&#39;s share of the vote, on neutral maps drawn by computer, and on the maps the states drew for 2026.</p>
+      <p class="sub">What if we used the same votes to divide the 435 House seats in three different ways: using the maps the states drew for 2026, neutral maps drawn by a computer, or each party&#39;s share of the vote? Would the outcome change?</p>
       <p class="byline">By <a class="author" href="#about">Govert Schoof</a><span aria-hidden="true"> · </span><time datetime="2026-10-08">October 8, 2026</time><span aria-hidden="true"> · </span><a href="#method">Methodology</a></p>
     </div>
   </header>
-  <div class="metastrip">
+  <section class="keyfacts" aria-labelledby="keyfacts-title">
     <div class="wrap">
-      <dl>
-        <div><dt>Scope</dt><dd>U.S. House, <span data-fill="house-seats"></span> seats in <span data-fill="all-states"></span> states</dd></div>
-        <div><dt>Votes</dt><dd>2016 + 2020 presidential, the same for every count. Not a forecast: the slider tries other results.</dd></div>
-        <div><dt>Question</dt><dd>How much do geography and map drawing change the seats?</dd></div>
-      </dl>
+      <h2 id="keyfacts-title">Key findings</h2>
+      <ul id="keyfacts"></ul>
     </div>
-  </div>
+  </section>
   <p class="load-error wrap" id="load-error" role="alert" hidden></p>
 
   <main>
@@ -38,13 +34,13 @@
       <div class="wrap">
         <div class="chead">
           <span class="no">01</span>
-          <h2 id="h01">One electorate. Three outcomes.</h2>
+          <h2 id="h01">The same votes. Three different outcomes.</h2>
           <p id="outcomes-intro"></p>
           <p class="lead" id="outcomes-lead"></p>
         </div>
         <div class="tour" id="tour">
           <div class="tour-head">
-            <span class="tour-label" id="tour-label"></span><span class="tour-count" id="tour-count"></span>
+            <span class="tour-count" id="tour-count"></span>
             <button type="button" id="tour-play">Play</button><button type="button" id="tour-skip" hidden>Skip</button>
           </div>
           <p class="tour-text" id="tour-text" aria-live="polite"></p>
@@ -91,7 +87,7 @@
         <div class="chead">
           <span class="no">02</span>
           <h2 id="h02">State by state</h2>
-          <p>Choose a state on the map, in the State menu or in the list to see its three seat counts and its drawing effect: Democratic seats on the enacted map minus the neutral-map median, the middle outcome of the state's neutral maps.</p>
+          <p>Pick a state to compare the three different seat counts.</p>
         </div>
         <div class="tools">
           <label class="pick" for="pick">State <select id="pick"><option value="">All states</option></select></label>
@@ -138,24 +134,10 @@
       <div class="wrap">
         <div class="chead">
           <span class="no">03</span>
-          <h2 id="h03">What the maps decide</h2>
-          <p id="decide-intro"></p>
+          <h2 id="h03">In detail</h2>
         </div>
         <div class="grid3">
-          <section class="wide" id="majority" aria-labelledby="majority-title">
-            <h3 id="majority-title">House majority</h3>
-            <p id="majority-text"></p>
-            <div id="majority-axis"></div>
-            <p class="note" id="majority-note"></p>
-          </section>
-          <section id="senate" aria-labelledby="senate-title">
-            <h3 id="senate-title">Senate in 2026</h3>
-            <div class="figs" id="senate-figures"></div>
-            <p id="senate-text"></p>
-            <p id="senate-at"></p>
-            <p class="note" id="senate-note"></p>
-          </section>
-          <section id="competitive" aria-labelledby="competitive-title">
+          <section class="wide" id="competitive" aria-labelledby="competitive-title">
             <h3 id="competitive-title">Competitive districts</h3>
             <div class="figs" id="competitive-figures"></div>
             <div id="competitive-axis"></div>
@@ -169,7 +151,7 @@
           </section>
           <section class="wide" id="control" aria-labelledby="control-title">
             <h3 id="control-title">By political control</h3>
-            <p class="note">These tables group the enacted maps by the party, if any, that could adopt them alone, and by the body that adopted them. They show who adopted a map, not the intent behind it. A map adopted under one party's control can still fall inside the neutral band.</p>
+            <p class="note">The tables show who adopted a map, not the intent behind it. A map adopted under one party's control can still fall inside the neutral band.</p>
             <div class="tables">
               <table>
                 <caption>Political control when the map was adopted</caption>
@@ -184,6 +166,14 @@
             </div>
             <p class="note" id="control-note"></p>
           </section>
+          <section class="wide" id="senate" aria-labelledby="senate-title">
+            <p class="kicker">Beyond district lines</p>
+            <h3 id="senate-title">Senate in 2026</h3>
+            <div class="figs" id="senate-figures"></div>
+            <p id="senate-text"></p>
+            <p id="senate-at"></p>
+            <p class="note" id="senate-note"></p>
+          </section>
         </div>
       </div>
     </section>
@@ -192,7 +182,7 @@
       <div class="wrap">
         <div class="chead">
           <span class="no">04</span>
-          <h2 id="h04">Method, scope and uncertainty</h2>
+          <h2 id="h04">Methodology</h2>
         </div>
         <section class="byvote" id="effect-size" aria-labelledby="byvote-title">
           <h3 id="byvote-title"></h3>
@@ -201,7 +191,7 @@
           <p class="note" id="byvote-examples"></p>
         </section>
         <details class="method" id="method-details">
-          <summary>How the three numbers are made <span>Votes, neutral maps, the Voting Rights Act, known limits, sources</span></summary>
+          <summary>How the seats are calculated <span>Votes, neutral maps, the Voting Rights Act, known limits, sources</span></summary>
           <div class="mbody prose">
             <p><b>How to read the three numbers.</b> All numbers count Democratic seats in the U.S. House. <i>Vote-proportional</i> gives each state's seats in proportion to its two-party vote. <i>Neutral-map median</i> is the median of <span data-fill="plans"></span> maps per state drawn by a computer that follows each state's rules but ignores party. <i>Enacted maps</i> is what the maps used on November 3, 2026 produce with the same votes. The difference between the first two is the geographic effect; the difference between the last two is the drawing effect. An effect shows its direction: R+6 means 6 seats toward Republicans, D+3 means 3 seats toward Democrats.</p>
             <p><b>The six states with one seat.</b> Alaska, Delaware, North Dakota, South Dakota, Vermont and Wyoming elect one representative for the whole state. There is nothing to draw, so all three counts give the same result: the party that won the state in 2016 and 2020, Democrats in Delaware and Vermont and Republicans in the other four. The national numbers include these six seats; they do not change the effects. On the vote slider none of the six changes sides, which the pipeline checks at every step.</p>

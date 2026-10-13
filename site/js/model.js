@@ -317,7 +317,6 @@ export function methodFills(results) {
   return {
     plans: count(sum(Object.values(states)[0].neutral.dist)),
     states: count(Object.keys(states).length),
-    'all-states': count(Object.keys(states).length + results.national.single_seat.length),
     'alarm-version': count(meta.ensemble.version),
     'status-date': longDate(meta.status_checked),
     generated: longDate(meta.generated),

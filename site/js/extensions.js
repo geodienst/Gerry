@@ -3,37 +3,6 @@
 import { share, neededShare, seats, count, effect, effectLine, longDate } from './format.js';
 import { houseOf } from './model.js';
 
-// --- Majority threshold (Task 6.10) -------------------------------------------------------------
-
-/** The House majority block: the sentence, the fixed rule for the six single-seat states and the vote axis. */
-export function majorityView(results) {
-  const m = results.national.majority;
-  const states = count(Object.keys(results.states).length);
-  return {
-    sentence: `With these votes, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House majority `
-      + `under the enacted maps, ${neededShare(m.neutral.share)} under neutral maps and ${neededShare(m.proportional.share)} `
-      + `if seats followed the vote. They have ${share(m.base_share)}.`,
-    proportionalNote: m.proportional.share < 0.5
-      ? `Proportional needs less than half of the vote because each state rounds its seats to whole numbers on its own, and over ${states} states those roundings do not cancel out.`
-      : '',
-    rule: 'A majority is 218 of the 435 seats. The six states with one seat count for the party that won them '
-      + 'in both 2016 and 2020: Delaware and Vermont for Democrats; Alaska, North Dakota, South Dakota and Wyoming '
-      + 'for Republicans.',
-    axis: {
-      base: m.base_share, low: m.neutral.low, high: m.neutral.high,
-      marks: [
-        { key: 'proportional', value: m.proportional.share, text: `Proportional ${neededShare(m.proportional.share)}` },
-        { key: 'neutral', value: m.neutral.share, text: `Neutral ${neededShare(m.neutral.share)}` },
-        { key: 'enacted', value: m.enacted.share, text: `Enacted ${neededShare(m.enacted.share)}` },
-      ],
-      baseText: `Vote ${share(m.base_share)}`,
-    },
-    label: `Share of the two-party vote that Democrats need for a House majority: enacted maps ${neededShare(m.enacted.share)}, `
-      + `neutral maps ${neededShare(m.neutral.share)} (90% of outcomes between ${neededShare(m.neutral.low)} and ${neededShare(m.neutral.high)}), `
-      + `proportional ${neededShare(m.proportional.share)}. Their share is ${share(m.base_share)}.`,
-  };
-}
-
 /** Text for the [data-fill] spans that the extensions add to the method section. */
 export function extensionFills(results) {
   return {

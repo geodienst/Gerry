@@ -313,7 +313,6 @@ test('methodFills: plans, states, ALARM version, dates and Louisiana', () => {
   assert.deepEqual(methodFills(results()), {
     plans: '5,000',
     states: '7',
-    'all-states': '13', // 7 states with more than one seat + 6 with one
     'alarm-version': '15',
     'status-date': 'October 3, 2026',
     generated: 'October 6, 2026',

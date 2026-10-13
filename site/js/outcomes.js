@@ -1,4 +1,4 @@
-// Chapter 01, "One electorate. Three outcomes." (redesign, chapter 3): three rows as a radio group with the two
+// Chapter 01, "The same votes. Three different outcomes." (redesign, chapter 3): three rows as a radio group with the two
 // effects between them, a waffle of the seats that follows the chosen row, and the sentences beside it. A vote
 // slider (plan 2026-10-08-vote-slider) moves all of it to another national vote share.
 // Texts come from chapters.js and geometry from axes.js; this module only draws.
@@ -171,7 +171,8 @@ export function renderOutcomes(view, { reduceMotion }) {
       parts[row.key].num.textContent = row.value;
       parts[row.key].desc.textContent = row.desc;
     }
-    p.steps.forEach((step, i) => stepTexts[i].replaceChildren(`${step.label} `, node('b', {}, step.value), `: ${step.words}`));
+    // between the rows only the effect itself; its name stays in the list under the waffle (owner, October 13, 2026)
+    p.steps.forEach((step, i) => stepTexts[i].replaceChildren(node('b', {}, step.value), `: ${step.words}`));
     $('finding').textContent = p.finding;
     $('key-band-text').textContent = p.band.key;
     $('effects').replaceChildren(...p.steps.map(effect), node('p', { class: 'note' }, view.effectsNote));

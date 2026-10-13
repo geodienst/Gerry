@@ -341,20 +341,20 @@ async function sweep(t) {
 // --- Task 7.9: chapter 03 ------------------------------------------------------------------------
 async function decide(t) {
   await t.load();
-  t.check('chapter 03 has five cards in this order', await t.js(
-    "[...document.querySelectorAll('#decide .grid3 > section')].map((s) => s.id).join() === 'majority,senate,competitive,redraws,control'"));
+  t.check('chapter 03 is "In detail", without an intro, with four cards and the Senate last', await t.js(
+    "[...document.querySelectorAll('#decide .grid3 > section')].map((s) => s.id).join() === 'competitive,redraws,control,senate'")
+    && (await t.text('#decide .chead h2')) === 'In detail' && await t.js("!document.getElementById('decide-intro')")
+    && (await t.text('#senate .kicker')) === 'Beyond district lines');
   const figs = await t.js("[...document.querySelectorAll('#decide .figs b')].map((b) => b.textContent)");
   // the Senate has two since October 13, 2026: the share needed and the seats of 100 at the slider
   t.check('six large figures, each a formatted number', figs.length === 6
     && figs.every((v) => /^(\d+(\.\d+)?%|\d+|\d+ to \d+|\d+ of 100|0|[RD]\+\d+)$/.test(v)), figs.join(' | '));
   const axes = await t.js(`[...document.querySelectorAll('#decide svg.dotrows')].map((s) => ({ id: s.parentElement.id, role: s.getAttribute('role'),
     label: s.getAttribute('aria-label'), rows: [...s.querySelectorAll('text.lbl')].map((x) => x.textContent), base: s.querySelectorAll('line.base').length }))`);
-  t.check('two charts of rows of dots, each with a text alternative', axes.length === 2 && axes.every((a) => a.role === 'img' && a.label),
+  t.check('one chart of rows of dots, with a text alternative', axes.length === 1 && axes.every((a) => a.role === 'img' && a.label),
     JSON.stringify(axes));
-  t.check('the House majority has Proportional, Neutral median and Enacted, and the vote as a dashed line',
-    axes[0]?.id === 'majority-axis' && axes[0].rows.join() === 'Proportional,Neutral median,Enacted' && axes[0].base === 1);
   t.check('competitive districts have Neutral median and Enacted',
-    axes[1]?.id === 'competitive-axis' && axes[1].rows.join() === 'Neutral median,Enacted' && axes[1].base === 0);
+    axes[0]?.id === 'competitive-axis' && axes[0].rows.join() === 'Neutral median,Enacted' && axes[0].base === 0);
   for (const width of [375, 1280]) {
     await t.load('', { width, height: 900 });
     await t.screenshot(`decide-${width}`);
@@ -365,7 +365,8 @@ async function decide(t) {
 async function method(t) {
   await t.load();
   t.check('the method is folded at the start', await t.js("document.getElementById('method-details')?.open === false"));
-  t.check('chapter 04 has its heading', (await t.text('#method .chead h2')) === 'Method, scope and uncertainty');
+  t.check('chapter 04 has its heading and its fold', (await t.text('#method .chead h2')) === 'Methodology'
+    && (await t.text('#method-details > summary')).startsWith('How the seats are calculated'));
   t.check('every number in the method and the footer is filled in', await t.js("[...document.querySelectorAll('[data-fill]')].every((el) => el.textContent.trim() !== '')"));
   const text = await t.text('#method');
   for (const part of ['How to read the three numbers.', 'Why neutral maps are not proportional.', 'Votes.', 'The Voting Rights Act.',
@@ -418,8 +419,8 @@ async function method(t) {
 
 // --- Task 6.9: layout, keyboard, dark mode, reduced motion -----------------------------------------
 async function layout(t) {
-  for (const [width, height, place, rowsPlace, metaPlace, font] of [
-    [375, 812, 'below', 'below', 'stacked', '15px'], [1280, 800, 'beside', 'beside', 'in a row', '15px'], [2560, 1440, 'beside', 'beside', 'in a row', '20.52px']]) {
+  for (const [width, height, place, rowsPlace, font] of [
+    [375, 812, 'below', 'below', '15px'], [1280, 800, 'beside', 'beside', '15px'], [2560, 1440, 'beside', 'beside', '20.52px']]) {
     await t.load('#CA', { width, height });
     await t.until(`${HEADING} === 'California'`);
     // clientWidth leaves out the scrollbar and, unlike innerWidth, does not grow with the overflow on a phone.
@@ -431,8 +432,6 @@ async function layout(t) {
     t.check(`${width}px: the waffle is ${rowsPlace} the three rows`, rowsWhere === rowsPlace, rowsWhere);
     const houseRows = await t.js("new Set([...document.querySelectorAll('#waffle rect.seat')].map((r) => r.getAttribute('y'))).size");
     t.check(`${width}px: the House has ${width < 768 ? 14 : 7} rows of squares`, houseRows === (width < 768 ? 14 : 7), String(houseRows));
-    const metaWhere = await t.js("(() => { const tops = [...document.querySelectorAll('.metastrip dl > div')].map((d) => Math.round(d.getBoundingClientRect().top)); return new Set(tops).size === 1 ? 'in a row' : 'stacked'; })()");
-    t.check(`${width}px: the three fields of the meta strip are ${metaPlace}`, metaWhere === metaPlace, metaWhere);
     t.check(`${width}px: root font size ${font}`, (await t.js('getComputedStyle(document.documentElement).fontSize')) === font);
     // The font size on screen: the CSS size times the scale of the chart's viewBox.
     const sizes = await t.js("[...document.querySelectorAll('svg.chart text')].map((el) => parseFloat(getComputedStyle(el).fontSize) * el.getScreenCTM().a)");
@@ -597,7 +596,6 @@ async function masthead(t) {
   await t.load();
   t.check('the title and the heading read "Some votes are more equal than others"', await t.js(
     "document.title === 'Some votes are more equal than others' && document.querySelector('header.mast h1')?.textContent === 'Some votes are more equal than others'"));
-  t.check('the line above the title names the election day', (await t.text('.mast .eyebrow')) === 'U.S. House maps for November 3, 2026');
   // Justitia at the top right: decorative, loaded from the site itself, clear of the title, the line under it and the byline
   t.check('the drawing in the masthead is decorative and stays clear of the text', await t.js(`(() => {
     const art = document.querySelector('.mast .mast-art');
@@ -606,7 +604,7 @@ async function masthead(t) {
     const apart = (el) => { const r = document.createRange(); r.selectNodeContents(el);
       return [...r.getClientRects()].every((b) => b.right <= a.left || b.left >= a.right || b.bottom <= a.top || b.top >= a.bottom); };
     return art.getAttribute('alt') === '' && art.complete && art.naturalWidth > 0 && new URL(art.src).origin === location.origin
-      && ['.mast h1', '.mast .sub', '.mast .byline', '.mast .eyebrow'].every((s) => apart(document.querySelector(s)));
+      && ['.mast h1', '.mast .sub', '.mast .byline'].every((s) => apart(document.querySelector(s)));
   })()`));
   t.check('the byline gives the author, the date and a link to the method',
     (await t.text('.mast .byline')) === 'By Govert Schoof · October 8, 2026 · Methodology'
@@ -620,11 +618,13 @@ async function masthead(t) {
   t.check('the Methodology link opens the method', await t.until("location.hash === '#method' && document.getElementById('method-details').open"));
   t.check('the meta description is the line under the title',
     await t.js("document.querySelector('meta[name=description]').content === document.querySelector('.mast .sub')?.textContent"));
-  const fields = await t.js("[...document.querySelectorAll('.metastrip dt')].map((dt) => dt.textContent + ': ' + dt.nextElementSibling.textContent)");
-  const scope = await t.js(`${DATA}.then((r) => 'Scope: U.S. House, ' + (r.national.seats + r.national.single_seat.length) + ' seats in '
-    + (Object.keys(r.states).length + r.national.single_seat.length) + ' states')`);
-  t.check('the meta strip has Scope, Votes and Question, Scope with the numbers of results.json',
-    fields.length === 3 && fields[0] === scope && fields[1].startsWith('Votes: ') && fields[2].startsWith('Question: '), fields.join(' | '));
+  // the question under the title and its answer right below the masthead (owner, October 13, 2026)
+  t.check('the line under the title asks the question', (await t.text('.mast .sub')).endsWith('Would the outcome change?')
+    && await t.js("!document.querySelector('.mast .eyebrow') && !document.querySelector('.metastrip')"));
+  const facts = await t.js("[...document.querySelectorAll('#keyfacts li')].map((li) => li.textContent)");
+  t.check('four key findings follow the masthead, before chapter 01', facts.length === 4
+    && facts[0].startsWith('With the maps the states drew for 2026, Democrats need ') && /Republican control .+ Democratic control/.test(facts[2])
+    && await t.js("document.querySelector('header.mast').nextElementSibling?.classList.contains('keyfacts') === true"), facts.join(' | '));
 }
 
 async function outcomes(t) {
@@ -653,8 +653,9 @@ async function outcomes(t) {
   })()`));
   t.check('the finding beside the waffle names the drawing effect and both counts', (await t.text('#finding')) === want.finding, await t.text('#finding'));
   t.check('Enacted maps is chosen at the start and is the only tab stop', rows.map((r) => `${r.checked}/${r.tab}`).join() === 'false/-1,false/-1,true/0');
-  t.check('the two effects stand between the rows',
-    await t.js(`[...document.querySelectorAll('#scen .step b')].map((b) => b.textContent).join() === ${JSON.stringify(want.steps.join())}`));
+  t.check('the two effects stand between the rows, without their names (owner, October 13, 2026)',
+    await t.js(`[...document.querySelectorAll('#scen .step b')].map((b) => b.textContent).join() === ${JSON.stringify(want.steps.join())}`)
+    && await t.js("[...document.querySelectorAll('#scen .step')].every((s) => s.textContent.startsWith(s.querySelector('b').textContent))"));
   const blue = "getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
   const democratic = `[...document.querySelectorAll('#waffle rect.seat')].filter((r) => r.getAttribute('fill') === ${blue}).length`;
   // the House of 435: these districts plus the six one-seat states, two of them Democratic
@@ -769,7 +770,7 @@ async function outcomes(t) {
     && slider.sentence.startsWith('The short line marks where the chosen count reaches a majority, 218 of 435 seats.'),
     JSON.stringify({ tipEnacted, tipNeutral, sentence: slider.sentence }));
   // the key sentence: the threshold of the enacted maps against neutral maps (a data reviewer, October 13)
-  t.check('the chapter opens with the threshold as its key sentence', /^With these maps, Democrats need \d+\.\d% of the two-party vote for a House majority\. On neutral maps they would need \d+\.\d%\./
+  t.check('the chapter opens with the threshold as its key sentence', /^With these maps, Democrats need \d+\.\d% of the two-party vote for a House majority, \d+\.\d points (more|less) than on neutral maps\.$/
     .test(await t.text('#outcomes-lead')), await t.text('#outcomes-lead'));
   // the drawing effect at every stop of the slider: a bar per stop, up for Democrats and down for Republicans
   const bars = await t.js(`[...document.querySelectorAll('#byvote-chart rect.col')].map((r) => ({ d: r.classList.contains('d'),
@@ -873,21 +874,16 @@ async function tour(t) {
 // --- Task 7.7: chapter 02, the largest drawing effects -------------------------------------------
 async function largest(t) {
   await t.load();
-  // Every state at 3 seats or more, ordered as chapters.js orders them; the rest counted in one sentence.
+  // Every state at 3 seats or more, ordered as chapters.js orders them; no sentence for the rest (owner, October 13).
   const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
     const rows = Object.entries(r.states).map(([postal, s]) => ({ postal, name: s.name, d: s.effects.drawing }));
     const big = rows.filter((x) => Math.abs(x.d) >= 3)
       .sort((a, b) => Math.abs(b.d) - Math.abs(a.d) || a.d - b.d || a.name.localeCompare(b.name, 'en'));
-    return { chips: big.map((x) => x.postal + f.effect(x.d)), small: rows.filter((x) => x.d !== 0 && Math.abs(x.d) < 3).length,
-      zero: rows.filter((x) => x.d === 0).length, states: rows.length };
+    return { chips: big.map((x) => x.postal + f.effect(x.d)) };
   })`);
   const chips = await t.js("[...document.querySelectorAll('#largest .chip')].map((c) => c.textContent)");
   t.check('every state at 3 seats or more has a button, by size, none left out', chips.join() === want.chips.join(), chips.join(' '));
-  const rest = await t.text('#largest .rest');
-  const counted = (pattern) => Number(pattern.exec(rest)?.[1] ?? 0);
-  t.check(`the sentence after the buttons counts the other states, so all ${want.states} are accounted for`,
-    counted(/(\d+) states? at 1 or 2/) === want.small && counted(/(\d+) states? at 0/) === want.zero
-    && want.chips.length + want.small + want.zero === want.states, rest);
+  t.check('no sentence after the buttons', await t.js("!document.querySelector('#largest .rest')"));
   const first = want.chips[0].slice(0, 2);
   await t.js("document.querySelector('#largest .chip').focus()");
   await t.key('Enter', 13, '\r');
@@ -911,7 +907,6 @@ export const GROUPS = [
   { name: 'decide', run: decide },
   { name: 'method', run: method },
   { name: 'layout', run: layout },
-  { name: 'majority', run: majority },
   { name: 'redraws', run: redraws },
   { name: 'competitive', run: competitive },
   { name: 'control', run: control },

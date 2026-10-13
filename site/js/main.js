@@ -10,7 +10,7 @@ import { extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
 import { renderList, renderState, renderLargest, renderSingle } from './sheet.js';
 import {
-  outcomesView, largestEffects, recordView, singleSeatView, decideView,
+  outcomesView, largestEffects, recordView, singleSeatView, decideView, keyFindings,
 } from './chapters.js';
 import { renderOutcomes } from './outcomes.js';
 import { createTour } from './tour.js';
@@ -62,6 +62,12 @@ async function main() {
   });
   $('maphint').textContent = hints.hint;
   const outcomesData = outcomesView(results);
+  // the answer under the question in the masthead
+  $('keyfacts').replaceChildren(...keyFindings(results, outcomesData).map((text) => {
+    const item = document.createElement('li');
+    item.textContent = text;
+    return item;
+  }));
   const outcomes = renderOutcomes(outcomesData, { reduceMotion: () => reduceMotion.matches });
   createTour(outcomesData.tour, outcomes, { reduceMotion: () => reduceMotion.matches });
   outcomes.paint(colors);

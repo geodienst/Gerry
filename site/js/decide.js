@@ -1,5 +1,5 @@
-// Chapter 03, "What the maps decide" (redesign, chapter 5): the House majority, the Senate, competitive
-// districts, redraws since 2024 and the tables by political control. Texts from chapters.js (decideView);
+// Chapter 03, "In detail" (redesign, chapter 5; owner, October 13, 2026): competitive districts, redraws since 2024,
+// the tables by political control and, last, the Senate. Texts from chapters.js (decideView);
 // this module only fills the cards and draws the two axes.
 import { drawDotRows } from './charts.js';
 
@@ -24,14 +24,8 @@ export function showSenate(view, point) {
   $('senate-at').textContent = at.text;
 }
 
-/** Fill the five cards. The axes take the width of their card, so call this again after a resize. */
+/** Fill the four cards. The axis takes the width of its card, so call this again after a resize. */
 export function renderDecide(view) {
-  $('decide-intro').textContent = view.intro;
-
-  $('majority-text').textContent = view.majority.sentence;
-  drawDotRows($('majority-axis'), view.majority.dots, view.majority.label);
-  $('majority-note').textContent = [view.majority.proportionalNote, view.majority.rule].filter(Boolean).join(' ');
-
   $('senate-title').textContent = view.senate.title;
   $('senate-text').textContent = view.senate.sentence;
   $('senate-note').textContent = view.senate.note;
