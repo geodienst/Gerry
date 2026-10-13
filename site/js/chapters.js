@@ -158,7 +158,7 @@ export function outcomesView(results) {
   const byVote = {
     title: 'The effect size of enacted maps',
     text: 'The enacted maps have fewer close districts than neutral maps, so they react less when the national vote shifts. '
-      + `${where} Each bar shows the drawing effect at one position of the vote slider in chapter 01; the dark line marks where the slider stands.`,
+      + `${where} Each bar shows the drawing effect at one position of the vote slider in chapter 02; the dark line marks where the slider stands.`,
     axis: 'Democratic share of the national two-party vote',
     bars, examples, line,
     label: `Drawing effect at each point of the vote slider, from ${points[0].label} to ${points.at(-1).label}. ${line}.`,

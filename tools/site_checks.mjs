@@ -470,8 +470,9 @@ async function layout(t) {
     await t.key('Tab', 9);
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
-  const wanted = ['choice', 'pick', 'view-districts', 'view-states', 'view-close', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
-  t.check('Tab reaches the chosen row, the State menu, the view buttons, the largest effects, the zoom buttons, the color buttons and the list, in that order',
+  // State by state comes first since October 13, 2026; the rows of the national count follow the list
+  const wanted = ['pick', 'view-districts', 'view-states', 'view-close', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
+  t.check('Tab reaches the State menu, the view buttons, the largest effects, the zoom buttons, the color buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
   t.check('focus reached with Tab is visible', order.at(-1) === 'row'
@@ -483,9 +484,11 @@ async function layout(t) {
   await t.key('Tab', 9);
   t.check('the second Tab lands on the Methodology link', await t.js("document.activeElement === document.querySelector('.mast .byline a[href=\"#method\"]')"));
   await t.key('Tab', 9);
+  t.check('the third Tab lands on the State menu of chapter 01', await t.js("document.activeElement === document.getElementById('pick')"));
+  await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
   const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
     outline: getComputedStyle(el).outlineStyle, group: el.parentElement.getAttribute('role'), name: el.parentElement.getAttribute('aria-label') }; })()`);
-  t.check('the next Tab lands on the chosen row of the radio group "Way of counting", with a visible outline',
+  t.check('the chosen row of the radio group "Way of counting" takes the focus, with a visible outline',
     radio.cls === 'choice' && radio.checked === 'true' && radio.outline === 'solid' && radio.group === 'radiogroup' && radio.name === 'Way of counting',
     JSON.stringify(radio));
   await t.key('Home', 36);
@@ -585,7 +588,7 @@ async function senate(t) {
       .test(await t.text('#senate-text')), await t.text('#senate-text'));
   t.check('the Senate block says it is not an effect of maps', (await t.text('#senate-note')).endsWith('none of this is an effect of maps.'));
   const at = await t.text('#senate-at');
-  t.check('at the start the Senate block shows the 2016 and 2020 votes', /^With the 2016 and 2020 votes \(\d+\.\d%\), as on the vote slider in chapter 01, Democrats would win \d+ of the \d+ seats on the ballot and hold \d+ of 100\./.test(at), at);
+  t.check('at the start the Senate block shows the 2016 and 2020 votes', /^With the 2016 and 2020 votes \(\d+\.\d%\), as on the vote slider in chapter 02, Democrats would win \d+ of the \d+ seats on the ballot and hold \d+ of 100\./.test(at), at);
   const stops = await t.js('document.getElementById("vote").max');
   await t.js(`(() => { const s = document.getElementById('vote'); s.value = '${stops}'; s.dispatchEvent(new Event('input')); })()`);
   const moved = await t.text('#senate-at');
@@ -628,7 +631,7 @@ async function masthead(t) {
   t.check('the line under the title asks the question', (await t.text('.mast .sub')).endsWith('Would the outcome change?')
     && await t.js("!document.querySelector('.mast .eyebrow') && !document.querySelector('.metastrip')"));
   const facts = await t.js("[...document.querySelectorAll('#keyfacts li')].map((li) => li.textContent)");
-  t.check('two key findings follow the masthead, before chapter 01', facts.length === 2
+  t.check('two key findings follow the masthead, before State by state', facts.length === 2
     && facts[0].startsWith('With the maps the states drew for 2026, Democrats need ') && /Republican control .+ Democratic control/.test(facts[1])
     && await t.js("document.querySelector('header.mast').nextElementSibling?.classList.contains('keyfacts') === true"), facts.join(' | '));
 }
