@@ -78,7 +78,7 @@ export function renderOutcomes(view, { reduceMotion }) {
   const band = svgNode('g', { class: 'band', display: 'none' });
   const changed = svgNode('g', { class: 'changed', 'aria-hidden': 'true' });
   const frames = svgNode('g', { class: 'frames' });
-  // a line through the middle column, where a majority starts, with its label above the House (owner's mockup)
+  // the label of the majority above the middle column, where seat 218 is (owner's mockup; no line, owner, October 13)
   const majorityLine = svgNode('g', { class: 'majority', 'aria-hidden': 'true' });
   svg.append(majorityLine, seatLayer, band, changed, frames);
   $('key-fill').textContent = house.fillKey;
@@ -148,8 +148,7 @@ export function renderOutcomes(view, { reduceMotion }) {
     layout = houseLayout(rows);
     svg.setAttribute('viewBox', `${-PAD} ${-TOP} ${layout.width + 2 * PAD} ${layout.height + PAD + TOP}`);
     const mx = layout.mid.x + HOUSE.size / 2;
-    majorityLine.replaceChildren(svgNode('line', { x1: mx, x2: mx, y1: -5, y2: layout.height + 1 }),
-      svgNode('text', { x: mx, y: -8, 'text-anchor': 'middle' }, view.majorityLabel));
+    majorityLine.replaceChildren(svgNode('text', { x: mx, y: -8, 'text-anchor': 'middle' }, view.majorityLabel));
     cells = Array.from({ length: 2 * HOUSE.half + 1 }, (_, i) => {
       const { x, y } = at(i);
       return svgNode('rect', { class: i === HOUSE.half ? 'seat middle' : 'seat', x, y, width: HOUSE.size, height: HOUSE.size });

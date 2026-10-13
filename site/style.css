@@ -392,7 +392,6 @@ footer p { margin: 0 0 0.3rem; max-width: 90ch; }
 .countcol > .note { margin: 0; max-width: 46ch; }
 .vote { margin-top: 0.6rem; }
 .vote-base { font-size: 0.8125rem; color: var(--muted); }
-#waffle .majority line { stroke: var(--fg); stroke-width: 1.4; }
 #waffle .majority text { fill: var(--fg); font-size: 14px; font-weight: 600; font-family: var(--font-body); }
 .neutral-more { border-top: 1px solid var(--rule); padding-top: 1rem; }
 .neutral-more #spread p { margin: 0.45rem 0 0; max-width: 70ch; }
