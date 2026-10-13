@@ -14,7 +14,7 @@ async function map(t) {
   t.check('the page loads and draws the map', await t.load());
   t.check('the map opens on "Districts: Democratic share"', await t.js(
     "document.getElementById('view-districts').getAttribute('aria-pressed') === 'true' && document.getElementById('view-states').getAttribute('aria-pressed') === 'false' && document.querySelector('#map path.district').parentNode.getAttribute('display') !== 'none'"));
-  t.check('the map title, for screen readers, names the district view', (await t.text('#map-title')) === 'Democratic vote share by district');
+  t.check('the map title above the map names the district view', (await t.text('#map-title')) === 'Democratic vote share by district');
   await t.js("document.getElementById('view-districts').click()");
   t.check('435 districts and 50 states on the map',
     await t.js("document.querySelectorAll('#map path.district').length === 435 && document.querySelectorAll('#map path.statefill').length === 50"));
@@ -427,10 +427,8 @@ async function layout(t) {
     const sideways = await t.js('({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth })');
     t.check(`${width}px: no sideways scrolling`, sideways.scrollWidth <= sideways.clientWidth, JSON.stringify(sideways));
     // a rule the browser skipped once left the chapters without room above their heads (October 13, 2026)
-    // the map sits closer under the rule of the key findings (owner's layout, October 13, 2026)
-    const pads = await t.js("[...document.querySelectorAll('.chapter')].map((c) => ({ id: c.id, top: parseFloat(getComputedStyle(c).paddingTop) }))");
-    t.check(`${width}px: every chapter has room above its head`, pads.length === 4
-      && pads.every((p) => p.top >= (p.id === 'states' ? 16 : 24)), JSON.stringify(pads));
+    const pads = await t.js("[...document.querySelectorAll('.chapter')].map((c) => parseFloat(getComputedStyle(c).paddingTop))");
+    t.check(`${width}px: every chapter has room above its head`, pads.length === 4 && pads.every((p) => p >= 24), pads.join());
     const where = await t.js("(() => { const m = document.querySelector('.mapcol').getBoundingClientRect(); const s = document.getElementById('sheet').getBoundingClientRect(); return s.left >= m.right - 1 ? 'beside' : s.top >= m.bottom - 1 ? 'below' : 'overlap'; })()");
     t.check(`${width}px: the sheet is ${place} the map`, where === place, where);
     const rowsWhere = await t.js("(() => { const r = document.getElementById('scen').getBoundingClientRect(); const w = document.querySelector('.waffle').getBoundingClientRect(); return w.left >= r.right - 1 ? 'beside' : w.top >= r.bottom - 1 ? 'below' : 'overlap'; })()");
@@ -472,9 +470,8 @@ async function layout(t) {
     await t.key('Tab', 9);
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
-  // the map comes first since the owner's layout of October 13, 2026; the rows of the national count follow the list
-  const wanted = ['pick', 'view-districts', 'view-states', 'view-close', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
-  t.check('Tab reaches the State menu, the view buttons, the zoom buttons, the color buttons and the list, in that order',
+  const wanted = ['choice', 'pick', 'view-districts', 'view-states', 'view-close', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
+  t.check('Tab reaches the chosen row, the State menu, the view buttons, the largest effects, the zoom buttons, the color buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
   t.check('focus reached with Tab is visible', order.at(-1) === 'row'
@@ -486,11 +483,9 @@ async function layout(t) {
   await t.key('Tab', 9);
   t.check('the second Tab lands on the Methodology link', await t.js("document.activeElement === document.querySelector('.mast .byline a[href=\"#method\"]')"));
   await t.key('Tab', 9);
-  t.check('the third Tab lands on the State menu above the map', await t.js("document.activeElement === document.getElementById('pick')"));
-  await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
   const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
     outline: getComputedStyle(el).outlineStyle, group: el.parentElement.getAttribute('role'), name: el.parentElement.getAttribute('aria-label') }; })()`);
-  t.check('the chosen row of the radio group "Way of counting" takes the focus, with a visible outline',
+  t.check('the next Tab lands on the chosen row of the radio group "Way of counting", with a visible outline',
     radio.cls === 'choice' && radio.checked === 'true' && radio.outline === 'solid' && radio.group === 'radiogroup' && radio.name === 'Way of counting',
     JSON.stringify(radio));
   await t.key('Home', 36);
@@ -590,7 +585,7 @@ async function senate(t) {
       .test(await t.text('#senate-text')), await t.text('#senate-text'));
   t.check('the Senate block says it is not an effect of maps', (await t.text('#senate-note')).endsWith('none of this is an effect of maps.'));
   const at = await t.text('#senate-at');
-  t.check('at the start the Senate block shows the 2016 and 2020 votes', /^With the 2016 and 2020 votes \(\d+\.\d%\), as on the vote slider above, Democrats would win \d+ of the \d+ seats on the ballot and hold \d+ of 100\./.test(at), at);
+  t.check('at the start the Senate block shows the 2016 and 2020 votes', /^With the 2016 and 2020 votes \(\d+\.\d%\), as on the vote slider in chapter 01, Democrats would win \d+ of the \d+ seats on the ballot and hold \d+ of 100\./.test(at), at);
   const stops = await t.js('document.getElementById("vote").max');
   await t.js(`(() => { const s = document.getElementById('vote'); s.value = '${stops}'; s.dispatchEvent(new Event('input')); })()`);
   const moved = await t.text('#senate-at');
@@ -882,23 +877,29 @@ async function tour(t) {
     && still.text === 'A short tour of this chapter in five steps.', JSON.stringify(still));
 }
 
-// --- Task 7.7, owner's layout of October 13, 2026: the map right under the key findings --------------------------
+// --- Task 7.7: chapter 02, the largest drawing effects -------------------------------------------
 async function largest(t) {
   await t.load();
-  t.check('the map follows the key findings, before the national count, with no row of buttons above it', await t.js(`(() => {
+  // Every state at 3 seats or more, ordered as chapters.js orders them; no sentence for the rest (owner, October 13).
+  const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
+    const rows = Object.entries(r.states).map(([postal, s]) => ({ postal, name: s.name, d: s.effects.drawing }));
+    const big = rows.filter((x) => Math.abs(x.d) >= 3)
+      .sort((a, b) => Math.abs(b.d) - Math.abs(a.d) || a.d - b.d || a.name.localeCompare(b.name, 'en'));
+    return { chips: big.map((x) => x.postal + f.effect(x.d)) };
+  })`);
+  const chips = await t.js("[...document.querySelectorAll('#largest .chip')].map((c) => c.textContent)");
+  t.check('every state at 3 seats or more has a button, by size, none left out', chips.join() === want.chips.join(), chips.join(' '));
+  t.check('no sentence after the buttons', await t.js("!document.querySelector('#largest .rest')"));
+  const first = want.chips[0].slice(0, 2);
+  await t.js("document.querySelector('#largest .chip').focus()");
+  await t.key('Enter', 13, '\r');
+  t.check('a button chooses its state, keeps the focus and marks itself', await t.until(`location.hash === '#${first}'`)
+    && await t.js(`document.activeElement?.dataset?.postal === '${first}' && document.activeElement.getAttribute('aria-current') === 'true'`));
+  t.check('chapter 02 holds the tools, the buttons, the map and the sheet', await t.js(`(() => {
     const ch = document.getElementById('states');
-    return !!ch && ['pick', 'map', 'legend', 'sheet'].every((id) => ch.contains(document.getElementById(id)))
-      && !document.getElementById('largest') && document.getElementById('h02')?.textContent === 'State by state'
-      && document.querySelector('.keyfacts').compareDocumentPosition(ch) === Node.DOCUMENT_POSITION_FOLLOWING
-      && (ch.compareDocumentPosition(document.getElementById('outcomes')) & Node.DOCUMENT_POSITION_FOLLOWING) > 0
-      && document.getElementById('sheet').tagName === 'ASIDE';
+    return !!ch && ['pick', 'largest', 'map', 'sheet'].every((id) => ch.contains(document.getElementById(id)))
+      && ch.querySelector('.chead h2')?.textContent === 'State by state' && document.getElementById('sheet').tagName === 'ASIDE';
   })()`));
-  t.check('the legend sits under the map, with the caption', await t.js(`(() => {
-    const map = document.getElementById('mapbox').getBoundingClientRect();
-    const legend = document.getElementById('legend').getBoundingClientRect();
-    return legend.top >= map.bottom - 1 && document.querySelector('.mapcap')?.textContent === 'Pick a state to compare the three different seat counts.';
-  })()`));
-  t.check('no chapter has a number', await t.js("!document.querySelector('.chead .no')"));
 }
 
 export const GROUPS = [

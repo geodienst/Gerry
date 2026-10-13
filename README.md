@@ -66,7 +66,7 @@ make serve
 
 Then open http://127.0.0.1:8000. Without Make, run `python -m http.server 8000 --bind 127.0.0.1 --directory site`.
 
-The page opens with four key findings under the title. Below them come a map in three views (Democratic share, drawing effect, close races) with the drawing effect by state beside it and a record per state; the national count three ways, with a short explainer that plays by itself, a waffle of the House of 435 seats and a slider for the national vote share; "In detail", with close districts, redraws since 2024, political control and the Senate in 2026; and the methodology, with the drawing effect at every point of the slider and the details folded. `#TX` in the address opens a state; `#method` opens the method.
+The page opens with four key findings under the title. Then come four numbered chapters: the national count three ways, with a short explainer that plays by itself, a waffle of the House of 435 seats and a slider for the national vote share (01), a map in three views (Democratic share, drawing effect, close races) with a record per state (02), close districts, redraws since 2024, political control and the Senate in 2026 (03), and the method, with the drawing effect at every point of the slider and the details folded (04). `#TX` in the address opens a state; `#method` opens the method.
 
 ## Sources and licenses
 

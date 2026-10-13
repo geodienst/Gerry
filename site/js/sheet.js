@@ -45,6 +45,32 @@ export function renderList(el, list, colors, onSelect, ui) {
   net.append('p').attr('class', 'note').text(list.summary);
 }
 
+/**
+ * "Drawing effects of 3 seats or more" above the map (redesign, chapter 4): a button per state and the
+ * sentence for the rest. Drawn once, so a button keeps the focus; the returned function marks the chosen
+ * state and colors the swatches.
+ * @param {object} view largestEffects(results)
+ * @returns {(colors: object, selected: string) => void}
+ */
+export function renderLargest(el, view, onSelect) {
+  const root = d3.select(el).html('');
+  root.append('span').attr('class', 'k').text(view.title);
+  const buttons = view.chips.map((chip) => {
+    const button = root.append('button').attr('type', 'button').attr('class', 'chip').attr('data-postal', chip.postal)
+      .attr('aria-label', chip.aria).on('click', () => onSelect(chip.postal));
+    button.append('i').attr('class', 'sw').attr('aria-hidden', 'true');
+    button.append('span').text(chip.postal);
+    button.append('b').text(chip.label);
+    return { button, chip };
+  });
+  return (colors, selected) => {
+    for (const { button, chip } of buttons) {
+      button.attr('aria-current', chip.postal === selected ? 'true' : null);
+      button.select('.sw').style('background', colors.effect(chip.drawing));
+    }
+  };
+}
+
 function definitionList(parent, items) {
   const dl = parent.append('dl').attr('class', 'kv');
   for (const item of items) {

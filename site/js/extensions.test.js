@@ -151,11 +151,11 @@ test('senateView.at: the seats at a stop of the vote slider and the seats that c
   // the base: Delaware and New Mexico above one half, both held by Democrats: 48 + 2 = 50, nothing changes
   const base = view.at({ share: 0.518, label: '51.8%', base: true });
   assert.deepEqual([base.seats, base.figure], [50, { value: '50 of 100', label: 'Democratic seats at 51.8%' }]);
-  assert.equal(base.text, 'With the 2016 and 2020 votes (51.8%), as on the vote slider above, Democrats would win 2 '
+  assert.equal(base.text, 'With the 2016 and 2020 votes (51.8%), as on the vote slider in chapter 01, Democrats would win 2 '
     + 'of the 5 seats on the ballot and hold 50 of 100. No seat changes party.');
   // 55.0%: a shift of 3.2 points takes Florida (0.5199) but not Texas (0.4955): 51 of 100
   const up = view.at({ share: 0.55, label: '55.0%', base: false });
-  assert.equal(up.text, 'At 55.0% of the vote, as on the vote slider above, Democrats would win 3 of the 5 seats on '
+  assert.equal(up.text, 'At 55.0% of the vote, as on the vote slider in chapter 01, Democrats would win 3 of the 5 seats on '
     + 'the ballot and hold 51 of 100. Seats that change party: Florida to Democrats.');
   // 45.0%: New Mexico drops to 0.4834
   assert.ok(view.at({ share: 0.45, label: '45.0%', base: false }).text.endsWith('Seats that change party: New Mexico to Republicans.'));

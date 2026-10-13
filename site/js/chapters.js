@@ -1,7 +1,7 @@
 // Texts and view models for the four chapters of the redesign (docs/superpowers/specs/2026-10-08-redesign-design.md).
 // Pure, like model.js and extensions.js: no DOM and no d3, every number through format.js, nothing new computed.
 import {
-  share, sliderShare, neededShare, neededGap, roundHalfUp, planShare, seats, count, effect, effectWords, percentLabel,
+  share, sliderShare, neededShare, neededGap, roundHalfUp, planShare, seats, count, effect, effectWords, effectLine, percentLabel,
 } from './format.js';
 import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS } from './model.js';
 import { stateExtras, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
@@ -158,7 +158,7 @@ export function outcomesView(results) {
   const byVote = {
     title: 'The effect size of enacted maps',
     text: 'The enacted maps have fewer close districts than neutral maps, so they react less when the national vote shifts. '
-      + `${where} Each bar shows the drawing effect at one position of the vote slider above; the dark line marks where the slider stands.`,
+      + `${where} Each bar shows the drawing effect at one position of the vote slider in chapter 01; the dark line marks where the slider stands.`,
     axis: 'Democratic share of the national two-party vote',
     bars, examples, line,
     // where the effect turns, for the key findings: below `below` toward Democrats, from `from` on toward Republicans
@@ -253,6 +253,21 @@ export function waffleText(view, key) {
 }
 
 // --- Chapter 02: state by state (Task 7.4) ------------------------------------------------------
+
+export const LARGEST_MIN = 3; // seats; every state at or above it is listed
+
+/**
+ * "Drawing effects of 3 seats or more": every state at or above the threshold, by size, toward Republicans
+ * first at equal size, then by name.
+ */
+export function largestEffects(results, min = LARGEST_MIN) {
+  const rows = Object.entries(results.states).map(([postal, s]) => ({ postal, name: s.name, drawing: s.effects.drawing }));
+  const chips = rows
+    .filter((r) => Math.abs(r.drawing) >= min)
+    .sort((a, b) => Math.abs(b.drawing) - Math.abs(a.drawing) || a.drawing - b.drawing || a.name.localeCompare(b.name, 'en'))
+    .map((r) => ({ ...r, label: effect(r.drawing), aria: `${r.name}, ${effectLine(r.drawing)}` }));
+  return { title: `Drawing effects of ${count(min)} seats or more`, chips };
+}
 
 /** The state record: the sheet of Phase 6 (stateSheet, stateExtras) with the headline and the seat strip. */
 export function recordView(results, postal) {
