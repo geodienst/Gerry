@@ -188,8 +188,8 @@ test('outcomesView: the finding without a drawing effect, and the key of the cha
   r.national.effects.drawing = 0;
   assert.equal(outcomesView(r).finding, 'In this comparison, with the 2016 and 2020 votes (51.8% for Democrats), '
     + 'the enacted maps give Democrats 225 seats, the same as the neutral-map median.');
-  assert.equal(changedKey(11), 'Dot: the 11 seats that changed with this choice');
-  assert.equal(changedKey(1), 'Dot: the 1 seat that changed with this choice');
+  assert.equal(changedKey(11), 'Star: the 11 seats that changed with this choice');
+  assert.equal(changedKey(1), 'Star: the 1 seat that changed with this choice');
 });
 
 test('outcomesView: an enacted count inside or above the band, a band of one count, no effect', () => {

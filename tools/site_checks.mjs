@@ -708,9 +708,9 @@ async function outcomes(t) {
     title: document.getElementById('waffle-label').textContent }; })()`);
   t.check('Arrow up chooses Neutral-map median and the focus moves with it', neutral.label === 'Neutral-map median' && neutral.checked === 'true', JSON.stringify(neutral));
   t.check('the seats that changed from Enacted maps to Neutral-map median carry a dot, and the key counts them', await t.js(`(() => {
-    const dots = document.querySelectorAll('#waffle .changed circle').length;
+    const dots = document.querySelectorAll('#waffle .changed polygon').length;
     return dots === ${want.neutralSeats} - ${want.enacted} && !document.getElementById('key-changed').hidden
-      && document.getElementById('key-changed-text').textContent === 'Dot: the ' + dots + ' seats that changed with this choice';
+      && document.getElementById('key-changed-text').textContent === 'Star: the ' + dots + ' seats that changed with this choice';
   })()`));
   t.check(`with Neutral-map median the seats ${want.lo} to ${want.hi} are outlined and the key says so`,
     neutral.band === want.hi - want.lo + 1 && neutral.shown !== 'none' && neutral.key, JSON.stringify(neutral));
@@ -809,10 +809,10 @@ async function outcomes(t) {
   t.check('the arrow keys move the slider one point', await t.until(`Number(document.getElementById('vote').value) === ${baseAt - 1}`));
   // a change of row dots the seats that changed; a move of the slider clears the dots
   await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
-  const dotted = await t.js("document.querySelectorAll('#waffle .changed circle').length");
+  const dotted = await t.js("document.querySelectorAll('#waffle .changed polygon').length");
   await setSlider(baseAt);
   t.check('a slider move clears the dots of the last change of row', dotted > 0 && await t.js(
-    "document.querySelectorAll('#waffle .changed circle').length === 0 && document.getElementById('key-changed').hidden"), `${dotted} dots before`);
+    "document.querySelectorAll('#waffle .changed polygon').length === 0 && document.getElementById('key-changed').hidden"), `${dotted} dots before`);
   // a tap shows the tooltip of a frame and keeps it; a tap elsewhere closes it
   await t.js(`(() => { const f = document.querySelectorAll('#waffle .frames rect')[1];
     for (const type of ['pointerenter', 'pointerleave']) f.dispatchEvent(new PointerEvent(type, { pointerType: 'touch' }));

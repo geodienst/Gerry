@@ -304,9 +304,10 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .vote-ticks .tk.base::before { order: 2; margin: 0.1rem 0 0; }
 /* on a phone every other percent of the scale keeps its number */
 @media (max-width: 480px) { .vote-ticks .tk:not(.base):nth-child(even) span { visibility: hidden; } }
-#waffle .changed circle { fill: var(--sheet); }
+#waffle .changed polygon { fill: var(--sheet); }
 .wkey .cd { width: 0.75rem; height: 0.75rem; background: var(--fg); border-radius: 0; display: grid; place-items: center; }
-.wkey .cd::after { content: ""; width: 0.25rem; height: 0.25rem; border-radius: 50%; background: var(--sheet); }
+.wkey .cd::after { content: ""; width: 0.55rem; height: 0.55rem; background: var(--sheet);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
 .finding { margin: 0; font: 600 1.125rem/1.4 var(--font-head); color: var(--fg); max-width: 46ch; }
 .wkey { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.8125rem; color: var(--muted); }
 .wkey > span { display: inline-flex; gap: 0.4rem; align-items: center; }

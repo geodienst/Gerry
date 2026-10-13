@@ -90,9 +90,15 @@ export function renderOutcomes(view, { reduceMotion }) {
     return place === 'mid' ? layout.mid : houseCell(place.side, place.k, layout.rows);
   };
   const seatsFrom = (lo, hi) => Array.from({ length: Math.max(0, hi - lo) }, (_, k) => lo + k);
+  // a five-pointed star in the middle of each seat that changed (owner, October 13, 2026: stars, as on the flag)
+  const star = (cx, cy) => Array.from({ length: 10 }, (_, k) => {
+    const r = k % 2 ? 1.5 : 3.7;
+    const a = -Math.PI / 2 + (k * Math.PI) / 5;
+    return `${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`;
+  }).join(' ');
   const dots = () => (moved ? seatsFrom(...moved).map((i) => {
     const { x, y } = at(i);
-    return svgNode('circle', { cx: x + HOUSE.size / 2, cy: y + HOUSE.size / 2, r: 1.8 });
+    return svgNode('polygon', { points: star(x + HOUSE.size / 2, y + HOUSE.size / 2) });
   }) : []);
 
   function showTip(frame, text) {

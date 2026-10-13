@@ -235,7 +235,7 @@ function houseView(results, needed) {
 
 /** The key of the dots on the seats that changed party with the last choice of row. */
 export function changedKey(k) {
-  return `Dot: the ${seats(k)} ${plural(k, 'seat', 'seats')} that changed with this choice`;
+  return `Star: the ${seats(k)} ${plural(k, 'seat', 'seats')} that changed with this choice`;
 }
 
 /** The line above the waffle and its title, for the chosen row. */
