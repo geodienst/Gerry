@@ -50,6 +50,9 @@ def minimal() -> dict:
             },
         },
         "at_large": {"VT": {"name": "Vermont", "fips": "50"}},
+        # made-up seats: two on the ballot, 98 not
+        "senate_2026": {"checked": date(2026, 10, 13), "sources": ["https://example.org/senate"], "tie": "R",
+                        "not_up": {"D": 50, "R": 48}, "up": {"MO": "R", "VT": "D"}},
     }
 
 
@@ -80,6 +83,9 @@ def test_minimal_config_loads_with_types(tmp_path):
     assert (mo.adopted_by, mo.control, mo.adopted_note) == ("Legislature", "Republican", None)
     nm = cfg.states["NM"]
     assert (nm.adopted_by, nm.control, nm.adopted_note) == ("Commission", "Bipartisan", "Made-up note for the test.")
+    sen = cfg.senate_2026
+    assert (sen.checked, sen.sources, sen.tie) == (date(2026, 10, 13), ("https://example.org/senate",), "R")
+    assert (sen.not_up, sen.up) == ({"D": 50, "R": 48}, {"MO": "R", "VT": "D"})
 
 
 def set_path(raw: dict, path: str, value) -> None:
@@ -132,6 +138,17 @@ BAD_VALUES = [
     ("states.NM.adopted_by", "Court", "court"),            # a court is Nonpartisan (NM: Bipartisan)
     ("states.MO.control", "Nonpartisan", "legislature"),   # a legislature never is
     ("states.NM.adopted_note", "", "adopted_note"),
+    # the Senate seats on the ballot in 2026 (owner, October 13, 2026)
+    ("senate_2026", None, "missing keys"),
+    ("senate_2026.tie", "I", "tie"),
+    ("senate_2026.up.TX", "R", "not in states"),
+    ("senate_2026.up.MO", "I", "up"),
+    ("senate_2026.not_up.D", 49, "100 together"),
+    ("senate_2026.not_up.I", 0, "unknown keys"),
+    ("senate_2026.not_up.D", -1, "not_up"),
+    ("senate_2026.sources", [], "sources"),
+    ("senate_2026.sources", ["http://example.org/senate"], "https"),
+    ("senate_2026.checked", "October 13", "checked"),
     ("states.NM.adopted_note", "Staff drew it \u2014 the legislature voted.", "em dash"),
 ]
 
@@ -269,3 +286,11 @@ def test_real_config_has_the_statewide_presidential_votes(cfg):
     # extensions design, chapter 7: MIT Election Data and Science Lab, U.S. President 1976-2024,
     # doi:10.7910/DVN/42MVDX, version 10.1, file 1976-2024-president.csv (Dataverse file 13887042)
     assert cfg.sources["medsl_president"] == "https://dataverse.harvard.edu/api/access/datafile/13887042"
+
+
+def test_real_config_has_the_senate_seats_of_2026(cfg):
+    # 33 Class II seats and the specials in Florida and Ohio; 34 D and 31 R not on the ballot (October 13, 2026)
+    sen = cfg.senate_2026
+    assert len(sen.up) == 35 and sen.not_up == {"D": 34, "R": 31} and sen.tie == "R"
+    assert sum(party == "D" for party in sen.up.values()) == 13
+    assert {"FL", "OH"} <= set(sen.up) and sen.up["GA"] == "D" and sen.up["ME"] == "R"

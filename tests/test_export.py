@@ -218,6 +218,11 @@ def toy_metrics():
             # extensions (Task 5.19): the Senate block, passed through unchanged
             "senate": {"base_share": 0.55, "states_needed": 26, "share": 0.53, "states_at_base": 27,
                        "seats_at_base": 54, "tipping": [{"postal": "HI", "share": 0.5}]},
+            # the Senate seats on the ballot in 2026 (owner, October 13, 2026), passed through unchanged
+            "senate_2026": {"checked": "2026-10-13", "base_share": 0.55, "up": 1, "held": {"D": 0, "R": 1},
+                            "not_up": {"D": 50, "R": 49}, "majority": 51, "needed": 1, "share": 0.6,
+                            "won_at_base": 0, "seats_at_base": 50,
+                            "seats": [{"postal": "HI", "share": 0.45, "held": "R"}]},
         },
         "states": {"HI": toy_state_metrics("15", ["narrow_ensemble"]), "MO": mo},
         "checks": {"anything": "not exported"},
@@ -252,9 +257,10 @@ def test_build_results_national_adds_single_seat_states_sorted_by_postal():
                                        {"postal": "DE", "fips": "10", "name": "Delaware"}]
     assert list(national) == ["seats", "proportional", "enacted", "neutral", "position", "effects",
                               "outside_band", "majority", "swing", "president", "competitive", "redraw", "by_control",
-                              "by_body", "senate", "single_seat"]
+                              "by_body", "senate", "senate_2026", "single_seat"]
     # the extensions pass through unchanged
-    for key in ("majority", "swing", "president", "competitive", "redraw", "by_control", "by_body", "senate"):
+    for key in ("majority", "swing", "president", "competitive", "redraw", "by_control", "by_body", "senate",
+                "senate_2026"):
         assert national[key] == toy_metrics()["national"][key], key
 
 

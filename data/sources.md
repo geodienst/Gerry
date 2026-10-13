@@ -124,6 +124,17 @@ Details in `data/crosscheck/state_files.csv`, made with `tools/compare_state_fil
 
 The ALARM simulations use the maps of the 2022 election as their reference plan. Five states redrew between the 2022 and 2024 elections: Alabama, Georgia, Louisiana, New York and North Carolina (Census 119th Congress page). Compared with 2022, the 2026 map differs in eleven states: AL, CA, FL, GA, LA, NC, NY, OH, TN, TX and UT.
 
+## Senate seats on the ballot in 2026
+
+Checked 2026-10-13, in `pipeline/config.yaml` under `senate_2026`. The Senate block of chapter 03 uses this list.
+
+- Party division of the 119th Congress: 53 Republicans, 45 Democrats and 2 independents who caucus with the Democrats ([U.S. Senate, Party Division](https://www.senate.gov/history/partydiv.htm)). The site counts the independents with the Democrats: 47 against 53.
+- On the ballot on November 3, 2026: the 33 Class II seats, 13 held by Democrats and 20 by Republicans ([U.S. Senate, Class II](https://www.senate.gov/senators/Class_II.htm)), and special elections for two Class III seats held by appointees: Florida (Ashley Moody, R, in the seat Marco Rubio left) and Ohio (Jon Husted, R, in the seat JD Vance left) ([U.S. Senate, Class III](https://www.senate.gov/senators/Class_III.htm); [Ballotpedia, Florida](https://ballotpedia.org/United_States_Senate_special_election_in_Florida,_2026), [Ballotpedia, Ohio](https://ballotpedia.org/United_States_Senate_special_election_in_Ohio,_2026)).
+- Held by Democrats (13): CO, DE, GA, IL, MA, MI, MN, NH, NJ, NM, OR, RI, VA.
+- Held by Republicans (22): AL, AK, AR, FL (special), ID, IA, KS, KY, LA, ME, MS, MT, NE, NC, OH (special), OK, SC, SD, TN, TX, WV, WY.
+- Not on the ballot: 34 Democrats (the two independents included) and 31 Republicans.
+- The vice president, JD Vance (R), breaks a 50-50 tie, so Democrats need 51 seats.
+
 ## Open items
 
 - Louisiana: whether the court in Callais v. Landry ruled on SB 121 after the argument of 2026-10-27, and whether new suits were filed.

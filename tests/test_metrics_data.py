@@ -169,12 +169,36 @@ def test_senate(metrics):
     sen = metrics["national"]["senate"]
     # prototype run of 2026-10-07: the 44 states of the vote basis and the six single-seat states (MIT file)
     assert (sen["states_needed"], sen["states_at_base"], sen["seats_at_base"]) == (26, 22, 44)
-    assert sen["base_share"] == pytest.approx(0.5169609, abs=5e-7)
-    # the 26th highest state share is Florida's 0.4878762: 0.5169609 + 0.5 - 0.4878762
-    assert sen["share"] == pytest.approx(0.5290847, abs=5e-7)
+    # on the share of the House and the vote slider (owner, October 13, 2026)
+    assert sen["base_share"] == metrics["national"]["majority"]["base_share"] == pytest.approx(0.5179747, abs=5e-7)
+    # the 26th highest state share is Florida's 0.4878762: 0.5179747 + 0.5 - 0.4878762
+    assert sen["share"] == pytest.approx(0.5300985, abs=5e-7)
     assert [t["postal"] for t in sen["tipping"]] == ["AZ", "GA", "FL", "NC", "TX"]
     assert [t["share"] for t in sen["tipping"]] == pytest.approx(
         [0.4929715, 0.4888521, 0.4878762, 0.4876063, 0.4635184], abs=5e-7)
     # one vote base: a multi-seat state has the share behind its proportional seats
     for t in sen["tipping"]:
         assert t["share"] == metrics["states"][t["postal"]]["d_share"]
+
+
+def test_senate_2026(metrics):
+    # run of 2026-10-13: 35 seats on the ballot, 34 D and 31 R not; 17 needed for 51
+    s = metrics["national"]["senate_2026"]
+    assert (s["up"], s["held"], s["not_up"], s["majority"], s["needed"]) == (35, {"D": 13, "R": 22},
+                                                                              {"D": 34, "R": 31}, 51, 17)
+    assert s["base_share"] == metrics["national"]["majority"]["base_share"]
+    # at 51.8%: the 13 seats above one half, Maine in and Georgia out, so 34 + 13 = 47
+    assert (s["won_at_base"], s["seats_at_base"]) == (13, 47)
+    won = {x["postal"] for x in s["seats"][:13]}
+    assert "ME" in won and "GA" not in won
+    # seat 17 is Texas, 0.4635184: 0.5179747 + 0.5 - 0.4635184
+    assert s["seats"][16]["postal"] == "TX"
+    assert s["share"] == pytest.approx(0.5544563, abs=5e-7)
+    # one vote base: a multi-seat state has the share behind its proportional seats
+    for seat in s["seats"]:
+        if seat["postal"] in metrics["states"]:
+            assert seat["share"] == metrics["states"][seat["postal"]]["d_share"]
+    # every point of the slider has the Senate seats, rising with the share, 47 at the base
+    points = metrics["national"]["swing"]["points"]
+    assert [p["senate"] for p in points if p["base"]] == [47]
+    assert all(a["senate"] <= b["senate"] for a, b in zip(points, points[1:]))

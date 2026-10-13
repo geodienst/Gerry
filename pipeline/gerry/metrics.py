@@ -311,12 +311,15 @@ def proportional_threshold(state_shares: Sequence[float], seats: Sequence[int], 
 # --- Senate block (extensions design, chapter 7) ----------------------------------------------------
 
 
-def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, around: int = 2) -> dict:
+def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, around: int = 2,
+                    base_share: float | None = None) -> dict:
     """Each state's two senators go to the party with more of its two-party vote. `votes` maps every state to its
     (Democratic, Republican) votes. Under a uniform swing on the state shares Democrats need `needed` states: the
     threshold is the national share plus 0.5 - h, with h the needed-th highest state share (exact, as
     enacted_threshold). A state exactly on one half does not count. Also the states and seats at the real votes,
-    and the states ranked needed - around to needed + around, from high to low (equal shares by postal code)."""
+    and the states ranked needed - around to needed + around, from high to low (equal shares by postal code).
+    The national share is `base_share` if given (the House share of the vote slider, owner, October 13, 2026),
+    else the share of all the votes in `votes`."""
     postals = sorted(votes)
     first, last = needed - around, needed + around
     if not 1 <= first <= last <= len(postals):
@@ -324,7 +327,7 @@ def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, aroun
     d = np.array([votes[p][0] for p in postals], dtype=float)
     r = np.array([votes[p][1] for p in postals], dtype=float)
     shares = d / (d + r)
-    base = float(d.sum() / (d + r).sum())
+    base = float(d.sum() / (d + r).sum()) if base_share is None else float(base_share)
     ranked = sorted(range(len(postals)), key=lambda i: (-shares[i], postals[i]))
     states = int(seats_at_swing(shares, 0.0))
     return {
@@ -335,3 +338,42 @@ def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, aroun
         "seats_at_base": 2 * states,
         "tipping": [{"postal": postals[i], "share": float(shares[i])} for i in ranked[first - 1:last]],
     }
+
+
+def senate_election(shares: Mapping[str, float], held: Mapping[str, str], not_up: Mapping[str, int], majority: int,
+                    base_share: float) -> dict:
+    """The Senate seats on one ballot (owner, October 13, 2026). `shares` maps each state with a seat on the ballot
+    to its Democratic share of the two-party presidential vote, `held` to the party ("D" or "R") that holds that
+    seat now; `not_up` gives the seats of each party that are not on the ballot. A seat goes to the party with
+    more of its state's vote, as in senate_majority. Democrats need `majority` seats in all: the seats on the
+    ballot they need are majority - not_up["D"], and under a uniform swing the national share they need is
+    base_share + 0.5 - h, with h the share of the state ranked at that number. Also the seats won at
+    base_share, and every seat on the ballot from the highest Democratic share to the lowest (equal shares by
+    postal code)."""
+    if sorted(shares) != sorted(held):
+        raise ValueError(f"shares has {sorted(shares)}, held has {sorted(held)}")
+    postals = sorted(shares, key=lambda p: (-shares[p], p))
+    up = np.array([shares[p] for p in postals], dtype=float)
+    needed = majority - not_up["D"]
+    if not 1 <= needed <= len(postals):
+        raise ValueError(f"Democrats need {needed} of the {len(postals)} seats on the ballot")
+    won = int(seats_at_swing(up, 0.0))
+    return {
+        "base_share": float(base_share),
+        "up": len(postals),
+        "held": {party: sum(held[p] == party for p in postals) for party in ("D", "R")},
+        "not_up": {party: int(not_up[party]) for party in ("D", "R")},
+        "majority": majority,
+        "needed": needed,
+        "share": float(base_share) + enacted_threshold(up, needed),
+        "won_at_base": won,
+        "seats_at_base": int(not_up["D"]) + won,
+        "seats": [{"postal": p, "share": float(shares[p]), "held": held[p]} for p in postals],
+    }
+
+
+def senate_seats_at(election: dict, share: float) -> int:
+    """Democratic seats in the whole Senate when Democrats win `share` of the national vote: the seats not on the
+    ballot plus the seats on it whose state share, moved by share - base_share, lies above one half."""
+    up = np.array([s["share"] for s in election["seats"]], dtype=float)
+    return election["not_up"]["D"] + int(seats_at_swing(up, share - election["base_share"]))

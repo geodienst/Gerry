@@ -35,8 +35,11 @@ _SOURCE_KEYS = (
     "tiger_gpkg", "tiger_mo_cd119", "cb_states", "medsl_president",
 )
 _TOP_KEYS = (
-    "status_checked", "census_vest_commit", "ensemble", "sources", "states", "at_large",
+    "status_checked", "census_vest_commit", "ensemble", "sources", "states", "at_large", "senate_2026",
 )
+SENATE_SEATS = 100
+SENATE_PARTIES = ("D", "R")
+_SENATE_KEYS = ("checked", "sources", "tie", "not_up", "up")
 _STATE_REQUIRED = (
     "name", "fips", "seats", "map_name", "status", "source_label", "source_url",
     "bef", "elections", "unit_kind", "adopted_by", "control",
@@ -98,6 +101,16 @@ class EnsembleConfig:
 
 
 @dataclass(frozen=True)
+class SenateConfig:
+    """The Senate seats on the ballot on November 3, 2026 (owner, October 13, 2026)."""
+    checked: date
+    sources: tuple[str, ...]
+    tie: str                 # party of the vice president, who breaks a 50-50 tie
+    not_up: dict[str, int]   # party -> seats not on the ballot
+    up: dict[str, str]       # postal -> party that holds the seat on the ballot now
+
+
+@dataclass(frozen=True)
 class Config:
     status_checked: date
     census_vest_commit: str
@@ -105,6 +118,7 @@ class Config:
     sources: dict[str, str]
     states: dict[str, StateConfig]
     at_large: dict[str, AtLargeState]
+    senate_2026: SenateConfig | None = None   # always set by load_config; None only in hand-built test configs
 
 
 def data_dir() -> Path:
@@ -147,6 +161,7 @@ def load_config(path: Path | None = None) -> Config:
         sources=_sources(raw["sources"]),
         states=states,
         at_large=at_large,
+        senate_2026=_senate(raw["senate_2026"], set(states) | set(at_large)),
     )
 
 
@@ -336,6 +351,36 @@ def _ensemble(raw: Any, states: dict[str, StateConfig]) -> EnsembleConfig:
         version=_int(raw["version"], "ensemble.version", 1),
         notes=notes,
         fill=fill,
+    )
+
+
+def _senate(raw: Any, postals: set[str]) -> SenateConfig:
+    """senate_2026: every seat on the ballot is in a state of the config, and the seats on the ballot and the
+    seats not on it add up to the 100 seats of the Senate."""
+    where = "senate_2026"
+    _mapping(raw, where)
+    _only_keys(raw, _SENATE_KEYS, where, required=_SENATE_KEYS)
+    sources = raw["sources"]
+    if not isinstance(sources, list) or not sources:
+        raise ConfigError(f"{where}.sources: expected a list of https URLs, got {sources!r}")
+    tie = _choice(raw, "tie", where, SENATE_PARTIES)
+    not_up_raw = _mapping(raw["not_up"], f"{where}.not_up")
+    _only_keys(not_up_raw, SENATE_PARTIES, f"{where}.not_up", required=SENATE_PARTIES)
+    not_up = {party: _int(not_up_raw[party], f"{where}.not_up.{party}", 0) for party in SENATE_PARTIES}
+    up_raw = _mapping(raw["up"], f"{where}.up")
+    up = {}
+    for postal in up_raw:
+        _postal(postal, f"{where}.up")
+        if postal not in postals:
+            raise ConfigError(f"{where}.up: {postal!r} is not in states or at_large")
+        up[postal] = _choice(up_raw, postal, f"{where}.up", SENATE_PARTIES)
+    if len(up) + sum(not_up.values()) != SENATE_SEATS:
+        raise ConfigError(f"{where}: {len(up)} seats up and {sum(not_up.values())} not up, "
+                          f"expected {SENATE_SEATS} together")
+    return SenateConfig(
+        checked=_date(raw["checked"], f"{where}.checked"),
+        sources=tuple(_url({"url": s}, "url", f"{where}.sources") for s in sources),
+        tie=tie, not_up=not_up, up=up,
     )
 
 

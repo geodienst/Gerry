@@ -21,7 +21,8 @@ from gerry.metrics import (MAX_SWING_STEPS, SWING_GRID, SwingRangeError, TieErro
                            dem_wins, distribution, effects, efficiency_gap, enacted_threshold, is_narrow,
                            largest_remainder, linear_band, mean_median, neutral_threshold, outside_band,
                            pmf_percentile, pmf_position, position, proportional_threshold, sample_percentile,
-                           seats_by_plan, senate_majority, sorted_band, swing_point)
+                           seats_by_plan, senate_election, senate_majority, senate_seats_at, sorted_band,
+                           swing_point)
 from gerry.validation import build_report
 
 HOUSE_SEATS = 435
@@ -341,11 +342,28 @@ def read_single_seat_votes(idir, at_large: Mapping[str, AtLargeState]) -> dict[s
     return {row.state: (float(row.d), float(row.r)) for row in table.itertuples(index=False)}
 
 
-def national_senate(votes: Mapping[str, tuple[float, float]]) -> dict:
-    """The Senate block (extensions design, ch. 7) from the (Democratic, Republican) votes of every state."""
+def national_senate(votes: Mapping[str, tuple[float, float]], base_share: float) -> dict:
+    """All 100 seats at once (extensions design, ch. 7), from the (Democratic, Republican) votes of every state,
+    on `base_share`, the national share of the House and the vote slider (owner, October 13, 2026)."""
     if len(votes) != SENATE_STATES:
         raise CheckError("senate_states", "US", f"{len(votes)} states with votes, expected {SENATE_STATES}")
-    return senate_majority(votes, SENATE_STATES_NEEDED)
+    return senate_majority(votes, SENATE_STATES_NEEDED, base_share=base_share)
+
+
+def national_senate_2026(senate, votes: Mapping[str, tuple[float, float]], base_share: float) -> dict:
+    """The seats on the ballot on November 3, 2026 (owner, October 13, 2026): `senate` is config.yaml's
+    senate_2026, `votes` the (Democratic, Republican) votes of every state. Democrats need more than half of the
+    Senate, or half when the vice president is a Democrat."""
+    if senate is None:
+        raise CheckError("senate_2026", "US", "config.yaml has no senate_2026")
+    missing = sorted(set(senate.up) - set(votes))
+    if missing:
+        raise CheckError("senate_2026", "US", f"no votes for the seats on the ballot in {missing}")
+    total = len(senate.up) + sum(senate.not_up.values())
+    majority = total // 2 + (0 if senate.tie == "D" else 1)
+    shares = {postal: votes[postal][0] / (votes[postal][0] + votes[postal][1]) for postal in senate.up}
+    return {"checked": senate.checked.isoformat(),
+            **senate_election(shares, senate.up, senate.not_up, majority, base_share)}
 
 
 def compute(cfg, idir) -> dict:
@@ -430,12 +448,24 @@ def compute(cfg, idir) -> dict:
         parts = [f"{value} {e['states']} states, {e['seats']} seats, drawing {e['drawing']:+d}"
                  for value, e in national[field].items()]
         print(f"US {field}: " + "; ".join(parts))
-    national["senate"] = national_senate({**senate, **single_seat})
+    # the Senate on the House share of the vote slider (owner, October 13, 2026)
+    base_share = national["majority"]["base_share"]
+    national["senate"] = national_senate({**senate, **single_seat}, base_share)
     sen = national["senate"]
-    print(f"US Senate: Democrats have {sen['base_share']:.4f} of the two-party vote in the {SENATE_STATES} states "
-          f"and need {sen['share']:.4f} for {sen['states_needed']} states; at {sen['base_share']:.4f} they win "
+    print(f"US Senate, all {SENATE_STATES} states at once: Democrats have {sen['base_share']:.4f} of the two-party "
+          f"vote and need {sen['share']:.4f} for {sen['states_needed']} states; at {sen['base_share']:.4f} they win "
           f"{sen['states_at_base']} states ({sen['seats_at_base']} seats); around the threshold: "
           + ", ".join(f"{t['postal']} {t['share']:.4f}" for t in sen["tipping"]))
+    national["senate_2026"] = national_senate_2026(getattr(cfg, "senate_2026", None), {**senate, **single_seat},
+                                                   base_share)
+    for point in national["swing"]["points"]:
+        point["senate"] = senate_seats_at(national["senate_2026"], point["share"])
+    s26 = national["senate_2026"]
+    print(f"US Senate 2026: {s26['up']} seats on the ballot ({s26['held']['D']} D, {s26['held']['R']} R), "
+          f"{s26['not_up']['D']} D and {s26['not_up']['R']} R not; Democrats need {s26['needed']} for "
+          f"{s26['majority']} and {s26['share']:.4f} of the vote; at {s26['base_share']:.4f} they win "
+          f"{s26['won_at_base']} ({s26['seats_at_base']} seats); seat {s26['needed']}: "
+          f"{s26['seats'][s26['needed'] - 1]['postal']} {s26['seats'][s26['needed'] - 1]['share']:.4f}")
     return {"national": national, "states": states, "checks": checks}
 
 

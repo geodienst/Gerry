@@ -62,6 +62,56 @@ sources:
   # file 1976-2024-president.csv, CC0 1.0. A Dataverse file id always serves the same file.
   medsl_president: https://dataverse.harvard.edu/api/access/datafile/13887042
 
+# Senate block (owner, October 13, 2026): the seats on the ballot on November 3, 2026 and the party that holds
+# each now, and the seats not on the ballot by party. Class II (33 seats) from the Senate's list; the special
+# elections for the Class III seats of Florida (Rubio) and Ohio (Vance), held by appointees. Party division
+# 53 R, 45 D, 2 independents who caucus with the Democrats (counted as D). The vice president, a Republican,
+# breaks a 50-50 tie. Listed with its sources in the Senate section of data/sources.md.
+senate_2026:
+  checked: 2026-10-13
+  sources:
+    - https://www.senate.gov/senators/Class_II.htm
+    - https://www.senate.gov/senators/Class_III.htm
+    - https://www.senate.gov/history/partydiv.htm
+  tie: R
+  not_up: {D: 34, R: 31}
+  up:
+    AL: R
+    AK: R
+    AR: R
+    CO: D
+    DE: D
+    FL: R
+    GA: D
+    ID: R
+    IL: D
+    IA: R
+    KS: R
+    KY: R
+    LA: R
+    ME: R
+    MA: D
+    MI: D
+    MN: D
+    MS: R
+    MT: R
+    NE: R
+    NH: D
+    NJ: D
+    NM: D
+    NC: R
+    OH: R
+    OK: R
+    OR: D
+    RI: D
+    SC: R
+    SD: R
+    TN: R
+    TX: R
+    VA: D
+    WV: R
+    WY: R
+
 states:
   AL:
     name: Alabama

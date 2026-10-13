@@ -695,3 +695,47 @@ def test_senate_majority_needs_the_ranks_around_the_threshold():
     # needed 2 of 2 states with two ranks on each side: ranks 0 to 4 do not all exist
     with pytest.raises(ValueError, match="ranks"):
         m.senate_majority({"AA": (1, 2), "BB": (2, 1)}, 2)
+
+
+def test_senate_majority_can_take_the_share_of_the_vote_slider():
+    # the same states, with the national share of the House (owner, October 13, 2026): 0.5 + 0.5 - 0.48
+    res = m.senate_majority(SENATE_VOTES, 3, around=1, base_share=0.5)
+    assert (res["base_share"], res["share"]) == (0.5, pytest.approx(0.52))
+    assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
+
+
+# The Senate seats on the ballot in 2026 (owner, October 13, 2026)
+
+# the five states above, each with one seat on the ballot and the party that holds it now; 5 seats not on it
+SENATE_SHARES = {"AA": 0.6, "BB": 0.3, "CC": 0.55, "DD": 0.48, "EE": 0.45}
+SENATE_HELD = {"AA": "D", "BB": "R", "CC": "R", "DD": "D", "EE": "R"}
+
+
+def test_senate_election_hand_example():
+    # 10 seats; Democrats need 6 (a Republican breaks a tie) and hold 3 of the 5 not on the ballot: 3 of the 5 up
+    res = m.senate_election(SENATE_SHARES, SENATE_HELD, {"D": 3, "R": 2}, 6, base_share=0.5)
+    assert (res["up"], res["needed"], res["majority"]) == (5, 3, 6)
+    assert res["held"] == {"D": 2, "R": 3} and res["not_up"] == {"D": 3, "R": 2}
+    # from high to low: AA 0.6, CC 0.55, DD 0.48, EE 0.45, BB 0.3; the third is 0.48: 0.5 + 0.5 - 0.48
+    assert res["share"] == pytest.approx(0.52)
+    # at 0.5: AA and CC, so 3 + 2 = 5 of 10
+    assert (res["won_at_base"], res["seats_at_base"]) == (2, 5)
+    assert [(s["postal"], s["held"]) for s in res["seats"]] == [("AA", "D"), ("CC", "R"), ("DD", "D"), ("EE", "R"),
+                                                                ("BB", "R")]
+    assert list(res) == ["base_share", "up", "held", "not_up", "majority", "needed", "share", "won_at_base",
+                         "seats_at_base", "seats"]
+
+
+def test_senate_seats_at_follows_the_vote_slider():
+    res = m.senate_election(SENATE_SHARES, SENATE_HELD, {"D": 3, "R": 2}, 6, base_share=0.5)
+    # at 0.5 the base: 5; at 0.53 DD (0.51) joins: 6; at 0.6 EE (0.55) too: 7; at 0.38 AA drops to 0.48: 3
+    assert [m.senate_seats_at(res, share) for share in (0.5, 0.53, 0.6, 0.38)] == [5, 6, 7, 3]
+
+
+def test_senate_election_checks_its_input():
+    with pytest.raises(ValueError, match="held"):
+        m.senate_election(SENATE_SHARES, {"AA": "D"}, {"D": 3, "R": 2}, 6, base_share=0.5)
+    # Democrats would need none or more seats than are on the ballot
+    for not_up_d in (6, 0):
+        with pytest.raises(ValueError, match="need"):
+            m.senate_election(SENATE_SHARES, SENATE_HELD, {"D": not_up_d, "R": 5 - not_up_d}, 6, base_share=0.5)

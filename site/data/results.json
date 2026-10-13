@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated": "2026-10-12",
+  "generated": "2026-10-13",
   "ensemble": {
    "name": "alarm_v15",
    "doi": "doi:10.7910/DVN/SLCD3E",
@@ -494,7 +494,8 @@
       "p95": 181
      },
      "more": 0.1282697000111876,
-     "base": false
+     "base": false,
+     "senate": 42
     },
     {
      "share": 0.471,
@@ -506,7 +507,8 @@
       "p95": 182
      },
      "more": 0.06445639516824,
-     "base": false
+     "base": false,
+     "senate": 42
     },
     {
      "share": 0.472,
@@ -518,7 +520,8 @@
       "p95": 183
      },
      "more": 0.059780387365609144,
-     "base": false
+     "base": false,
+     "senate": 42
     },
     {
      "share": 0.473,
@@ -530,7 +533,8 @@
       "p95": 184
      },
      "more": 0.05068386557114592,
-     "base": false
+     "base": false,
+     "senate": 42
     },
     {
      "share": 0.474,
@@ -542,7 +546,8 @@
       "p95": 184
      },
      "more": 0.07505501453291885,
-     "base": false
+     "base": false,
+     "senate": 42
     },
     {
      "share": 0.475,
@@ -554,7 +559,8 @@
       "p95": 185
      },
      "more": 0.11552632390363196,
-     "base": false
+     "base": false,
+     "senate": 42
     },
     {
      "share": 0.476,
@@ -566,7 +572,8 @@
       "p95": 186
      },
      "more": 0.16071905678772352,
-     "base": false
+     "base": false,
+     "senate": 42
     },
     {
      "share": 0.477,
@@ -578,7 +585,8 @@
       "p95": 186
      },
      "more": 0.07767414036786582,
-     "base": false
+     "base": false,
+     "senate": 42
     },
     {
      "share": 0.478,
@@ -590,7 +598,8 @@
       "p95": 187
      },
      "more": 0.06453468955416466,
-     "base": false
+     "base": false,
+     "senate": 43
     },
     {
      "share": 0.479,
@@ -602,7 +611,8 @@
       "p95": 188
      },
      "more": 0.049155234663846435,
-     "base": false
+     "base": false,
+     "senate": 43
     },
     {
      "share": 0.48,
@@ -614,7 +624,8 @@
       "p95": 189
      },
      "more": 0.07822929853526771,
-     "base": false
+     "base": false,
+     "senate": 43
     },
     {
      "share": 0.481,
@@ -626,7 +637,8 @@
       "p95": 190
      },
      "more": 0.03375130339964864,
-     "base": false
+     "base": false,
+     "senate": 43
     },
     {
      "share": 0.482,
@@ -638,7 +650,8 @@
       "p95": 191
      },
      "more": 0.03138365483618871,
-     "base": false
+     "base": false,
+     "senate": 43
     },
     {
      "share": 0.483,
@@ -650,7 +663,8 @@
       "p95": 191
      },
      "more": 0.04608452751617826,
-     "base": false
+     "base": false,
+     "senate": 43
     },
     {
      "share": 0.484,
@@ -662,7 +676,8 @@
       "p95": 192
      },
      "more": 0.04009651009041863,
-     "base": false
+     "base": false,
+     "senate": 43
     },
     {
      "share": 0.485,
@@ -674,7 +689,8 @@
       "p95": 193
      },
      "more": 0.06709963475584454,
-     "base": false
+     "base": false,
+     "senate": 43
     },
     {
      "share": 0.486,
@@ -686,7 +702,8 @@
       "p95": 194
      },
      "more": 0.11788378906863153,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.487,
@@ -698,7 +715,8 @@
       "p95": 195
      },
      "more": 0.1316572789219303,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.488,
@@ -710,7 +728,8 @@
       "p95": 196
      },
      "more": 0.1348995848108772,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.489,
@@ -722,7 +741,8 @@
       "p95": 197
      },
      "more": 0.039654510859895784,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.49,
@@ -734,7 +754,8 @@
       "p95": 198
      },
      "more": 0.03332990843350177,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.491,
@@ -746,7 +767,8 @@
       "p95": 199
      },
      "more": 0.03922988093457983,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.492,
@@ -758,7 +780,8 @@
       "p95": 200
      },
      "more": 0.058411824955691444,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.493,
@@ -770,7 +793,8 @@
       "p95": 201
      },
      "more": 0.09553864557168044,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.494,
@@ -782,7 +806,8 @@
       "p95": 202
      },
      "more": 0.05971430343241766,
-     "base": false
+     "base": false,
+     "senate": 44
     },
     {
      "share": 0.495,
@@ -794,7 +819,8 @@
       "p95": 203
      },
      "more": 0.06082590742703763,
-     "base": false
+     "base": false,
+     "senate": 45
     },
     {
      "share": 0.496,
@@ -806,7 +832,8 @@
       "p95": 204
      },
      "more": 0.10982803316366226,
-     "base": false
+     "base": false,
+     "senate": 45
     },
     {
      "share": 0.497,
@@ -818,7 +845,8 @@
       "p95": 205
      },
      "more": 0.1099852794644472,
-     "base": false
+     "base": false,
+     "senate": 45
     },
     {
      "share": 0.498,
@@ -830,7 +858,8 @@
       "p95": 206
      },
      "more": 0.1723933483845701,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.499,
@@ -842,7 +871,8 @@
       "p95": 207
      },
      "more": 0.18296938064679052,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.5,
@@ -854,7 +884,8 @@
       "p95": 208
      },
      "more": 0.1920764483923284,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.501,
@@ -866,7 +897,8 @@
       "p95": 209
      },
      "more": 0.11285512226755426,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.502,
@@ -878,7 +910,8 @@
       "p95": 210
      },
      "more": 0.19132519302744175,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.503,
@@ -890,7 +923,8 @@
       "p95": 211
      },
      "more": 0.280938309299994,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.504,
@@ -902,7 +936,8 @@
       "p95": 212
      },
      "more": 0.2836745492020495,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.505,
@@ -914,7 +949,8 @@
       "p95": 213
      },
      "more": 0.28331761311603443,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.506,
@@ -926,7 +962,8 @@
       "p95": 215
      },
      "more": 0.4313469278318582,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.507,
@@ -938,7 +975,8 @@
       "p95": 216
      },
      "more": 0.45020130460409824,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.508,
@@ -950,7 +988,8 @@
       "p95": 217
      },
      "more": 0.5899960277159872,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.509,
@@ -962,7 +1001,8 @@
       "p95": 218
      },
      "more": 0.7198114126868213,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.51,
@@ -974,7 +1014,8 @@
       "p95": 220
      },
      "more": 0.6371092328004561,
-     "base": false
+     "base": false,
+     "senate": 46
     },
     {
      "share": 0.511,
@@ -986,7 +1027,8 @@
       "p95": 221
      },
      "more": 0.6532032941827793,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.512,
@@ -998,7 +1040,8 @@
       "p95": 222
      },
      "more": 0.773619753485236,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.513,
@@ -1010,7 +1053,8 @@
       "p95": 223
      },
      "more": 0.871447487998655,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.514,
@@ -1022,7 +1066,8 @@
       "p95": 224
      },
      "more": 0.924437294158408,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.515,
@@ -1034,7 +1079,8 @@
       "p95": 226
      },
      "more": 0.9785314332585769,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.516,
@@ -1046,7 +1092,8 @@
       "p95": 227
      },
      "more": 0.9875897854581086,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.517,
@@ -1058,7 +1105,8 @@
       "p95": 228
      },
      "more": 0.994404141135425,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.5179747240856283,
@@ -1070,7 +1118,8 @@
       "p95": 229
      },
      "more": 0.9972007342690713,
-     "base": true
+     "base": true,
+     "senate": 47
     },
     {
      "share": 0.518,
@@ -1082,7 +1131,8 @@
       "p95": 229
      },
      "more": 0.9972693412934388,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.519,
@@ -1094,7 +1144,8 @@
       "p95": 230
      },
      "more": 0.9973534251226154,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.52,
@@ -1106,7 +1157,8 @@
       "p95": 231
      },
      "more": 0.9987234911490157,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.521,
@@ -1118,7 +1170,8 @@
       "p95": 231
      },
      "more": 0.9987676385201436,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.522,
@@ -1130,7 +1183,8 @@
       "p95": 232
      },
      "more": 0.9993615733565059,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.523,
@@ -1142,7 +1196,8 @@
       "p95": 233
      },
      "more": 0.9997764736334149,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.524,
@@ -1154,7 +1209,8 @@
       "p95": 234
      },
      "more": 0.9993527272345992,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.525,
@@ -1166,7 +1222,8 @@
       "p95": 235
      },
      "more": 0.9991958717045804,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.526,
@@ -1178,7 +1235,8 @@
       "p95": 236
      },
      "more": 0.9996438071259488,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.527,
@@ -1190,7 +1248,8 @@
       "p95": 237
      },
      "more": 0.9971638685182886,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.528,
@@ -1202,7 +1261,8 @@
       "p95": 238
      },
      "more": 0.9986055007020289,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.529,
@@ -1214,7 +1274,8 @@
       "p95": 238
      },
      "more": 0.9994698525138718,
-     "base": false
+     "base": false,
+     "senate": 47
     },
     {
      "share": 0.53,
@@ -1226,7 +1287,8 @@
       "p95": 239
      },
      "more": 0.9998384728622518,
-     "base": false
+     "base": false,
+     "senate": 48
     },
     {
      "share": 0.531,
@@ -1238,7 +1300,8 @@
       "p95": 240
      },
      "more": 0.9994237618787987,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.532,
@@ -1250,7 +1313,8 @@
       "p95": 241
      },
      "more": 0.9998539905093021,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.533,
@@ -1262,7 +1326,8 @@
       "p95": 242
      },
      "more": 0.9999468607183619,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.534,
@@ -1274,7 +1339,8 @@
       "p95": 243
      },
      "more": 0.999755653142927,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.535,
@@ -1286,7 +1352,8 @@
       "p95": 244
      },
      "more": 0.9997534119117313,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.536,
@@ -1298,7 +1365,8 @@
       "p95": 245
      },
      "more": 0.9999088838759584,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.537,
@@ -1310,7 +1378,8 @@
       "p95": 246
      },
      "more": 0.9999667725839706,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.538,
@@ -1322,7 +1391,8 @@
       "p95": 247
      },
      "more": 0.9999887007289717,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.539,
@@ -1334,7 +1404,8 @@
       "p95": 248
      },
      "more": 0.999990479974423,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.54,
@@ -1346,7 +1417,8 @@
       "p95": 249
      },
      "more": 0.99999786964748,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.541,
@@ -1358,7 +1430,8 @@
       "p95": 249
      },
      "more": 0.9999993427621258,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.542,
@@ -1370,7 +1443,8 @@
       "p95": 250
      },
      "more": 0.9999962695280853,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.543,
@@ -1382,7 +1456,8 @@
       "p95": 251
      },
      "more": 0.9999818648182022,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.544,
@@ -1394,7 +1469,8 @@
       "p95": 252
      },
      "more": 0.9999946463248718,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.545,
@@ -1406,7 +1482,8 @@
       "p95": 253
      },
      "more": 0.9999948349127555,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.546,
@@ -1418,7 +1495,8 @@
       "p95": 254
      },
      "more": 0.9999952606287447,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.547,
@@ -1430,7 +1508,8 @@
       "p95": 256
      },
      "more": 0.9999966679516449,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.548,
@@ -1442,7 +1521,8 @@
       "p95": 256
      },
      "more": 0.9999415901586244,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.549,
@@ -1454,7 +1534,8 @@
       "p95": 257
      },
      "more": 0.9993821304942344,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.55,
@@ -1466,7 +1547,8 @@
       "p95": 258
      },
      "more": 0.9997477570977814,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.551,
@@ -1478,7 +1560,8 @@
       "p95": 259
      },
      "more": 0.9998963245380752,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.552,
@@ -1490,7 +1573,8 @@
       "p95": 260
      },
      "more": 0.9996448952658463,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.553,
@@ -1502,7 +1586,8 @@
       "p95": 261
      },
      "more": 0.9998857804954984,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.554,
@@ -1514,7 +1599,8 @@
       "p95": 262
      },
      "more": 0.9996134859411253,
-     "base": false
+     "base": false,
+     "senate": 50
     },
     {
      "share": 0.555,
@@ -1526,7 +1612,8 @@
       "p95": 263
      },
      "more": 0.9995154955719973,
-     "base": false
+     "base": false,
+     "senate": 51
     },
     {
      "share": 0.556,
@@ -1538,7 +1625,8 @@
       "p95": 264
      },
      "more": 0.9998215094296703,
-     "base": false
+     "base": false,
+     "senate": 51
     },
     {
      "share": 0.557,
@@ -1550,7 +1638,8 @@
       "p95": 265
      },
      "more": 0.9999459663793767,
-     "base": false
+     "base": false,
+     "senate": 51
     },
     {
      "share": 0.558,
@@ -1562,7 +1651,8 @@
       "p95": 266
      },
      "more": 0.9998281538098346,
-     "base": false
+     "base": false,
+     "senate": 51
     },
     {
      "share": 0.559,
@@ -1574,7 +1664,8 @@
       "p95": 267
      },
      "more": 0.9999419596677648,
-     "base": false
+     "base": false,
+     "senate": 51
     },
     {
      "share": 0.56,
@@ -1586,7 +1677,8 @@
       "p95": 268
      },
      "more": 0.999934631275507,
-     "base": false
+     "base": false,
+     "senate": 52
     }
    ]
   },
@@ -2077,9 +2169,9 @@
    }
   },
   "senate": {
-   "base_share": 0.5169608961242592,
+   "base_share": 0.5179747240856283,
    "states_needed": 26,
-   "share": 0.5290847223592346,
+   "share": 0.5300985503206037,
    "states_at_base": 22,
    "seats_at_base": 44,
    "tipping": [
@@ -2102,6 +2194,201 @@
     {
      "postal": "TX",
      "share": 0.46351837472645074
+    }
+   ]
+  },
+  "senate_2026": {
+   "checked": "2026-10-13",
+   "base_share": 0.5179747240856283,
+   "up": 35,
+   "held": {
+    "D": 13,
+    "R": 22
+   },
+   "not_up": {
+    "D": 34,
+    "R": 31
+   },
+   "majority": 51,
+   "needed": 17,
+   "share": 0.5544563493591775,
+   "won_at_base": 13,
+   "seats_at_base": 47,
+   "seats": [
+    {
+     "postal": "MA",
+     "share": 0.6596961187596091,
+     "held": "D"
+    },
+    {
+     "postal": "RI",
+     "share": 0.5954555512326805,
+     "held": "D"
+    },
+    {
+     "postal": "IL",
+     "share": 0.5882847899132275,
+     "held": "D"
+    },
+    {
+     "postal": "DE",
+     "share": 0.5796321058935202,
+     "held": "D"
+    },
+    {
+     "postal": "NJ",
+     "share": 0.5771324416206048,
+     "held": "D"
+    },
+    {
+     "postal": "OR",
+     "share": 0.5736877722734169,
+     "held": "D"
+    },
+    {
+     "postal": "NM",
+     "share": 0.5514038649170374,
+     "held": "D"
+    },
+    {
+     "postal": "CO",
+     "share": 0.5504474605271458,
+     "held": "D"
+    },
+    {
+     "postal": "VA",
+     "share": 0.540773794171576,
+     "held": "D"
+    },
+    {
+     "postal": "ME",
+     "share": 0.5323828184561813,
+     "held": "R"
+    },
+    {
+     "postal": "MN",
+     "share": 0.5235733438501063,
+     "held": "D"
+    },
+    {
+     "postal": "NH",
+     "share": 0.5208812036572614,
+     "held": "D"
+    },
+    {
+     "postal": "MI",
+     "share": 0.507325158269057,
+     "held": "D"
+    },
+    {
+     "postal": "GA",
+     "share": 0.4888520578713317,
+     "held": "D"
+    },
+    {
+     "postal": "FL",
+     "share": 0.48787617376502457,
+     "held": "R"
+    },
+    {
+     "postal": "NC",
+     "share": 0.48760625778208216,
+     "held": "R"
+    },
+    {
+     "postal": "TX",
+     "share": 0.46351837472645074,
+     "held": "R"
+    },
+    {
+     "postal": "OH",
+     "share": 0.4582281017173285,
+     "held": "R"
+    },
+    {
+     "postal": "IA",
+     "share": 0.4540521577927261,
+     "held": "R"
+    },
+    {
+     "postal": "SC",
+     "share": 0.43386098416249713,
+     "held": "R"
+    },
+    {
+     "postal": "AK",
+     "share": 0.4333627339352438,
+     "held": "R"
+    },
+    {
+     "postal": "MS",
+     "share": 0.41278351921054895,
+     "held": "R"
+    },
+    {
+     "postal": "KS",
+     "share": 0.40878969470556625,
+     "held": "R"
+    },
+    {
+     "postal": "MT",
+     "share": 0.4041697669795583,
+     "held": "R"
+    },
+    {
+     "postal": "LA",
+     "share": 0.4019523260067082,
+     "held": "R"
+    },
+    {
+     "postal": "NE",
+     "share": 0.38500069543235,
+     "held": "R"
+    },
+    {
+     "postal": "TN",
+     "share": 0.3737441958491357,
+     "held": "R"
+    },
+    {
+     "postal": "AL",
+     "share": 0.3639591775355451,
+     "held": "R"
+    },
+    {
+     "postal": "AR",
+     "share": 0.35752573591603787,
+     "held": "R"
+    },
+    {
+     "postal": "KY",
+     "share": 0.35621357588264696,
+     "held": "R"
+    },
+    {
+     "postal": "SD",
+     "share": 0.35407886685881856,
+     "held": "R"
+    },
+    {
+     "postal": "ID",
+     "share": 0.33111090740146587,
+     "held": "R"
+    },
+    {
+     "postal": "OK",
+     "share": 0.31940795112106385,
+     "held": "R"
+    },
+    {
+     "postal": "WV",
+     "share": 0.3020146768607797,
+     "held": "R"
+    },
+    {
+     "postal": "WY",
+     "share": 0.2602594875382457,
+     "held": "R"
     }
    ]
   },
