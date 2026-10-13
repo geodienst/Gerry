@@ -397,9 +397,10 @@ footer p { margin: 0 0 0.3rem; max-width: 90ch; }
 /* Chapter 02 after the owner's mockup (October 13, 2026) */
 .ohead { display: grid; gap: 0.5rem; }
 .ohead .lead { margin: 0; font: 700 clamp(1.2rem, 1rem + 0.8vw, 1.55rem)/1.35 var(--font-head); max-width: 52ch; }
-.ohead .note { margin: 0; }
+.ohead .note { margin: 0; max-width: 64ch; }
 .countcol { display: grid; gap: 1rem; align-content: start; }
 .countcol > .note { margin: 0; max-width: 46ch; }
+#outcomes-beats { margin: 0; }
 .vote { margin-top: 0.6rem; }
 .vote-base { font-size: 0.8125rem; color: var(--muted); }
 #waffle .majority text { fill: var(--fg); font-size: 14px; font-weight: 600; font-family: var(--font-body); }

@@ -179,7 +179,10 @@ export function renderOutcomes(view, { reduceMotion }) {
       parts[row.key].desc.textContent = row.desc;
     }
     // between the rows the effect with a short name, as in the owner's mockup: "R+10 drawing"
-    p.steps.forEach((step, i) => stepTexts[i].replaceChildren(node('b', {}, step.value), ` ${step.name}`));
+    // between the rows only the difference, such as R+10 (owner's review, October 13, 2026)
+    p.steps.forEach((step, i) => stepTexts[i].replaceChildren(node('b', {}, step.value)));
+    $('outcomes-lead').textContent = p.lead;
+    $('outcomes-beats').textContent = p.beats;
     $('key-band-text').textContent = p.band.key;
     $('spread').replaceChildren(node('p', {}, p.spread), node('p', { class: 'note' }, view.neutralNote),
       node('p', { class: 'note' }, view.scope));

@@ -84,7 +84,18 @@ export function outcomesView(results) {
     neutral: { median: n.neutral.median, p5: n.neutral.p5, p95: n.neutral.p95 }, more: n.position.more };
   // a grid point that reads like the base share (51.8% next to 0.51797) would be a second stop with the same label
   const points = [...(n.swing?.points ?? []).filter((p) => !p.base && sliderShare(p.share) !== sliderShare(base.share)), base]
-    .sort((a, b) => a.share - b.share).map((p) => pointView(p, { offset: house.dSingle, total: house.total }));
+    .sort((a, b) => a.share - b.share).map((p) => ({ ...pointView(p, { offset: house.dSingle, total: house.total }), more: p.more }));
+  // The large sentence above the House and the 99% sentence under it, in the owner's words (review of October 13,
+  // 2026), at every stop of the slider.
+  for (const p of points) {
+    const e = p.rows.find((r) => r.key === 'enacted').seats;
+    const short = majority - e;
+    p.lead = `With these votes, Democrats would win ${seats(e)} seats on the 2026 maps, `
+      + (short > 0 ? `${COUNT_WORDS[short] ?? count(short)} short of a majority. ` : 'a majority. ')
+      + `The median result on the neutral maps is ${seats(p.rows.find((r) => r.key === 'neutral').seats)}.`;
+    const part = planShare(p.more);
+    p.beats = `${part[0].toUpperCase()}${part.slice(1)} of the simulated neutral maps give Democrats more seats than the 2026 maps do.`;
+  }
   const baseIndex = points.findIndex((p) => p.base);
   const main = points[baseIndex];
   // The first stop where each count reaches a majority: a short line on the slider for the chosen row, and the sentence
@@ -123,14 +134,7 @@ export function outcomesView(results) {
       + `${q.label === sliderShare(p2024) ? '' : 'near '}the Democratic share of the 2024 presidential vote, the enacted maps `
       + `give Democrats ${seatsOf(q, 'enacted')} seats and neutral maps ${seatsOf(q, 'neutral')}.` });
   }
-  // The key sentence of the chapter: the threshold, which does not depend on one result (a data reviewer, October 13).
-  // The key sentence of the chapter, in the words of the owner's mockup (October 13, 2026).
-  const enactedSeats = main.rows.find((r) => r.key === 'enacted').seats;
-  const short = majority - enactedSeats;
-  const lead = `With the same votes, the enacted maps give Democrats ${seats(enactedSeats)} seats, `
-    + (short > 0 ? `${COUNT_WORDS[short] ?? count(short)} short of a majority. ` : 'a majority. ')
-    + `Neutral maps give ${seats(main.rows.find((r) => r.key === 'neutral').seats)}. `
-    + `In ${planShare(n.position.more)} of neutral maps, Democrats win more seats than under the enacted maps.`;
+  const lead = main.lead;
   const gap = neededGap(m.enacted.share, m.neutral.share);
   // The drawing effect at every stop of the slider, with a few examples (same reviewer): the effect is not one number.
   const seatsAt = (point, key) => point.rows.find((r) => r.key === key).seats;
@@ -174,15 +178,15 @@ export function outcomesView(results) {
     .filter(({ p }) => !p.base && Math.abs(p.share * 100 - Math.round(p.share * 100)) < 1e-6)
     .map(({ p, index }) => ({ index, label: percentLabel(p.share) }));
   return {
-    intro: 'Pick a count to see the seats. Move the slider to change the national vote.',
+    intro: 'Choose an option to see how the seats will be divided. On top of that, move the slider to change the national vote share.',
     total: house.total,
     rows: main.rows,
     steps: main.steps,
     band: main.band,
     finding: main.finding,
     house: houseView(results, m.seats_needed),
-    effectsNote: 'Geography: the gap between proportional seats and neutral maps. '
-      + 'Drawing: the gap between neutral maps and the enacted maps.',
+    effectsNote: 'The first comparison shows what changes when votes are counted in districts rather than translated into '
+      + 'proportional seats. The second shows what changes when we use the 2026 maps instead of neutral maps.',
     majorityLabel: `${seats(majority)} for a majority`,
     spread: main.spread,
     position: main.position,

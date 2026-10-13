@@ -23,11 +23,17 @@ test('outcomesView: three rows, the two effects between them, the band and the s
   // drawing -10; position.more 0.9972; seven states; Texas first with 5,000 maps. Every count is shown in the House of
   // 435 (owner decision, October 11): plus the 2 Democratic single-seat states -> 226, 225 (219 to 231), 215.
   const view = outcomesView(withExtensions());
-  // the key sentence and the line under it in the words of the owner's mockup (October 13): 215 is 218 - 3;
-  // position.more 0.9972 -> "more than 99%"
-  assert.equal(view.lead, 'With the same votes, the enacted maps give Democrats 215 seats, three short of a majority. Neutral '
-    + 'maps give 225. In more than 99% of neutral maps, Democrats win more seats than under the enacted maps.');
-  assert.equal(view.intro, 'Pick a count to see the seats. Move the slider to change the national vote.');
+  // the owner's review (October 13): 215 is 218 - 3; position.more 0.9972 -> "More than 99%", under the House
+  assert.equal(view.lead, 'With these votes, Democrats would win 215 seats on the 2026 maps, three short of a majority. '
+    + 'The median result on the neutral maps is 225.');
+  assert.equal(view.points[view.baseIndex].beats, 'More than 99% of the simulated neutral maps give Democrats more seats '
+    + 'than the 2026 maps do.');
+  // at 50%: 207 of the 2026 maps is 11 short; neutral median 205; 19% of neutral outcomes above the enacted maps
+  assert.equal(view.points[0].lead, 'With these votes, Democrats would win 207 seats on the 2026 maps, 11 short of a majority. '
+    + 'The median result on the neutral maps is 205.');
+  assert.equal(view.points[0].beats, '19% of the simulated neutral maps give Democrats more seats than the 2026 maps do.');
+  assert.equal(view.intro, 'Choose an option to see how the seats will be divided. On top of that, move the slider to change '
+    + 'the national vote share.');
   assert.equal(view.total, 435);
   assert.deepEqual(view.rows.map((r) => [r.key, r.label, r.seats, r.value]), [
     ['proportional', 'Vote-proportional', 226, '226'], ['neutral', 'Neutral-map median', 225, '225'], ['enacted', 'Enacted maps', 215, '215'],
@@ -56,8 +62,8 @@ test('outcomesView: three rows, the two effects between them, the band and the s
     fillKey: '1 square = 1 seat of 435. Democrats fill from the left, Republicans from the right.',
     singleKey: 'Framed: the six states with one seat, the same in every count.',
   });
-  assert.equal(view.effectsNote, 'Geography: the gap between proportional seats and neutral maps. '
-    + 'Drawing: the gap between neutral maps and the enacted maps.');
+  assert.equal(view.effectsNote, 'The first comparison shows what changes when votes are counted in districts rather than '
+    + 'translated into proportional seats. The second shows what changes when we use the 2026 maps instead of neutral maps.');
   assert.equal(view.majorityLabel, '218 for a majority');
   // 215 < 219
   assert.equal(view.spread, '90% of neutral outcomes give Democrats 219 to 231 seats. The enacted maps give 215, below that range.');

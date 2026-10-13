@@ -661,12 +661,14 @@ async function outcomes(t) {
       && [...document.querySelectorAll('#scen .big .visually-hidden')].every((s) => s.textContent.trim() === 'Democratic seats');
   })()`));
   // the key sentence of the owner's mockup (October 13, 2026)
-  t.check('the chapter opens with the key sentence of the mockup', /^With the same votes, the enacted maps give Democrats \d+ seats, (\w+ short of a majority|a majority)\. Neutral maps give \d+\. In .+ of neutral maps, Democrats win more seats than under the enacted maps\.$/
+  // the owner's review (October 13, 2026): the large sentence, and the 99% sentence under the House
+  t.check('the chapter opens with the seats on the 2026 maps and the neutral median', /^With these votes, Democrats would win \d+ seats on the 2026 maps, (\w+ short of a majority|a majority)\. The median result on the neutral maps is \d+\.$/
     .test(await t.text('#outcomes-lead')), await t.text('#outcomes-lead'));
+  t.check('under the House the share of neutral maps that give Democrats more seats', /^(More than 99%|Less than 1%|\d+%) of the simulated neutral maps give Democrats more seats than the 2026 maps do\.$/
+    .test(await t.text('#outcomes-beats')), await t.text('#outcomes-beats'));
   t.check('Enacted maps is chosen at the start and is the only tab stop', rows.map((r) => `${r.checked}/${r.tab}`).join() === 'false/-1,false/-1,true/0');
-  t.check('the two effects stand between the rows with a short name, as in the mockup',
-    await t.js(`[...document.querySelectorAll('#scen .step b')].map((b) => b.textContent).join() === ${JSON.stringify(want.steps.join())}`)
-    && await t.js("[...document.querySelectorAll('#scen .step')].map((s) => s.textContent.split(' ')[1]).join() === 'geography,drawing'"));
+  t.check('the two differences stand between the rows, without labels (owner, October 13, 2026)',
+    await t.js(`[...document.querySelectorAll('#scen .step')].map((s) => s.textContent).join() === ${JSON.stringify(want.steps.join())}`));
   const blue = "getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
   const democratic = `[...document.querySelectorAll('#waffle rect.seat')].filter((r) => r.getAttribute('fill') === ${blue}).length`;
   // the House of 435: these districts plus the six one-seat states, two of them Democratic
@@ -723,8 +725,9 @@ async function outcomes(t) {
   t.check('Arrow down on the last row goes round to the first', (await t.js("document.activeElement.querySelector('.lab')?.textContent")) === 'Vote-proportional');
   await t.js("document.querySelectorAll('#scen [role=radio]')[2].click()");
   t.check('a click chooses a row and repaints the waffle', await t.until(`${democratic} === ${want.enacted} + 2`, 2000));
-  t.check('under the rows the two definitions', (await t.text('#effects-note')) === 'Geography: the gap between proportional seats and '
-    + 'neutral maps. Drawing: the gap between neutral maps and the enacted maps.');
+  t.check('under the rows the explanation of the two comparisons', (await t.text('#effects-note')) === 'The first comparison shows what '
+    + 'changes when votes are counted in districts rather than translated into proportional seats. The second shows what changes '
+    + 'when we use the 2026 maps instead of neutral maps.');
   t.check('the spread sentence places the enacted maps against the band', /^90% of neutral outcomes give Democrats \d+( to \d+)? seats\. The enacted maps give \d+, (below|within|above) that range\.$/
     .test(await t.js("document.querySelector('#spread p').textContent")));
 
