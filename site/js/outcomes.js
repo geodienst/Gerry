@@ -4,6 +4,7 @@
 // Texts come from chapters.js and geometry from axes.js; this module only draws.
 import { HOUSE, houseLayout, houseCell, housePlace } from './axes.js';
 import { waffleText, changedKey } from './chapters.js';
+import { renderByVote } from './swing.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const $ = (id) => document.getElementById(id);
@@ -24,6 +25,7 @@ const svgNode = (tag, attrs, text = null) => node(tag, attrs, text, SVG_NS);
  */
 export function renderOutcomes(view, { reduceMotion }) {
   $('outcomes-intro').textContent = view.intro;
+  $('outcomes-lead').textContent = view.lead;
   let pi = view.baseIndex; // the point of the vote slider on screen
   const point = () => view.points[pi];
 
@@ -202,9 +204,15 @@ export function renderOutcomes(view, { reduceMotion }) {
     tipLine.hidden = index < 0;
     tipLine.style.setProperty('--at', String(Math.max(index, 0) / (view.points.length - 1)));
   };
+  // The drawing effect at every stop of the slider, at the bottom of the chapter, with a line at the stop on screen.
+  $('byvote-title').textContent = view.byVote.title;
+  $('byvote-text').textContent = view.byVote.text;
+  $('byvote-examples').textContent = view.byVote.line;
+  const byVote = renderByVote($('byvote-chart'), view.byVote, view.slider.scale);
   const back = $('vote-back');
   function showPoint() {
     const p = point();
+    byVote.show(pi);
     slider.value = String(pi);
     slider.setAttribute('aria-valuetext', p.valueText);
     $('vote-out').textContent = p.base ? `${p.label}, the 2016 and 2020 votes` : p.label;
@@ -286,6 +294,7 @@ export function renderOutcomes(view, { reduceMotion }) {
     paint(next) {
       colors = next;
       for (const swatch of document.querySelectorAll('#outcomes .sw.d, #outcomes .sw.r')) swatch.style.background = colors.party(swatch.classList.contains('d'));
+      byVote.paint(colors);
       draw(false);
     },
     select,

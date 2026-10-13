@@ -220,6 +220,20 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .chead .no { font: 700 0.8125rem/1 var(--font-body); color: var(--ink); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; border: 1px solid currentColor; padding: 0.3rem 0.4rem; }
 .chead h2 { font: 700 1.5rem/1.2 var(--font-head); }
 .chead p { grid-column: 2; color: var(--muted); max-width: 64ch; margin: 0.4rem 0 0; }
+/* the key sentence of chapter 01: the threshold (a data reviewer, October 13) */
+.chead p.lead { color: var(--fg); font: 600 1.1875rem/1.4 var(--font-head); margin-top: 0.7rem; }
+/* the drawing effect at every stop of the slider, at the bottom of chapter 01 */
+.byvote { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: 1.4rem; display: grid; gap: 0.5rem; }
+.byvote h3 { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; letter-spacing: 0; text-transform: none; color: var(--fg); }
+.byvote p { margin: 0; max-width: 72ch; }
+#byvote-chart { min-width: 0; }
+.byvote-chart { display: block; }
+.byvote-chart .grid { stroke: var(--rule); }
+.byvote-chart .zero { stroke: var(--fg); }
+.byvote-chart .axis { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.byvote-chart .example { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.byvote-chart .lead { stroke: var(--muted); stroke-dasharray: 2 2; }
+.byvote-chart .here { stroke: var(--fg); stroke-width: 1.5; }
 
 /* Chapter 01: the three rows, the waffle and the two columns under them (Task 7.6) */
 .outcomes { display: grid; grid-template-columns: minmax(0, 23rem) minmax(0, 1fr); gap: clamp(1.2rem, 3vw, 2.8rem); align-items: start; }

@@ -756,11 +756,24 @@ async function outcomes(t) {
     tipEnacted === stopOf('on the enacted maps') && tipNeutral === stopOf('on neutral maps') && tipEnacted !== tipNeutral
     && slider.sentence.startsWith('The short line marks where the chosen count reaches a majority, 218 of 435 seats.'),
     JSON.stringify({ tipEnacted, tipNeutral, sentence: slider.sentence }));
+  // the key sentence: the threshold of the enacted maps against neutral maps (a data reviewer, October 13)
+  t.check('the chapter opens with the threshold as its key sentence', /^With these maps, Democrats need \d+\.\d% of the two-party vote for a House majority\. On neutral maps they would need \d+\.\d%\./
+    .test(await t.text('#outcomes-lead')), await t.text('#outcomes-lead'));
+  // the drawing effect at every stop of the slider: a bar per stop, up for Democrats and down for Republicans
+  const bars = await t.js(`[...document.querySelectorAll('#byvote-chart rect.col')].map((r) => ({ d: r.classList.contains('d'),
+    h: Number(r.getAttribute('height')), x: Number(r.getAttribute('x')) + Number(r.getAttribute('width')) / 2 }))`);
+  const wantBars = stops.map((p) => p.enacted - p.neutral.median);
+  t.check('one bar per stop of the slider, each pointing the way of its drawing effect', bars.length === stops.length
+    && bars.every((b, i) => (wantBars[i] > 0) === b.d && (wantBars[i] === 0) === (b.h === 0)), `${bars.length} bars for ${stops.length} stops`);
+  t.check('the examples under the chart name 2024 and the 2016 and 2020 votes', await t.js(
+    "/\\(2024\\): D\\+\\d+/.test(document.getElementById('byvote-examples').textContent) && /\\(2016 \\+ 2020\\): R\\+\\d+/.test(document.getElementById('byvote-examples').textContent)"));
   const half = stops.findIndex((p) => Math.abs(p.share - 0.5) < 1e-9);
   await setSlider(half);
   const moved = await t.js(`(() => ({ rows: [...document.querySelectorAll('#scen .big .n')].map((b) => Number(b.textContent)),
     out: document.getElementById('vote-out').textContent, back: document.getElementById('vote-back').hidden,
     finding: document.getElementById('finding').textContent, democratic: ${democratic} }))()`);
+  t.check('the line in the chart of drawing effects follows the slider', await t.js(
+    "Math.abs(Number(document.querySelector('#byvote-chart line.here').getAttribute('x1')) - " + bars[half].x + ") < 0.5"));
   const p = stops[half];
   t.check('at 50.0% the rows, the finding and the waffle follow the slider',
     moved.rows.join() === [p.proportional, p.neutral.median, p.enacted].map((v) => v + 2).join() && moved.out === '50.0%' && !moved.back

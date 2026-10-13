@@ -26,7 +26,7 @@
     <div class="wrap">
       <dl>
         <div><dt>Scope</dt><dd>U.S. House, <span data-fill="house-seats"></span> seats in <span data-fill="all-states"></span> states</dd></div>
-        <div><dt>Votes</dt><dd>2016 + 2020 presidential, held constant</dd></div>
+        <div><dt>Votes</dt><dd>2016 + 2020 presidential, the same for every count. Not a forecast: the slider tries other results.</dd></div>
         <div><dt>Question</dt><dd>How much do geography and map drawing change the seats?</dd></div>
       </dl>
     </div>
@@ -40,6 +40,7 @@
           <span class="no">01</span>
           <h2 id="h01">One electorate. Three outcomes.</h2>
           <p id="outcomes-intro"></p>
+          <p class="lead" id="outcomes-lead"></p>
         </div>
         <div class="tour" id="tour">
           <div class="tour-head">
@@ -81,6 +82,12 @@
         <div class="findings">
           <div class="effectlist" id="effects"></div>
           <div class="effectlist" id="spread"></div>
+        </div>
+        <div class="byvote">
+          <h3 id="byvote-title"></h3>
+          <p id="byvote-text"></p>
+          <div id="byvote-chart"></div>
+          <p class="note" id="byvote-examples"></p>
         </div>
       </div>
     </section>

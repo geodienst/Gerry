@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  roundHalfUp, share, sliderShare, neededShare, margin, planShare, advantage, seats,
+  roundHalfUp, share, sliderShare, neededShare, neededGap, margin, planShare, advantage, seats,
   effect, effectWords, effectLine, count, percentLabel, longDate,
 } from './format.js';
 
@@ -39,6 +39,13 @@ test('neededShare: a threshold rounds up to the next 0.1 point, so the share it 
   assert.equal(neededShare(0.4978747), '49.8%');
   assert.equal(neededShare(0.5291), '53.0%');
   assert.equal(neededShare(0.523), '52.3%'); // exactly on a tenth stays
+});
+
+test('neededGap: the difference between two thresholds as they are written, rounded up', () => {
+  // 52.303% -> 52.4%, 51.157% -> 51.2%: 1.2 points, as a reader would subtract them
+  assert.equal(neededGap(0.5230328, 0.5115747), 1.2);
+  assert.equal(neededGap(0.512, 0.512), 0);
+  assert.equal(neededGap(0.505, 0.512), -0.7);
 });
 
 test('margin: the gap between the two parties in points, |2 * share - 1|', () => {

@@ -64,6 +64,19 @@ export function share(fraction) {
 }
 
 /**
+ * The difference in points between two thresholds as neededShare writes them, so it matches what a reader subtracts:
+ * 0.5230328 (52.4%) and 0.5115747 (51.2%) -> 1.2.
+ * @param {number} a
+ * @param {number} b
+ * @returns {number}
+ */
+export function neededGap(a, b) {
+  checkFraction(a);
+  checkFraction(b);
+  return (Math.ceil(a * 1000 - 1e-9) - Math.ceil(b * 1000 - 1e-9)) / 10;
+}
+
+/**
  * The gap between the two parties in a district, in points with one decimal: 0.4691 -> "6.2 points".
  * @param {number} fraction the Democratic share of the two-party vote
  * @returns {string}

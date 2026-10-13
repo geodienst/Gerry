@@ -1,6 +1,8 @@
 // Texts and view models for the four chapters of the redesign (docs/superpowers/specs/2026-10-08-redesign-design.md).
 // Pure, like model.js and extensions.js: no DOM and no d3, every number through format.js, nothing new computed.
-import { share, sliderShare, neededShare, planShare, seats, count, effect, effectWords, effectLine, percentLabel } from './format.js';
+import {
+  share, sliderShare, neededShare, neededGap, roundHalfUp, planShare, seats, count, effect, effectWords, effectLine, percentLabel,
+} from './format.js';
 import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS } from './model.js';
 import { stateExtras, majorityView, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
 import { seatTicks, rowDomain } from './axes.js';
@@ -121,6 +123,39 @@ export function outcomesView(results) {
       + `${q.label === sliderShare(p2024) ? '' : 'near '}the Democratic share of the 2024 presidential vote, the enacted maps `
       + `give Democrats ${seatsOf(q, 'enacted')} seats and neutral maps ${seatsOf(q, 'neutral')}.` });
   }
+  // The key sentence of the chapter: the threshold, which does not depend on one result (a data reviewer, October 13).
+  const gap = neededGap(m.enacted.share, m.neutral.share);
+  const lead = `With these maps, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House majority. `
+    + `On neutral maps they would need ${neededShare(m.neutral.share)}. `
+    + (gap > 0 ? `The difference, ${roundHalfUp(gap, 1)} points, comes from how the maps are drawn.`
+      : gap === 0 ? 'The maps make no difference.' : `The enacted maps ask ${roundHalfUp(-gap, 1)} points less.`);
+  // The drawing effect at every stop of the slider, with a few examples (same reviewer): the effect is not one number.
+  const seatsAt = (point, key) => point.rows.find((r) => r.key === key).seats;
+  const bars = points.map((p, index) => {
+    const drawing = seatsAt(p, 'enacted') - seatsAt(p, 'neutral');
+    return { index, share: p.share, label: p.label, drawing, value: effect(drawing),
+      title: `${p.label} of the vote: ${effect(drawing)}. Enacted maps ${seats(seatsAt(p, 'enacted'))}, `
+        + `neutral-map median ${seats(seatsAt(p, 'neutral'))}.` };
+  });
+  const strongest = bars.reduce((best, b) => (Math.abs(b.drawing) > Math.abs(best.drawing) ? b : best), bars[0]);
+  const half = bars.find((b) => !points[b.index].base && Math.abs(b.share - 0.5) < 1e-9);
+  const picks = [near2024 >= 0 ? bars[near2024] : null, half, bars[baseIndex], strongest].filter(Boolean);
+  const examples = [...new Map(picks.map((b) => [b.index, b])).values()].sort((a, b) => a.index - b.index)
+    .map((b) => ({ index: b.index, label: b.label, value: b.value,
+      note: b.index === baseIndex ? '2016 + 2020' : p2024 !== undefined && b.label === sliderShare(p2024) ? '2024' : '' }));
+  const line = examples.map((e) => `${e.label}${e.note ? ` (${e.note})` : ''}: ${e.value}`).join(' · ');
+  const turn = bars.findIndex((b) => b.drawing < 0);
+  const where = turn < 0 ? 'At every point of the slider they give Democrats at least as many seats as neutral maps would.'
+    : turn === 0 ? `From ${bars[0].label} on they give Democrats fewer seats than neutral maps would.`
+      : `Below ${bars[turn].label} of the vote they give Democrats more seats than neutral maps would, from ${bars[turn].label} on fewer.`;
+  const byVote = {
+    title: 'The drawing effect depends on the vote',
+    text: 'The enacted maps have fewer close districts than neutral maps, so they move less when the national vote moves. '
+      + `${where} Each bar is the drawing effect at one point of the slider.`,
+    bars, examples, line,
+    label: `Drawing effect at each point of the vote slider, from ${points[0].label} to ${points.at(-1).label}. ${line}.`,
+    max: Math.max(5, Math.ceil(Math.max(...bars.map((b) => Math.abs(b.drawing))) / 5) * 5),
+  };
   // A plain scale under the slider: the stops at whole percents, and a mark at the 2016 and 2020 votes (feedback of
   // October 11: labels per count looked like choices between the counts).
   const scale = points.map((p, index) => ({ p, index }))
@@ -145,6 +180,8 @@ export function outcomesView(results) {
     scope: national.note,
     points,
     baseIndex,
+    lead,
+    byVote,
     why,
     tour: {
       label: 'How to read this',

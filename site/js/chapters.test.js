@@ -23,6 +23,9 @@ test('outcomesView: three rows, the two effects between them, the band and the s
   // drawing -10; position.more 0.9972; seven states; Texas first with 5,000 maps. Every count is shown in the House of
   // 435 (owner decision, October 11): plus the 2 Democratic single-seat states -> 226, 225 (219 to 231), 215.
   const view = outcomesView(withExtensions());
+  // the threshold as the key sentence of the chapter (a data reviewer, October 13): 52.4% against 51.2%
+  assert.equal(view.lead, 'With these maps, Democrats need 52.4% of the two-party vote for a House majority. On neutral '
+    + 'maps they would need 51.2%. The difference, 1.2 points, comes from how the maps are drawn.');
   // the intro names the rows and the slider (Mark Thompson's feedback, October 12)
   assert.equal(view.intro, 'One set of votes, three ways to turn them into seats. Choose a row to see how many of the 435 '
     + 'seats Democrats would win. Move the slider to see what changes when the national vote shifts.');
@@ -108,6 +111,28 @@ test('outcomesView: one view per point of the vote slider, the base point as the
   assert.deepEqual(view.slider.reach, { proportional: 0, neutral: 1, enacted: 2 });
   assert.equal(view.slider.majority, 'The short line marks where the chosen count reaches a majority, 218 of 435 seats. '
     + 'That happens at 50.0% of the two-party vote if seats follow the votes, at 51.8% on neutral maps and at 53.0% on the enacted maps.');
+});
+
+test('outcomesView: the drawing effect at every stop of the slider, with a few examples', () => {
+  const { byVote } = outcomesView(withExtensions());
+  // testdata stops: 50% (205 against 203 of 435: D+2), the base (215 against 225: R+10), 53% (223 against 236: R+13)
+  assert.deepEqual(byVote.bars.map((b) => [b.index, b.drawing, b.value]), [[0, 2, 'D+2'], [1, -10, 'R+10'], [2, -13, 'R+13']]);
+  assert.equal(byVote.bars[2].title, '53.0% of the vote: R+13. Enacted maps 223, neutral-map median 236.');
+  assert.equal(byVote.title, 'The drawing effect depends on the vote');
+  // the first stop with an effect toward Republicans is the base, 51.8%
+  assert.equal(byVote.text, 'The enacted maps have fewer close districts than neutral maps, so they move less when the '
+    + 'national vote moves. Below 51.8% of the vote they give Democrats more seats than neutral maps would, from 51.8% on '
+    + 'fewer. Each bar is the drawing effect at one point of the slider.');
+  // examples: the stop nearest 2024 (here 50.0%, not 49.2%, so no year), 50%, the 2016 and 2020 votes, the strongest effect
+  assert.deepEqual(byVote.examples, [
+    { index: 0, label: '50.0%', note: '', value: 'D+2' },
+    { index: 1, label: '51.8%', note: '2016 + 2020', value: 'R+10' },
+    { index: 2, label: '53.0%', note: '', value: 'R+13' },
+  ]);
+  assert.equal(byVote.line, '50.0%: D+2 · 51.8% (2016 + 2020): R+10 · 53.0%: R+13');
+  assert.equal(byVote.label, 'Drawing effect at each point of the vote slider, from 50.0% to 53.0%. 50.0%: D+2 · '
+    + '51.8% (2016 + 2020): R+10 · 53.0%: R+13.');
+  assert.equal(byVote.max, 15); // the largest effect, 13, rounded up to 5
 });
 
 test('outcomesView: the explainer in five steps, each with a row and a stop of the slider', () => {
