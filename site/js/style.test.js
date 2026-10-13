@@ -91,3 +91,15 @@ test('the zoom hint over the map is readable on its lightest colors', () => {
     }
   }
 });
+
+test('every brace in style.css is matched, so no rule is skipped', () => {
+  // October 13, 2026: a stray } after the key findings made the browser skip the next rule, the space around every
+  // chapter. Comments hold no rules; the depth must never drop below zero and must end at zero.
+  let depth = 0;
+  for (const [i, ch] of [...css.replace(/\/\*[\s\S]*?\*\//g, '')].entries()) {
+    if (ch === '{') depth += 1;
+    if (ch === '}') depth -= 1;
+    assert.ok(depth >= 0, `a } without its { near character ${i}`);
+  }
+  assert.equal(depth, 0, 'a { without its }');
+});

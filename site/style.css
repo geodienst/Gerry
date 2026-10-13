@@ -212,7 +212,6 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .keyfacts li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.4rem; height: 0.4rem; background: var(--ink); }
 /* the Senate card in chapter 03: a line above its title that sets it apart from the maps */
 .grid3 .kicker { margin: 0 0 -0.4rem; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
-}
 .chapter { padding-block: clamp(2rem, 5vw, 3.6rem); border-bottom: 1px solid var(--rule); }
 .chapter > .wrap { display: grid; gap: 1.4rem; }
 .chead { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.9rem; align-items: baseline; }

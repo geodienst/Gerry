@@ -426,6 +426,9 @@ async function layout(t) {
     // clientWidth leaves out the scrollbar and, unlike innerWidth, does not grow with the overflow on a phone.
     const sideways = await t.js('({ scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth })');
     t.check(`${width}px: no sideways scrolling`, sideways.scrollWidth <= sideways.clientWidth, JSON.stringify(sideways));
+    // a rule the browser skipped once left the chapters without room above their heads (October 13, 2026)
+    const pads = await t.js("[...document.querySelectorAll('.chapter')].map((c) => parseFloat(getComputedStyle(c).paddingTop))");
+    t.check(`${width}px: every chapter has room above its head`, pads.length === 4 && pads.every((p) => p >= 24), pads.join());
     const where = await t.js("(() => { const m = document.querySelector('.mapcol').getBoundingClientRect(); const s = document.getElementById('sheet').getBoundingClientRect(); return s.left >= m.right - 1 ? 'beside' : s.top >= m.bottom - 1 ? 'below' : 'overlap'; })()");
     t.check(`${width}px: the sheet is ${place} the map`, where === place, where);
     const rowsWhere = await t.js("(() => { const r = document.getElementById('scen').getBoundingClientRect(); const w = document.querySelector('.waffle').getBoundingClientRect(); return w.left >= r.right - 1 ? 'beside' : w.top >= r.bottom - 1 ? 'below' : 'overlap'; })()");
