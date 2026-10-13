@@ -191,7 +191,12 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .mast .sub { margin: 0; font-size: 1.1875rem; line-height: 1.45; max-width: 52ch; }
 /* The byline as a news story has it: author, date, and a link to the method. */
 .mast .byline { margin: 0; font-size: 0.9375rem; color: var(--mast-muted); }
-.mast .byline .author { color: var(--mast-fg); font-weight: 700; }
+.mast .byline .author { color: var(--mast-fg); font-weight: 700; text-decoration: none; }
+.mast .byline .author:hover { text-decoration: underline; }
+/* About this project, at the end of the page */
+.about { border-top: 1px solid var(--rule); padding-block: 2rem 2.4rem; }
+.about h2 { font: 700 1.25rem/1.2 var(--font-head); margin: 0 0 0.6rem; }
+.about p { max-width: 64ch; margin: 0.45rem 0 0; }
 .mast .byline a { color: var(--mast-fg); text-underline-offset: 0.2em; }
 .mast a:focus-visible { outline-color: var(--mast-fg); }
 .metastrip { border-bottom: 1px solid var(--rule); background: var(--sheet); }

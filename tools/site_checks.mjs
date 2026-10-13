@@ -475,8 +475,10 @@ async function layout(t) {
     && (await t.js('getComputedStyle(document.activeElement).outlineStyle')) === 'solid');
   await t.load();
   await t.key('Tab', 9);
-  t.check('the first Tab lands on the Methodology link in the byline, with a visible outline', await t.js(
-    "document.activeElement === document.querySelector('.mast .byline a') && getComputedStyle(document.activeElement).outlineStyle === 'solid'"));
+  t.check('the first Tab lands on the name in the byline, with a visible outline', await t.js(
+    "document.activeElement === document.querySelector('.mast .byline a.author') && getComputedStyle(document.activeElement).outlineStyle === 'solid'"));
+  await t.key('Tab', 9);
+  t.check('the second Tab lands on the Methodology link', await t.js("document.activeElement === document.querySelector('.mast .byline a[href=\"#method\"]')"));
   await t.key('Tab', 9);
   const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
     outline: getComputedStyle(el).outlineStyle, group: el.parentElement.getAttribute('role'), name: el.parentElement.getAttribute('aria-label') }; })()`);
@@ -586,8 +588,13 @@ async function masthead(t) {
   t.check('the line above the title names the election day', (await t.text('.mast .eyebrow')) === 'U.S. House maps for November 3, 2026');
   t.check('the byline gives the author, the date and a link to the method',
     (await t.text('.mast .byline')) === 'By Govert Schoof · October 8, 2026 · Methodology'
-    && await t.js("document.querySelector('.mast .byline a').getAttribute('href') === '#method' && document.querySelector('meta[name=author]').content === 'Govert Schoof'"));
-  await t.js("document.querySelector('.mast .byline a').click()");
+    && await t.js("!!document.querySelector('.mast .byline a[href=\"#method\"]') && document.querySelector('meta[name=author]').content === 'Govert Schoof'"));
+  t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
+    const about = document.getElementById('about')?.textContent ?? '';
+    return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
+      && ['founder of the Geodienst', 'Mark Thompson, Vincent and JW', 'no client and no funding', 'press office'].every((x) => about.includes(x));
+  })()`));
+  await t.js("document.querySelector('.mast .byline a[href=\"#method\"]').click()");
   t.check('the Methodology link opens the method', await t.until("location.hash === '#method' && document.getElementById('method-details').open"));
   t.check('the meta description is the line under the title',
     await t.js("document.querySelector('meta[name=description]').content === document.querySelector('.mast .sub')?.textContent"));
