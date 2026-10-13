@@ -128,7 +128,7 @@ export function senateView(results) {
       return {
         seats: total,
         figure: { value: `${count(total)} of 100`, label: `Democratic seats at ${point.label}` },
-        text: `${where}, as on the vote slider in chapter 01, Democrats would win ${count(won.length)} of the ${count(s.up)} `
+        text: `${where}, as on the vote slider above, Democrats would win ${count(won.length)} of the ${count(s.up)} `
           + `seats on the ballot and hold ${count(total)} of 100. `
           + (changes.length ? `Seats that change party: ${changes.join('; ')}.` : 'No seat changes party.'),
       };

@@ -8,9 +8,9 @@ import {
 } from './model.js';
 import { extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
-import { renderList, renderState, renderLargest, renderSingle } from './sheet.js';
+import { renderList, renderState, renderSingle } from './sheet.js';
 import {
-  outcomesView, largestEffects, recordView, singleSeatView, decideView, keyFindings,
+  outcomesView, recordView, singleSeatView, decideView, keyFindings,
 } from './chapters.js';
 import { renderOutcomes } from './outcomes.js';
 import { createTour } from './tour.js';
@@ -82,7 +82,6 @@ async function main() {
   const pick = $('pick');
   for (const option of stateOptions(results, { single: true })) pick.append(new Option(option.label, option.postal));
   pick.addEventListener('change', () => select(pick.value, { push: true }));
-  const paintLargest = renderLargest($('largest'), largestEffects(results), (postal) => select(postal, { push: true }));
 
   function renderSheet() {
     if (index.single[ui.selected]) renderSingle($('sheet'), singleSeatView(results, ui.selected), back);
@@ -94,7 +93,6 @@ async function main() {
     map.paint(colors, ui.view, ui.selected);
     $('map-title').textContent = MAP_TITLES[ui.view];
     drawLegend($('legend'), ui.view, colors, closeLegend(results));
-    paintLargest(colors, ui.selected);
     renderSheet();
   }
 

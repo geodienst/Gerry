@@ -82,13 +82,17 @@ a { color: var(--ink); }
 @media (max-width: 899.98px) { .atlas { grid-template-columns: minmax(0, 1fr); } }
 /* The map column in three boxes like the record beside it: title and key, the map, and the hints under it;
    the last box stretches to the bottom of the record. */
-.mapcol { display: grid; grid-template-rows: auto auto 1fr; gap: 0.7rem; min-width: 0; }
-.mapfoot { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.5rem; align-content: start; }
+.mapcol { display: grid; gap: 0.7rem; min-width: 0; align-content: start; }
+/* the map right under the key findings (owner's mockup, October 13, 2026) */
+#states { padding-top: clamp(1.2rem, 2.4vw, 1.8rem); }
+.mapcol .tools { justify-content: space-between; }
+.mapcol .legend { justify-content: center; }
+.mapcap { margin: 0; font-size: 0.875rem; color: var(--muted); }
+.mapfoot { display: grid; gap: 0.4rem; align-content: start; }
 
-.seg { display: inline-flex; border: 1px solid var(--rule); }
-.seg button { font: inherit; font-size: 0.87rem; padding: 0.4rem 0.65rem; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
-.seg button + button { border-left: 1px solid var(--rule); }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 0.2rem 1.1rem; }
+.seg button { font: inherit; font-size: 0.87rem; padding: 0.25rem 0; border: 0; background: transparent; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
+.seg button[aria-pressed="true"] { color: var(--fg); font-weight: 600; text-decoration: none; }
 select { font: inherit; font-size: 0.87rem; padding: 0.3rem 0.4rem; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); }
 .pick { font-size: 0.87rem; color: var(--muted); display: flex; gap: 0.4rem; align-items: center; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -117,8 +121,6 @@ svg { display: block; width: 100%; height: auto; }
 .tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
 .tip b, .tip span { display: block; }
-.maphead { display: grid; gap: 0.35rem; background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; }
-.maptitle { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; color: var(--fg); letter-spacing: 0; text-transform: none; }
 /* The color choice is a quiet setting under the map, apart from the view buttons. */
 .colors { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
 .colors button { font: inherit; padding: 0.2rem 0; border: 0; background: none; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
@@ -184,10 +186,10 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 #control .num { text-align: right; font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; padding-left: 1.25rem; }
 
 /* Redesign: masthead, meta strip and chapter heads (Task 7.6) */
-.mast { background: var(--mast); color: var(--mast-fg); padding-block: clamp(1.6rem, 4vw, 3.2rem) clamp(1.4rem, 3vw, 2.4rem); }
-.mast .wrap { display: grid; gap: 0.9rem; }
-.mast h1 { margin: 0; font: 700 clamp(1.9rem, 1.3rem + 2.6vw, 3.3rem)/1.08 var(--font-head); letter-spacing: -0.01em; max-width: 18ch; text-wrap: balance; }
-.mast .sub { margin: 0; font-size: 1.1875rem; line-height: 1.45; max-width: 52ch; }
+.mast { background: var(--mast); color: var(--mast-fg); padding-block: clamp(1.3rem, 3vw, 2.4rem) clamp(1.2rem, 2.6vw, 2rem); }
+.mast .wrap { display: grid; gap: 0.7rem; }
+.mast h1 { margin: 0; font: 700 clamp(1.9rem, 1.2rem + 2vw, 2.9rem)/1.1 var(--font-head); letter-spacing: -0.01em; max-width: 36ch; text-wrap: balance; }
+.mast .sub { margin: 0; font-size: 1.0625rem; line-height: 1.5; max-width: 80ch; }
 /* The byline as a news story has it: author, date, and a link to the method. */
 /* Justitia at the top right of the masthead (owner, October 13, 2026): a black line drawing on white, turned into
    light lines on the dark green; left out on narrow screens, where the title needs the width */
@@ -204,19 +206,17 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .mast .byline a { color: var(--mast-fg); text-underline-offset: 0.2em; }
 .mast a:focus-visible { outline-color: var(--mast-fg); }
 /* The key findings under the masthead: the answer to its question (owner, October 13, 2026) */
-.keyfacts { border-bottom: 1px solid var(--rule); background: var(--sheet); }
-.keyfacts .wrap { padding-block: 1.3rem 1.4rem; }
-.keyfacts ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; }
-.keyfacts li { position: relative; padding-left: 1.1rem; max-width: 78ch; }
-.keyfacts li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.4rem; height: 0.4rem; background: var(--ink); }
+.keyfacts-body { padding-block: clamp(1.3rem, 2.6vw, 1.9rem) clamp(1.2rem, 2.4vw, 1.7rem); border-bottom: 1px solid var(--rule); display: grid; gap: 0.55rem; }
+.keyfacts ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.5rem; }
+.keyfacts li { font-size: 1.0625rem; line-height: 1.5; max-width: 80ch; }
+.keyfacts .note { margin: 0.2rem 0 0; }
 /* the Senate card in chapter 03: a line above its title that sets it apart from the maps */
 .grid3 .kicker { margin: 0 0 -0.5rem; font-size: 0.8125rem; color: var(--muted); }
 .chapter { padding-block: clamp(2rem, 5vw, 3.6rem); border-bottom: 1px solid var(--rule); }
 .chapter > .wrap { display: grid; gap: 1.4rem; }
-.chead { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.9rem; align-items: baseline; }
-.chead .no { font: 700 0.8125rem/1 var(--font-body); color: var(--ink); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; border: 1px solid currentColor; padding: 0.3rem 0.4rem; }
+.chead { display: grid; }
 .chead h2 { font: 700 1.5rem/1.2 var(--font-head); }
-.chead p { grid-column: 2; color: var(--muted); max-width: 64ch; margin: 0.4rem 0 0; }
+.chead p { color: var(--muted); max-width: 64ch; margin: 0.4rem 0 0; }
 /* the key sentence of chapter 01: the threshold (a data reviewer, October 13) */
 .chead p.lead { color: var(--fg); font: 600 1.1875rem/1.4 var(--font-head); margin-top: 0.7rem; }
 /* the drawing effect at every stop of the slider, at the bottom of chapter 01 */
@@ -320,13 +320,8 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .eff .w { font-size: 0.94rem; }
 @media (max-width: 480px) { .eff { grid-template-columns: auto minmax(0, 1fr); } .eff .w { grid-column: 1 / -1; } }
 
-/* Chapter 02: tools, the largest effects and the record (Task 7.7) */
+/* The map: its tools and the record beside it (Task 7.7) */
 .tools { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; align-items: center; }
-.largest { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
-.largest .k { font-size: 0.8125rem; color: var(--muted); margin-right: 0.2rem; }
-.chip { font: inherit; font-size: 0.8125rem; display: inline-flex; gap: 0.45rem; align-items: center; padding: 0.3rem 0.6rem; border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
-.chip b { font-variant-numeric: tabular-nums; }
-.chip[aria-current="true"] { border-color: var(--ink); background: var(--tint); }
 .record { background: var(--sheet); border: 1px solid var(--rule); padding: 1.1rem 1.1rem 1.2rem; display: grid; gap: 0.8rem; min-width: 0; align-content: start; }
 #sheet-title { font: 700 1.5rem/1.15 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
 .record .k { font-size: 0.8125rem; color: var(--muted); }
