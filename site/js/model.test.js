@@ -5,7 +5,7 @@ import { results, withExtensions } from './testdata.js';
 import {
   AT_LARGE_TEXT, indexResults, districtLabel, districtTip, stateTip, tapLine, stateOptions, mapHints,
   isClose, isSwing, closeness, closeTip, closeLegend, MAP_TITLES,
-  effectList, positionText, stateSheet, nationalView, methodFills, houseOf,
+  effectList, LIST_MIN, positionText, stateSheet, nationalView, methodFills, houseOf,
 } from './model.js';
 
 // --- the map (Task 6.2) ---
@@ -115,6 +115,11 @@ test('effectList: toward Republicans, zero, toward Democrats, each from large R 
   assert.deepEqual(list.toR.map((r) => [r.postal, r.label]), [['FL', 'R+4'], ['TX', 'R+2']]);
   assert.deepEqual(list.zero.map((r) => r.postal), ['HI', 'LA', 'MO']);
   assert.deepEqual(list.toD.map((r) => [r.postal, r.label]), [['NM', 'D+1'], ['CA', 'D+3']]);
+  // two levels (owner, October 13, 2026): 3 seats or more in view, the rest behind "5 more states"
+  assert.equal(LIST_MIN, 3);
+  assert.deepEqual([list.big.toR.map((r) => r.postal), list.big.toD.map((r) => r.postal)], [['FL'], ['CA']]);
+  assert.deepEqual([list.small.toR.map((r) => r.postal), list.small.toD.map((r) => r.postal)], [['TX'], ['NM']]);
+  assert.equal(list.moreLabel, '5 more states');
   // ties go by name, not by file order or postal code: Mississippi (MS, added last) comes before Missouri (MO)
   const r = results();
   r.states.MS = { ...r.states.MO, name: 'Mississippi' };

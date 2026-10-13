@@ -82,7 +82,7 @@ a { color: var(--ink); }
 @media (max-width: 899.98px) { .atlas { grid-template-columns: minmax(0, 1fr); } }
 /* The map column in three boxes like the record beside it: title and key, the map, and the hints under it;
    the last box stretches to the bottom of the record. */
-.mapcol { display: grid; grid-template-rows: auto auto 1fr; gap: 0.7rem; min-width: 0; }
+.mapcol { display: grid; grid-template-rows: auto 1fr; gap: 0.7rem; min-width: 0; }
 .mapfoot { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.5rem; align-content: start; }
 
 .seg { display: inline-flex; border: 1px solid var(--rule); }
@@ -117,7 +117,8 @@ svg { display: block; width: 100%; height: auto; }
 .tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
 .tip b, .tip span { display: block; }
-.maphead { display: grid; gap: 0.35rem; background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; }
+/* the title and legend of the map, under it in the block with the hints (owner, October 13, 2026) */
+.maphead { display: grid; gap: 0.35rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--rule); }
 .maptitle { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; color: var(--fg); letter-spacing: 0; text-transform: none; }
 /* The color choice is a quiet setting under the map, apart from the view buttons. */
 .colors { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
@@ -144,10 +145,10 @@ svg { display: block; width: 100%; height: auto; }
 .row:hover { background: var(--band); }
 .row .v { text-align: right; font-variant-numeric: tabular-nums; }
 .row svg { height: 0.8rem; }
-details.zeros > summary { cursor: pointer; font-size: 0.87rem; color: var(--muted); padding: 0.25rem; list-style: none; display: flex; gap: 0.4rem; align-items: center; }
-details.zeros > summary::-webkit-details-marker { display: none; }
-details.zeros > summary::before { content: ""; width: 0.45rem; height: 0.45rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; margin-right: 0.15rem; }
-details.zeros[open] > summary::before { transform: rotate(45deg); }
+:is(details.zeros, details.more) > summary { cursor: pointer; font-size: 0.87rem; color: var(--muted); padding: 0.25rem; list-style: none; display: flex; gap: 0.4rem; align-items: center; }
+:is(details.zeros, details.more) > summary::-webkit-details-marker { display: none; }
+:is(details.zeros, details.more) > summary::before { content: ""; width: 0.45rem; height: 0.45rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; margin-right: 0.15rem; }
+:is(details.zeros, details.more)[open] > summary::before { transform: rotate(45deg); }
 .net { display: grid; gap: 0.35rem; border-top: 1px solid var(--rule); padding-top: 0.7rem; }
 .net svg text { font-size: 11px; font-family: var(--font-body); fill: var(--fg); }
 .axis text, .chart text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }

@@ -166,6 +166,23 @@ async function list(t) {
   t.check('without a state the sheet shows "Drawing effect by state"', await t.until(`${HEADING} === 'Drawing effect by state'`));
   t.check('one row per state, 44 in all', await t.js("document.querySelectorAll('#sheet .row').length === 44"));
   t.check('rows show the effect as R+n, D+n or 0', await t.js("[...document.querySelectorAll('#sheet .row .v')].every((v) => /^(0|[RD]\\+\\d+)$/.test(v.textContent))"));
+  // two levels (owner, October 13, 2026): the effects of 3 seats or more in view, the rest behind one fold
+  t.check('in view only the effects of 3 seats or more, toward Republicans at the top and Democrats at the bottom', await t.js(`(() => {
+    const more = document.querySelector('#sheet details.more');
+    const shown = [...document.querySelectorAll('#sheet .row')].filter((r) => !more.contains(r));
+    const v = shown.map((r) => r.querySelector('.v').textContent);
+    const n = (s) => Number(s.slice(2));
+    const r = v.filter((s) => s.startsWith('R')), d = v.filter((s) => s.startsWith('D'));
+    return !more.open && /^\\d+ more states?$/.test(more.querySelector('summary').textContent)
+      && v.length > 0 && v.every((s) => n(s) >= 3) && v.join() === [...r, ...d].join()
+      && shown.length + more.querySelectorAll('.row').length === 44;
+  })()`));
+  await t.js("document.querySelector('#sheet details.more summary').click()");
+  t.check('the first fold opens the smaller effects, with the zero states in a fold of their own inside it', await t.js(`(() => {
+    const more = document.querySelector('#sheet details.more');
+    return more.open && !!more.querySelector('details.zeros')
+      && [...more.querySelectorAll(':scope > .list .row')].every((r) => r.checkVisibility() && /^[RD]\\+[12]$/.test(r.querySelector('.v').textContent));
+  })()`));
   t.check('the states without a drawing effect are folded behind one line', await t.js(
     "(() => { const d = document.querySelector('#sheet details.zeros'); return d !== null && !d.open && /neutral median$/.test(d.querySelector('summary').textContent); })()"));
   t.check('the zero states sit inside the folded line and are not rendered while it is closed', await t.js(`(() => {
@@ -475,8 +492,10 @@ async function layout(t) {
   t.check('Tab reaches the State menu, the view buttons, the largest effects, the zoom buttons, the color buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
-  t.check('focus reached with Tab is visible', order.at(-1) === 'row'
-    && (await t.js('getComputedStyle(document.activeElement).outlineStyle')) === 'solid');
+  // the list is shorter since its two folds (October 13, 2026): Tab reaches its fold and goes on past it
+  t.check('Tab reaches the fold of the smaller effects after the first rows', order.indexOf('SUMMARY') > order.indexOf('row'), order.join(' '));
+  t.check('focus reached with Tab is visible', (await t.js('getComputedStyle(document.activeElement).outlineStyle')) === 'solid',
+    await t.js('document.activeElement.id || document.activeElement.className || document.activeElement.tagName'));
   await t.load();
   await t.key('Tab', 9);
   t.check('the first Tab lands on the name in the byline, with a visible outline', await t.js(

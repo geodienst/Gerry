@@ -17,28 +17,39 @@ function stateRow(parent, row, colors, onSelect) {
 }
 
 /**
- * "Drawing effect by state" with the zero states folded away and the net bar.
+ * "Drawing effect by state" in two levels (owner, October 13, 2026): the largest effects toward Republicans at the top
+ * and toward Democrats at the bottom, between them one fold with the smaller effects and, inside it, the fold of the
+ * zero states; then the net bar.
  * @param {Element} el the sheet
  * @param {object} list effectList(results)
  * @param {object} colors makeColors(...)
- * @param {{zerosOpen: boolean}} ui remembers whether the zero states are unfolded
+ * @param {{moreOpen: boolean, zerosOpen: boolean}} ui remembers which folds are open
  */
 export function renderList(el, list, colors, onSelect, ui) {
   const sheet = d3.select(el).html('');
   sheet.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text('Drawing effect by state');
   sheet.append('p').attr('class', 'note')
     .text('Seats each enacted map moves toward one party, compared with the median of its neutral maps. Select a state for its numbers.');
-  const toR = sheet.append('div').attr('class', 'list');
-  for (const row of list.toR) stateRow(toR, row, colors, onSelect);
-  if (list.zero.length > 0) {
-    const zeros = sheet.append('details').attr('class', 'zeros').property('open', ui.zerosOpen)
-      .on('toggle', (event) => { ui.zerosOpen = event.target.open; });
-    zeros.append('summary').text(list.zeroLabel);
-    const zeroList = zeros.append('div').attr('class', 'list');
-    for (const row of list.zero) stateRow(zeroList, row, colors, onSelect);
+  const rows = (parent, items) => {
+    if (items.length === 0) return;
+    const box = parent.append('div').attr('class', 'list');
+    for (const row of items) stateRow(box, row, colors, onSelect);
+  };
+  rows(sheet, list.big.toR);
+  if (list.small.toR.length + list.zero.length + list.small.toD.length > 0) {
+    const more = sheet.append('details').attr('class', 'more').property('open', ui.moreOpen)
+      .on('toggle', (event) => { if (event.target === more.node()) ui.moreOpen = event.target.open; });
+    more.append('summary').text(list.moreLabel);
+    rows(more, list.small.toR);
+    if (list.zero.length > 0) {
+      const zeros = more.append('details').attr('class', 'zeros').property('open', ui.zerosOpen)
+        .on('toggle', (event) => { ui.zerosOpen = event.target.open; });
+      zeros.append('summary').text(list.zeroLabel);
+      rows(zeros, list.zero);
+    }
+    rows(more, list.small.toD);
   }
-  const toD = sheet.append('div').attr('class', 'list');
-  for (const row of list.toD) stateRow(toD, row, colors, onSelect);
+  rows(sheet, list.big.toD);
   const net = sheet.append('div').attr('class', 'net');
   net.append('h4').text('All states together');
   drawNetBar(net.append('div').node(), list, colors);
