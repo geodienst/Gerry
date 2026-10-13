@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { results, withExtensions } from './testdata.js';
 import {
-  LABELS, SHORT_LABELS, EFFECT_LABELS, outcomesView, waffleText, changedKey, LARGEST_MIN, largestEffects, recordView, singleSeatView,
+  LABELS, SHORT_LABELS, EFFECT_LABELS, outcomesView, waffleText, changedKey, recordView, singleSeatView,
   decideView, keyFindings,
 } from './chapters.js';
 import { stateSheet, AT_LARGE_TEXT } from './model.js';
@@ -221,25 +221,6 @@ test('waffleText: the count per party and the title of the waffle', () => {
 });
 
 // --- chapter 02 (Task 7.4) ---
-
-test('largestEffects: every state at 3 seats or more, by size, then toward Republicans first, then by name', () => {
-  // testdata drawing effects: TX -2, CA 3, FL -4, NM 1, HI 0, LA 0, MO 0
-  const view = largestEffects(results());
-  assert.equal(LARGEST_MIN, 3);
-  assert.equal(view.title, 'Drawing effects of 3 seats or more');
-  assert.deepEqual(view.chips, [
-    { postal: 'FL', name: 'Florida', drawing: -4, label: 'R+4', aria: 'Florida, R+4: 4 seats toward Republicans' },
-    { postal: 'CA', name: 'California', drawing: 3, label: 'D+3', aria: 'California, D+3: 3 seats toward Democrats' },
-  ]);
-});
-
-test('largestEffects: ties', () => {
-  const r = results();
-  r.states.NM.effects.drawing = -3; // ties with CA at 3 seats: toward Republicans first
-  r.states.TX.effects.drawing = 3; // ties with CA toward Democrats: by name, California before Texas
-  const view = largestEffects(r);
-  assert.deepEqual(view.chips.map((c) => c.postal), ['FL', 'NM', 'CA', 'TX']);
-});
 
 test('recordView: the sheet of Phase 6 plus the headline, the strip and the extras (Texas)', () => {
   const r = withExtensions();

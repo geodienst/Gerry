@@ -30,56 +30,29 @@ export function renderList(el, list, colors, onSelect, ui) {
   sheet.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text('Drawing effect by state');
   sheet.append('p').attr('class', 'note')
     .text('Seats each enacted map moves toward one party, compared with the median of its neutral maps. Select a state for its numbers.');
-  const rows = (parent, items) => {
-    if (items.length === 0) return;
-    const box = parent.append('div').attr('class', 'list');
-    for (const row of items) stateRow(box, row, colors, onSelect);
-  };
-  rows(sheet, list.big.toR);
+  // the rows and both folds in one list, with no more space around a fold than between two rows
+  const add = (parent, items) => { for (const row of items) stateRow(parent, row, colors, onSelect); };
+  const all = sheet.append('div').attr('class', 'list');
+  add(all, list.big.toR);
   if (list.small.toR.length + list.zero.length + list.small.toD.length > 0) {
-    const more = sheet.append('details').attr('class', 'more').property('open', ui.moreOpen)
+    const more = all.append('details').attr('class', 'more').property('open', ui.moreOpen)
       .on('toggle', (event) => { if (event.target === more.node()) ui.moreOpen = event.target.open; });
     more.append('summary').text(list.moreLabel);
-    rows(more, list.small.toR);
+    const inner = more.append('div').attr('class', 'list');
+    add(inner, list.small.toR);
     if (list.zero.length > 0) {
-      const zeros = more.append('details').attr('class', 'zeros').property('open', ui.zerosOpen)
+      const zeros = inner.append('details').attr('class', 'zeros').property('open', ui.zerosOpen)
         .on('toggle', (event) => { ui.zerosOpen = event.target.open; });
       zeros.append('summary').text(list.zeroLabel);
-      rows(zeros, list.zero);
+      add(zeros.append('div').attr('class', 'list'), list.zero);
     }
-    rows(more, list.small.toD);
+    add(inner, list.small.toD);
   }
-  rows(sheet, list.big.toD);
+  add(all, list.big.toD);
   const net = sheet.append('div').attr('class', 'net');
   net.append('h4').text('All states together');
   drawNetBar(net.append('div').node(), list, colors);
   net.append('p').attr('class', 'note').text(list.summary);
-}
-
-/**
- * "Drawing effects of 3 seats or more" above the map (redesign, chapter 4): a button per state and the
- * sentence for the rest. Drawn once, so a button keeps the focus; the returned function marks the chosen
- * state and colors the swatches.
- * @param {object} view largestEffects(results)
- * @returns {(colors: object, selected: string) => void}
- */
-export function renderLargest(el, view, onSelect) {
-  const root = d3.select(el).html('');
-  root.append('span').attr('class', 'k').text(view.title);
-  const buttons = view.chips.map((chip) => {
-    const button = root.append('button').attr('type', 'button').attr('class', 'chip').attr('data-postal', chip.postal)
-      .attr('aria-label', chip.aria).on('click', () => onSelect(chip.postal));
-    button.append('i').attr('class', 'sw').attr('aria-hidden', 'true');
-    button.append('span').text(chip.postal);
-    button.append('b').text(chip.label);
-    return { button, chip };
-  });
-  return (colors, selected) => {
-    for (const { button, chip } of buttons) {
-      button.attr('aria-current', chip.postal === selected ? 'true' : null);
-      button.select('.sw').style('background', colors.effect(chip.drawing));
-    }
-  };
 }
 
 function definitionList(parent, items) {

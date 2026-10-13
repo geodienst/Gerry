@@ -181,7 +181,8 @@ async function list(t) {
   t.check('the first fold opens the smaller effects, with the zero states in a fold of their own inside it', await t.js(`(() => {
     const more = document.querySelector('#sheet details.more');
     return more.open && !!more.querySelector('details.zeros')
-      && [...more.querySelectorAll(':scope > .list .row')].every((r) => r.checkVisibility() && /^[RD]\\+[12]$/.test(r.querySelector('.v').textContent));
+      && [...more.querySelectorAll('.row')].filter((r) => !r.closest('details.zeros'))
+        .every((r) => r.checkVisibility() && /^[RD]\\+[12]$/.test(r.querySelector('.v').textContent));
   })()`));
   t.check('the states without a drawing effect are folded behind one line', await t.js(
     "(() => { const d = document.querySelector('#sheet details.zeros'); return d !== null && !d.open && /neutral median$/.test(d.querySelector('summary').textContent); })()"));
@@ -488,8 +489,8 @@ async function layout(t) {
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
   // State by state comes first since October 13, 2026; the rows of the national count follow the list
-  const wanted = ['pick', 'view-districts', 'view-states', 'view-close', 'chip', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
-  t.check('Tab reaches the State menu, the view buttons, the largest effects, the zoom buttons, the color buttons and the list, in that order',
+  const wanted = ['pick', 'view-districts', 'view-states', 'view-close', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
+  t.check('Tab reaches the State menu, the view buttons, the zoom buttons, the color buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
   // the list is shorter since its two folds (October 13, 2026): Tab reaches its fold and goes on past it
@@ -899,28 +900,21 @@ async function tour(t) {
     && still.text === 'A short tour of this chapter in five steps.', JSON.stringify(still));
 }
 
-// --- Task 7.7: chapter 02, the largest drawing effects -------------------------------------------
+// --- Task 7.7: chapter 01, the map and the list beside it ------------------------------------------------------
 async function largest(t) {
   await t.load();
-  // Every state at 3 seats or more, ordered as chapters.js orders them; no sentence for the rest (owner, October 13).
-  const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
-    const rows = Object.entries(r.states).map(([postal, s]) => ({ postal, name: s.name, d: s.effects.drawing }));
-    const big = rows.filter((x) => Math.abs(x.d) >= 3)
-      .sort((a, b) => Math.abs(b.d) - Math.abs(a.d) || a.d - b.d || a.name.localeCompare(b.name, 'en'));
-    return { chips: big.map((x) => x.postal + f.effect(x.d)) };
-  })`);
-  const chips = await t.js("[...document.querySelectorAll('#largest .chip')].map((c) => c.textContent)");
-  t.check('every state at 3 seats or more has a button, by size, none left out', chips.join() === want.chips.join(), chips.join(' '));
-  t.check('no sentence after the buttons', await t.js("!document.querySelector('#largest .rest')"));
-  const first = want.chips[0].slice(0, 2);
-  await t.js("document.querySelector('#largest .chip').focus()");
-  await t.key('Enter', 13, '\r');
-  t.check('a button chooses its state, keeps the focus and marks itself', await t.until(`location.hash === '#${first}'`)
-    && await t.js(`document.activeElement?.dataset?.postal === '${first}' && document.activeElement.getAttribute('aria-current') === 'true'`));
-  t.check('chapter 02 holds the tools, the buttons, the map and the sheet', await t.js(`(() => {
+  // the row of the largest effects above the map is gone: the list beside the map shows them (owner, October 13, 2026)
+  t.check('chapter 01 holds the tools, the map and the sheet, and no row of buttons above the map', await t.js(`(() => {
     const ch = document.getElementById('states');
-    return !!ch && ['pick', 'largest', 'map', 'sheet'].every((id) => ch.contains(document.getElementById(id)))
+    return !!ch && ['pick', 'map', 'legend', 'sheet'].every((id) => ch.contains(document.getElementById(id)))
+      && !document.getElementById('largest') && !document.querySelector('.chip')
       && ch.querySelector('.chead h2')?.textContent === 'State by state' && document.getElementById('sheet').tagName === 'ASIDE';
+  })()`));
+  t.check('the two folds of the list have their own marks, centred', await t.js(`(() => {
+    const mark = (s) => getComputedStyle(document.querySelector(s), '::before').content;
+    const centre = (s) => getComputedStyle(document.querySelector(s)).justifyContent === 'center';
+    return mark('#sheet details.more > summary').includes('\u00bb') && mark('#sheet details.zeros > summary').includes('\u2039\u203a')
+      && centre('#sheet details.more > summary') && centre('#sheet details.zeros > summary');
   })()`));
 }
 
