@@ -872,6 +872,27 @@ async function tour(t) {
     && still.text === 'A short tour of this chapter in five steps.', JSON.stringify(still));
 }
 
+// --- The map in full screen (owner, October 13, 2026) -------------------------------------------------------------------
+async function fullscreen(t) {
+  await t.load('', { width: 1280, height: 800 });
+  const state = `(() => { const col = document.querySelector('.mapcol'); const box = document.getElementById('mapbox').getBoundingClientRect();
+    return { full: document.fullscreenElement === col || col.classList.contains('is-full'), pressed: document.getElementById('map-full').getAttribute('aria-pressed'),
+      label: document.getElementById('map-full').getAttribute('aria-label'), height: Math.round(box.height), window: innerHeight,
+      legend: document.getElementById('legend').getBoundingClientRect().bottom <= innerHeight + 1 }; })()`;
+  const before = await t.js(state);
+  t.check('the map has a full-screen button, not pressed at the start', !before.full && before.pressed === 'false' && before.label === 'Full screen', JSON.stringify(before));
+  await t.js("document.getElementById('map-full').click()");
+  await t.sleep(300);
+  const on = await t.js(state);
+  t.check('the button puts the map and its legend over the whole window', on.full && on.pressed === 'true' && on.label === 'Exit full screen'
+    && on.height > 0.6 * on.window && on.legend, JSON.stringify(on));
+  await t.screenshot('map-full-1280');
+  await t.key('Escape', 27);
+  await t.sleep(300);
+  const off = await t.js(state);
+  t.check('Escape brings the map back into the page', !off.full && off.pressed === 'false' && off.height < on.height, JSON.stringify(off));
+}
+
 // --- Task 7.7: chapter 01, the map and the list beside it ------------------------------------------------------
 async function largest(t) {
   await t.load();
@@ -889,6 +910,7 @@ export const GROUPS = [
   { name: 'outcomes', run: outcomes },
   { name: 'map', run: map },
   { name: 'largest', run: largest },
+  { name: 'fullscreen', run: fullscreen },
   { name: 'list', run: list },
   { name: 'sheet', run: sheet },
   { name: 'sweep', run: sweep },

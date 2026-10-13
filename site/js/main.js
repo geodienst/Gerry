@@ -145,6 +145,8 @@ async function main() {
   // not from the State menu, from text elsewhere on the page, or while reading further down.
   const inView = (el) => { const box = el.getBoundingClientRect(); return box.bottom > 0 && box.top < window.innerHeight; };
   document.addEventListener('keydown', (event) => {
+    // the map covering the window goes back first; the browser's own full screen handles Escape itself
+    if (event.key === 'Escape' && mapcol.classList.contains('is-full')) { leaveFull(); fullButton.focus(); return; }
     const from = event.target;
     const inside = $('sheet').contains(from) || $('mapbox').contains(from);
     const idle = from === document.body && (inView($('sheet')) || inView($('mapbox')));
@@ -172,6 +174,35 @@ async function main() {
   $('zoom-in').addEventListener('click', () => map.zoomBy(1.8));
   $('zoom-out').addEventListener('click', () => map.zoomBy(1 / 1.8));
   $('zoom-reset').addEventListener('click', () => { select('', { push: true }); map.zoomTo('', true); });
+  // Full screen for the map and the block under it (owner, October 13, 2026): the browser's full screen where the page
+  // may use it, otherwise the map column covers the window. The same button or Escape goes back.
+  const mapcol = document.querySelector('.mapcol');
+  const fullButton = $('map-full');
+  const isFull = () => document.fullscreenElement === mapcol || mapcol.classList.contains('is-full');
+  const showFull = () => {
+    const on = isFull();
+    fullButton.setAttribute('aria-pressed', String(on));
+    fullButton.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+    fullButton.title = on ? 'Exit full screen' : 'Full screen';
+    document.body.classList.toggle('map-full', mapcol.classList.contains('is-full'));
+  };
+  const leaveFull = () => {
+    if (document.fullscreenElement === mapcol) document.exitFullscreen().catch(() => {});
+    mapcol.classList.remove('is-full');
+    showFull();
+  };
+  fullButton.addEventListener('click', async () => {
+    if (isFull()) { leaveFull(); return; }
+    try {
+      if (!mapcol.requestFullscreen) throw new Error('no full screen here');
+      await mapcol.requestFullscreen();
+    } catch {
+      mapcol.classList.add('is-full');
+    }
+    showFull();
+    fullButton.focus();
+  });
+  document.addEventListener('fullscreenchange', showFull);
 
   const decide = decideView(results);
   renderDecide(decide);
