@@ -3,7 +3,7 @@
 import {
   share, sliderShare, neededShare, neededGap, roundHalfUp, planShare, seats, count, effect, effectWords, percentLabel,
 } from './format.js';
-import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS } from './model.js';
+import { nationalView, stateSheet, axisLabel, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS, effectList } from './model.js';
 import { stateExtras, senateView, redrawView, competitiveText, controlTables } from './extensions.js';
 import { seatTicks, rowDomain } from './axes.js';
 
@@ -318,12 +318,13 @@ function dots(values, step, tickText, rows, base = undefined) {
 export function keyFindings(results) {
   const n = results.national;
   const m = n.majority;
-  const control = n.by_control;
+  const list = effectList(results);
   return [
     `With the maps the states drew for 2026, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House `
       + `majority; on neutral maps, ${neededShare(m.neutral.share)}.`,
-    `Maps adopted under Republican control move ${effectWords(control.Republican.drawing)}; maps adopted under Democratic `
-      + `control, ${effectWords(control.Democratic.drawing)}.`,
+    // the seats the enacted maps move each way, added up over the states, and the net (owner, October 13, 2026)
+    `The enacted maps move ${seats(list.seatsR)} ${list.seatsR === 1 ? 'seat' : 'seats'} toward Republicans and `
+      + `${seats(list.seatsD)} toward Democrats. Net effect: ${effect(list.net)}.`,
   ];
 }
 
