@@ -210,9 +210,11 @@ export function renderOutcomes(view, { reduceMotion }) {
   $('byvote-examples').textContent = view.byVote.line;
   const byVote = renderByVote($('byvote-chart'), view.byVote, view.slider.scale);
   const back = $('vote-back');
+  const pointHooks = []; // called with the stop on screen, for the Senate block in chapter 03
   function showPoint() {
     const p = point();
     byVote.show(pi);
+    for (const hook of pointHooks) hook(pi);
     slider.value = String(pi);
     slider.setAttribute('aria-valuetext', p.valueText);
     $('vote-out').textContent = p.base ? `${p.label}, the 2016 and 2020 votes` : p.label;
@@ -290,6 +292,8 @@ export function renderOutcomes(view, { reduceMotion }) {
   new ResizeObserver(fit).observe(box);
   select(current);
   return {
+    /** Call `hook(index)` whenever the vote slider moves to another stop. */
+    onPoint(hook) { pointHooks.push(hook); },
     /** Colors for the squares and the key; again after a palette or theme change. */
     paint(next) {
       colors = next;

@@ -1,6 +1,6 @@
 // Texts and view models for the extensions (docs/superpowers/specs/2026-10-06-extensions-design.md,
 // chapters 1 to 4 and 7), from the results.json fields of Phase 5. Pure, like model.js.
-import { share, neededShare, seats, count, effect, effectLine } from './format.js';
+import { share, neededShare, seats, count, effect, effectLine, longDate } from './format.js';
 import { houseOf } from './model.js';
 
 // --- Majority threshold (Task 6.10) -------------------------------------------------------------
@@ -40,7 +40,10 @@ export function extensionFills(results) {
     // the House of 435 and its majority: the districts Democrats need plus the Democratic single seats
     'house-seats': seats(houseOf(results).total),
     'house-majority': seats(results.national.majority.seats_needed + houseOf(results).dSingle),
+    // the Senate in the method: all 100 seats at once, and the date of the list of seats on the ballot
     'senate-states': count(results.national.senate.states_needed),
+    'senate-all': neededShare(results.national.senate.share),
+    'senate-checked': longDate(results.national.senate_2026.checked),
   };
 }
 
@@ -116,17 +119,50 @@ export function controlTables(results) {
   };
 }
 
-// --- The Senate (Task 6.14) ---------------------------------------------------------------------
+// --- The Senate (Task 6.14; the seats on the ballot in 2026, owner, October 13, 2026) -------------------------
 
-/** The Senate block beside the House majority (extensions design, chapter 7). */
+const ordinal = (n) => `${n}${[11, 12, 13].includes(n % 100) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] ?? 'th'}`;
+const nameList = (list) => (list.length < 2 ? list.join('') : `${list.slice(0, -1).join(', ')} and ${list.at(-1)}`);
+
+/** The Senate block beside the House majority: the seats on the ballot on November 3, 2026, each going to the party
+ *  that wins its state's presidential vote, shifted like the vote slider. at(point) follows the slider of chapter 01. */
 export function senateView(results) {
-  const s = results.national.senate;
+  const s = results.national.senate_2026;
+  const names = Object.fromEntries([
+    ...Object.entries(results.states).map(([postal, st]) => [postal, st.name]),
+    ...results.national.single_seat.map((st) => [st.postal, st.name]),
+  ]);
+  const key = s.seats[s.needed - 1];
+  const tie = s.majority > 50 ? 'a Republican' : 'a Democrat';
   return {
-    sentence: `If each state's two senators went to the party that won its presidential vote, Democrats would need `
-      + `${neededShare(s.share)} of the two-party vote for a Senate majority. They have ${share(s.base_share)} and would `
-      + `win ${count(s.states_at_base)} ${plural(s.states_at_base, 'state', 'states')}.`,
-    note: 'The Senate has no districts, so this is not an effect of maps. The gap comes from each state having two senators, '
-      + 'whatever its population. These shares count the votes of every state; the House block leaves out the votes of the '
-      + 'six states with one seat.',
+    title: 'Senate in 2026',
+    needed: { value: neededShare(s.share), label: 'needed for a majority' },
+    sentence: `On November 3, ${count(s.up)} of the 100 seats are on the ballot. Of the other ${count(100 - s.up)}, `
+      + `Democrats hold ${count(s.not_up.D)} and Republicans ${count(s.not_up.R)}. At 50 to 50 the vice president, ${tie}, `
+      + `decides, so Democrats need ${count(s.majority)} seats: ${count(s.needed)} of the ${count(s.up)} on the ballot. If each `
+      + `of those seats went to the party that wins its state's presidential vote, Democrats would need ${neededShare(s.share)} `
+      + `of the two-party vote. Ranked by that vote, the ${ordinal(s.needed)} seat is in ${names[key.postal]}, where Democrats `
+      + `won ${share(key.share)} in 2016 and 2020 together.`,
+    note: 'Senate races depend more on the candidates than House races: in 2020 Susan Collins won Maine while Joe Biden '
+      + 'carried it by 9 points. These numbers show how the seats on the ballot lean on presidential votes, not who will win '
+      + 'them. The Senate has no districts, so none of this is an effect of maps.',
+    /** The seats at one stop of the vote slider ({share, label, base}): the same rule as the pipeline (senate_seats_at). */
+    at(point) {
+      const swing = point.share - s.base_share;
+      const won = s.seats.filter((seat) => seat.share + swing > 0.5);
+      const total = s.not_up.D + won.length;
+      const toD = won.filter((seat) => seat.held === 'R').map((seat) => names[seat.postal]);
+      const toR = s.seats.filter((seat) => seat.held === 'D' && !won.includes(seat)).map((seat) => names[seat.postal]);
+      const changes = [toD.length ? `${nameList(toD)} to Democrats` : '', toR.length ? `${nameList(toR)} to Republicans` : '']
+        .filter(Boolean);
+      const where = point.base ? `With the 2016 and 2020 votes (${point.label})` : `At ${point.label} of the vote`;
+      return {
+        seats: total,
+        figure: { value: `${count(total)} of 100`, label: `Democratic seats at ${point.label}` },
+        text: `${where}, as on the vote slider in chapter 01, Democrats would win ${count(won.length)} of the ${count(s.up)} `
+          + `seats on the ballot and hold ${count(total)} of 100. `
+          + (changes.length ? `Seats that change party: ${changes.join('; ')}.` : 'No seat changes party.'),
+      };
+    },
   };
 }

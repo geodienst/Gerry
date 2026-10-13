@@ -344,8 +344,9 @@ async function decide(t) {
   t.check('chapter 03 has five cards in this order', await t.js(
     "[...document.querySelectorAll('#decide .grid3 > section')].map((s) => s.id).join() === 'majority,senate,competitive,redraws,control'"));
   const figs = await t.js("[...document.querySelectorAll('#decide .figs b')].map((b) => b.textContent)");
-  t.check('seven large figures, each a formatted number', figs.length === 7
-    && figs.every((v) => /^(\d+(\.\d+)?%|\d+|\d+ to \d+|0|[RD]\+\d+)$/.test(v)), figs.join(' | '));
+  // the Senate has two since October 13, 2026: the share needed and the seats of 100 at the slider
+  t.check('six large figures, each a formatted number', figs.length === 6
+    && figs.every((v) => /^(\d+(\.\d+)?%|\d+|\d+ to \d+|\d+ of 100|0|[RD]\+\d+)$/.test(v)), figs.join(' | '));
   const axes = await t.js(`[...document.querySelectorAll('#decide svg.dotrows')].map((s) => ({ id: s.parentElement.id, role: s.getAttribute('role'),
     label: s.getAttribute('aria-label'), rows: [...s.querySelectorAll('text.lbl')].map((x) => x.textContent), base: s.querySelectorAll('line.base').length }))`);
   t.check('two charts of rows of dots, each with a text alternative', axes.length === 2 && axes.every((a) => a.role === 'img' && a.label),
@@ -576,8 +577,19 @@ async function control(t) {
 // --- Task 6.14: the Senate -----------------------------------------------------------------------
 async function senate(t) {
   await t.load();
-  t.check('the Senate sentence', /^If each state's two senators went to the party that won its presidential vote, Democrats would need .+ of the two-party vote for a Senate majority\. They have .+ and would win \d+ states?\.$/.test(await t.text('#senate-text')));
-  t.check('the Senate block says it is not an effect of maps', (await t.text('#senate-note')).startsWith('The Senate has no districts'));
+  // the seats on the ballot in 2026, following the vote slider (owner, October 13, 2026)
+  t.check('the Senate block is about the seats on the ballot in 2026', (await t.text('#senate-title')) === 'Senate in 2026'
+    && /^On November 3, \d+ of the 100 seats are on the ballot\. .+ Democrats would need \d+\.\d% of the two-party vote\. Ranked by that vote, the \d+(st|nd|rd|th) seat is in [A-Z][a-z]+/
+      .test(await t.text('#senate-text')), await t.text('#senate-text'));
+  t.check('the Senate block says it is not an effect of maps', (await t.text('#senate-note')).endsWith('none of this is an effect of maps.'));
+  const at = await t.text('#senate-at');
+  t.check('at the start the Senate block shows the 2016 and 2020 votes', /^With the 2016 and 2020 votes \(\d+\.\d%\), as on the vote slider in chapter 01, Democrats would win \d+ of the \d+ seats on the ballot and hold \d+ of 100\./.test(at), at);
+  const stops = await t.js('document.getElementById("vote").max');
+  await t.js(`(() => { const s = document.getElementById('vote'); s.value = '${stops}'; s.dispatchEvent(new Event('input')); })()`);
+  const moved = await t.text('#senate-at');
+  const figure = await t.text('#senate-figures');
+  t.check('the Senate block follows the vote slider', moved.startsWith('At 56.0% of the vote,') && figure.includes('Democratic seats at 56.0%'),
+    `${moved} | ${figure}`);
 }
 
 // --- Task 7.6: the masthead and chapter 01 -------------------------------------------------------

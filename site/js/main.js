@@ -14,7 +14,7 @@ import {
 } from './chapters.js';
 import { renderOutcomes } from './outcomes.js';
 import { createTour } from './tour.js';
-import { renderDecide } from './decide.js';
+import { renderDecide, showSenate } from './decide.js';
 import { drawSeatAxis } from './charts.js';
 import { nationalSeatDomain } from './axes.js';
 
@@ -171,6 +171,10 @@ async function main() {
 
   const decide = decideView(results);
   renderDecide(decide);
+  // the Senate block follows the vote slider of chapter 01 (owner, October 13, 2026)
+  let senatePoint = outcomesData.points[outcomesData.baseIndex];
+  showSenate(decide, senatePoint);
+  outcomes.onPoint((index) => { senatePoint = outcomesData.points[index]; showSenate(decide, senatePoint); });
   const fills = { ...methodFills(results), ...extensionFills(results) };
   for (const el of document.querySelectorAll('[data-fill]')) {
     if (Object.hasOwn(fills, el.dataset.fill)) el.textContent = fills[el.dataset.fill];
@@ -185,6 +189,7 @@ async function main() {
     const at = focusable().indexOf(document.activeElement);
     renderSheet();
     renderDecide(decide);
+    showSenate(decide, senatePoint);
     drawFigure();
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
   });

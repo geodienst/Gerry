@@ -16,6 +16,14 @@ function figures(el, items) {
   }
 }
 
+/** The Senate at one stop of the vote slider in chapter 01 (owner, October 13, 2026): the seats it gives, and which
+ *  seats change party. `point` is a stop of outcomesView().points. */
+export function showSenate(view, point) {
+  const at = view.senate.at(point);
+  figures($('senate-figures'), [view.senate.needed, at.figure]);
+  $('senate-at').textContent = at.text;
+}
+
 /** Fill the five cards. The axes take the width of their card, so call this again after a resize. */
 export function renderDecide(view) {
   $('decide-intro').textContent = view.intro;
@@ -24,7 +32,7 @@ export function renderDecide(view) {
   drawDotRows($('majority-axis'), view.majority.dots, view.majority.label);
   $('majority-note').textContent = [view.majority.proportionalNote, view.majority.rule].filter(Boolean).join(' ');
 
-  figures($('senate-figures'), view.senate.figures);
+  $('senate-title').textContent = view.senate.title;
   $('senate-text').textContent = view.senate.sentence;
   $('senate-note').textContent = view.senate.note;
 

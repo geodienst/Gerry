@@ -34,6 +34,14 @@ function extended() {
     base_share: 0.5172, states_needed: 26, share: 0.5291, states_at_base: 22, seats_at_base: 44,
     tipping: [{ postal: 'WI', share: 0.5051 }],
   };
+  // the Senate seats on the ballot in 2026 (owner, October 13, 2026): five made-up seats, 48 D and 47 R not on it
+  r.national.senate_2026 = {
+    checked: '2026-10-13', base_share: 0.518, up: 5, held: { D: 2, R: 3 }, not_up: { D: 48, R: 47 }, majority: 51,
+    needed: 3, share: 0.5301, won_at_base: 2, seats_at_base: 50,
+    seats: [{ postal: 'DE', share: 0.5796, held: 'D' }, { postal: 'NM', share: 0.5514, held: 'D' },
+      { postal: 'FL', share: 0.4879, held: 'R' }, { postal: 'TX', share: 0.4635, held: 'R' },
+      { postal: 'WY', share: 0.2603, held: 'R' }],
+  };
   return r;
 }
 
@@ -66,7 +74,9 @@ test('majorityView: the vote axis and its text alternative', () => {
 
 test('extensionFills: the numbers in the method paragraph "Extensions"', () => {
   // the House of 435 and its majority of 218 (seats_needed 216 of the districts + the 2 Democratic single seats)
-  assert.deepEqual(extensionFills(extended()), { 'house-seats': '435', 'house-majority': '218', 'senate-states': '26' });
+  // the Senate in the method: 26 states, all 100 seats at once 0.5291 -> 53.0%, the list of October 13, 2026
+  assert.deepEqual(extensionFills(extended()), { 'house-seats': '435', 'house-majority': '218', 'senate-states': '26',
+    'senate-all': '53.0%', 'senate-checked': 'October 13, 2026' });
 });
 
 // --- redraws since 2024 (Task 6.11) ---
@@ -148,17 +158,32 @@ test('controlTables: every value in order, with states, seats and the summed dra
 
 // --- the Senate (Task 6.14) ---
 
-test('senateView: the threshold, the share and the states at the real votes', () => {
-  // By hand: neededShare(0.5291) -> 52.91% rounded up -> "53.0%" (needed); share(0.5172) -> 51.72% -> "51.7%" (base share);
-  // states_at_base 22 -> "22 states".
+test('senateView: the seats on the ballot in 2026, the threshold and the seat that decides', () => {
+  // By hand: 5 seats up, 95 not (48 D, 47 R); 51 needed, so 3 of the 5; neededShare(0.5301) -> 53.1%; the 3rd seat is
+  // Florida's, share(0.4879) -> 48.8%.
   const view = senateView(extended());
-  assert.equal(view.sentence, "If each state's two senators went to the party that won its presidential vote, Democrats would "
-    + 'need 53.0% of the two-party vote for a Senate majority. They have 51.7% and would win 22 states.');
-  assert.equal(view.note, 'The Senate has no districts, so this is not an effect of maps. The gap comes from each state having two '
-    + 'senators, whatever its population. These shares count the votes of every state; the House block leaves out the votes '
-    + 'of the six states with one seat.');
-  // One state takes the singular.
-  const r = extended();
-  r.national.senate.states_at_base = 1;
-  assert.ok(senateView(r).sentence.endsWith('They have 51.7% and would win 1 state.'));
+  assert.equal(view.title, 'Senate in 2026');
+  assert.deepEqual(view.needed, { value: '53.1%', label: 'needed for a majority' });
+  assert.equal(view.sentence, 'On November 3, 5 of the 100 seats are on the ballot. Of the other 95, Democrats hold 48 and '
+    + 'Republicans 47. At 50 to 50 the vice president, a Republican, decides, so Democrats need 51 seats: 3 of the 5 on the '
+    + "ballot. If each of those seats went to the party that wins its state's presidential vote, Democrats would need 53.1% "
+    + 'of the two-party vote. Ranked by that vote, the 3rd seat is in Florida, where Democrats won 48.8% in 2016 and 2020 '
+    + 'together.');
+  assert.ok(view.note.startsWith('Senate races depend more on the candidates than House races'));
+  assert.ok(view.note.endsWith('The Senate has no districts, so none of this is an effect of maps.'));
+});
+
+test('senateView.at: the seats at a stop of the vote slider and the seats that change party', () => {
+  const view = senateView(extended());
+  // the base: Delaware and New Mexico above one half, both held by Democrats: 48 + 2 = 50, nothing changes
+  const base = view.at({ share: 0.518, label: '51.8%', base: true });
+  assert.deepEqual([base.seats, base.figure], [50, { value: '50 of 100', label: 'Democratic seats at 51.8%' }]);
+  assert.equal(base.text, 'With the 2016 and 2020 votes (51.8%), as on the vote slider in chapter 01, Democrats would win 2 '
+    + 'of the 5 seats on the ballot and hold 50 of 100. No seat changes party.');
+  // 55.0%: a shift of 3.2 points takes Florida (0.5199) but not Texas (0.4955): 51 of 100
+  const up = view.at({ share: 0.55, label: '55.0%', base: false });
+  assert.equal(up.text, 'At 55.0% of the vote, as on the vote slider in chapter 01, Democrats would win 3 of the 5 seats on '
+    + 'the ballot and hold 51 of 100. Seats that change party: Florida to Democrats.');
+  // 45.0%: New Mexico drops to 0.4834
+  assert.ok(view.at({ share: 0.45, label: '45.0%', base: false }).text.endsWith('Seats that change party: New Mexico to Republicans.'));
 });

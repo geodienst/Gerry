@@ -316,14 +316,10 @@ test('decideView: the House majority with its rows of dots', () => {
 test('decideView: Senate, competitive districts, redraws and the tables', () => {
   const r = withExtensions();
   const view = decideView(r);
-  // Senate: share 0.5291 rounded up -> 53.0%, base 0.5172 -> 51.7%, 22 states of the 26 needed
-  assert.deepEqual(view.senate.figures, [
-    { value: '53.0%', label: 'needed for a majority' }, { value: '51.7%', label: 'Democratic share' },
-    { value: '22', label: 'states won, 26 needed' },
-  ]);
+  // Senate: the view of extensions.js, which has its own tests
   const s = senateView(r);
-  assert.equal(view.senate.sentence, s.sentence);
-  assert.equal(view.senate.note, s.note);
+  assert.deepEqual([view.senate.title, view.senate.needed, view.senate.sentence, view.senate.note],
+    [s.title, s.needed, s.sentence, s.note]);
   // competitive: enacted 81, median 96, band 87 to 105; domain 75 to 110 in steps of 5 (rowDomain)
   assert.deepEqual(view.competitive.figures, [{ value: '81', label: 'enacted maps' }, { value: '96', label: 'neutral median' }]);
   assert.deepEqual(view.competitive.dots.domain, [75, 110]);

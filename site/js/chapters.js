@@ -337,7 +337,6 @@ export function decideView(results) {
   const majority = majorityView(results);
   const m = n.majority;
   const c = n.competitive;
-  const s = n.senate;
   const senate = senateView(results);
   const redraws = redrawView(results);
   const offset = houseOf(results).dSingle; // seats of the House of 435, as in chapter 01
@@ -355,15 +354,7 @@ export function decideView(results) {
         { value: m.base_share, text: majority.axis.baseText },
       ),
     },
-    senate: {
-      figures: [
-        { value: neededShare(s.share), label: 'needed for a majority' },
-        { value: share(s.base_share), label: 'Democratic share' },
-        { value: count(s.states_at_base), label: `states won, ${count(s.states_needed)} needed` },
-      ],
-      sentence: senate.sentence,
-      note: senate.note,
-    },
+    senate,
     competitive: {
       figures: [{ value: count(c.enacted), label: 'enacted maps' }, { value: count(c.median), label: 'neutral median' }],
       dots: dots([c.enacted, c.median, c.p5, c.p95], 5, count, [

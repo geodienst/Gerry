@@ -139,6 +139,14 @@ export function withExtensions() {
     base_share: 0.5172, states_needed: 26, share: 0.5291, states_at_base: 22, seats_at_base: 44,
     tipping: [{ postal: 'WI', share: 0.5051 }],
   };
+  // the Senate seats on the ballot in 2026 (owner, October 13, 2026): five made-up seats, 48 D and 47 R not on it
+  r.national.senate_2026 = {
+    checked: '2026-10-13', base_share: 0.518, up: 5, held: { D: 2, R: 3 }, not_up: { D: 48, R: 47 }, majority: 51,
+    needed: 3, share: 0.5301, won_at_base: 2, seats_at_base: 50,
+    seats: [{ postal: 'DE', share: 0.5796, held: 'D' }, { postal: 'NM', share: 0.5514, held: 'D' },
+      { postal: 'FL', share: 0.4879, held: 'R' }, { postal: 'TX', share: 0.4635, held: 'R' },
+      { postal: 'WY', share: 0.2603, held: 'R' }],
+  };
   for (const s of Object.values(r.states)) {
     s.adopted = { by: 'Legislature', control: 'Republican', note: null };
     s.competitive = { enacted: 0, median: 1, p5: 0, p95: 2 };

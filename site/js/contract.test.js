@@ -481,3 +481,27 @@ test('the Senate block follows from the state shares', { skip }, () => {
   assert.ok(above <= s.states_at_base && s.states_at_base <= above + national.single_seat.length,
     `senate.states_at_base ${s.states_at_base} against ${above} multi-seat states above one half`);
 });
+
+test('the Senate seats on the ballot in 2026 follow from the state shares and the slider', { skip }, () => {
+  const { national, states } = data().results;
+  const s = national.senate_2026;
+  const all = [...Object.keys(states), ...national.single_seat.map((x) => x.postal)];
+  // owner, October 13, 2026: the House share of the vote slider, 100 seats, a Republican vice president
+  assert.equal(s.base_share, national.majority.base_share);
+  assert.equal(s.up + s.not_up.D + s.not_up.R, 100);
+  assert.equal(s.held.D + s.held.R, s.up);
+  assert.equal(s.majority, 51);
+  assert.equal(s.needed, s.majority - s.not_up.D);
+  assert.equal(s.seats.length, s.up);
+  assert.equal(new Set(s.seats.map((x) => x.postal)).size, s.up, 'one seat per state');
+  s.seats.forEach((seat, i) => {
+    assert.ok(all.includes(seat.postal) && isFraction(seat.share) && ['D', 'R'].includes(seat.held), `seat ${seat.postal}`);
+    if (i > 0) assert.ok(s.seats[i - 1].share >= seat.share, 'the seats run from high to low');
+    if (seat.postal in states) assert.ok(near(seat.share, states[seat.postal].d_share, 1e-12), `${seat.postal} is its d_share`);
+  });
+  assert.ok(near(s.share, s.base_share + 0.5 - s.seats[s.needed - 1].share, 1e-12), `senate_2026.share ${s.share}`);
+  // the rule of the site (extensions.js senateView().at) gives the seats of the pipeline at every stop of the slider
+  const at = (share) => s.not_up.D + s.seats.filter((seat) => seat.share + (share - s.base_share) > 0.5).length;
+  assert.equal(at(s.base_share), s.seats_at_base);
+  for (const p of national.swing.points) assert.equal(at(p.share), p.senate, `senate at ${p.share}`);
+});
