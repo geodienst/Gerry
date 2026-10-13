@@ -26,6 +26,7 @@ const svgNode = (tag, attrs, text = null) => node(tag, attrs, text, SVG_NS);
 export function renderOutcomes(view, { reduceMotion }) {
   $('outcomes-intro').textContent = view.intro;
   $('outcomes-lead').textContent = view.lead;
+  $('effects-note').textContent = view.effectsNote;
   let pi = view.baseIndex; // the point of the vote slider on screen
   const point = () => view.points[pi];
 
@@ -77,11 +78,14 @@ export function renderOutcomes(view, { reduceMotion }) {
   const band = svgNode('g', { class: 'band', display: 'none' });
   const changed = svgNode('g', { class: 'changed', 'aria-hidden': 'true' });
   const frames = svgNode('g', { class: 'frames' });
-  svg.append(seatLayer, band, changed, frames);
+  // a line through the middle column, where a majority starts, with its label above the House (owner's mockup)
+  const majorityLine = svgNode('g', { class: 'majority', 'aria-hidden': 'true' });
+  svg.append(majorityLine, seatLayer, band, changed, frames);
   $('key-fill').textContent = house.fillKey;
   $('key-single-text').textContent = house.singleKey;
 
   const PAD = 2; // room in the viewBox for the frames around the outer seats
+  const TOP = 20; // room above the House for the label of the majority line
   let layout = null;
   let cells = [];
   let moved = null; // [from, to) of the seats that changed with the last choice of row
@@ -142,7 +146,10 @@ export function renderOutcomes(view, { reduceMotion }) {
 
   function build(rows) {
     layout = houseLayout(rows);
-    svg.setAttribute('viewBox', `${-PAD} 0 ${layout.width + 2 * PAD} ${layout.height + PAD}`);
+    svg.setAttribute('viewBox', `${-PAD} ${-TOP} ${layout.width + 2 * PAD} ${layout.height + PAD + TOP}`);
+    const mx = layout.mid.x + HOUSE.size / 2;
+    majorityLine.replaceChildren(svgNode('line', { x1: mx, x2: mx, y1: -5, y2: layout.height + 1 }),
+      svgNode('text', { x: mx, y: -8, 'text-anchor': 'middle' }, view.majorityLabel));
     cells = Array.from({ length: 2 * HOUSE.half + 1 }, (_, i) => {
       const { x, y } = at(i);
       return svgNode('rect', { class: i === HOUSE.half ? 'seat middle' : 'seat', x, y, width: HOUSE.size, height: HOUSE.size });
@@ -166,24 +173,17 @@ export function renderOutcomes(view, { reduceMotion }) {
 
   // The texts that follow the slider: row numbers, the effects between and under the rows, the finding and the
   // sentences beside the waffle.
-  const effect = (step) => {
-    const line = node('div', { class: 'eff' });
-    line.append(node('span', { class: 'k' }, step.label), node('span', { class: 'v' }, step.value), node('span', { class: 'w' }, step.detail));
-    return line;
-  };
   function texts() {
     const p = point();
     for (const row of p.rows) {
       parts[row.key].num.textContent = row.value;
       parts[row.key].desc.textContent = row.desc;
     }
-    // between the rows only the effect itself; its name stays in the list under the waffle (owner, October 13, 2026)
-    p.steps.forEach((step, i) => stepTexts[i].replaceChildren(node('b', {}, step.value), `: ${step.words}`));
-    $('finding').textContent = p.finding;
+    // between the rows the effect with a short name, as in the owner's mockup: "R+10 drawing"
+    p.steps.forEach((step, i) => stepTexts[i].replaceChildren(node('b', {}, step.value), ` ${step.name}`));
     $('key-band-text').textContent = p.band.key;
-    $('effects').replaceChildren(...p.steps.map(effect), node('p', { class: 'note' }, view.effectsNote));
-    $('spread').replaceChildren(node('p', {}, p.spread), node('p', {}, p.position),
-      node('p', { class: 'note' }, view.neutralNote), node('p', { class: 'note' }, view.scope));
+    $('spread').replaceChildren(node('p', {}, p.spread), node('p', { class: 'note' }, view.neutralNote),
+      node('p', { class: 'note' }, view.scope));
   }
 
   // The vote slider: one step per point, a plain scale of whole percents and a mark at the 2016 and 2020 votes.
@@ -193,8 +193,7 @@ export function renderOutcomes(view, { reduceMotion }) {
   slider.step = '1';
   slider.value = String(pi);
   $('vote-label').textContent = view.slider.label;
-  $('vote-majority').textContent = view.slider.majority;
-  $('vote-how').textContent = view.slider.how;
+  $('vote-how').textContent = view.slider.caption;
   $('vote-why-summary').textContent = view.why.summary;
   $('vote-why-text').textContent = view.why.text;
   const mark = (cls, { index, label }) => {
@@ -203,14 +202,14 @@ export function renderOutcomes(view, { reduceMotion }) {
     tick.append(node('span', {}, label));
     return tick;
   };
-  $('vote-ticks').replaceChildren(...view.slider.scale.map((t) => mark('tk', t)), mark('tk base', view.slider.base));
-  // the short line where the chosen row reaches a majority; it moves with the choice of row
-  const tipLine = $('vote-tip');
-  const placeTipLine = () => {
-    const index = view.slider.reach[current];
-    tipLine.hidden = index < 0;
-    tipLine.style.setProperty('--at', String(Math.max(index, 0) / (view.points.length - 1)));
-  };
+  $('vote-ticks').replaceChildren(...view.slider.scale.map((t) => mark('tk', t)));
+  // a marker where each count first reaches a majority, with its name and share (owner's mockup)
+  $('vote-marks').replaceChildren(...view.slider.marks.map((m) => {
+    const marker = node('span', { class: `mk ${m.key}` });
+    marker.style.setProperty('--at', String(m.index / (view.points.length - 1)));
+    marker.append(node('span', {}, m.label), node('span', {}, m.value));
+    return marker;
+  }));
   // The drawing effect at every stop of the slider, at the bottom of the chapter, with a line at the stop on screen.
   $('byvote-title').textContent = view.byVote.title;
   $('byvote-text').textContent = view.byVote.text;
@@ -224,7 +223,8 @@ export function renderOutcomes(view, { reduceMotion }) {
     for (const hook of pointHooks) hook(pi);
     slider.value = String(pi);
     slider.setAttribute('aria-valuetext', p.valueText);
-    $('vote-out').textContent = p.base ? `${p.label}, the 2016 and 2020 votes` : p.label;
+    $('vote-out').textContent = p.label;
+    $('vote-base').textContent = p.base ? view.slider.base.label : '';
     back.hidden = p.base;
   }
   function moveTo(index) {
@@ -284,7 +284,6 @@ export function renderOutcomes(view, { reduceMotion }) {
 
   function select(key, animate = false) {
     current = key;
-    placeTipLine();
     for (const button of rows) {
       const on = button.dataset.key === key;
       button.setAttribute('aria-checked', String(on));

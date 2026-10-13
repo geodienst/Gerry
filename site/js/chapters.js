@@ -31,10 +31,11 @@ function pointView(raw, { offset, total }) {
   };
   const { median, p5, p95 } = p.neutral;
   const band = p5 === p95 ? `90% of outcomes give ${seats(p5)}` : `90% of outcomes: ${seats(p5)} to ${seats(p95)}`;
+  const mapsBand = p5 === p95 ? `90% of neutral maps give ${seats(p5)}` : `90% of neutral maps: ${seats(p5)} to ${seats(p95)}`;
   const where = p.enacted < p5 ? 'below that range' : p.enacted > p95 ? 'above that range' : 'within that range';
   const drawing = p.enacted - median;
   const step = (key, value, from, to) => ({
-    key, label: EFFECT_LABELS[key], value: effect(value), words: effectWords(value),
+    key, label: EFFECT_LABELS[key], name: key === 'geographic' ? 'geography' : 'drawing', value: effect(value), words: effectWords(value),
     detail: `${effectWords(value)} (${seats(from)} to ${seats(to)})`,
   });
   const at = p.base ? `with the 2016 and 2020 votes (${sliderShare(p.share)} for Democrats)`
@@ -44,9 +45,9 @@ function pointView(raw, { offset, total }) {
     valueText: `${sliderShare(p.share)} of the two-party vote for Democrats${p.base ? ', the 2016 and 2020 result' : ''}`,
     rows: [
       { key: 'proportional', label: LABELS.proportional, seats: p.proportional, value: seats(p.proportional),
-        desc: "Each state's seats in proportion to its two-party vote." },
+        desc: "Seats in proportion to each state's two-party vote." },
       { key: 'neutral', label: LABELS.neutral, seats: median, value: seats(median),
-        desc: `The middle outcome of the neutral maps. ${band}.` },
+        desc: `${mapsBand}.` },
       { key: 'enacted', label: LABELS.enacted, seats: p.enacted, value: seats(p.enacted),
         desc: 'The maps used on November 3, 2026.' },
     ],
@@ -90,7 +91,6 @@ export function outcomesView(results) {
   // under the slider, so the line, the sentence and the waffle at that stop agree. -1: not within the slider.
   const reach = Object.fromEntries(['proportional', 'neutral', 'enacted'].map((key) => [key,
     points.findIndex((p) => p.rows.find((r) => r.key === key).seats >= majority)]));
-  const from = (key) => (reach[key] >= 0 ? `at ${points[reach[key]].label}` : `above ${points.at(-1).label}`);
   // Why presidential votes of 2016 and 2020, and the explainer at the top of the chapter (Mark Thompson's feedback,
   // October 12). The fifth step goes to the stop nearest the Democratic share of the 2024 presidential vote.
   const p2024 = n.president?.['2024'];
@@ -124,10 +124,14 @@ export function outcomesView(results) {
       + `give Democrats ${seatsOf(q, 'enacted')} seats and neutral maps ${seatsOf(q, 'neutral')}.` });
   }
   // The key sentence of the chapter: the threshold, which does not depend on one result (a data reviewer, October 13).
+  // The key sentence of the chapter, in the words of the owner's mockup (October 13, 2026).
+  const enactedSeats = main.rows.find((r) => r.key === 'enacted').seats;
+  const short = majority - enactedSeats;
+  const lead = `With the same votes, the enacted maps give Democrats ${seats(enactedSeats)} seats, `
+    + (short > 0 ? `${COUNT_WORDS[short] ?? count(short)} short of a majority. ` : 'a majority. ')
+    + `Neutral maps give ${seats(main.rows.find((r) => r.key === 'neutral').seats)}. `
+    + `In ${planShare(n.position.more)} of neutral maps, Democrats win more seats than under the enacted maps.`;
   const gap = neededGap(m.enacted.share, m.neutral.share);
-  const lead = `With these maps, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House majority, `
-    + (gap > 0 ? `${roundHalfUp(gap, 1)} points more than on neutral maps.`
-      : gap === 0 ? 'the same as on neutral maps.' : `${roundHalfUp(-gap, 1)} points less than on neutral maps.`);
   // The drawing effect at every stop of the slider, with a few examples (same reviewer): the effect is not one number.
   const seatsAt = (point, key) => point.rows.find((r) => r.key === key).seats;
   const bars = points.map((p, index) => {
@@ -170,15 +174,16 @@ export function outcomesView(results) {
     .filter(({ p }) => !p.base && Math.abs(p.share * 100 - Math.round(p.share * 100)) < 1e-6)
     .map(({ p, index }) => ({ index, label: percentLabel(p.share) }));
   return {
-    intro: 'Choose an option to see how the seats will be divided. On top of that, move the slider to change the national vote share.',
+    intro: 'Pick a count to see the seats. Move the slider to change the national vote.',
     total: house.total,
     rows: main.rows,
     steps: main.steps,
     band: main.band,
     finding: main.finding,
     house: houseView(results, m.seats_needed),
-    effectsNote: 'The geographic effect is the difference between proportional seats and neutral maps. '
-      + 'The drawing effect is the difference between neutral maps and the enacted maps.',
+    effectsNote: 'Geography: the gap between proportional seats and neutral maps. '
+      + 'Drawing: the gap between neutral maps and the enacted maps.',
+    majorityLabel: `${seats(majority)} for a majority`,
     spread: main.spread,
     position: main.position,
     neutralNote: `The neutral maps come from the ALARM Project. For each state a computer drew ${plans} maps that follow `
@@ -198,14 +203,19 @@ export function outcomesView(results) {
     },
     slider: {
       label: 'Democratic share of the national two-party vote',
-      how: `The slider starts at ${sliderShare(base.share)}, the 2016 and 2020 presidential votes together. It moves every `
-        + 'district by the same number of points. The results are not a forecast.',
+      caption: `Each marker shows where a count reaches ${seats(majority)} seats. `
+        + (gap > 0 ? `On the enacted maps, Democrats need ${roundHalfUp(gap, 1)} points more than on neutral maps. `
+          : gap === 0 ? 'On the enacted maps, Democrats need the same share as on neutral maps. '
+            : `On the enacted maps, Democrats need ${roundHalfUp(-gap, 1)} points less than on neutral maps. `)
+        + 'The slider moves every district by the same amount; it is not a forecast.',
       scale,
-      base: { index: baseIndex, label: '2016 + 2020' },
+      base: { index: baseIndex, label: '2016 and 2020 votes' },
       reach,
-      majority: `The short line marks where the chosen count reaches a majority, ${seats(majority)} of ${seats(house.total)} seats. `
-        + `That happens ${from('proportional')} of the two-party vote if seats follow the votes, ${from('neutral')} on neutral maps `
-        + `and ${from('enacted')} on the enacted maps.`,
+      // a marker on the slider where each count first reaches a majority (none for a count that never does)
+      marks: ['proportional', 'neutral', 'enacted'].filter((key) => reach[key] >= 0).map((key) => ({
+        key, index: reach[key], label: { proportional: 'Proportional', neutral: 'Neutral', enacted: 'Enacted' }[key],
+        value: neededShare(m[key].share),
+      })),
     },
   };
 }

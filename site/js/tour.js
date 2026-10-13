@@ -55,6 +55,7 @@ export function createTour(tour, outcomes, { reduceMotion }) {
     }
   }
   function start() {
+    box.classList.remove('done');
     state = 'playing';
     play.textContent = 'Pause';
     skip.hidden = false;
@@ -85,6 +86,7 @@ export function createTour(tour, outcomes, { reduceMotion }) {
     text.textContent = tour.end;
     count.textContent = '';
     play.textContent = 'Replay';
+    box.classList.add('done'); // a slim line: only the button stays
     skip.hidden = true;
     bar.style.animation = 'none';
   }

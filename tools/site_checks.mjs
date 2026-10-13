@@ -655,16 +655,18 @@ async function outcomes(t) {
     rows.map((r) => r.label).join() === 'Vote-proportional,Neutral-map median,Enacted maps' && rows.map((r) => r.value).join() === want.values.join(),
     JSON.stringify(rows));
   t.check('a block in the Democratic color under each number of the three rows, and words for screen readers', await t.js(`(() => {
-    const legend = getComputedStyle(document.querySelector('#outcomes .wkey .sw.d')).backgroundColor;
+    const legend = getComputedStyle(document.querySelector('#readout .who .sw')).backgroundColor;
     const blocks = [...document.querySelectorAll('#scen .big .sw.d')];
     return blocks.length === 3 && blocks.every((b) => getComputedStyle(b).backgroundColor === legend)
       && [...document.querySelectorAll('#scen .big .visually-hidden')].every((s) => s.textContent.trim() === 'Democratic seats');
   })()`));
-  t.check('the finding beside the waffle names the drawing effect and both counts', (await t.text('#finding')) === want.finding, await t.text('#finding'));
+  // the key sentence of the owner's mockup (October 13, 2026)
+  t.check('the chapter opens with the key sentence of the mockup', /^With the same votes, the enacted maps give Democrats \d+ seats, (\w+ short of a majority|a majority)\. Neutral maps give \d+\. In .+ of neutral maps, Democrats win more seats than under the enacted maps\.$/
+    .test(await t.text('#outcomes-lead')), await t.text('#outcomes-lead'));
   t.check('Enacted maps is chosen at the start and is the only tab stop', rows.map((r) => `${r.checked}/${r.tab}`).join() === 'false/-1,false/-1,true/0');
-  t.check('the two effects stand between the rows, without their names (owner, October 13, 2026)',
+  t.check('the two effects stand between the rows with a short name, as in the mockup',
     await t.js(`[...document.querySelectorAll('#scen .step b')].map((b) => b.textContent).join() === ${JSON.stringify(want.steps.join())}`)
-    && await t.js("[...document.querySelectorAll('#scen .step')].every((s) => s.textContent.startsWith(s.querySelector('b').textContent))"));
+    && await t.js("[...document.querySelectorAll('#scen .step')].map((s) => s.textContent.split(' ')[1]).join() === 'geography,drawing'"));
   const blue = "getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
   const democratic = `[...document.querySelectorAll('#waffle rect.seat')].filter((r) => r.getAttribute('fill') === ${blue}).length`;
   // the House of 435: these districts plus the six one-seat states, two of them Democratic
@@ -721,10 +723,8 @@ async function outcomes(t) {
   t.check('Arrow down on the last row goes round to the first', (await t.js("document.activeElement.querySelector('.lab')?.textContent")) === 'Vote-proportional');
   await t.js("document.querySelectorAll('#scen [role=radio]')[2].click()");
   t.check('a click chooses a row and repaints the waffle', await t.until(`${democratic} === ${want.enacted} + 2`, 2000));
-  const effects = await t.text('#effects');
-  t.check('the effects block names both effects with direction and the two numbers they lie between',
-    /Geographic effect(0|[RD]\+\d+)(no difference|\d+ seats? toward (Republicans|Democrats)) \(\d+ to \d+\)/.test(effects) && /Drawing effect(0|[RD]\+\d+)/.test(effects),
-    effects.slice(0, 160));
+  t.check('under the rows the two definitions', (await t.text('#effects-note')) === 'Geography: the gap between proportional seats and '
+    + 'neutral maps. Drawing: the gap between neutral maps and the enacted maps.');
   t.check('the spread sentence places the enacted maps against the band', /^90% of neutral outcomes give Democrats \d+( to \d+)? seats\. The enacted maps give \d+, (below|within|above) that range\.$/
     .test(await t.js("document.querySelector('#spread p').textContent")));
 
@@ -739,48 +739,39 @@ async function outcomes(t) {
     label: document.getElementById('vote-label').textContent, out: document.getElementById('vote-out').textContent,
     text: s.getAttribute('aria-valuetext'), back: document.getElementById('vote-back').hidden,
     ticks: [...document.querySelectorAll('#vote-ticks .tk')].map((x) => ({ text: x.textContent, base: x.classList.contains('base'),
-      at: Number(x.style.getPropertyValue('--at')) })), sentence: document.getElementById('vote-majority').textContent }; })()`);
+      at: Number(x.style.getPropertyValue('--at')) })), base: document.getElementById('vote-base').textContent,
+    caption: document.getElementById('vote-how').textContent,
+    marks: [...document.querySelectorAll('#vote-marks .mk')].map((m) => ({ key: m.classList[1], text: m.textContent,
+      at: Math.round(Number(m.style.getPropertyValue('--at')) * Number(s.max)) })) }; })()`);
   t.check('the vote slider starts at the 2016 and 2020 votes, one step per point',
     slider.value === baseAt && slider.max === stops.length - 1 && slider.back
-    && slider.label === 'Democratic share of the national two-party vote' && slider.out.endsWith(', the 2016 and 2020 votes')
+    && slider.label === 'Democratic share of the national two-party vote' && /^\d+\.\d%$/.test(slider.out) && slider.base === '2016 and 2020 votes'
     && slider.text.endsWith('of the two-party vote for Democrats, the 2016 and 2020 result'), JSON.stringify(slider));
-  // a plain scale: every whole percent from 47% to 56% under the stop with that share, and one mark at the base
-  const scale = slider.ticks.filter((x) => !x.base);
-  const baseMark = slider.ticks.filter((x) => x.base);
-  t.check('under the slider a plain scale from 47% to 56%, each number under its stop, and a mark at the 2016 and 2020 votes',
+  // a plain scale: every whole percent from 47% to 56% under the stop with that share
+  const scale = slider.ticks;
+  t.check('under the slider a plain scale from 47% to 56%, each number under its stop',
     scale.map((x) => x.text).join() === Array.from({ length: 10 }, (_, k) => `${47 + k}%`).join()
-    && scale.every((x) => Math.abs(stops[Math.round(x.at * (stops.length - 1))].share * 100 - Number.parseInt(x.text, 10)) < 1e-6)
-    && baseMark.length === 1 && baseMark[0].text === '2016 + 2020' && Math.round(baseMark[0].at * (stops.length - 1)) === baseAt,
+    && scale.every((x) => Math.abs(stops[Math.round(x.at * (stops.length - 1))].share * 100 - Number.parseInt(x.text, 10)) < 1e-6),
     JSON.stringify(slider.ticks));
-  // the sentence names the first stop where the enacted maps (the row shown) reach 218 of 435; one stop lower they do not
-  const enactedAt = Number(/at (\d+\.\d)% on the enacted maps/.exec(slider.sentence)?.[1]);
-  const enactedStop = stops.findIndex((p) => !p.base && Math.abs(p.share * 100 - enactedAt) < 1e-6);
+  // a marker where each count first reaches a majority (owner's mockup, October 13, 2026)
+  const reaches = (p, key) => (key === 'neutral' ? p.neutral.median : p[key]) >= swing.needed;
+  t.check('three markers on the slider, each with its name and share, under a caption that explains them',
+    slider.marks.map((m) => m.key).join() === 'proportional,neutral,enacted'
+    && slider.marks.every((m) => /^(Proportional|Neutral|Enacted)\d+\.\d%$/.test(m.text))
+    && slider.caption.startsWith('Each marker shows where a count reaches 218 seats.') && slider.caption.endsWith('it is not a forecast.'),
+    JSON.stringify({ marks: slider.marks, caption: slider.caption }));
+  t.check('each marker sits at the first stop where its count reaches a majority',
+    slider.marks.every((m) => reaches(stops[m.at], m.key) && (m.at === 0 || !reaches(stops[m.at - 1], m.key))), JSON.stringify(slider.marks));
+  // at the marker of the enacted maps (the row shown) they reach 218 of 435; one stop lower they do not
+  const enactedStop = slider.marks.find((m) => m.key === 'enacted')?.at ?? -1;
   const middleBlue = "document.querySelector('#waffle rect.middle').getAttribute('fill') === getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
   await setSlider(enactedStop);
   const atStop = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
   await setSlider(enactedStop - 1);
   const below = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
-  t.check('at the stop the sentence names for the enacted maps they reach seat 218, one stop lower they do not',
+  t.check('at the marker of the enacted maps they reach seat 218, one stop lower they do not',
     enactedStop > 0 && atStop.blue && atStop.democratic >= swing.needed + 2 && !below.blue && below.democratic < swing.needed + 2,
-    JSON.stringify({ enactedAt, enactedStop, atStop, below }));
-  // the short line marks the stop where the chosen row reaches 218 of 435: the enacted maps at the start, then neutral maps
-  const stopOf = (name) => {
-    const at = Number(new RegExp(`at (\\d+\\.\\d)% ${name}`).exec(slider.sentence)?.[1]);
-    return stops.findIndex((p) => Math.abs(p.share * 100 - at) < 0.05);
-  };
-  const tipAt = () => t.js(`(() => { const l = document.getElementById('vote-tip');
-    return l.hidden ? -1 : Math.round(Number(l.style.getPropertyValue('--at')) * Number(document.getElementById('vote').max)); })()`);
-  const tipEnacted = await tipAt();
-  await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
-  const tipNeutral = await tipAt();
-  await t.js("document.querySelectorAll('#scen [role=radio]')[2].click()");
-  t.check('the short line on the slider sits at the stop where the chosen row reaches a majority, and moves with the row',
-    tipEnacted === stopOf('on the enacted maps') && tipNeutral === stopOf('on neutral maps') && tipEnacted !== tipNeutral
-    && slider.sentence.startsWith('The short line marks where the chosen count reaches a majority, 218 of 435 seats.'),
-    JSON.stringify({ tipEnacted, tipNeutral, sentence: slider.sentence }));
-  // the key sentence: the threshold of the enacted maps against neutral maps (a data reviewer, October 13)
-  t.check('the chapter opens with the threshold as its key sentence', /^With these maps, Democrats need \d+\.\d% of the two-party vote for a House majority, \d+\.\d points (more|less) than on neutral maps\.$/
-    .test(await t.text('#outcomes-lead')), await t.text('#outcomes-lead'));
+    JSON.stringify({ enactedStop, atStop, below }));
   // the drawing effect at every stop of the slider: a bar per stop, up for Democrats and down for Republicans
   const bars = await t.js(`[...document.querySelectorAll('#byvote-chart rect.col')].map((r) => ({ d: r.classList.contains('d'),
     h: Number(r.getAttribute('height')), x: Number(r.getAttribute('x')) + Number(r.getAttribute('width')) / 2 }))`);
@@ -793,13 +784,13 @@ async function outcomes(t) {
   await setSlider(half);
   const moved = await t.js(`(() => ({ rows: [...document.querySelectorAll('#scen .big .n')].map((b) => Number(b.textContent)),
     out: document.getElementById('vote-out').textContent, back: document.getElementById('vote-back').hidden,
-    finding: document.getElementById('finding').textContent, democratic: ${democratic} }))()`);
+    democratic: ${democratic} }))()`);
   t.check('the line in the chart of drawing effects follows the slider', await t.js(
     "Math.abs(Number(document.querySelector('#byvote-chart line.here').getAttribute('x1')) - " + bars[half].x + ") < 0.5"));
   const p = stops[half];
-  t.check('at 50.0% the rows, the finding and the waffle follow the slider',
+  t.check('at 50.0% the rows and the waffle follow the slider',
     moved.rows.join() === [p.proportional, p.neutral.median, p.enacted].map((v) => v + 2).join() && moved.out === '50.0%' && !moved.back
-    && moved.finding.startsWith('In this comparison, with Democrats at 50.0% of the two-party vote,') && moved.democratic === p.enacted + 2,
+    && moved.democratic === p.enacted + 2,
     JSON.stringify(moved));
   await t.js("document.getElementById('vote-back').click()");
   t.check('"Back to the 2016 and 2020 votes" returns to the base point and focuses the slider', await t.js(
@@ -818,7 +809,7 @@ async function outcomes(t) {
     for (const type of ['pointerenter', 'pointerleave']) f.dispatchEvent(new PointerEvent(type, { pointerType: 'touch' }));
     f.dispatchEvent(new MouseEvent('click', { bubbles: true })); })()`);
   const tapped = await t.js("({ hidden: document.getElementById('waffle-tip').hidden, text: document.getElementById('waffle-tip').textContent })");
-  await t.js("document.getElementById('finding').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }))");
+  await t.js("document.getElementById('outcomes-lead').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }))");
   t.check('a tap on a frame shows its tooltip, a tap elsewhere closes it',
     !tapped.hidden && tapped.text.startsWith('Alaska, North Dakota, South Dakota and Wyoming') && await t.js("document.getElementById('waffle-tip').hidden"),
     JSON.stringify(tapped));
@@ -839,7 +830,8 @@ async function tour(t) {
   await t.js("document.querySelector('#outcomes .outcomes').scrollIntoView({ block: 'center' })");
   const state = `(() => ({ count: document.getElementById('tour-count').textContent, play: document.getElementById('tour-play').textContent,
     text: document.getElementById('tour-text').textContent, row: document.querySelector('#scen [aria-checked=true] .lab').textContent,
-    out: document.getElementById('vote-out').textContent, skip: document.getElementById('tour-skip').hidden }))()`;
+    out: document.getElementById('vote-out').textContent, base: document.getElementById('vote-base').textContent,
+    skip: document.getElementById('tour-skip').hidden, done: document.getElementById('tour').classList.contains('done') }))()`;
   t.check('the explainer starts by itself in view, with Pause and Skip', await t.until(
     "document.getElementById('tour-count').textContent === '1 / 5' && document.getElementById('tour-play').textContent === 'Pause' && !document.getElementById('tour-skip').hidden", 4000));
   await t.until("document.getElementById('tour-count').textContent === '3 / 5'", 4000);
@@ -851,7 +843,7 @@ async function tour(t) {
   await t.until("document.getElementById('tour-play').textContent === 'Replay'", 4000);
   const end = await t.js(state);
   t.check('at the end the chapter returns to the enacted maps at the 2016 and 2020 votes, with Replay',
-    end.row === 'Enacted maps' && end.out.endsWith(', the 2016 and 2020 votes') && end.count === '' && end.skip
+    end.row === 'Enacted maps' && end.base === '2016 and 2020 votes' && end.count === '' && end.skip && end.done
     && end.text === 'That is the comparison. Choose a row or move the slider to explore it yourself.', JSON.stringify(end));
   // Replay, Pause holds the step, Skip ends it
   await t.js("document.getElementById('tour-play').click()");

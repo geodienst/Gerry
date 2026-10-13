@@ -266,12 +266,15 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .wkey .fr { width: 0.6rem; height: 1rem; border: 1.5px solid var(--fg); }
 #waffle-tip { z-index: 2; }
 /* The explainer at the top of chapter 01 (Mark Thompson's feedback, October 12): five steps that play by themselves */
-.tour { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.45rem; margin-bottom: 1.2rem; }
+.tour { background: var(--sheet); border: 1px solid var(--rule); padding: 0.5rem 0.9rem; display: grid; gap: 0.3rem; }
+.tour.done { background: transparent; border: 0; padding: 0; }
+.tour.done .tour-text, .tour.done .tour-bar { display: none; }
+.tour.done .tour-head button:first-of-type { margin-left: 0; }
 .tour-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
 .tour-count { font-variant-numeric: tabular-nums; }
 .tour-head button { font: inherit; font-weight: 600; padding: 0.2rem 0.6rem; border: 1px solid var(--rule); background: var(--bg); color: var(--fg); cursor: pointer; }
 .tour-head button:first-of-type { margin-left: auto; }
-.tour-text { margin: 0; font: 600 1.0625rem/1.45 var(--font-head); color: var(--fg); min-height: 2.9em; max-width: 70ch; }
+.tour-text { margin: 0; font-size: 0.97rem; line-height: 1.45; color: var(--fg); max-width: 70ch; }
 .tour-bar { height: 3px; background: var(--rule); }
 .tour-bar i { display: block; height: 100%; width: 0; background: var(--ink); }
 @keyframes tourbar { from { width: 0; } to { width: 100%; } }
@@ -283,44 +286,35 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .vote { --thumb: 1.15rem; display: grid; gap: 0.35rem; }
 .vote-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.8rem; }
 .vote-head label { font-weight: 600; }
-#vote-majority { margin: 0; max-width: 64ch; }
 .vote-head output { font: 700 1.1875rem/1.2 var(--font-head); font-variant-numeric: tabular-nums; }
 .vote-back { font: inherit; font-size: 0.8125rem; padding: 0.15rem 0; border: 0; background: none; color: var(--fg); cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
-.vote-track { position: relative; padding: 1.5rem 0 1.6rem; }
+.vote-track { position: relative; padding: 0.3rem 0 4.1rem; }
 #vote { position: relative; z-index: 1; width: 100%; margin: 0; height: var(--thumb); appearance: none; -webkit-appearance: none; background: none; cursor: pointer; }
 /* the short line where the chosen row reaches a majority, across the track and under the thumb */
-.vote-tip { position: absolute; top: calc(1.5rem + var(--thumb) / 2 - 0.55rem); height: 1.1rem; width: 2px; left: calc(var(--thumb) / 2 + var(--at) * (100% - var(--thumb))); transform: translateX(-50%); background: var(--fg); pointer-events: none; }
-.vote-tip[hidden] { display: none; }
 #vote::-webkit-slider-runnable-track { height: 4px; background: var(--rule); }
 #vote::-moz-range-track { height: 4px; background: var(--rule); }
 #vote::-webkit-slider-thumb { -webkit-appearance: none; width: var(--thumb); height: var(--thumb); margin-top: calc(2px - var(--thumb) / 2); border-radius: 50%; background: var(--ink); border: 2px solid var(--sheet); }
 #vote::-moz-range-thumb { width: var(--thumb); height: var(--thumb); border-radius: 50%; background: var(--ink); border: 2px solid var(--sheet); }
-.vote-ticks { position: absolute; inset: calc(1.5rem + var(--thumb) / 2 + 4px) 0 0; pointer-events: none; }
+.vote-ticks { position: absolute; inset: calc(0.3rem + var(--thumb) + 2.5rem) 0 0; pointer-events: none; }
+/* where each count reaches a majority (owner's mockup, October 13, 2026) */
+.vote-marks { position: absolute; inset: 0.3rem 0 0; pointer-events: none; }
+.vote-marks .mk { position: absolute; top: calc(var(--thumb) / 2 - 0.55rem); left: calc(var(--thumb) / 2 + var(--at) * (100% - var(--thumb))); transform: translateX(-50%); display: grid; justify-items: center; font-size: 0.75rem; line-height: 1.25; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vote-marks .mk::before { content: ""; width: 2px; height: 1.1rem; background: var(--muted); margin-bottom: 0.25rem; }
+.vote-marks .mk.enacted { color: var(--ink); font-weight: 600; }
+.vote-marks .mk.enacted::before { background: var(--ink); }
 .vote-ticks .tk { position: absolute; left: calc(var(--thumb) / 2 + var(--at) * (100% - var(--thumb))); transform: translateX(-50%); display: grid; justify-items: center; font-size: 0.75rem; line-height: 1.2; color: var(--muted); white-space: nowrap; }
 .vote-ticks .tk::before { content: ""; width: 1px; height: 0.4rem; background: var(--fg); margin-bottom: 0.1rem; }
 .vote-ticks .tk { font-variant-numeric: tabular-nums; }
 /* the mark of the 2016 and 2020 votes sits above the line, apart from the scale */
-.vote-ticks .tk.base { top: auto; bottom: calc(100% + 8px); color: var(--fg); font-weight: 600; }
-.vote-ticks .tk.base::before { order: 2; margin: 0.1rem 0 0; }
 /* on a phone every other percent of the scale keeps its number */
 @media (max-width: 480px) { .vote-ticks .tk:not(.base):nth-child(even) span { visibility: hidden; } }
 #waffle .changed polygon { fill: var(--sheet); }
 .wkey .cd { width: 0.75rem; height: 0.75rem; background: var(--fg); border-radius: 0; display: grid; place-items: center; }
 .wkey .cd::after { content: ""; width: 0.55rem; height: 0.55rem; background: var(--sheet);
   clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
-.finding { margin: 0; font: 600 1.125rem/1.4 var(--font-head); color: var(--fg); max-width: 46ch; }
 .wkey { display: flex; flex-wrap: wrap; gap: 0.3rem 1.2rem; font-size: 0.8125rem; color: var(--muted); }
 .wkey > span { display: inline-flex; gap: 0.4rem; align-items: center; }
 .wkey .ol { width: 0.75rem; height: 0.75rem; border: 1.4px solid var(--fg); }
-.findings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem clamp(1.2rem, 3vw, 2.8rem); border-top: 1px solid var(--rule); padding-top: 1.2rem; }
-@media (max-width: 880px) { .findings { grid-template-columns: minmax(0, 1fr); } }
-.effectlist { display: grid; gap: 0.5rem; align-content: start; }
-.effectlist p { margin: 0; max-width: 62ch; }
-.eff { display: grid; grid-template-columns: 9.5rem auto minmax(0, 1fr); gap: 0.2rem 0.8rem; align-items: baseline; }
-.eff .k { font-size: 0.875rem; color: var(--fg); font-weight: 600; }
-.eff .v { font: 700 1.1875rem/1.2 var(--font-head); font-variant-numeric: tabular-nums; }
-.eff .w { font-size: 0.94rem; }
-@media (max-width: 480px) { .eff { grid-template-columns: auto minmax(0, 1fr); } .eff .w { grid-column: 1 / -1; } }
 
 /* Chapter 02: tools, the largest effects and the record (Task 7.7) */
 .tools { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; align-items: center; }
@@ -389,3 +383,17 @@ footer p { margin: 0 0 0.3rem; max-width: 90ch; }
 .credit img { width: 1.25rem; height: 1.25rem; }
 /* In dark mode the logo sits on a light disc so its red stays readable. */
 @media (prefers-color-scheme: dark) { .credit img { background: #fff; padding: 0.15rem; border-radius: 50%; } }
+
+/* Chapter 02 after the owner's mockup (October 13, 2026) */
+.ohead { display: grid; gap: 0.5rem; }
+.ohead .lead { margin: 0; font: 700 clamp(1.2rem, 1rem + 0.8vw, 1.55rem)/1.35 var(--font-head); max-width: 52ch; }
+.ohead .note { margin: 0; }
+.countcol { display: grid; gap: 1rem; align-content: start; }
+.countcol > .note { margin: 0; max-width: 46ch; }
+.vote { margin-top: 0.6rem; }
+.vote-base { font-size: 0.8125rem; color: var(--muted); }
+#waffle .majority line { stroke: var(--fg); stroke-width: 1.4; }
+#waffle .majority text { fill: var(--fg); font-size: 14px; font-weight: 600; font-family: var(--font-body); }
+.neutral-more { border-top: 1px solid var(--rule); padding-top: 1rem; }
+.neutral-more #spread p { margin: 0.45rem 0 0; max-width: 70ch; }
+@media (max-width: 480px) { .vote-marks .mk { font-size: 0.6875rem; } }
