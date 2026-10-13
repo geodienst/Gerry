@@ -878,17 +878,18 @@ async function tour(t) {
 // --- The map in full screen (owner, October 13, 2026) -------------------------------------------------------------------
 async function fullscreen(t) {
   await t.load('', { width: 1280, height: 800 });
-  const state = `(() => { const col = document.querySelector('.mapcol'); const box = document.getElementById('mapbox').getBoundingClientRect();
+  const state = `(() => { const col = document.querySelector('.atlas'); const box = document.getElementById('mapbox').getBoundingClientRect();
     return { full: document.fullscreenElement === col || col.classList.contains('is-full'), pressed: document.getElementById('map-full').getAttribute('aria-pressed'),
       label: document.getElementById('map-full').getAttribute('aria-label'), height: Math.round(box.height), window: innerHeight,
-      legend: document.getElementById('legend').getBoundingClientRect().bottom <= innerHeight + 1 }; })()`;
+      legend: document.getElementById('legend').getBoundingClientRect().bottom <= innerHeight + 1,
+      sheet: document.getElementById('sheet').getBoundingClientRect().top < innerHeight && document.getElementById('sheet').getBoundingClientRect().left > box.right - 1 }; })()`;
   const before = await t.js(state);
   t.check('the map has a full-screen button, not pressed at the start', !before.full && before.pressed === 'false' && before.label === 'Full screen', JSON.stringify(before));
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(300);
   const on = await t.js(state);
-  t.check('the button puts the map and its legend over the whole window', on.full && on.pressed === 'true' && on.label === 'Exit full screen'
-    && on.height > 0.6 * on.window && on.legend, JSON.stringify(on));
+  t.check('the button puts the map, its legend and the sheet beside it over the whole window', on.full && on.pressed === 'true'
+    && on.label === 'Exit full screen' && on.height > 0.6 * on.window && on.legend && on.sheet, JSON.stringify(on));
   await t.screenshot('map-full-1280');
   await t.key('Escape', 27);
   await t.sleep(300);
