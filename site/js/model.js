@@ -142,8 +142,6 @@ const sum = (values) => values.reduce((a, b) => a + b, 0);
 const plural = (n, one, many) => (n === 1 ? one : many);
 
 /** The list without a chosen state: states toward Republicans, zero states, states toward Democrats, and the sums. */
-export const LIST_MIN = 3; // seats: the effects the list shows without unfolding (owner, October 13, 2026)
-
 export function effectList(results) {
   const rows = Object.entries(results.states)
     .map(([postal, s]) => ({ postal, name: s.name, drawing: s.effects.drawing, label: effect(s.effects.drawing) }))
@@ -158,14 +156,8 @@ export function effectList(results) {
     ? `no state moves a seat toward ${party}`
     : `${count(n)} ${plural(n, 'state moves', 'states move')} ${seats(total)} ${plural(total, 'seat', 'seats')} toward ${party}`);
   const first = moves(toR.length, seatsR, 'Republicans');
-  // in view: the largest effects on each side; behind one fold the smaller ones, with the zero states inside it
-  const big = (r) => Math.abs(r.drawing) >= LIST_MIN;
-  const more = rows.filter((r) => !big(r)).length;
   return {
     toR, zero, toD, seatsR, seatsD, net,
-    big: { toR: toR.filter(big), toD: toD.filter(big) },
-    small: { toR: toR.filter((r) => !big(r)), toD: toD.filter((r) => !big(r)) },
-    moreLabel: `${count(more)} more ${plural(more, 'state', 'states')}`,
     zeroLabel: `${count(zero.length)} ${plural(zero.length, 'state matches its', 'states match their')} neutral median`,
     summary: `${first[0].toUpperCase()}${first.slice(1)}, ${moves(toD.length, seatsD, 'Democrats')}. Net: ${effectWords(net)}.`,
     bar: {

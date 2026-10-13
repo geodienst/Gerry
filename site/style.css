@@ -145,16 +145,10 @@ svg { display: block; width: 100%; height: auto; }
 .row:hover { background: var(--band); }
 .row .v { text-align: right; font-variant-numeric: tabular-nums; }
 .row svg { height: 0.8rem; }
-:is(details.zeros, details.more) > summary { cursor: pointer; font-size: 0.87rem; color: var(--muted); padding: 0.05rem 0.25rem; list-style: none; display: flex; gap: 0.45rem; align-items: center; justify-content: center; }
-:is(details.zeros, details.more) > .list { margin-top: 2px; }
-:is(details.zeros, details.more) > summary::-webkit-details-marker { display: none; }
-/* the two folds sit between the effects toward Republicans and toward Democrats (owner, October 13, 2026):
-   >> for the smaller effects, turning down when open; <> for the states at zero, turning inward when open */
-:is(details.zeros, details.more) > summary::before { font: 700 1rem/1 var(--font-body); color: var(--muted); display: inline-block; transition: transform 0.15s; }
-details.more > summary::before { content: "\00bb"; }
-details.more[open] > summary::before { transform: rotate(90deg); }
-details.zeros > summary::before { content: "\2039\203a"; letter-spacing: -0.05em; }
-details.zeros[open] > summary::before { content: "\203a\2039"; }
+details.zeros > summary { cursor: pointer; font-size: 0.87rem; color: var(--muted); padding: 0.25rem; list-style: none; display: flex; gap: 0.4rem; align-items: center; }
+details.zeros > summary::-webkit-details-marker { display: none; }
+details.zeros > summary::before { content: ""; width: 0.45rem; height: 0.45rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; margin-right: 0.15rem; }
+details.zeros[open] > summary::before { transform: rotate(45deg); }
 .net { display: grid; gap: 0.35rem; border-top: 1px solid var(--rule); padding-top: 0.7rem; }
 .net svg text { font-size: 11px; font-family: var(--font-body); fill: var(--fg); }
 .axis text, .chart text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
