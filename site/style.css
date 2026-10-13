@@ -63,7 +63,7 @@ body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--
 
 h1 { font: 600 clamp(1.6rem, 2.6vw, 2.4rem)/1.15 var(--font-head); margin: 0; text-wrap: balance; }
 h2 { font: 600 1.33rem/1.2 var(--font-head); margin: 0; text-wrap: balance; }
-h3, h4 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; font-weight: 600; }
+h3, h4 { font-size: 0.875rem; color: var(--fg); margin: 0; font-weight: 600; }
 .num { font-variant-numeric: tabular-nums; }
 a { color: var(--ink); }
 .load-error { margin: 0; padding: 0.7rem 1rem; border: 1px solid var(--rule); background: var(--sheet); }
@@ -72,7 +72,7 @@ a { color: var(--ink); }
 .stack { display: grid; gap: 0.4rem; }
 .trio { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; align-items: baseline; }
 .trio div { display: grid; }
-.trio .lab { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.trio .lab { font-size: 0.8125rem; color: var(--muted); }
 .trio .val { font: 600 2rem/1.1 var(--font-head); font-variant-numeric: tabular-nums; }
 .trio .sub { font-size: 0.87rem; color: var(--muted); }
 .effects { margin: 0; font-size: 0.93rem; }
@@ -194,7 +194,7 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .mast .wrap { position: relative; }
 .mast-art { position: absolute; right: 0; top: 50%; transform: translateY(-50%); height: 118%; max-height: 19rem; filter: invert(1); mix-blend-mode: screen; opacity: 0.85; pointer-events: none; }
 @media (max-width: 900px) { .mast-art { display: none; } }
-.mast .byline { margin: 0; font-size: 0.9375rem; color: var(--mast-muted); }
+.mast .byline { margin: 0; font-size: 0.9375rem; color: var(--mast-muted); display: flex; flex-wrap: wrap; gap: 0.2rem 1.5rem; }
 .mast .byline .author { color: var(--mast-fg); font-weight: 700; text-decoration: none; }
 .mast .byline .author:hover { text-decoration: underline; }
 /* About this project, at the end of the page */
@@ -205,13 +205,12 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .mast a:focus-visible { outline-color: var(--mast-fg); }
 /* The key findings under the masthead: the answer to its question (owner, October 13, 2026) */
 .keyfacts { border-bottom: 1px solid var(--rule); background: var(--sheet); }
-.keyfacts .wrap { padding-block: 1rem 1.1rem; display: grid; gap: 0.5rem; }
-.keyfacts h2 { margin: 0; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.keyfacts .wrap { padding-block: 1.3rem 1.4rem; }
 .keyfacts ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; }
 .keyfacts li { position: relative; padding-left: 1.1rem; max-width: 78ch; }
 .keyfacts li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.4rem; height: 0.4rem; background: var(--ink); }
 /* the Senate card in chapter 03: a line above its title that sets it apart from the maps */
-.grid3 .kicker { margin: 0 0 -0.4rem; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.grid3 .kicker { margin: 0 0 -0.5rem; font-size: 0.8125rem; color: var(--muted); }
 .chapter { padding-block: clamp(2rem, 5vw, 3.6rem); border-bottom: 1px solid var(--rule); }
 .chapter > .wrap { display: grid; gap: 1.4rem; }
 .chead { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.9rem; align-items: baseline; }
@@ -316,7 +315,7 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .effectlist { display: grid; gap: 0.5rem; align-content: start; }
 .effectlist p { margin: 0; max-width: 62ch; }
 .eff { display: grid; grid-template-columns: 9.5rem auto minmax(0, 1fr); gap: 0.2rem 0.8rem; align-items: baseline; }
-.eff .k { font-size: 0.8125rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.eff .k { font-size: 0.875rem; color: var(--fg); font-weight: 600; }
 .eff .v { font: 700 1.1875rem/1.2 var(--font-head); font-variant-numeric: tabular-nums; }
 .eff .w { font-size: 0.94rem; }
 @media (max-width: 480px) { .eff { grid-template-columns: auto minmax(0, 1fr); } .eff .w { grid-column: 1 / -1; } }
@@ -330,7 +329,7 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .chip[aria-current="true"] { border-color: var(--ink); background: var(--tint); }
 .record { background: var(--sheet); border: 1px solid var(--rule); padding: 1.1rem 1.1rem 1.2rem; display: grid; gap: 0.8rem; min-width: 0; align-content: start; }
 #sheet-title { font: 700 1.5rem/1.15 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
-.record .k { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.record .k { font-size: 0.8125rem; color: var(--muted); }
 
 /* The record: headline, three numbers and the rows of dots (Task 7.8) */
 .headline { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.2rem 0.9rem; align-items: center; padding-block: 0.7rem; border-block: 1px solid var(--rule); }

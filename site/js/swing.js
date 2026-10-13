@@ -56,7 +56,7 @@ export function renderByVote(el, byVote, scale) {
     // example labels in the band above the plot, left out where they would run into the one before
     let right = -Infinity;
     for (const e of byVote.examples) {
-      const text = e.note ? `${e.value} · ${e.note}` : e.value;
+      const text = e.note ? `${e.value} (${e.note})` : e.value;
       const w = text.length * 6.6;
       const cx = Math.min(Math.max(x(e.index), M.left + w / 2), width - M.right - w / 2);
       if (cx - w / 2 < right + 6) continue;

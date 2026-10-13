@@ -133,9 +133,9 @@ test('outcomesView: the drawing effect at every stop of the slider, with a few e
     { index: 1, label: '51.8%', note: '2016 + 2020', value: 'R+10' },
     { index: 2, label: '53.0%', note: '', value: 'R+13' },
   ]);
-  assert.equal(byVote.line, '50.0%: D+2 · 51.8% (2016 + 2020): R+10 · 53.0%: R+13');
-  assert.equal(byVote.label, 'Drawing effect at each point of the vote slider, from 50.0% to 53.0%. 50.0%: D+2 · '
-    + '51.8% (2016 + 2020): R+10 · 53.0%: R+13.');
+  assert.equal(byVote.line, '50.0%: D+2; 51.8% (2016 + 2020): R+10; 53.0%: R+13');
+  assert.equal(byVote.label, 'Drawing effect at each point of the vote slider, from 50.0% to 53.0%. 50.0%: D+2; '
+    + '51.8% (2016 + 2020): R+10; 53.0%: R+13.');
   assert.equal(byVote.max, 15); // the largest effect, 13, rounded up to 5
   // the effect turns at the base: no stop with 0 before it
   assert.deepEqual(byVote.cross, { below: '51.8%', from: '51.8%' });
@@ -230,8 +230,8 @@ test('largestEffects: every state at 3 seats or more, by size, then toward Repub
   assert.equal(LARGEST_MIN, 3);
   assert.equal(view.title, 'Drawing effects of 3 seats or more');
   assert.deepEqual(view.chips, [
-    { postal: 'FL', name: 'Florida', drawing: -4, label: 'R+4', aria: 'Florida, R+4 · 4 seats toward Republicans' },
-    { postal: 'CA', name: 'California', drawing: 3, label: 'D+3', aria: 'California, D+3 · 3 seats toward Democrats' },
+    { postal: 'FL', name: 'Florida', drawing: -4, label: 'R+4', aria: 'Florida, R+4: 4 seats toward Republicans' },
+    { postal: 'CA', name: 'California', drawing: 3, label: 'D+3', aria: 'California, D+3: 3 seats toward Democrats' },
   ]);
 });
 

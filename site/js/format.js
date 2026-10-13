@@ -187,13 +187,13 @@ export function effectWords(n) {
 }
 
 /**
- * Notation and words together: -6 -> "R+6 · 6 seats toward Republicans",
- * 0 -> "0 · no difference". The separator is a middle dot (U+00B7).
+ * Notation and words together: -6 -> "R+6: 6 seats toward Republicans",
+ * 0 -> "0: no difference". A colon, as between the rows of chapter 01 (style round, October 13, 2026).
  * @param {number} n
  * @returns {string}
  */
 export function effectLine(n) {
-  return `${effect(n)} · ${effectWords(n)}`;
+  return `${effect(n)}: ${effectWords(n)}`;
 }
 
 /**

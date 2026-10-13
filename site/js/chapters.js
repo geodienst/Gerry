@@ -142,7 +142,7 @@ export function outcomesView(results) {
   const examples = [...new Map(picks.map((b) => [b.index, b])).values()].sort((a, b) => a.index - b.index)
     .map((b) => ({ index: b.index, label: b.label, value: b.value,
       note: b.index === baseIndex ? '2016 + 2020' : p2024 !== undefined && b.label === sliderShare(p2024) ? '2024' : '' }));
-  const line = examples.map((e) => `${e.label}${e.note ? ` (${e.note})` : ''}: ${e.value}`).join(' · ');
+  const line = examples.map((e) => `${e.label}${e.note ? ` (${e.note})` : ''}: ${e.value}`).join('; ');
   // where the effect turns: the first stop toward Republicans, and the stops just below it without an effect (owner,
   // October 13: say whose vote the percentage is)
   const turn = bars.findIndex((b) => b.drawing < 0);

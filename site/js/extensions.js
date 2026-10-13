@@ -1,6 +1,6 @@
 // Texts and view models for the extensions (docs/superpowers/specs/2026-10-06-extensions-design.md,
 // chapters 1 to 4 and 7), from the results.json fields of Phase 5. Pure, like model.js.
-import { share, neededShare, seats, count, effect, effectLine, longDate } from './format.js';
+import { share, neededShare, seats, count, effect, effectWords, effectLine, longDate } from './format.js';
 import { houseOf } from './model.js';
 
 /** Text for the [data-fill] spans that the extensions add to the method section. */
@@ -30,7 +30,7 @@ export function redrawView(results) {
     .sort((a, b) => a.change - b.change || a.name.localeCompare(b.name, 'en'));
   return {
     sentence: `With these votes, the maps of the 2024 election give Democrats ${seats(n.seats_2024 + dSingle)} seats and the `
-      + `2026 maps ${seats(results.national.enacted + dSingle)}. Net change: ${effectLine(n.change)}.`,
+      + `2026 maps ${seats(results.national.enacted + dSingle)}. Net change: ${effect(n.change)}, ${effectWords(n.change)}.`,
     rows,
   };
 }

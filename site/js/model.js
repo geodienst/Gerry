@@ -26,7 +26,7 @@ export function districtLabel(id, postal) {
 export function districtTip(index, id, postal) {
   if (index.single[postal]) return { title: index.single[postal].name, lines: [AT_LARGE_TEXT] };
   return {
-    title: `${districtLabel(id, postal)} · ${index.states[postal].name}`,
+    title: `${districtLabel(id, postal)}, ${index.states[postal].name}`,
     lines: [`Democratic share ${share(index.shareOf[id])}`],
   };
 }
@@ -71,7 +71,7 @@ export function closeTip(index, id, postal) {
     lines.push(`Close districts in ${s.name}: ${count(s.competitive.enacted)} on the enacted map, `
       + `a median of ${count(s.competitive.median)} on neutral maps`);
   }
-  return { title: `${districtLabel(id, postal)} · ${s.name}`, lines };
+  return { title: `${districtLabel(id, postal)}, ${s.name}`, lines };
 }
 
 /** The key of the view "Districts: close races": two fills, two dots, the pale rest, the swing states and the counts. */

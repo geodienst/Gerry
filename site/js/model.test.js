@@ -25,10 +25,10 @@ test('indexResults: single-seat states and the share of every district', () => {
 
 test('tooltips: a district, a state, and a single-seat state', () => {
   const index = indexResults(results());
-  assert.deepEqual(districtTip(index, '4809', 'TX'), { title: 'TX-9 · Texas', lines: ['Democratic share 46.9%'] });
+  assert.deepEqual(districtTip(index, '4809', 'TX'), { title: 'TX-9, Texas', lines: ['Democratic share 46.9%'] });
   assert.deepEqual(stateTip(index, 'TX'), {
     title: 'Texas',
-    lines: ['Drawing effect R+2 · 2 seats toward Republicans', 'Neutral-map median 2, enacted 0 Democratic seats'],
+    lines: ['Drawing effect R+2: 2 seats toward Republicans', 'Neutral-map median 2, enacted 0 Democratic seats'],
   });
   assert.deepEqual(districtTip(index, '5600', 'WY'), { title: 'Wyoming', lines: [AT_LARGE_TEXT] });
   assert.deepEqual(stateTip(index, 'WY'), { title: 'Wyoming', lines: [AT_LARGE_TEXT] });
@@ -49,10 +49,10 @@ test('close races: 45% to 55% Democratic, both ends included, for districts and 
 test('closeTip: the district share, marked when close, and the close districts of its state', () => {
   // without the extension fields there is no line for the state
   // TX-9 at 46.91%: close, the parties 6.2 points apart
-  assert.deepEqual(closeTip(indexResults(results()), '4809', 'TX'), { title: 'TX-9 · Texas', lines: ['Democratic share 46.9%, a margin of 6.2 points'] });
+  assert.deepEqual(closeTip(indexResults(results()), '4809', 'TX'), { title: 'TX-9, Texas', lines: ['Democratic share 46.9%, a margin of 6.2 points'] });
   // HI-2 at 70.1% is not close; withExtensions gives every state 0 close districts enacted and a median of 1
   const index = indexResults(withExtensions());
-  assert.deepEqual(closeTip(index, '1502', 'HI'), { title: 'HI-2 · Hawaii', lines: ['Democratic share 70.1%',
+  assert.deepEqual(closeTip(index, '1502', 'HI'), { title: 'HI-2, Hawaii', lines: ['Democratic share 70.1%',
     'Close districts in Hawaii: 0 on the enacted map, a median of 1 on neutral maps'] });
   assert.deepEqual(closeTip(index, '5600', 'WY'), { title: 'Wyoming', lines: [AT_LARGE_TEXT] });
 });
@@ -173,8 +173,8 @@ test('stateSheet: heading, status, the three numbers and the effects (Texas)', (
   ]);
   assert.equal(sheet.seatsOf, 'Democratic seats of 4.');
   assert.deepEqual(sheet.effects, [
-    { label: 'Geographic effect', value: '0 · no difference', note: '(neutral maps compared with proportional)' },
-    { label: 'Drawing effect', value: 'R+2 · 2 seats toward Republicans', note: '(enacted map compared with neutral maps)' },
+    { label: 'Geographic effect', value: '0: no difference', note: '(neutral maps compared with proportional)' },
+    { label: 'Drawing effect', value: 'R+2: 2 seats toward Republicans', note: '(enacted map compared with neutral maps)' },
   ]);
   assert.equal(sheet.position, 'Of the 5,000 neutral maps, 0% give fewer Democratic seats than the enacted map, 0% the same number and 100% more.');
   assert.equal(sheet.blocked, null);

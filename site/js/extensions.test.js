@@ -58,9 +58,9 @@ test('redrawView: the net change and the states with another seat count', () => 
   const view = redrawView(extended());
   // seats of 435: 217 and 213 of the districts + the 2 Democratic single seats
   assert.equal(view.sentence, 'With these votes, the maps of the 2024 election give Democrats 219 seats and the 2026 maps 215. '
-    + 'Net change: R+4 · 4 seats toward Republicans.');
+    + 'Net change: R+4, 4 seats toward Republicans.');
   assert.deepEqual(view.rows.map((r) => [r.postal, r.text]), [
-    ['TX', 'R+3 · 3 seats toward Republicans'], ['CA', 'D+1 · 1 seat toward Democrats'],
+    ['TX', 'R+3: 3 seats toward Republicans'], ['CA', 'D+1: 1 seat toward Democrats'],
   ]);
   // Equal changes in alphabetical order (testdata has NM before HI); FL has a new map with the
   // same seats, so no row.
@@ -69,9 +69,9 @@ test('redrawView: the net change and the states with another seat count', () => 
   r.states.HI.redraw = { seats_2024: 1, change: 1, map_changed: true }; // enacted 2
   r.states.LA.redraw = { seats_2024: 2, change: -1, map_changed: true }; // enacted 1
   assert.deepEqual(redrawView(r).rows.map((row) => [row.postal, row.text]), [
-    ['TX', 'R+3 · 3 seats toward Republicans'], ['LA', 'R+1 · 1 seat toward Republicans'],
-    ['CA', 'D+1 · 1 seat toward Democrats'], ['HI', 'D+1 · 1 seat toward Democrats'],
-    ['NM', 'D+1 · 1 seat toward Democrats'],
+    ['TX', 'R+3: 3 seats toward Republicans'], ['LA', 'R+1: 1 seat toward Republicans'],
+    ['CA', 'D+1: 1 seat toward Democrats'], ['HI', 'D+1: 1 seat toward Democrats'],
+    ['NM', 'D+1: 1 seat toward Democrats'],
   ]);
 });
 

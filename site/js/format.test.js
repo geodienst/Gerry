@@ -179,10 +179,10 @@ test('effectWords: seats toward a party, one seat in the singular', () => {
 });
 
 test('effectLine: notation and words joined by a middle dot', () => {
-  assert.equal(effectLine(-6), 'R+6 · 6 seats toward Republicans');
-  assert.equal(effectLine(3), 'D+3 · 3 seats toward Democrats');
-  assert.equal(effectLine(0), '0 · no difference');
-  assert.equal(effectLine(-0), '0 · no difference');
+  assert.equal(effectLine(-6), 'R+6: 6 seats toward Republicans');
+  assert.equal(effectLine(3), 'D+3: 3 seats toward Democrats');
+  assert.equal(effectLine(0), '0: no difference');
+  assert.equal(effectLine(-0), '0: no difference');
 });
 
 test('effect, effectWords and effectLine reject fractions and text', () => {

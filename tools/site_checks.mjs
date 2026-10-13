@@ -35,7 +35,7 @@ async function map(t) {
   const texas = await t.center(districtOf('TX'));
   await t.mouse('mouseMoved', texas);
   t.check('pointing at a district shows its name and share',
-    /^TX-\d+ · Texas$/.test(await t.text('#tip b')) && (await t.text('#tip')).includes('Democratic share'));
+    /^TX-\d+, Texas$/.test(await t.text('#tip b')) && (await t.text('#tip')).includes('Democratic share'));
   await t.click(texas);
   t.check('clicking a district writes the tap line', /^TX-\d+: .+ Democratic$/.test(await t.text('#tapline')), await t.text('#tapline'));
   t.check('clicking Texas puts #TX in the link and in the State menu',
@@ -75,7 +75,7 @@ async function map(t) {
   await t.until(`${ZOOM} === 1`);
   await t.mouse('mouseMoved', await t.center(stateOf('TX')));
   t.check('pointing at a state shows its drawing effect',
-    /^Drawing effect (0|[RD]\+\d+) · /.test(await t.js("document.querySelector('#tip span')?.textContent ?? ''")));
+    /^Drawing effect (0|[RD]\+\d+): /.test(await t.js("document.querySelector('#tip span')?.textContent ?? ''")));
   await t.js("document.getElementById('view-districts').click()");
   const legend = await t.text('#legend');
   t.check('the district legend runs from 20% to 80% with both ends named',
@@ -205,7 +205,7 @@ async function sheet(t) {
     t.check(`the Texas sheet has "${part}"`, texas.includes(part));
   }
   t.check('the status reads "In effect" or "Challenged in court"', /In effect|Challenged in court/.test(texas));
-  t.check('effects show their direction', /([RD]\+\d+ · \d+ seats? toward (Republicans|Democrats)|0 · no difference)/.test(texas));
+  t.check('effects show their direction', /([RD]\+\d+: \d+ seats? toward (Republicans|Democrats)|0: no difference)/.test(texas));
   t.check('the headline gives the drawing effect and says what it compares', await t.js(`(() => {
     const big = document.querySelector('#sheet .headline .big')?.textContent ?? '';
     const line = document.querySelector('#sheet .headline p')?.textContent ?? '';
@@ -552,7 +552,7 @@ async function majority(t) {
 // --- Task 6.11: redraws since 2024 ---------------------------------------------------------------
 async function redraws(t) {
   await t.load('#TX');
-  t.check('the national redraw sentence', /^With these votes, the maps of the 2024 election give Democrats \d+ seats and the 2026 maps \d+\. Net change: (0 · no difference|[RD]\+\d+ · .+)\.$/.test(await t.text('#redraw-text')));
+  t.check('the national redraw sentence', /^With these votes, the maps of the 2024 election give Democrats \d+ seats and the 2026 maps \d+\. Net change: (0, no difference|[RD]\+\d+, .+)\.$/.test(await t.text('#redraw-text')));
   const changed = await t.js(`${DATA}.then((r) => Object.values(r.states).filter((s) => s.redraw.change !== 0).length)`);
   t.check('one line per state with another seat count', await t.js(`document.querySelectorAll('#redraw-list li').length === ${changed}`));
   await t.until(`${HEADING} === 'Texas'`);
@@ -609,8 +609,11 @@ async function masthead(t) {
     return art.getAttribute('alt') === '' && art.complete && art.naturalWidth > 0 && new URL(art.src).origin === location.origin
       && ['.mast h1', '.mast .sub', '.mast .byline'].every((s) => apart(document.querySelector(s)));
   })()`));
-  t.check('the byline gives the author, the date and a link to the method',
-    (await t.text('.mast .byline')) === 'By Govert Schoof · October 8, 2026 · Methodology'
+  // no labels in capitals and no middle dots (style round, October 13, 2026)
+  t.check('no text is set in capitals', await t.js(
+    "![...document.querySelectorAll('body *')].some((el) => getComputedStyle(el).textTransform === 'uppercase' && el.textContent.trim())"));
+  t.check('the byline gives the author, the date and a link to the method, apart by space',
+    (await t.js("[...document.querySelectorAll('.mast .byline > *')].map((e) => e.textContent).join('|')")) === 'By Govert Schoof, October 8, 2026|Methodology'
     && await t.js("!!document.querySelector('.mast .byline a[href=\"#method\"]') && document.querySelector('meta[name=author]').content === 'Govert Schoof'"));
   t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
     const about = document.getElementById('about')?.textContent ?? '';
