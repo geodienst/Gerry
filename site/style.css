@@ -190,6 +190,11 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .mast h1 { margin: 0; font: 700 clamp(1.9rem, 1.3rem + 2.6vw, 3.3rem)/1.08 var(--font-head); letter-spacing: -0.01em; max-width: 18ch; text-wrap: balance; }
 .mast .sub { margin: 0; font-size: 1.1875rem; line-height: 1.45; max-width: 52ch; }
 /* The byline as a news story has it: author, date, and a link to the method. */
+/* Justitia at the top right of the masthead (owner, October 13, 2026): a black line drawing on white, turned into
+   light lines on the dark green; left out on narrow screens, where the title needs the width */
+.mast .wrap { position: relative; }
+.mast-art { position: absolute; right: 0; top: 50%; transform: translateY(-50%); height: 118%; max-height: 19rem; filter: invert(1); mix-blend-mode: screen; opacity: 0.85; pointer-events: none; }
+@media (max-width: 900px) { .mast-art { display: none; } }
 .mast .byline { margin: 0; font-size: 0.9375rem; color: var(--mast-muted); }
 .mast .byline .author { color: var(--mast-fg); font-weight: 700; text-decoration: none; }
 .mast .byline .author:hover { text-decoration: underline; }

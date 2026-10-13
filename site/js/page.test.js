@@ -17,7 +17,7 @@ test('the page loads scripts and styles only from its own folder', () => {
   // data:, is an empty icon, so the browser does not ask for favicon.ico
   assert.deepEqual(refs, ['data:,', 'style.css', 'vendor/d3.min.js', 'vendor/topojson-client.min.js', 'js/main.js']);
   const images = [...read('index.html').matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(images, ['img/geodienst.svg']);
+  assert.deepEqual(images, ['img/justice.webp', 'img/geodienst.svg']); // Justitia in the masthead, the logo in the footer
 });
 
 test('modules import only the modules next to them', () => {

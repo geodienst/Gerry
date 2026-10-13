@@ -586,6 +586,16 @@ async function masthead(t) {
   t.check('the title and the heading read "Some votes are more equal than others"', await t.js(
     "document.title === 'Some votes are more equal than others' && document.querySelector('header.mast h1')?.textContent === 'Some votes are more equal than others'"));
   t.check('the line above the title names the election day', (await t.text('.mast .eyebrow')) === 'U.S. House maps for November 3, 2026');
+  // Justitia at the top right: decorative, loaded from the site itself, clear of the title, the line under it and the byline
+  t.check('the drawing in the masthead is decorative and stays clear of the text', await t.js(`(() => {
+    const art = document.querySelector('.mast .mast-art');
+    const a = art.getBoundingClientRect();
+    // the text itself, not the block around it: a paragraph's box runs the full width
+    const apart = (el) => { const r = document.createRange(); r.selectNodeContents(el);
+      return [...r.getClientRects()].every((b) => b.right <= a.left || b.left >= a.right || b.bottom <= a.top || b.top >= a.bottom); };
+    return art.getAttribute('alt') === '' && art.complete && art.naturalWidth > 0 && new URL(art.src).origin === location.origin
+      && ['.mast h1', '.mast .sub', '.mast .byline', '.mast .eyebrow'].every((s) => apart(document.querySelector(s)));
+  })()`));
   t.check('the byline gives the author, the date and a link to the method',
     (await t.text('.mast .byline')) === 'By Govert Schoof · October 8, 2026 · Methodology'
     && await t.js("!!document.querySelector('.mast .byline a[href=\"#method\"]') && document.querySelector('meta[name=author]').content === 'Govert Schoof'"));
