@@ -628,8 +628,8 @@ async function masthead(t) {
   t.check('the line under the title asks the question', (await t.text('.mast .sub')).endsWith('Would the outcome change?')
     && await t.js("!document.querySelector('.mast .eyebrow') && !document.querySelector('.metastrip')"));
   const facts = await t.js("[...document.querySelectorAll('#keyfacts li')].map((li) => li.textContent)");
-  t.check('four key findings follow the masthead, before chapter 01', facts.length === 4
-    && facts[0].startsWith('With the maps the states drew for 2026, Democrats need ') && /Republican control .+ Democratic control/.test(facts[2])
+  t.check('two key findings follow the masthead, before chapter 01', facts.length === 2
+    && facts[0].startsWith('With the maps the states drew for 2026, Democrats need ') && /Republican control .+ Democratic control/.test(facts[1])
     && await t.js("document.querySelector('header.mast').nextElementSibling?.classList.contains('keyfacts') === true"), facts.join(' | '));
 }
 

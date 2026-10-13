@@ -137,8 +137,6 @@ test('outcomesView: the drawing effect at every stop of the slider, with a few e
   assert.equal(byVote.label, 'Drawing effect at each point of the vote slider, from 50.0% to 53.0%. 50.0%: D+2; '
     + '51.8% (2016 + 2020): R+10; 53.0%: R+13.');
   assert.equal(byVote.max, 15); // the largest effect, 13, rounded up to 5
-  // the effect turns at the base: no stop with 0 before it
-  assert.deepEqual(byVote.cross, { below: '51.8%', from: '51.8%' });
 });
 
 test('outcomesView: the explainer in five steps, each with a row and a stop of the slider', () => {
@@ -291,21 +289,14 @@ test('singleSeatView: the short record of a state with one seat', () => {
 
 test('keyFindings: the answer under the question in the masthead', () => {
   const r = withExtensions();
-  // thresholds 52.4% and 51.2%; drawing effect -10; the effect turns at the base, 51.8%; by control: Republican -6,
-  // Democratic 4; competitive districts 81 against a median of 96
-  assert.deepEqual(keyFindings(r, outcomesView(r)), [
+  // thresholds 52.4% and 51.2%; by control: Republican -6, Democratic 4 (the drawing effect by vote share and the
+  // competitive districts moved down, owner, October 13)
+  assert.deepEqual(keyFindings(r), [
     'With the maps the states drew for 2026, Democrats need 52.4% of the two-party vote for a House majority; on neutral '
       + 'maps, 51.2%.',
-    'With the 2016 and 2020 votes, the maps move 10 seats toward Republicans compared with neutral maps. The direction '
-      + 'depends on the vote: below 51.8% the maps favor Democrats, from 51.8% on Republicans.',
     'Maps adopted under Republican control move 6 seats toward Republicans; maps adopted under Democratic control, 4 seats '
       + 'toward Democrats.',
-    'The maps have 81 competitive districts (45% to 55% Democratic); neutral maps have about 96.',
   ]);
-  // no turn on the slider: no second sentence
-  const view = outcomesView(r);
-  view.byVote.cross = { below: null, from: null };
-  assert.ok(keyFindings(r, view)[1].endsWith('compared with neutral maps.'));
 });
 
 test('decideView: Senate, competitive districts, redraws and the tables', () => {

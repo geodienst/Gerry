@@ -63,7 +63,7 @@ async function main() {
   $('maphint').textContent = hints.hint;
   const outcomesData = outcomesView(results);
   // the answer under the question in the masthead
-  $('keyfacts').replaceChildren(...keyFindings(results, outcomesData).map((text) => {
+  $('keyfacts').replaceChildren(...keyFindings(results).map((text) => {
     const item = document.createElement('li');
     item.textContent = text;
     return item;

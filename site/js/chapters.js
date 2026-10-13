@@ -161,8 +161,6 @@ export function outcomesView(results) {
       + `${where} Each bar shows the drawing effect at one position of the vote slider in chapter 01; the dark line marks where the slider stands.`,
     axis: 'Democratic share of the national two-party vote',
     bars, examples, line,
-    // where the effect turns, for the key findings: below `below` toward Democrats, from `from` on toward Republicans
-    cross: { below: turn > 0 && even > 0 ? bars[even].label : null, from: turn > 0 ? bars[turn].label : null },
     label: `Drawing effect at each point of the vote slider, from ${points[0].label} to ${points.at(-1).label}. ${line}.`,
     max: Math.max(5, Math.ceil(Math.max(...bars.map((b) => Math.abs(b.drawing))) / 5) * 5),
   };
@@ -320,24 +318,17 @@ function dots(values, step, tickText, rows, base = undefined) {
   return { domain, ticks: ticks.map((value) => ({ value, text: tickText(value) })), rows, ...(base ? { base } : {}) };
 }
 
-/** The answer under the question in the masthead (owner, October 13, 2026): four findings on the 2016 and 2020 votes.
- *  `outcomes` is outcomesView(results), for the share where the drawing effect turns. */
-export function keyFindings(results, outcomes) {
+/** The answer under the question in the masthead (owner, October 13, 2026): two findings on the 2016 and 2020 votes.
+ *  The drawing effect by vote share and the competitive districts are further down (owner, the same day). */
+export function keyFindings(results) {
   const n = results.national;
   const m = n.majority;
-  const d = n.effects.drawing;
-  const { below, from } = outcomes.byVote.cross;
   const control = n.by_control;
   return [
     `With the maps the states drew for 2026, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House `
       + `majority; on neutral maps, ${neededShare(m.neutral.share)}.`,
-    (d === 0 ? 'With the 2016 and 2020 votes, the maps give the same number of seats as neutral maps.'
-      : `With the 2016 and 2020 votes, the maps move ${effectWords(d)} compared with neutral maps.`)
-      + (below && from ? ` The direction depends on the vote: below ${below} the maps favor Democrats, from ${from} on Republicans.` : ''),
     `Maps adopted under Republican control move ${effectWords(control.Republican.drawing)}; maps adopted under Democratic `
       + `control, ${effectWords(control.Democratic.drawing)}.`,
-    `The maps have ${count(n.competitive.enacted)} competitive districts (45% to 55% Democratic); neutral maps have about `
-      + `${count(n.competitive.median)}.`,
   ];
 }
 
