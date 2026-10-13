@@ -223,7 +223,8 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 /* the key sentence of chapter 01: the threshold (a data reviewer, October 13) */
 .chead p.lead { color: var(--fg); font: 600 1.1875rem/1.4 var(--font-head); margin-top: 0.7rem; }
 /* the drawing effect at every stop of the slider, at the bottom of chapter 01 */
-.byvote { margin-top: 2rem; border-top: 1px solid var(--rule); padding-top: 1.4rem; display: grid; gap: 0.5rem; }
+/* the effect size of the enacted maps, in a box above the method (owner, October 13) */
+.byvote { margin: 0 0 1rem; background: var(--sheet); border: 1px solid var(--rule); padding: 1.1rem 1.2rem; display: grid; gap: 0.5rem; }
 .byvote h3 { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; letter-spacing: 0; text-transform: none; color: var(--fg); }
 .byvote p { margin: 0; max-width: 72ch; }
 #byvote-chart { min-width: 0; }

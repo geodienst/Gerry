@@ -3,8 +3,8 @@
 // line at the stop the slider shows. Drawn at the width of its box in pixels, so the text keeps its size on a phone.
 // Texts from chapters.js (outcomesView().byVote); this module only draws.
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const HEIGHT = 220;
-const M = { left: 44, right: 8, top: 40, bottom: 24 }; // top: room for the example labels
+const HEIGHT = 240;
+const M = { left: 44, right: 8, top: 40, bottom: 44 }; // top: room for the example labels; bottom: scale and its name
 
 function svgNode(tag, attrs = {}, text = null) {
   const el = document.createElementNS(SVG_NS, tag);
@@ -51,7 +51,8 @@ export function renderByVote(el, byVote, scale) {
       rect.append(svgNode('title', {}, b.title));
       parts.push(rect);
     }
-    for (const t of scale) parts.push(svgNode('text', { class: 'axis', x: x(t.index), y: HEIGHT - 6, 'text-anchor': 'middle' }, t.label));
+    for (const t of scale) parts.push(svgNode('text', { class: 'axis', x: x(t.index), y: HEIGHT - M.bottom + 16, 'text-anchor': 'middle' }, t.label));
+    parts.push(svgNode('text', { class: 'axis', x: M.left + plotW / 2, y: HEIGHT - 6, 'text-anchor': 'middle' }, byVote.axis));
     // example labels in the band above the plot, left out where they would run into the one before
     let right = -Infinity;
     for (const e of byVote.examples) {

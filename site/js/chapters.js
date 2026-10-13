@@ -144,14 +144,23 @@ export function outcomesView(results) {
     .map((b) => ({ index: b.index, label: b.label, value: b.value,
       note: b.index === baseIndex ? '2016 + 2020' : p2024 !== undefined && b.label === sliderShare(p2024) ? '2024' : '' }));
   const line = examples.map((e) => `${e.label}${e.note ? ` (${e.note})` : ''}: ${e.value}`).join(' · ');
+  // where the effect turns: the first stop toward Republicans, and the stops just below it without an effect (owner,
+  // October 13: say whose vote the percentage is)
   const turn = bars.findIndex((b) => b.drawing < 0);
-  const where = turn < 0 ? 'At every point of the slider they give Democrats at least as many seats as neutral maps would.'
-    : turn === 0 ? `From ${bars[0].label} on they give Democrats fewer seats than neutral maps would.`
-      : `Below ${bars[turn].label} of the vote they give Democrats more seats than neutral maps would, from ${bars[turn].label} on fewer.`;
+  let even = turn;
+  while (even > 0 && bars[even - 1].drawing === 0) even -= 1;
+  const vote = 'of the national two-party vote';
+  const where = turn < 0 ? 'At every position of the slider the enacted maps give Democrats at least as many seats as neutral maps would.'
+    : turn === 0 ? 'At every position of the slider the enacted maps give Democrats fewer seats than neutral maps would.'
+      : even === 0 ? `Below ${bars[turn].label} ${vote} the enacted maps give Democrats as many seats as neutral maps would; from ${bars[turn].label} on, fewer.`
+        : `When Democrats win less than ${bars[even].label} ${vote}, the enacted maps give them more seats than neutral maps would. `
+          + (even < turn ? `From ${bars[turn].label} on they give them fewer, and in between the same number.`
+            : `From ${bars[turn].label} on they give them fewer.`);
   const byVote = {
-    title: 'The drawing effect depends on the vote',
-    text: 'The enacted maps have fewer close districts than neutral maps, so they move less when the national vote moves. '
-      + `${where} Each bar is the drawing effect at one point of the slider.`,
+    title: 'The effect size of enacted maps',
+    text: 'The enacted maps have fewer close districts than neutral maps, so they react less when the national vote shifts. '
+      + `${where} Each bar shows the drawing effect at one position of the vote slider in chapter 01; the dark line marks where the slider stands.`,
+    axis: 'Democratic share of the national two-party vote',
     bars, examples, line,
     label: `Drawing effect at each point of the vote slider, from ${points[0].label} to ${points.at(-1).label}. ${line}.`,
     max: Math.max(5, Math.ceil(Math.max(...bars.map((b) => Math.abs(b.drawing))) / 5) * 5),

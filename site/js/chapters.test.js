@@ -118,11 +118,13 @@ test('outcomesView: the drawing effect at every stop of the slider, with a few e
   // testdata stops: 50% (205 against 203 of 435: D+2), the base (215 against 225: R+10), 53% (223 against 236: R+13)
   assert.deepEqual(byVote.bars.map((b) => [b.index, b.drawing, b.value]), [[0, 2, 'D+2'], [1, -10, 'R+10'], [2, -13, 'R+13']]);
   assert.equal(byVote.bars[2].title, '53.0% of the vote: R+13. Enacted maps 223, neutral-map median 236.');
-  assert.equal(byVote.title, 'The drawing effect depends on the vote');
+  assert.equal(byVote.title, 'The effect size of enacted maps');
   // the first stop with an effect toward Republicans is the base, 51.8%
-  assert.equal(byVote.text, 'The enacted maps have fewer close districts than neutral maps, so they move less when the '
-    + 'national vote moves. Below 51.8% of the vote they give Democrats more seats than neutral maps would, from 51.8% on '
-    + 'fewer. Each bar is the drawing effect at one point of the slider.');
+  assert.equal(byVote.text, 'The enacted maps have fewer close districts than neutral maps, so they react less when the '
+    + 'national vote shifts. When Democrats win less than 51.8% of the national two-party vote, the enacted maps give them '
+    + 'more seats than neutral maps would. From 51.8% on they give them fewer. Each bar shows the drawing effect at one '
+    + 'position of the vote slider in chapter 01; the dark line marks where the slider stands.');
+  assert.equal(byVote.axis, 'Democratic share of the national two-party vote');
   // examples: the stop nearest 2024 (here 50.0%, not 49.2%, so no year), 50%, the 2016 and 2020 votes, the strongest effect
   assert.deepEqual(byVote.examples, [
     { index: 0, label: '50.0%', note: '', value: 'D+2' },
