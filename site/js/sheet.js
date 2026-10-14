@@ -91,10 +91,8 @@ function headline(parent, value, swatch, lines) {
  * headline, and the seat strip in place of the seat axis.
  * @param {object} record recordView(results, postal)
  */
-export function renderState(el, record, colors, onBack, moreEl = null) {
+export function renderState(el, record, colors, onBack) {
   const root = d3.select(el).html('');
-  // in full screen the part from "Districts, sorted" on goes into its own box under the map (owner's sketch, October 14)
-  const rest = moreEl ? d3.select(moreEl).html('') : root;
   root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
   root.append('span').attr('class', 'k').text(record.kicker);
   root.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(record.name);
@@ -122,27 +120,85 @@ export function renderState(el, record, colors, onBack, moreEl = null) {
     sourceLine(b, record.blocked.source);
   }
 
-  const sorted = rest.append('div').attr('class', 'stack sorted');
+  const sorted = root.append('div').attr('class', 'stack sorted');
   sorted.append('h4').text('Districts, sorted');
   drawSorted(sorted.append('div').node(), record.sorted, colors, record.sortedLabel);
   sorted.append('p').attr('class', 'note').text(record.sortedCaption);
 
   if (record.extras.body.length > 0) {
-    const more = rest.append('div').attr('class', 'stack extras');
+    const more = root.append('div').attr('class', 'stack extras');
     for (const line of record.extras.body) more.append('p').attr('class', 'note').text(line);
   }
 
-  const measures = rest.append('div').attr('class', 'stack');
+  const measures = root.append('div').attr('class', 'stack');
   measures.append('h4').text('Other measures');
   definitionList(measures, record.measures.map((m) => ({ label: m.label, value: m.value, note: m.context })));
 
   if (record.notes.length > 0) {
-    const notes = rest.append('div').attr('class', 'stack');
+    const notes = root.append('div').attr('class', 'stack');
     notes.append('h4').text('Notes');
     const ul = notes.append('ul').attr('class', 'notes');
     for (const text of record.notes) ul.append('li').text(text);
   }
-  sourceLine(rest, record.source);
+  sourceLine(root, record.source);
+}
+
+/**
+ * One state in full screen, after the owner's mockup (October 14, 2026): the record on the right in its own order, ending
+ * with the map, its status and who adopted it; under the map and the record a strip with the sorted districts, their
+ * notes, and the other measures and the notes folded.
+ * @param {Element} el the sheet on the right
+ * @param {Element} moreEl the strip under the map
+ */
+export function renderStateFull(el, moreEl, record, colors, onBack) {
+  const root = d3.select(el).html('');
+  root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
+  root.append('span').attr('class', 'k').text(record.kicker);
+  const name = root.append('div').attr('class', 'fullname');
+  name.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(record.name);
+  name.append('span').attr('class', 'seats').text(record.seatCount);
+  headline(root, record.headline.value, colors.effect(record.headline.drawing), [record.headline.sentence]);
+  trio(root, record.trio);
+  root.append('p').attr('class', 'note').text(record.seatsOf);
+  drawDotRows(root.append('div').node(), record.strip, record.strip.label);
+  // each effect with its note on a line of its own, as in the mockup
+  const dl = root.append('dl').attr('class', 'kv stacked');
+  for (const item of record.effects) {
+    dl.append('dt').text(item.label);
+    const dd = dl.append('dd');
+    dd.append('b').text(item.value);
+    if (item.note) dd.append('span').attr('class', 'note').text(item.note.replace(/^\((.*)\)$/, '$1'));
+  }
+  root.append('p').attr('class', 'note').text(record.position);
+  if (record.blocked) {
+    const b = root.append('div').attr('class', 'stack');
+    b.append('h4').text('Blocked map');
+    b.append('p').attr('class', 'meta').text(`${record.blocked.name} \u00b7 ${record.blocked.status}`);
+    b.append('p').attr('class', 'note').text(`${record.blocked.seatsText} ${record.blocked.position}`);
+    sourceLine(b, record.blocked.source);
+  }
+  const foot = root.append('div').attr('class', 'foot');
+  foot.append('p').attr('class', 'meta').text([record.mapName, record.status, record.legal].join(' \u00b7 '));
+  for (const line of record.extras.head) foot.append('p').attr('class', 'meta').text(line);
+
+  const more = d3.select(moreEl).html('');
+  const chart = more.append('div').attr('class', 'fs-chart');
+  chart.append('h4').text('Districts, sorted');
+  drawSorted(chart.append('div').attr('class', 'card').node(), record.sorted, colors, record.sortedLabel);
+  const text = more.append('div').attr('class', 'fs-text');
+  text.append('p').attr('class', 'note').text(record.sortedCaption);
+  for (const line of record.extras.body) text.append('p').attr('class', 'note').text(line);
+  const folds = more.append('div').attr('class', 'fs-folds');
+  const measures = folds.append('details').attr('class', 'fold');
+  measures.append('summary').text('Other measures');
+  definitionList(measures, record.measures.map((m) => ({ label: m.label, value: m.value, note: m.context })));
+  if (record.notes.length > 0) {
+    const notes = folds.append('details').attr('class', 'fold');
+    notes.append('summary').text('Notes');
+    const ul = notes.append('ul').attr('class', 'notes');
+    for (const line of record.notes) ul.append('li').text(line);
+  }
+  sourceLine(folds, record.source);
 }
 
 /** The short record of a state with one seat (redesign, chapter 4). */

@@ -484,7 +484,9 @@ async function layout(t) {
   await t.key('Tab', 9);
   t.check('the second Tab lands on the Methodology link', await t.js("document.activeElement === document.querySelector('.mast .byline a[href=\"#method\"]')"));
   await t.key('Tab', 9);
-  t.check('the third Tab lands on the State menu of chapter 01', await t.js("document.activeElement === document.getElementById('pick')"));
+  t.check('the third Tab lands on Share in the byline', await t.js("document.activeElement === document.getElementById('share-site')"));
+  await t.key('Tab', 9);
+  t.check('the fourth Tab lands on the State menu of chapter 01', await t.js("document.activeElement === document.getElementById('pick')"));
   await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
   const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
     outline: getComputedStyle(el).outlineStyle, group: el.parentElement.getAttribute('role'), name: el.parentElement.getAttribute('aria-label') }; })()`);
@@ -616,7 +618,7 @@ async function masthead(t) {
   t.check('no text is set in capitals', await t.js(
     "![...document.querySelectorAll('body *')].some((el) => getComputedStyle(el).textTransform === 'uppercase' && el.textContent.trim())"));
   t.check('the byline gives the author, the date and a link to the method, apart by space',
-    (await t.js("[...document.querySelectorAll('.mast .byline > *')].map((e) => e.textContent).join('|')")) === 'By Govert Schoof, October 8, 2026|Methodology'
+    (await t.js("[...document.querySelectorAll('.mast .byline > *')].map((e) => e.textContent).join('|')")) === 'By Govert Schoof, October 8, 2026|Methodology|Share'
     && await t.js("!!document.querySelector('.mast .byline a[href=\"#method\"]') && document.querySelector('meta[name=author]').content === 'Govert Schoof'"));
   t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
     const about = document.getElementById('about')?.textContent ?? '';
@@ -891,27 +893,33 @@ async function fullscreen(t) {
   t.check('the button puts the map, its legend and the sheet beside it over the whole window', on.full && on.pressed === 'true'
     && on.label === 'Exit full screen' && on.height > 0.6 * on.window && on.legend && on.sheet, JSON.stringify(on));
   await t.screenshot('map-full-1280');
-  // the owner's sketch (October 14, 2026): map large with title and legend inside, hints and the start of the record on the
-  // right, the rest of the record flat under the map
+  // the owner's mockup (October 14, 2026): map large with title and legend inside, the record on the right in its own
+  // order ending with map, status and adoption, a strip under both; no district line and colors in full screen
   await t.load('#TX', { width: 2000, height: 830 });
   await t.until(`${HEADING} === 'Texas'`);
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(400);
   const wide = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
-    const map = r('mapbox'), side = r('sheet'), more = r('sheet-more'), tools = r('fs-tools'), title = r('map-title'), legend = r('legend');
-    return { sideRight: side.left >= map.right - 1, toolsBelow: tools.top >= side.bottom - 1 && tools.left >= map.right - 1,
-      hintHidden: !document.getElementById('maphint').checkVisibility(),
-      moreUnder: more.top >= map.bottom - 1 && more.right <= side.left + 1,
-      sorted: !!document.querySelector('#sheet-more .stack.sorted') && !document.querySelector('#sheet .stack.sorted'),
-      tapline: document.getElementById('fs-tools').contains(document.getElementById('tapline')),
+    const map = r('mapbox'), side = r('sheet'), more = r('sheet-more'), title = r('map-title'), legend = r('legend');
+    const foot = document.querySelector('#sheet .foot');
+    return { sideRight: side.left >= map.right - 1,
+      stripUnderMap: more.top >= map.bottom - 1 && more.left <= map.left + 1 && more.right <= side.left + 1,
+      sorted: !!document.querySelector('#sheet-more .fs-chart svg') && !document.querySelector('#sheet .stack.sorted'),
+      folds: [...document.querySelectorAll('#sheet-more details.fold summary')].map((s) => s.textContent).join() === 'Other measures,Notes',
+      foot: !!foot && foot.textContent.includes(' \u00b7 Challenged in court \u00b7 Legal status as of') && foot.textContent.includes('Adopted by'),
+      kept: !!document.querySelector('#sheet .headline') && !!document.querySelector('#sheet .k'),
+      noHints: ['tapline', 'maphint'].every((id) => !document.getElementById(id).checkVisibility()) && !document.querySelector('.colors').checkVisibility(),
+      share: document.getElementById('map-share').checkVisibility(),
+      sideFits: document.getElementById('sheet').scrollHeight <= document.getElementById('sheet').clientHeight + 2,
+      stripFits: document.getElementById('sheet-more').scrollHeight <= document.getElementById('sheet-more').clientHeight + 2,
       inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top,
       desc: [...document.querySelectorAll('#legend .desc')].every((d) => !d.checkVisibility()) }; })()`);
-  t.check('2000px: full screen as sketched: the record on the right with the hints at its foot, the rest lies flat under the map, title and legend in the map',
+  t.check('2000px: full screen as in the mockup: the whole record on the right, a strip under the map, title and legend in the map, a share button',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
   await t.screenshot('map-full-2000-texas');
   await t.key('Escape', 27);
-  t.check('back from full screen the record is whole again and the hints are under the map', await t.js(
-    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.querySelector('.mapfoot').contains(document.getElementById('tapline'))"));
+  t.check('back from full screen the record is whole again, with the hints under the map and no share button there', await t.js(
+    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.getElementById('maphint').checkVisibility() && !document.getElementById('map-share').checkVisibility()"));
   await t.load('', { width: 1280, height: 800 });
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(300);

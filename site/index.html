@@ -18,7 +18,7 @@
       <img class="mast-art" src="img/justice.webp" alt="">
       <h1>Some votes are more equal than others</h1>
       <p class="sub">What if we used the same votes to divide the 435 House seats in three different ways: using the maps the states drew for 2026, neutral maps drawn by a computer, or each party&#39;s share of the vote? Would the outcome change?</p>
-      <p class="byline"><span>By <a class="author" href="#about">Govert Schoof</a>, <time datetime="2026-10-08">October 8, 2026</time></span><a href="#method">Methodology</a></p>
+      <p class="byline"><span>By <a class="author" href="#about">Govert Schoof</a>, <time datetime="2026-10-08">October 8, 2026</time></span><a href="#method">Methodology</a><button type="button" class="share" id="share-site">Share</button></p>
     </div>
   </header>
   <section class="keyfacts" aria-labelledby="keyfacts-title">
@@ -53,6 +53,9 @@
                 <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
                 <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
                 <button type="button" id="zoom-reset" class="wide" aria-label="All states">All</button>
+                <button type="button" id="map-share" aria-label="Share this view" title="Share this view">
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 10V2M5 5l3-3 3 3M3 8v6h10V8"/></svg>
+                </button>
                 <button type="button" id="map-full" aria-label="Full screen" aria-pressed="false" title="Full screen">
                   <svg class="enter" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
                   <svg class="leave" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4"/></svg>
@@ -76,7 +79,6 @@
             </div>
           </div>
           <aside class="record" id="sheet" aria-labelledby="sheet-title"></aside>
-          <div class="fs-tools" id="fs-tools"></div>
           <div class="sheet-more" id="sheet-more" hidden></div>
         </div>
         <p class="visually-hidden" id="sheet-status" aria-live="polite"></p>

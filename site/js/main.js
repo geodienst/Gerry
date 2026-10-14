@@ -8,7 +8,7 @@ import {
 } from './model.js';
 import { extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
-import { renderList, renderState, renderSingle } from './sheet.js';
+import { renderList, renderState, renderStateFull, renderSingle } from './sheet.js';
 import {
   outcomesView, recordView, singleSeatView, decideView, keyFindings,
 } from './chapters.js';
@@ -83,16 +83,11 @@ async function main() {
   for (const option of stateOptions(results, { single: true })) pick.append(new Option(option.label, option.postal));
   pick.addEventListener('change', () => select(pick.value, { push: true }));
 
-  // full screen (owner's sketch, October 14, 2026): from 900px the hints of the map go to the top of the right column
-  // and the second part of a state record goes into a box under the map
+  // full screen (owner's mockup, October 14, 2026): from 900px a state record runs on the right in its own order and
+  // its second part lies in a strip under the map
   const atlas = document.querySelector('.atlas'); // the map, the block under it and the sheet beside it
   const isFull = () => document.fullscreenElement === atlas || atlas.classList.contains('is-full');
   const split = () => isFull() && window.innerWidth >= 900;
-  const hintEls = ['tapline', 'maphint'].map($).concat(document.querySelector('.mapfoot .colors'));
-  function placeHints() {
-    const target = split() ? $('fs-tools') : document.querySelector('.mapfoot');
-    for (const el of hintEls) if (el.parentElement !== target) target.append(el);
-  }
   function renderSheet() {
     const more = $('sheet-more');
     const apart = split() && ui.selected && !index.single[ui.selected];
@@ -100,7 +95,8 @@ async function main() {
     more.hidden = !apart;
     atlas.classList.toggle('has-more', Boolean(apart));
     if (index.single[ui.selected]) renderSingle($('sheet'), singleSeatView(results, ui.selected), back);
-    else if (ui.selected) renderState($('sheet'), recordView(results, ui.selected), colors, back, apart ? more : null);
+    else if (ui.selected && apart) renderStateFull($('sheet'), more, recordView(results, ui.selected), colors, back);
+    else if (ui.selected) renderState($('sheet'), recordView(results, ui.selected), colors, back);
     else renderList($('sheet'), effectList(results), colors, (postal) => select(postal, { push: true, focus: true }), ui);
   }
 
@@ -193,7 +189,6 @@ async function main() {
   // may use it, otherwise the map column covers the window. The same button or Escape goes back.
   const fullButton = $('map-full');
   const showFull = () => {
-    placeHints();
     renderSheet();
     const on = isFull();
     fullButton.setAttribute('aria-pressed', String(on));
@@ -218,6 +213,23 @@ async function main() {
     fullButton.focus();
   });
   document.addEventListener('fullscreenchange', showFull);
+  // Share (owner, October 14, 2026): the device's share sheet where there is one, else the link goes to the clipboard.
+  // The masthead shares the site, the button in full screen the view with its state (#TX). No outside services.
+  async function share(url) {
+    try {
+      if (navigator.share) { await navigator.share({ title: document.title, url }); return; }
+      await navigator.clipboard.writeText(url);
+      const note = document.createElement('p');
+      note.className = 'share-note';
+      note.setAttribute('role', 'status');
+      note.textContent = 'Link copied';
+      (document.fullscreenElement || document.body).append(note);
+      setTimeout(() => note.remove(), 2000);
+    } catch { /* the reader closed the share sheet */ }
+  }
+  const page = () => `${location.origin}${location.pathname}`;
+  $('share-site').addEventListener('click', () => share(page()));
+  $('map-share').addEventListener('click', () => share(`${page()}${location.hash}`));
 
   const decide = decideView(results);
   renderDecide(decide);
@@ -237,7 +249,6 @@ async function main() {
     width = window.innerWidth;
     const focusable = () => [...$('sheet').querySelectorAll('button, summary, a[href], [tabindex]')];
     const at = focusable().indexOf(document.activeElement);
-    placeHints();
     renderSheet();
     renderDecide(decide);
     showSenate(decide, senatePoint);

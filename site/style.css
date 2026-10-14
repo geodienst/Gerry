@@ -124,25 +124,35 @@ svg { display: block; width: 100%; height: auto; }
 .atlas:is(:fullscreen, .is-full) #map { width: 100%; height: 100%; }
 .atlas:is(:fullscreen, .is-full) > .record { overflow: auto; min-height: 0; }
 @media (min-width: 900px) { .atlas:is(:fullscreen, .is-full) { grid-template-rows: minmax(0, 1fr); } }
-/* Full screen after the owner's sketch (October 14, 2026): the map large with its title and legend inside it, on the
-   right the start of the state record with the hints of the map, the rest of the record flat under the map */
-.fs-tools, .sheet-more { display: none; }
+/* Full screen after the owner's mockup (October 14, 2026): the map large with its title and legend inside it, a state
+   record on the right in its own order, and a strip under both with the sorted districts, their notes and two folds */
+.sheet-more, #map-share { display: none; }
+.atlas:is(:fullscreen, .is-full) #map-share { display: grid; place-items: center; }
+#map-share svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; }
 @media (min-width: 900px) {
-  .atlas:is(:fullscreen, .is-full) { grid-template-columns: minmax(0, 1fr) minmax(22rem, 28%); grid-template-rows: minmax(0, 1fr) auto auto;
-    grid-template-areas: "map side" "map side" "map tools"; column-gap: 1rem; row-gap: 0; }
-  .atlas.has-more:is(:fullscreen, .is-full) { grid-template-areas: "map side" "more side" "more tools"; }
-  .atlas.has-more:is(:fullscreen, .is-full) > .sheet-more { margin-top: 0.8rem; }
+  .atlas:is(:fullscreen, .is-full) { grid-template-columns: minmax(0, 1fr) minmax(22rem, 28%); grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "map side" "map side"; gap: 1rem; }
+  /* the strip under the map only, so the record on the right keeps the whole height and fits */
+  .atlas.has-more:is(:fullscreen, .is-full) { grid-template-areas: "map side" "more side"; }
   .atlas:is(:fullscreen, .is-full) > .mapcol { grid-area: map; display: block; position: relative; min-height: 0; }
-  /* the hints of the map at the bottom of the record, in the same block (owner, October 14, 2026) */
-  .atlas:is(:fullscreen, .is-full) > .record { grid-area: side; border-bottom: 0; }
-  .atlas:is(:fullscreen, .is-full) > .fs-tools { grid-area: tools; display: grid; gap: 0.35rem; background: var(--sheet); border: 1px solid var(--rule);
-    border-top: 0; padding: 0.6rem 1.1rem 0.9rem; }
-  .atlas:is(:fullscreen, .is-full) > .fs-tools .maphint { display: none; }
-  .atlas:is(:fullscreen, .is-full) > .sheet-more:not([hidden]) { grid-area: more; display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-    gap: 0.8rem 1.6rem; align-content: start; align-items: start; background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem;
-    max-height: 34vh; overflow: auto; }
-  .atlas:is(:fullscreen, .is-full) > .sheet-more > .stack { align-content: start; }
-  .atlas:is(:fullscreen, .is-full) > .sheet-more > .stack.sorted { grid-column: span 2; }
+  .atlas:is(:fullscreen, .is-full) > .record { grid-area: side; gap: 0.55rem; padding: 0.8rem 1rem; }
+  .atlas:is(:fullscreen, .is-full) :is(#tapline, #maphint, .colors) { display: none; }
+  .atlas:is(:fullscreen, .is-full) > .sheet-more:not([hidden]) { grid-area: more; display: grid;
+    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(14rem, 20rem); gap: 0.5rem 1.6rem; align-items: start;
+    border-top: 1px solid var(--rule); padding-top: 0.7rem; max-height: 40vh; overflow: auto; }
+  .fs-chart { display: grid; gap: 0.4rem; }
+  .fs-chart h4 { font: 700 1.1875rem/1.25 var(--font-head); color: var(--fg); }
+  .fs-chart .card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 0.4rem 0.5rem; }
+  .fs-text { display: grid; gap: 0.6rem; padding-top: 1.9rem; }
+  .fs-text p, .fs-folds p { margin: 0; }
+  .fs-folds { display: grid; gap: 0.6rem; padding-top: 1.6rem; }
+  .fs-folds .fold { border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+  .fs-folds .fold summary { cursor: pointer; font-weight: 600; }
+  .fullname { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .fullname .seats { color: var(--muted); font-size: 0.875rem; }
+  .kv.stacked dd .note { display: block; }
+  .record .foot { border-top: 1px solid var(--rule); padding-top: 0.7rem; display: grid; gap: 0.2rem; }
+  .record .foot p { margin: 0; }
   .atlas:is(:fullscreen, .is-full) .mapfoot { display: contents; }
   .atlas:is(:fullscreen, .is-full) .maphead { position: absolute; inset: 1px; padding: 0; border: 0; pointer-events: none; display: block; }
   .atlas:is(:fullscreen, .is-full) .maptitle { position: absolute; top: 0.6rem; left: 0.8rem; padding: 0.3rem 0.6rem;
@@ -151,6 +161,10 @@ svg { display: block; width: 100%; height: auto; }
     background: color-mix(in srgb, var(--sheet) 75%, transparent); border: 1px solid var(--rule); border-radius: 4px; }
   .atlas:is(:fullscreen, .is-full) .legend .desc { display: none; }
 }
+/* the share button in the masthead, quiet like the link next to it, and the short note after a copy */
+.mast .byline .share { font: inherit; color: var(--mast-fg); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
+.share-note { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: 200; margin: 0; padding: 0.45rem 0.9rem;
+  background: var(--fg); color: var(--sheet); border-radius: 4px; font-size: 0.875rem; }
 body.map-full { overflow: hidden; }
 .gesture { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 12, 16, 0.6); color: #fff; font-size: 1.1rem; pointer-events: none; text-align: center; padding: 1rem; }
 .maphint { font-size: 0.8rem; color: var(--muted); margin: 0; }
