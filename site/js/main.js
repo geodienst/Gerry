@@ -83,9 +83,24 @@ async function main() {
   for (const option of stateOptions(results, { single: true })) pick.append(new Option(option.label, option.postal));
   pick.addEventListener('change', () => select(pick.value, { push: true }));
 
+  // full screen (owner's sketch, October 14, 2026): from 900px the hints of the map go to the top of the right column
+  // and the second part of a state record goes into a box under the map
+  const atlas = document.querySelector('.atlas'); // the map, the block under it and the sheet beside it
+  const isFull = () => document.fullscreenElement === atlas || atlas.classList.contains('is-full');
+  const split = () => isFull() && window.innerWidth >= 900;
+  const hintEls = ['tapline', 'maphint'].map($).concat(document.querySelector('.mapfoot .colors'));
+  function placeHints() {
+    const target = split() ? $('fs-tools') : document.querySelector('.mapfoot');
+    for (const el of hintEls) if (el.parentElement !== target) target.append(el);
+  }
   function renderSheet() {
+    const more = $('sheet-more');
+    const apart = split() && ui.selected && !index.single[ui.selected];
+    if (!apart) more.replaceChildren();
+    more.hidden = !apart;
+    atlas.classList.toggle('has-more', Boolean(apart));
     if (index.single[ui.selected]) renderSingle($('sheet'), singleSeatView(results, ui.selected), back);
-    else if (ui.selected) renderState($('sheet'), recordView(results, ui.selected), colors, back);
+    else if (ui.selected) renderState($('sheet'), recordView(results, ui.selected), colors, back, apart ? more : null);
     else renderList($('sheet'), effectList(results), colors, (postal) => select(postal, { push: true, focus: true }), ui);
   }
 
@@ -176,10 +191,10 @@ async function main() {
   $('zoom-reset').addEventListener('click', () => { select('', { push: true }); map.zoomTo('', true); });
   // Full screen for the map, the block under it and the sheet (owner, October 13, 2026): the browser's full screen where the page
   // may use it, otherwise the map column covers the window. The same button or Escape goes back.
-  const atlas = document.querySelector('.atlas'); // the map, the block under it and the sheet beside it
   const fullButton = $('map-full');
-  const isFull = () => document.fullscreenElement === atlas || atlas.classList.contains('is-full');
   const showFull = () => {
+    placeHints();
+    renderSheet();
     const on = isFull();
     fullButton.setAttribute('aria-pressed', String(on));
     fullButton.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
@@ -222,6 +237,7 @@ async function main() {
     width = window.innerWidth;
     const focusable = () => [...$('sheet').querySelectorAll('button, summary, a[href], [tabindex]')];
     const at = focusable().indexOf(document.activeElement);
+    placeHints();
     renderSheet();
     renderDecide(decide);
     showSenate(decide, senatePoint);

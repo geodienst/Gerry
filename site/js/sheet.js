@@ -91,8 +91,10 @@ function headline(parent, value, swatch, lines) {
  * headline, and the seat strip in place of the seat axis.
  * @param {object} record recordView(results, postal)
  */
-export function renderState(el, record, colors, onBack) {
+export function renderState(el, record, colors, onBack, moreEl = null) {
   const root = d3.select(el).html('');
+  // in full screen the part from "Districts, sorted" on goes into its own box under the map (owner's sketch, October 14)
+  const rest = moreEl ? d3.select(moreEl).html('') : root;
   root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
   root.append('span').attr('class', 'k').text(record.kicker);
   root.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(record.name);
@@ -120,27 +122,27 @@ export function renderState(el, record, colors, onBack) {
     sourceLine(b, record.blocked.source);
   }
 
-  const sorted = root.append('div').attr('class', 'stack sorted');
+  const sorted = rest.append('div').attr('class', 'stack sorted');
   sorted.append('h4').text('Districts, sorted');
   drawSorted(sorted.append('div').node(), record.sorted, colors, record.sortedLabel);
   sorted.append('p').attr('class', 'note').text(record.sortedCaption);
 
   if (record.extras.body.length > 0) {
-    const more = root.append('div').attr('class', 'stack extras');
+    const more = rest.append('div').attr('class', 'stack extras');
     for (const line of record.extras.body) more.append('p').attr('class', 'note').text(line);
   }
 
-  const measures = root.append('div').attr('class', 'stack');
+  const measures = rest.append('div').attr('class', 'stack');
   measures.append('h4').text('Other measures');
   definitionList(measures, record.measures.map((m) => ({ label: m.label, value: m.value, note: m.context })));
 
   if (record.notes.length > 0) {
-    const notes = root.append('div').attr('class', 'stack');
+    const notes = rest.append('div').attr('class', 'stack');
     notes.append('h4').text('Notes');
     const ul = notes.append('ul').attr('class', 'notes');
     for (const text of record.notes) ul.append('li').text(text);
   }
-  sourceLine(root, record.source);
+  sourceLine(rest, record.source);
 }
 
 /** The short record of a state with one seat (redesign, chapter 4). */

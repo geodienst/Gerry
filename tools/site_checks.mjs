@@ -891,20 +891,26 @@ async function fullscreen(t) {
   t.check('the button puts the map, its legend and the sheet beside it over the whole window', on.full && on.pressed === 'true'
     && on.label === 'Exit full screen' && on.height > 0.6 * on.window && on.legend && on.sheet, JSON.stringify(on));
   await t.screenshot('map-full-1280');
-  // option A: on a wide screen a state record runs in two columns next to the map (owner, October 14, 2026)
+  // the owner's sketch (October 14, 2026): map large with title and legend inside, hints and the start of the record on the
+  // right, the rest of the record flat under the map
   await t.load('#TX', { width: 2000, height: 830 });
   await t.until(`${HEADING} === 'Texas'`);
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(400);
-  const wide = await t.js(`(() => { const s = document.getElementById('sheet'); const sorted = s.querySelector('.stack.sorted').getBoundingClientRect();
-    const title = document.getElementById('sheet-title').getBoundingClientRect(); const map = document.getElementById('mapbox').getBoundingClientRect();
-    const box = s.getBoundingClientRect(); const kids = [...s.children].map((c) => c.getBoundingClientRect());
-    return { columns: getComputedStyle(s).columnCount, secondColumn: kids.some((k) => k.left > title.right),
-      inside: kids.every((k) => k.right <= box.right + 1), half: Math.abs(map.width - box.width) < 0.15 * innerWidth }; })()`);
-  t.check('2000px: in full screen the map takes about half and the state record two columns, nothing outside them',
-    wide.columns === '2' && wide.secondColumn && wide.inside && wide.half, JSON.stringify(wide));
+  const wide = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
+    const map = r('mapbox'), side = r('sheet'), more = r('sheet-more'), tools = r('fs-tools'), title = r('map-title'), legend = r('legend');
+    return { sideRight: side.left >= map.right - 1, toolsAbove: tools.bottom <= side.top + 1 && tools.left >= map.right - 1,
+      moreUnder: more.top >= map.bottom - 1 && more.right <= side.left + 1,
+      sorted: !!document.querySelector('#sheet-more .stack.sorted') && !document.querySelector('#sheet .stack.sorted'),
+      tapline: document.getElementById('fs-tools').contains(document.getElementById('tapline')),
+      inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top,
+      desc: [...document.querySelectorAll('#legend .desc')].every((d) => !d.checkVisibility()) }; })()`);
+  t.check('2000px: full screen as sketched: the record starts on the right under the hints, the rest lies flat under the map, title and legend in the map',
+    Object.values(wide).every(Boolean), JSON.stringify(wide));
   await t.screenshot('map-full-2000-texas');
   await t.key('Escape', 27);
+  t.check('back from full screen the record is whole again and the hints are under the map', await t.js(
+    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.querySelector('.mapfoot').contains(document.getElementById('tapline'))"));
   await t.load('', { width: 1280, height: 800 });
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(300);
