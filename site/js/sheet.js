@@ -120,7 +120,7 @@ export function renderState(el, record, colors, onBack) {
     sourceLine(b, record.blocked.source);
   }
 
-  const sorted = root.append('div').attr('class', 'stack');
+  const sorted = root.append('div').attr('class', 'stack sorted');
   sorted.append('h4').text('Districts, sorted');
   drawSorted(sorted.append('div').node(), record.sorted, colors, record.sortedLabel);
   sorted.append('p').attr('class', 'note').text(record.sortedCaption);
