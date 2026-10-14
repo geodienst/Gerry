@@ -621,7 +621,7 @@ async function masthead(t) {
   t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
     const about = document.getElementById('about')?.textContent ?? '';
     return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
-      && ['founder of the Geodienst', 'Mark Thompson, Vincent and JW', 'no client and no funding', 'press office'].every((x) => about.includes(x));
+      && ['founder of the Geodienst', 'Mark Thompson, Vincent, JW and Elmeri', 'no client and no funding', 'press office'].every((x) => about.includes(x));
   })()`));
   await t.js("document.querySelector('.mast .byline a[href=\"#method\"]').click()");
   t.check('the Methodology link opens the method', await t.until("location.hash === '#method' && document.getElementById('method-details').open"));
