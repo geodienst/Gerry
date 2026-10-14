@@ -899,13 +899,14 @@ async function fullscreen(t) {
   await t.sleep(400);
   const wide = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
     const map = r('mapbox'), side = r('sheet'), more = r('sheet-more'), tools = r('fs-tools'), title = r('map-title'), legend = r('legend');
-    return { sideRight: side.left >= map.right - 1, toolsAbove: tools.bottom <= side.top + 1 && tools.left >= map.right - 1,
+    return { sideRight: side.left >= map.right - 1, toolsBelow: tools.top >= side.bottom - 1 && tools.left >= map.right - 1,
+      hintHidden: !document.getElementById('maphint').checkVisibility(),
       moreUnder: more.top >= map.bottom - 1 && more.right <= side.left + 1,
       sorted: !!document.querySelector('#sheet-more .stack.sorted') && !document.querySelector('#sheet .stack.sorted'),
       tapline: document.getElementById('fs-tools').contains(document.getElementById('tapline')),
       inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top,
       desc: [...document.querySelectorAll('#legend .desc')].every((d) => !d.checkVisibility()) }; })()`);
-  t.check('2000px: full screen as sketched: the record starts on the right under the hints, the rest lies flat under the map, title and legend in the map',
+  t.check('2000px: full screen as sketched: the record on the right with the hints at its foot, the rest lies flat under the map, title and legend in the map',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
   await t.screenshot('map-full-2000-texas');
   await t.key('Escape', 27);
