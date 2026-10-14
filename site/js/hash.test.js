@@ -1,7 +1,7 @@
 // Tests for site/js/hash.js. Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stateFromHash, linkFor } from './hash.js';
+import { stateFromHash, linkFor, outcomesLink, outcomesFromSearch } from './hash.js';
 
 const STATES = { TX: {}, CA: {}, MO: {} };
 
@@ -32,4 +32,30 @@ test('stateFromHash accepts a single-seat state only when the caller passes the 
   assert.equal(stateFromHash('#TX', STATES, single), 'TX');
   assert.equal(stateFromHash('#AK', STATES, single), ''); // not in either list
   assert.equal(stateFromHash('#WY', STATES), ''); // without the third argument, as before
+});
+
+const KEYS = ['proportional', 'neutral', 'enacted'];
+const SHARES = [0.47, 0.471, 0.492, 0.5, 0.5179747240856283, 0.56];
+
+test('outcomesLink gives the chosen row and the vote share in percent with one decimal, at chapter 02', () => {
+  assert.equal(outcomesLink('neutral', 0.492), '?count=neutral&vote=49.2#outcomes');
+  assert.equal(outcomesLink('enacted', 0.5179747240856283), '?count=enacted&vote=51.8#outcomes');
+  assert.equal(outcomesLink('proportional', 0.5), '?count=proportional&vote=50.0#outcomes');
+});
+
+test('outcomesFromSearch reads a link made by outcomesLink back to the row and the stop of the slider', () => {
+  for (const [key, index] of [['neutral', 2], ['enacted', 4], ['proportional', 3], ['enacted', 0], ['neutral', 5]]) {
+    const search = outcomesLink(key, SHARES[index]).split('#')[0];
+    assert.deepEqual(outcomesFromSearch(search, KEYS, SHARES), { key, index }, search);
+  }
+});
+
+test('outcomesFromSearch gives null without a count or a vote, and leaves out what it does not know', () => {
+  for (const search of ['', '?', '?notour', '?tourms=400']) assert.equal(outcomesFromSearch(search, KEYS, SHARES), null, search);
+  assert.deepEqual(outcomesFromSearch('?count=house&vote=49.2', KEYS, SHARES), { key: null, index: 2 });
+  assert.deepEqual(outcomesFromSearch('?count=neutral', KEYS, SHARES), { key: 'neutral', index: null });
+  assert.deepEqual(outcomesFromSearch('?count=neutral&vote=49.25', KEYS, SHARES), { key: 'neutral', index: null }); // between two stops
+  assert.deepEqual(outcomesFromSearch('?count=neutral&vote=60', KEYS, SHARES), { key: 'neutral', index: null }); // off the slider
+  assert.deepEqual(outcomesFromSearch('?count=neutral&vote=abc', KEYS, SHARES), { key: 'neutral', index: null });
+  assert.deepEqual(outcomesFromSearch('?count=__proto__&vote=51.8', KEYS, SHARES), { key: null, index: 4 });
 });

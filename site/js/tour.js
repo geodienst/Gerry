@@ -3,6 +3,7 @@
 // Replay afterwards. A click on a row or a move of the slider hands the controls to the reader. With reduced motion it
 // waits for Play. Texts come from chapters.js (outcomesView().tour); this module only plays them.
 // ?notour leaves the explainer out (the site checks use it); ?tourms=N sets the time per step in milliseconds.
+// A shared link to the chapter (?count=neutral&vote=49.2) keeps its row and vote share: the explainer then waits for Play.
 const $ = (id) => document.getElementById(id);
 
 /** Reading time for one step: about 20 characters a second plus a pause, at most 11 seconds. */
@@ -13,9 +14,9 @@ export function stepTime(text, fixed = 0) {
 /**
  * @param {object} tour outcomesView(results).tour
  * @param {{select(key: string, animate?: boolean): void, moveTo(index: number): void, onUser(fn: () => void): void}} outcomes
- * @param {{reduceMotion: () => boolean}} o
+ * @param {{reduceMotion: () => boolean, hold?: boolean}} o hold: a shared link set the chapter, so do not play by itself
  */
-export function createTour(tour, outcomes, { reduceMotion }) {
+export function createTour(tour, outcomes, { reduceMotion, hold = false }) {
   const box = $('tour');
   const params = new URLSearchParams(window.location.search);
   if (params.has('notour')) {
@@ -100,7 +101,7 @@ export function createTour(tour, outcomes, { reduceMotion }) {
   outcomes.onUser(() => { if (state === 'playing' || state === 'paused') finish(false); });
 
   text.textContent = tour.intro;
-  if (reduceMotion() || !('IntersectionObserver' in window)) return;
+  if (hold || reduceMotion() || !('IntersectionObserver' in window)) return;
   // Play once the rows and the waffle are in view, the first time only.
   const watch = new IntersectionObserver((entries) => {
     if (state === 'idle' && entries.some((e) => e.isIntersecting)) {

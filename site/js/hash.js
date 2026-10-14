@@ -28,3 +28,32 @@ export function stateFromHash(hash, states, single = {}) {
 export function linkFor(postal, path) {
   return postal ? `#${postal}` : path;
 }
+
+/**
+ * The link to chapter 02 as the reader set it (owner, October 14, 2026): the chosen row and the national vote share on
+ * the slider, in percent with one decimal. "neutral" at 0.492 gives "?count=neutral&vote=49.2#outcomes".
+ * @param {string} key the chosen row: proportional, neutral or enacted
+ * @param {number} share the Democratic share of the two-party vote at the stop on screen, as a fraction
+ * @returns {string}
+ */
+export function outcomesLink(key, share) {
+  return `?count=${encodeURIComponent(key)}&vote=${(share * 100).toFixed(1)}#outcomes`;
+}
+
+/**
+ * The row and the stop of the slider in a link made by outcomesLink, or null when the link has neither.
+ * An unknown row gives key null; a share half a stop (0.05 points) or more from every stop gives index null.
+ * @param {string} search location.search
+ * @param {string[]} keys the rows of chapter 02
+ * @param {number[]} shares the share at each stop of the slider, as fractions
+ * @returns {{key: string|null, index: number|null}|null}
+ */
+export function outcomesFromSearch(search, keys, shares) {
+  const params = new URLSearchParams(search);
+  if (!params.has('count') && !params.has('vote')) return null;
+  const key = keys.includes(params.get('count')) ? params.get('count') : null;
+  const vote = Number(params.get('vote') ?? Number.NaN);
+  const off = (i) => Math.abs(shares[i] * 100 - vote);
+  const nearest = shares.reduce((best, s, i) => (off(i) < off(best) ? i : best), 0);
+  return { key, index: Number.isFinite(vote) && off(nearest) < 0.05 - 1e-9 ? nearest : null };
+}

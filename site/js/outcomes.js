@@ -310,8 +310,10 @@ export function renderOutcomes(view, { reduceMotion }) {
       draw(false);
     },
     select,
-    /** Move the slider to stop `index` (the explainer). */
+    /** Move the slider to stop `index` (the explainer, a shared link). */
     moveTo,
+    /** The chosen row and the stop of the slider on screen, for the link of the share button. */
+    state() { return { key: current, index: pi }; },
     /** Call `fn` when the reader chooses a row or moves the slider; changes made through select and moveTo do not. */
     onUser(fn) { userHook = fn; },
   };

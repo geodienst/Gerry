@@ -1,7 +1,7 @@
 // Entry point: loads site/data/results.json and site/data/map.topojson, then wires chapter 01, the map and the sheet beside it,
 // chapter 03 and the figure in the method (chapter 04).
 // d3 and topojson come from site/vendor/ as globals; the page makes no other requests.
-import { stateFromHash, linkFor } from './hash.js';
+import { stateFromHash, linkFor, outcomesLink, outcomesFromSearch } from './hash.js';
 import { makeColors } from './colors.js';
 import {
   indexResults, stateOptions, mapHints, effectList, nationalView, methodFills, MAP_TITLES, closeLegend,
@@ -69,7 +69,9 @@ async function main() {
     return item;
   }));
   const outcomes = renderOutcomes(outcomesData, { reduceMotion: () => reduceMotion.matches });
-  createTour(outcomesData.tour, outcomes, { reduceMotion: () => reduceMotion.matches });
+  // a link from the share button of chapter 02 sets its row and vote share; the explainer then waits for Play
+  const shared = outcomesFromSearch(location.search, outcomesData.rows.map((row) => row.key), outcomesData.points.map((p) => p.share));
+  createTour(outcomesData.tour, outcomes, { reduceMotion: () => reduceMotion.matches, hold: Boolean(shared) });
   outcomes.paint(colors);
 
   const map = createMap({
@@ -214,7 +216,8 @@ async function main() {
   });
   document.addEventListener('fullscreenchange', showFull);
   // Share (owner, October 14, 2026): the device's share sheet where there is one, else the link goes to the clipboard.
-  // The masthead shares the site, the button in full screen the view with its state (#TX). No outside services.
+  // The button by the key findings shares the site, the one under the map the map with its state (#TX), the one by the
+  // seat counts of chapter 02 the chosen row and vote share (?count=neutral&vote=49.2#outcomes). No outside services.
   async function share(url) {
     try {
       if (navigator.share) { await navigator.share({ title: document.title, url }); return; }
@@ -229,7 +232,11 @@ async function main() {
   }
   const page = () => `${location.origin}${location.pathname}`;
   $('share-site').addEventListener('click', () => share(page()));
-  $('map-share').addEventListener('click', () => share(`${page()}${location.hash}`));
+  $('map-share').addEventListener('click', () => share(`${page()}${linkFor(ui.selected, '')}`));
+  $('outcomes-share').addEventListener('click', () => {
+    const { key, index } = outcomes.state();
+    share(`${page()}${outcomesLink(key, outcomesData.points[index].share)}`);
+  });
 
   const decide = decideView(results);
   renderDecide(decide);
@@ -237,6 +244,10 @@ async function main() {
   let senatePoint = outcomesData.points[outcomesData.baseIndex];
   showSenate(decide, senatePoint);
   outcomes.onPoint((index) => { senatePoint = outcomesData.points[index]; showSenate(decide, senatePoint); });
+  if (shared) { // after the Senate hook, so the Senate block follows the shared vote share
+    if (shared.key) outcomes.select(shared.key);
+    outcomes.moveTo(shared.index ?? outcomesData.baseIndex); // a moved slider shows no stars for changed seats
+  }
   const fills = { ...methodFills(results), ...extensionFills(results) };
   for (const el of document.querySelectorAll('[data-fill]')) {
     if (Object.hasOwn(fills, el.dataset.fill)) el.textContent = fills[el.dataset.fill];

@@ -484,7 +484,7 @@ async function layout(t) {
   await t.key('Tab', 9);
   t.check('the second Tab lands on the Methodology link', await t.js("document.activeElement === document.querySelector('.mast .byline a[href=\"#method\"]')"));
   await t.key('Tab', 9);
-  t.check('the third Tab lands on Share in the byline', await t.js("document.activeElement === document.getElementById('share-site')"));
+  t.check('the third Tab lands on Share by the key findings', await t.js("document.activeElement === document.getElementById('share-site')"));
   await t.key('Tab', 9);
   t.check('the fourth Tab lands on the State menu of chapter 01', await t.js("document.activeElement === document.getElementById('pick')"));
   await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
@@ -618,7 +618,7 @@ async function masthead(t) {
   t.check('no text is set in capitals', await t.js(
     "![...document.querySelectorAll('body *')].some((el) => getComputedStyle(el).textTransform === 'uppercase' && el.textContent.trim())"));
   t.check('the byline gives the author, the date and a link to the method, apart by space',
-    (await t.js("[...document.querySelectorAll('.mast .byline > *')].map((e) => e.textContent).join('|')")) === 'By Govert Schoof, October 8, 2026|Methodology|Share'
+    (await t.js("[...document.querySelectorAll('.mast .byline > *')].map((e) => e.textContent).join('|')")) === 'By Govert Schoof, October 8, 2026|Methodology'
     && await t.js("!!document.querySelector('.mast .byline a[href=\"#method\"]') && document.querySelector('meta[name=author]').content === 'Govert Schoof'"));
   t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
     const about = document.getElementById('about')?.textContent ?? '';
@@ -894,32 +894,51 @@ async function fullscreen(t) {
     && on.label === 'Exit full screen' && on.height > 0.6 * on.window && on.legend && on.sheet, JSON.stringify(on));
   await t.screenshot('map-full-1280');
   // the owner's mockup (October 14, 2026): map large with title and legend inside, the record on the right in its own
-  // order ending with map, status and adoption, a strip under both; no district line and colors in full screen
-  await t.load('#TX', { width: 2000, height: 830 });
+  // order ending with map, status and adoption, a strip under both with the folds under the record, Share under the
+  // map (owner, same day); no district line and colors in full screen
+  await t.load('#TX', { width: 1920, height: 1080 });
   await t.until(`${HEADING} === 'Texas'`);
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(400);
-  const wide = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
-    const map = r('mapbox'), side = r('sheet'), more = r('sheet-more'), title = r('map-title'), legend = r('legend');
+  const wide = await t.js(`(() => { const r = (el) => (typeof el === 'string' ? document.getElementById(el) : el).getBoundingClientRect();
+    const map = r('mapbox'), col = r(document.querySelector('.atlas > .mapcol')), side = r('sheet'), more = r('sheet-more');
+    const title = r('map-title'), legend = r('legend'), share = r('map-share'), folds = r(document.querySelector('#sheet-more .fs-folds'));
     const foot = document.querySelector('#sheet .foot');
     return { sideRight: side.left >= map.right - 1,
-      stripUnderMap: more.top >= map.bottom - 1 && more.left <= map.left + 1 && more.right <= side.left + 1,
+      stripUnderBoth: more.top >= Math.max(col.bottom, side.bottom) - 1 && more.left <= map.left + 1 && more.right >= side.right - 1,
+      foldsUnderRecord: folds.left >= side.left - 1 && folds.right <= side.right + 1,
       sorted: !!document.querySelector('#sheet-more .fs-chart svg') && !document.querySelector('#sheet .stack.sorted'),
       folds: [...document.querySelectorAll('#sheet-more details.fold summary')].map((s) => s.textContent).join() === 'Other measures,Notes',
       foot: !!foot && foot.textContent.includes(' \u00b7 Challenged in court \u00b7 Legal status as of') && foot.textContent.includes('Adopted by'),
       kept: !!document.querySelector('#sheet .headline') && !!document.querySelector('#sheet .k'),
       noHints: ['tapline', 'maphint'].every((id) => !document.getElementById(id).checkVisibility()) && !document.querySelector('.colors').checkVisibility(),
-      share: document.getElementById('map-share').checkVisibility(),
+      shareUnderMap: document.getElementById('map-share').checkVisibility() && share.top >= map.bottom - 1 && share.right <= map.right + 1
+        && share.bottom <= more.top + 1,
       sideFits: document.getElementById('sheet').scrollHeight <= document.getElementById('sheet').clientHeight + 2,
       stripFits: document.getElementById('sheet-more').scrollHeight <= document.getElementById('sheet-more').clientHeight + 2,
       inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top,
       desc: [...document.querySelectorAll('#legend .desc')].every((d) => !d.checkVisibility()) }; })()`);
-  t.check('2000px: full screen as in the mockup: the whole record on the right, a strip under the map, title and legend in the map, a share button',
+  t.check('1920 x 1080: full screen as in the mockup: the whole Texas record on the right, a strip under both with the folds under the record, title and legend in the map, Share under it',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
-  await t.screenshot('map-full-2000-texas', { viewport: true });
+  await t.screenshot('map-full-1920-texas', { viewport: true });
+  // at 1920 x 1080 a longer record scrolls; on a screen of 2560 x 1440 every record fits whole
+  await t.load('#TX', { width: 2560, height: 1440 });
+  await t.until(`${HEADING} === 'Texas'`);
+  await t.js("document.getElementById('map-full').click()");
+  await t.sleep(400);
+  const over = [];
+  for (const postal of await t.js("[...document.querySelectorAll('#pick option')].map((o) => o.value).filter(Boolean)")) {
+    await t.js(`location.hash = '#${postal}'`);
+    await t.sleep(60);
+    const [scroll, client] = await t.js("(() => { const s = document.getElementById('sheet'); return [s.scrollHeight, s.clientHeight]; })()");
+    if (scroll > client + 2) over.push(`${postal} ${scroll - client}px`);
+  }
+  t.check('2560 x 1440: every state record fits whole in full screen', over.length === 0, over.join(', '));
+  await t.js("location.hash = '#TX'");
+  await t.until(`${HEADING} === 'Texas'`);
   await t.key('Escape', 27);
-  t.check('back from full screen the record is whole again, with the hints under the map and no share button there', await t.js(
-    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.getElementById('maphint').checkVisibility() && !document.getElementById('map-share').checkVisibility()"));
+  t.check('back from full screen the record is whole again, with the hints and Share under the map', await t.js(
+    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.getElementById('maphint').checkVisibility() && document.querySelector('.mapfoot .mapbar').contains(document.getElementById('map-share')) && document.getElementById('map-share').checkVisibility()"));
   await t.load('', { width: 1280, height: 800 });
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(300);
@@ -927,6 +946,58 @@ async function fullscreen(t) {
   await t.sleep(300);
   const off = await t.js(state);
   t.check('Escape brings the map back into the page', !off.full && off.pressed === 'false' && off.height < on.height, JSON.stringify(off));
+}
+
+// --- Share (owner, October 14, 2026): by the key findings, under the map and above the House in chapter 02 ------------
+async function sharing(t) {
+  await t.load('', { width: 1280, height: 800 });
+  // a catcher in place of the device's share sheet, so the checks see the link each button gives
+  await t.js("Object.defineProperty(navigator, 'share', { configurable: true, value: async (data) => { window.shared = data.url; } })");
+  const place = await t.js(`(() => { const r = (el) => (typeof el === 'string' ? document.getElementById(el) : el).getBoundingClientRect();
+    const band = r(document.querySelector('.keyfacts')), list = r('keyfacts'), site = r('share-site');
+    const map = document.getElementById('map-share'), out = document.getElementById('outcomes-share');
+    return { siteRight: site.left >= list.right - 1 && site.top >= band.top && site.bottom <= band.bottom && !document.querySelector('.mast button'),
+      mapUnder: document.querySelector('.mapfoot').contains(map) && r(map).top >= r('mapbox').bottom && r(map).right > r('palette-neutral').right
+        && map.checkVisibility() && !document.querySelector('.zoombar #map-share'),
+      outcomesRight: document.querySelector('#outcomes .whead').contains(out) && r(out).left >= r('readout').right && r(out).bottom <= r('waffle').top
+        && r(out).right <= r('waffle').right + 1,
+      dots: [...document.querySelectorAll('.sharebtn')].map((b) => b.querySelectorAll('svg circle').length === 3 && b.textContent === 'Share').join() === 'true,true,true' };
+  })()`);
+  t.check('Share sits at the right of the key findings, under the map and at the right above the House, each with three dots',
+    Object.values(place).every(Boolean), JSON.stringify(place));
+  const link = async (id) => {
+    await t.js(`window.shared = ''; document.getElementById('${id}').click()`);
+    await t.sleep(100);
+    return t.js('window.shared');
+  };
+  const page = await t.js('location.origin + location.pathname');
+  t.check('Share by the key findings gives the address of the site', (await link('share-site')) === page);
+  await t.js("location.hash = '#TX'");
+  await t.until(`${HEADING} === 'Texas'`);
+  t.check('Share under the map gives the map with its state', (await link('map-share')) === `${page}#TX`);
+  // chapter 02 on the neutral maps at 49.2% of the vote
+  await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
+  await t.js(`(() => { const s = document.getElementById('vote');
+    s.value = String([...Array(Number(s.max) + 1).keys()].find((i) => { s.value = String(i); s.dispatchEvent(new Event('input')); return document.getElementById('vote-out').textContent === '49.2%'; }));
+  })()`);
+  const chosen = await link('outcomes-share');
+  t.check('Share above the House gives the chosen row and vote share', chosen === `${page}?count=neutral&vote=49.2#outcomes`, chosen);
+  // without a share sheet the link goes to the clipboard, with a short note
+  await t.js("Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); "
+    + "Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } })");
+  await t.js("document.getElementById('share-site').click()");
+  await t.sleep(100);
+  t.check('without a share sheet the link goes to the clipboard and a short note says so', await t.js(
+    "window.copied === location.origin + location.pathname && document.querySelector('.share-note')?.textContent === 'Link copied'"));
+  // the shared link opens chapter 02 as it was shared; the explainer waits for Play and the Senate block follows
+  await t.load('#outcomes', { query: 'count=neutral&vote=49.2' });
+  await t.sleep(1500);
+  const opened = await t.js(`({ row: document.querySelector('#scen [aria-checked=true] .lab')?.textContent, vote: document.getElementById('vote-out').textContent,
+    tour: document.getElementById('tour-count').textContent === '' && document.getElementById('tour-play').textContent === 'Play',
+    senate: document.getElementById('senate-figures').textContent.includes('49.2%'),
+    inView: Math.abs(document.getElementById('outcomes').getBoundingClientRect().top) < 4 })`);
+  t.check('a shared link opens chapter 02 on its row and vote share, with the explainer waiting', opened.row === 'Neutral-map median'
+    && opened.vote === '49.2%' && opened.tour && opened.senate && opened.inView, JSON.stringify(opened));
 }
 
 // --- Task 7.7: chapter 01, the map and the list beside it ------------------------------------------------------
@@ -958,4 +1029,5 @@ export const GROUPS = [
   { name: 'control', run: control },
   { name: 'senate', run: senate },
   { name: 'tour', run: tour },
+  { name: 'share', run: sharing },
 ];
