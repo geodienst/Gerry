@@ -916,7 +916,7 @@ async function fullscreen(t) {
       desc: [...document.querySelectorAll('#legend .desc')].every((d) => !d.checkVisibility()) }; })()`);
   t.check('2000px: full screen as in the mockup: the whole record on the right, a strip under the map, title and legend in the map, a share button',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
-  await t.screenshot('map-full-2000-texas');
+  await t.screenshot('map-full-2000-texas', { viewport: true });
   await t.key('Escape', 27);
   t.check('back from full screen the record is whole again, with the hints under the map and no share button there', await t.js(
     "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.getElementById('maphint').checkVisibility() && !document.getElementById('map-share').checkVisibility()"));

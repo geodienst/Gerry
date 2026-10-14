@@ -183,10 +183,11 @@ async function main() {
       await tab('Input.dispatchKeyEvent', { type: 'keyDown', key, code: key, windowsVirtualKeyCode: code, text });
       await tab('Input.dispatchKeyEvent', { type: 'keyUp', key, code: key, windowsVirtualKeyCode: code });
     },
-    async screenshot(name) {
+    async screenshot(name, { viewport = false } = {}) {
       if (!shots) return;
       mkdirSync(shots, { recursive: true });
-      const { cssContentSize: size } = await tab('Page.getLayoutMetrics');
+      const { cssContentSize: content, cssLayoutViewport: view } = await tab('Page.getLayoutMetrics');
+      const size = viewport ? { width: view.clientWidth, height: view.clientHeight } : content;
       const { data } = await tab('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true,
         clip: { x: 0, y: 0, width: size.width, height: size.height, scale: 1 } });
       writeFileSync(join(shots, `${name}.png`), Buffer.from(data, 'base64'));
