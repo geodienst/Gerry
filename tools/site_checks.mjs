@@ -374,6 +374,16 @@ async function method(t) {
   t.check('the method is folded at the start', await t.js("document.getElementById('method-details')?.open === false"));
   t.check('chapter 04 has its heading and its fold', (await t.text('#method .chead h2')) === 'Methodology'
     && (await t.text('#method-details > summary')).startsWith('How the seats are calculated'));
+  // the effect size of enacted maps is the first part of the fold, not a block of its own (owner, October 17, 2026)
+  t.check('the effect size is the first part of the method fold', await t.js(
+    "document.querySelector('#method-details .mbody').firstElementChild === document.getElementById('effect-size') && !document.querySelector('#method > .wrap > #effect-size')"));
+  await t.js("document.getElementById('method-details').open = true");
+  await t.sleep(300);
+  t.check('opened, the chart of the effect size takes the width of the fold', await t.js(
+    "(() => { const svg = document.querySelector('#byvote-chart svg'); return svg.getBoundingClientRect().width >= 0.9 * document.getElementById('byvote-chart').clientWidth && svg.getBoundingClientRect().width > 500; })()"));
+  await t.js("document.getElementById('method').scrollIntoView()");
+  await t.screenshot('method-open-1280', { viewport: true });
+  await t.js("document.getElementById('method-details').open = false");
   t.check('every number in the method and the footer is filled in', await t.js("[...document.querySelectorAll('[data-fill]')].every((el) => el.textContent.trim() !== '')"));
   const text = await t.text('#method');
   for (const part of ['How to read the three numbers.', 'Why neutral maps are not proportional.', 'Votes.', 'The Voting Rights Act.',

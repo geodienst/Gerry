@@ -188,8 +188,9 @@ async function main() {
       mkdirSync(shots, { recursive: true });
       const { cssContentSize: content, cssLayoutViewport: view } = await tab('Page.getLayoutMetrics');
       const size = viewport ? { width: view.clientWidth, height: view.clientHeight } : content;
+      const at = viewport ? { x: view.pageX, y: view.pageY } : { x: 0, y: 0 }; // the screen where it is scrolled to
       const { data } = await tab('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true,
-        clip: { x: 0, y: 0, width: size.width, height: size.height, scale: 1 } });
+        clip: { x: at.x, y: at.y, width: size.width, height: size.height, scale: 1 } });
       writeFileSync(join(shots, `${name}.png`), Buffer.from(data, 'base64'));
     },
   };
