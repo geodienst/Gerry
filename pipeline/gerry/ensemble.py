@@ -44,8 +44,10 @@ def _check_plans(plans: pd.DataFrame, seats: int, postal: str, label: str) -> No
 
 
 def district_votes(stats: pd.DataFrame, st: StateConfig) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """(ensemble, reference) with columns state, draw, district, d_<e>, r_<e>, d, r."""
+    """(ensemble, reference) with columns state, draw, district, d_<e>, r_<e>, d, r. The ensemble also keeps
+    ALARM's chain, the separate run each plan comes from (review of October 2026, finding 2)."""
     out = pd.DataFrame({"state": st.postal, "draw": stats["draw"].astype(str).str.strip(),
+                        "chain": pd.to_numeric(stats["chain"], errors="coerce").astype("Int64"),
                         "district": _district_codes(stats["district"], st.postal)})
     for e in st.elections:
         dem, rep = select_columns(stats.columns, e)
@@ -57,7 +59,10 @@ def district_votes(stats: pd.DataFrame, st: StateConfig) -> tuple[pd.DataFrame, 
     out = add_composite(out, st.elections)
     is_reference = out["draw"] == REFERENCE_DRAW
     ensemble = out[~is_reference].reset_index(drop=True)
-    reference = out[is_reference].reset_index(drop=True)
+    reference = out[is_reference].drop(columns="chain").reset_index(drop=True)
+    no_chain = ensemble[ensemble["chain"].isna()]
+    if len(no_chain):
+        raise CheckError("ensemble_structure", st.postal, f"draw {no_chain['draw'].iloc[0]} has no chain")
     _check_plans(ensemble, st.seats, st.postal, "ensemble")
     _check_plans(reference, st.seats, st.postal, "reference")
     if reference.empty:

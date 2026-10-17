@@ -2,9 +2,12 @@
 data/interim/metrics.json from 02_join.py and 03_metrics.py on the real data."""
 import json
 
+import numpy as np
+import pandas as pd
 import pytest
 
-from gerry.config import interim_dir, load_config
+from gerry.config import REPO_ROOT, interim_dir, load_config
+from gerry.metrics import dem_wins, distribution, seats_by_plan
 
 METRICS = interim_dir() / "metrics.json"
 pytestmark = [pytest.mark.data,
@@ -202,3 +205,67 @@ def test_senate_2026(metrics):
     points = metrics["national"]["swing"]["points"]
     assert [p["senate"] for p in points if p["base"]] == [47]
     assert all(a["senate"] <= b["senate"] for a, b in zip(points, points[1:]))
+
+
+# --- review of October 2026: metrics.json against the interim data and a formula of its own --------------------
+ENSEMBLE = interim_dir() / "ensemble_districts.parquet"
+ENACTED = interim_dir() / "enacted_districts.parquet"
+needs_interim = pytest.mark.skipif(not (ENSEMBLE.exists() and ENACTED.exists()), reason="run 02_join.py first")
+
+
+def wasted_votes_gap(d, r):
+    """The efficiency gap written out again, apart from gerry.metrics: the winner of a district wastes the
+    votes above half of that district's votes, the loser all its votes; positive favors Republicans."""
+    d, r = np.asarray(d, dtype=float), np.asarray(r, dtype=float)
+    half = (d + r) / 2
+    wasted_d = np.where(d > r, d - half, d).sum()
+    wasted_r = np.where(d > r, r, r - half).sum()
+    return (wasted_d - wasted_r) / (d + r).sum()
+
+
+def test_wasted_votes_gap_by_hand():
+    # (60, 40): D wastes 10, R 40; (30, 70): D 30, R 20; (45, 55): D 45, R 5 -> (85 - 65) / 300
+    assert wasted_votes_gap([60, 30, 45], [40, 70, 55]) == pytest.approx(20 / 300)
+
+
+@needs_interim
+def test_metrics_json_follows_from_the_interim_data(metrics):
+    # a metrics.json left over from an earlier join fails here (the reviewer's point on stale output)
+    ensemble = pd.read_parquet(ENSEMBLE, columns=["state", "draw", "district", "d", "r", "d_pre_20", "r_pre_20"])
+    enacted = pd.read_parquet(ENACTED)
+    enacted = enacted[(enacted["map_id"] == "enacted") & (enacted["method"] == "block")]
+    assert sorted(ensemble["state"].unique()) == sorted(metrics["states"])
+    for postal, part in ensemble.groupby("state"):
+        s = metrics["states"][postal]
+        seats = len(s["neutral"]["dist"]) - 1
+        assert distribution(seats_by_plan(part.reset_index(drop=True)).to_numpy(), seats).tolist() == s["neutral"]["dist"], postal
+        rows = enacted[enacted["state"] == postal]
+        wins = dem_wins(rows["d"], rows["r"], rows["d_pre_20"], rows["r_pre_20"])
+        assert int(wins.sum()) == s["enacted"], postal
+
+
+def test_efficiency_gap_follows_from_the_district_votes(metrics):
+    # every state's EG again with the formula above: a broken efficiency_gap or a changed number (the reviewer
+    # set Nevada to +100 points) fails here
+    for postal, s in metrics["states"].items():
+        d = [x["d"] for x in s["districts"]]
+        r = [x["r"] for x in s["districts"]]
+        assert s["eg"]["value"] == pytest.approx(wasted_votes_gap(d, r), abs=1e-12), postal
+
+
+def test_alarm_runs_back_the_method_text(metrics):
+    # site/index.html, Known limits (owner, October 17, 2026): the runs of version 15 give the same national median
+    # and band, the same median in the 11 states ALARM reruns, and in Texas 18 instead of 17 in one run
+    html = (REPO_ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    assert ("ALARM is rerunning its neutral maps for 11 states. Its separate runs of version 15 give the same national "
+            "median and band, and the same median in those 11 states. In Texas one run gives 18 Democratic seats "
+            "instead of 17, because the median lies on the edge between the two.") in html
+    nat = metrics["national"]["neutral"]
+    assert metrics["checks"]["runs_national"] == [{"median": nat["median"], "p5": nat["p5"], "p95": nat["p95"]}] * 2
+    rerun = sorted(p for p, keys in load_config().ensemble.notes.items() if "alarm_rerun_unpublished" in keys)
+    assert len(rerun) == 11
+    runs = metrics["checks"]["runs"]
+    for postal in rerun:
+        assert {c["median"] for c in runs[postal]["chains"].values()} == {metrics["states"][postal]["neutral"]["median"]}, postal
+    assert metrics["states"]["TX"]["neutral"]["median"] == 17
+    assert sorted(c["median"] for c in runs["TX"]["chains"].values()) == [17, 18]

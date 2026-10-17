@@ -137,7 +137,7 @@ def write_outputs(results: dict[str, StateResult], cfg, out_dir: Path, partial: 
         "enacted_districts.parquet": _ordered([r.enacted for r in results.values()],
                                               ["state", "map_id", "method", "district"], vote_cols),
         "ensemble_districts.parquet": _ordered([r.ensemble for r in results.values()],
-                                               ["state", "draw", "district"], vote_cols),
+                                               ["state", "draw", "chain", "district"], vote_cols),
         "alarm_reference.parquet": _ordered([r.reference for r in results.values()], ["state", "district"], vote_cols),
     }
     states = set(results)

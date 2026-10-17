@@ -271,6 +271,23 @@ Ties are districts where D equals R in the composite; the 2020 result decided th
 | WI | 5000 | 0 | 0 | ok |
 | WV | 5000 | 0 | 0 | ok |
 
+## ALARM runs
+
+ALARM draws the neutral maps of each state in two or four separate runs (chains). The table lists the states where a run has another median of Democratic seats than all runs together, with the median and the 5th to 95th percentile per run. Under it, the nation on the first and on the second half of each state's runs. For information: nothing here is judged.
+
+| State | All runs | Per run |
+|---|---|---|
+| AZ | 4 | run 1: 3 (3 to 5, 1250 plans); run 2: 4 (3 to 5, 1250 plans); run 3: 4 (3 to 4, 1250 plans); run 4: 4 (3 to 5, 1250 plans) |
+| TX | 17 | run 1: 18 (15 to 20, 2500 plans); run 2: 17 (15 to 20, 2500 plans) |
+
+District seats of the nation, without the six single-seat states:
+
+| Plans | Median | 5th percentile | 95th percentile |
+|---|---|---|---|
+| All runs | 223 | 217 | 229 |
+| Half 1 of the runs | 223 | 217 | 229 |
+| Half 2 of the runs | 223 | 217 | 229 |
+
 ## Join log
 
 Counts from 02_join.py. `unlinked_blocks` are census blocks whose unit is not in ALARM's map.rds (water); they have no voting-age population and no people. `reference_share` is the share of the population with the same district on ALARM's reference plan and on the 2022 map (Census CD118).
@@ -466,23 +483,23 @@ ALARM's `cd_2020` districts that take the label of the matching district in map.
 
 ## PlanScore
 
-EG in percentage points, positive favors Republicans. PlanScore's own sign is the opposite; the CSV records the size and the party PlanScore names. "Equal-turnout formula" is PlanScore's own formula on its own district votes; it must match PlanScore to the rounding of its printed value. "Ours on PlanScore's votes" is our wasted-votes EG on the same votes; the two differ when turnout differs between districts.
+EG in percentage points, positive favors Republicans. PlanScore's own sign is the opposite; the CSV records the size and the party PlanScore names. "Equal-turnout formula" is PlanScore's own formula on its own district votes; it must match PlanScore to the rounding of its printed value. "Ours on PlanScore's votes" is our wasted-votes EG on the same votes; the two differ when turnout differs between districts. "Ours on our votes" is our wasted-votes EG on our own district votes of the same election. When the plan is our enacted map, column "Votes" requires that no district's Democratic or Republican votes differ from PlanScore's by more than 3%, that ours on our votes lies within 0.1 point of ours on PlanScore's votes, and that our composite follows from our district votes. The composite adds 2016 and 2020, so it differs from PlanScore's single elections by design; column "Composite" needs an explanation.
 
-| State | Election | PlanScore | Ours on PlanScore's votes | Equal-turnout formula | Reproduced | Our composite, enacted map | Same map | Composite | Source |
-|---|---|---|---|---|---|---|---|---|---|
-| AZ | US President 2016 | +12.90 | +19.61 | +12.89 | ok | +22.08 | yes | explained | https://planscore.org/plan.html?20251203T023738.531981083Z (2026-10-06) |
-| AZ | US President 2020 | -5.20 | -2.74 | -5.24 | ok | +22.08 | yes | explained | https://planscore.org/plan.html?20251203T023738.531981083Z (2026-10-06) |
-| CA | US President 2020 | -12.50 | -12.10 | -12.49 | ok | -11.12 | yes | explained | https://planscore.org/plan.html?20251109T005753.161170853Z (2026-10-06) |
-| CO | US President 2016 | +5.40 | +2.71 | +5.37 | ok | -2.46 | yes | explained | https://planscore.org/plan.html?20251203T023818.696378561Z (2026-10-06) |
-| CO | US President 2020 | +1.40 | +1.52 | +1.38 | ok | -2.46 | yes | explained | https://planscore.org/plan.html?20251203T023818.696378561Z (2026-10-06) |
-| MI | US President 2016 | +3.60 | +3.90 | +3.61 | ok | +5.98 | yes | explained | https://planscore.org/plan.html?20211102T180623.315151618Z (2026-10-06) |
-| MI | US President 2020 | -1.00 | -0.30 | -1.02 | ok | +5.98 | yes | explained | https://planscore.org/plan.html?20211102T180623.315151618Z (2026-10-06) |
-| NV | US President 2016 | -22.40 | -18.29 | -22.41 | ok | -18.76 | yes | explained | https://planscore.org/plan.html?20251203T023643.541161352Z (2026-10-06) |
-| NV | US President 2020 | -22.60 | -19.13 | -22.55 | ok | -18.76 | yes | explained | https://planscore.org/plan.html?20251203T023643.541161352Z (2026-10-06) |
-| PA | US President 2016 | +2.20 | +0.01 | +2.18 | ok | +1.43 | yes | explained | https://planscore.org/plan.html?20251203T023833.200573530Z (2026-10-06) |
-| PA | US President 2020 | -1.70 | -3.03 | -1.74 | ok | +1.43 | yes | explained | https://planscore.org/plan.html?20251203T023833.200573530Z (2026-10-06) |
-| WI | US President 2016 | +24.20 | +24.50 | +24.18 | ok | +25.68 | yes | explained | https://planscore.org/plan.html?20251203T023843.240634454Z (2026-10-06) |
-| WI | US President 2020 | +25.60 | +26.72 | +25.64 | ok | +25.68 | yes | explained | https://planscore.org/plan.html?20251203T023843.240634454Z (2026-10-06) |
+| State | Election | PlanScore | Ours on PlanScore's votes | Equal-turnout formula | Reproduced | Ours on our votes | Largest district difference | Votes | Our composite, enacted map | Same map | Composite | Source |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| AZ | US President 2016 | +12.90 | +19.61 | +12.89 | ok | +19.63 | 0.32% | ok | +22.08 | yes | explained | https://planscore.org/plan.html?20251203T023738.531981083Z (2026-10-06) |
+| AZ | US President 2020 | -5.20 | -2.74 | -5.24 | ok | -2.75 | 0.27% | ok | +22.08 | yes | explained | https://planscore.org/plan.html?20251203T023738.531981083Z (2026-10-06) |
+| CA | US President 2020 | -12.50 | -12.10 | -12.49 | ok | -12.10 | 2.29% | ok | -11.12 | yes | explained | https://planscore.org/plan.html?20251109T005753.161170853Z (2026-10-06) |
+| CO | US President 2016 | +5.40 | +2.71 | +5.37 | ok | +2.69 | 0.51% | ok | -2.46 | yes | explained | https://planscore.org/plan.html?20251203T023818.696378561Z (2026-10-06) |
+| CO | US President 2020 | +1.40 | +1.52 | +1.38 | ok | +1.52 | 0.49% | ok | -2.46 | yes | explained | https://planscore.org/plan.html?20251203T023818.696378561Z (2026-10-06) |
+| MI | US President 2016 | +3.60 | +3.90 | +3.61 | ok | +3.88 | 0.83% | ok | +5.98 | yes | explained | https://planscore.org/plan.html?20211102T180623.315151618Z (2026-10-06) |
+| MI | US President 2020 | -1.00 | -0.30 | -1.02 | ok | -0.34 | 0.82% | ok | +5.98 | yes | explained | https://planscore.org/plan.html?20211102T180623.315151618Z (2026-10-06) |
+| NV | US President 2016 | -22.40 | -18.29 | -22.41 | ok | -18.27 | 0.12% | ok | -18.76 | yes | explained | https://planscore.org/plan.html?20251203T023643.541161352Z (2026-10-06) |
+| NV | US President 2020 | -22.60 | -19.13 | -22.55 | ok | -19.13 | 0.13% | ok | -18.76 | yes | explained | https://planscore.org/plan.html?20251203T023643.541161352Z (2026-10-06) |
+| PA | US President 2016 | +2.20 | +0.01 | +2.18 | ok | +0.01 | 0.25% | ok | +1.43 | yes | explained | https://planscore.org/plan.html?20251203T023833.200573530Z (2026-10-06) |
+| PA | US President 2020 | -1.70 | -3.03 | -1.74 | ok | -3.07 | 0.52% | ok | +1.43 | yes | explained | https://planscore.org/plan.html?20251203T023833.200573530Z (2026-10-06) |
+| WI | US President 2016 | +24.20 | +24.50 | +24.18 | ok | +24.49 | 0.13% | ok | +25.68 | yes | explained | https://planscore.org/plan.html?20251203T023843.240634454Z (2026-10-06) |
+| WI | US President 2020 | +25.60 | +26.72 | +25.64 | ok | +26.71 | 0.10% | ok | +25.68 | yes | explained | https://planscore.org/plan.html?20251203T023843.240634454Z (2026-10-06) |
 
 ## Dave's Redistricting App
 

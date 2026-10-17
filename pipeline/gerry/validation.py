@@ -26,7 +26,11 @@ from gerry.metrics import dem_wins, efficiency_gap
 
 SHARE_TOLERANCE = 0.005       # 0.5 percentage point, as a fraction
 EXPECTED_PLANS = 5000
-CHECK_KEYS = ("cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction", "planscore", "state_files")
+CHECK_KEYS = ("cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction", "planscore", "planscore_votes",
+              "state_files")
+# PlanScore against our own district votes of the same election, on the same map (review of October 2026):
+PLANSCORE_VOTE_TOLERANCE = 0.03   # largest relative difference of a district's Democratic or Republican votes
+PLANSCORE_EG_TOLERANCE = 0.001    # 0.1 point between our EG on our votes and our EG on PlanScore's votes
 PLANSCORE_COLUMNS = ("state", "election", "url", "accessed", "same_map", "planscore_eg_pct",
                      "planscore_favors", "district", "dem_votes", "rep_votes")
 # tools/compare_state_files.py (Phase 3) imports this tuple and writes state_files.csv with it.
@@ -102,8 +106,47 @@ def planscore_comparison(df: pd.DataFrame) -> list[dict]:
             "tolerance": 0.5 * 10.0 ** -decimals / 100,
             "reproduced": efficiency_gap(d, r, wins),
             "equal_turnout": equal_turnout_gap(d, r, wins),
+            "districts": {_district_key(k): (float(dv), float(rv)) for k, dv, rv in zip(rows["district"], d, r)},
         })
     return out
+
+
+def _district_key(value) -> str:
+    """"01", "1" and 1 give "1", so PlanScore's numbers and ours meet."""
+    text = str(value).strip()
+    return str(int(text)) if text.isdigit() else text
+
+
+def _year_of(election: str) -> str | None:
+    """"16" or "20" for the presidential election of 2016 or 2020, else None."""
+    if "president" not in election.lower():
+        return None
+    return next((year[2:] for year in ("2016", "2020") if year in election), None)
+
+
+def vote_comparison(c: dict, ours: list[dict], state: dict, year: str) -> dict:
+    """Our enacted district votes of one election against PlanScore's, for a plan that is our map.
+
+    largest: the largest relative difference of a district's Democratic or Republican votes;
+    eg: our wasted-votes EG on our own votes of that election; composite: our composite EG computed
+    again from the district list in metrics.json, ties to the 2020 winner as in 03_metrics.
+    matched is False when the district numbers differ."""
+    by_key = {_district_key(row["district"]): row for row in ours}
+    keys = sorted(c["districts"])
+    if set(keys) != set(by_key):
+        return {"matched": False, "largest": float("inf"), "eg": float("nan"), "composite": float("nan")}
+    d = np.array([by_key[k][f"d_pre_{year}"] for k in keys], dtype=float)
+    r = np.array([by_key[k][f"r_pre_{year}"] for k in keys], dtype=float)
+    ps_d = np.array([c["districts"][k][0] for k in keys])
+    ps_r = np.array([c["districts"][k][1] for k in keys])
+    largest = float(max(np.max(np.abs(d / ps_d - 1)), np.max(np.abs(r / ps_r - 1))))
+    rows = state["districts"]
+    cd = np.array([x["d"] for x in rows], dtype=float)
+    cr = np.array([x["r"] for x in rows], dtype=float)
+    d20 = np.array([by_key[_district_key(x["id"][2:])]["d_pre_20"] for x in rows], dtype=float)
+    r20 = np.array([by_key[_district_key(x["id"][2:])]["r_pre_20"] for x in rows], dtype=float)
+    return {"matched": True, "largest": largest, "eg": efficiency_gap(d, r, dem_wins(d, r)),
+            "composite": efficiency_gap(cd, cr, dem_wins(cd, cr, d20, r20))}
 
 
 class _Ledger:
@@ -275,11 +318,18 @@ def _planscore(metrics: dict, crosscheck_dir: Path, ledger: _Ledger) -> str:
             "the CSV records the size and the party PlanScore names. \"Equal-turnout formula\" is PlanScore's "
             "own formula on its own district votes; it must match PlanScore to the rounding of its printed "
             "value. \"Ours on PlanScore's votes\" is our wasted-votes EG on the same votes; the two differ "
-            "when turnout differs between districts."]
+            "when turnout differs between districts. \"Ours on our votes\" is our wasted-votes EG on our own "
+            "district votes of the same election. When the plan is our enacted map, column \"Votes\" requires "
+            f"that no district's Democratic or Republican votes differ from PlanScore's by more than "
+            f"{PLANSCORE_VOTE_TOLERANCE:.0%}, that ours on our votes lies within {100 * PLANSCORE_EG_TOLERANCE:.1f} "
+            "point of ours on PlanScore's votes, and that our composite follows from our district votes. "
+            "The composite adds 2016 and 2020, so it differs from PlanScore's single elections by design; "
+            "column \"Composite\" needs an explanation."]
     df = read_crosscheck(crosscheck_dir / "planscore.csv", PLANSCORE_COLUMNS)
     if df is None:
         ledger.pending.append("data/crosscheck/planscore.csv not found")
         return "\n\n".join(head + ["Pending: data/crosscheck/planscore.csv not found."])
+    votes_all = metrics.get("checks", {}).get("district_votes", {})
     rows = []
     for c in planscore_comparison(df):
         state = c["state"]
@@ -289,14 +339,63 @@ def _planscore(metrics: dict, crosscheck_dir: Path, ledger: _Ledger) -> str:
         repro = ledger.judge(state, "planscore_reproduction", repro_ok,
                              f"PlanScore {_eg(c['planscore'])}, equal-turnout formula {_eg(c['equal_turnout'])}")
         ours = metrics["states"][state]["eg"]["value"]
+        year = _year_of(c["election"])
+        on_ours, largest = "", ""
+        if not c["same_map"]:
+            votes = "different map"
+        elif year is None:
+            votes = "not 2016 or 2020"
+        elif state not in votes_all or "districts" not in metrics["states"][state]:
+            ledger.pending.append(f"{state} {c['election']}: our district votes are not in metrics.json")
+            votes = "pending"
+        else:
+            cmp = vote_comparison(c, votes_all[state], metrics["states"][state], year)
+            ok = (cmp["matched"] and cmp["largest"] <= PLANSCORE_VOTE_TOLERANCE
+                  and abs(cmp["eg"] - c["reproduced"]) <= PLANSCORE_EG_TOLERANCE + 1e-12
+                  and abs(cmp["composite"] - ours) <= 1e-9)
+            what = (f"{c['election']}: districts do not match PlanScore's" if not cmp["matched"] else
+                    f"{c['election']}: largest district vote difference {cmp['largest']:.2%}, our EG on our votes "
+                    f"{_eg(cmp['eg'])} against {_eg(c['reproduced'])} on PlanScore's, our composite {_eg(ours)} "
+                    f"against {_eg(cmp['composite'])} from our district votes")
+            votes = ledger.judge(state, "planscore_votes", ok, what)
+            if cmp["matched"]:
+                on_ours, largest = _eg(cmp["eg"]), f"{cmp['largest']:.2%}"
         composite = ledger.judge(state, "planscore", False,
                                  f"PlanScore {_eg(c['planscore'])}, our composite {_eg(ours)}")
         rows.append((state, c["election"], _eg(c["planscore"]), _eg(c["reproduced"]), _eg(c["equal_turnout"]),
-                     repro, _eg(ours), "yes" if c["same_map"] else "no", composite,
+                     repro, on_ours, largest, votes, _eg(ours), "yes" if c["same_map"] else "no", composite,
                      f"{c['url']} ({c['accessed']})"))
     return "\n\n".join(head + [_table(
         ["State", "Election", "PlanScore", "Ours on PlanScore's votes", "Equal-turnout formula", "Reproduced",
-         "Our composite, enacted map", "Same map", "Composite", "Source"], rows)])
+         "Ours on our votes", "Largest district difference", "Votes", "Our composite, enacted map", "Same map",
+         "Composite", "Source"], rows)])
+
+
+def _runs(metrics: dict) -> str:
+    """ALARM's separate runs per state and for the nation (review of October 2026, finding 2). For information."""
+    head = ["## ALARM runs",
+            "ALARM draws the neutral maps of each state in two or four separate runs (chains). The table lists the "
+            "states where a run has another median of Democratic seats than all runs together, with the median and "
+            "the 5th to 95th percentile per run. Under it, the nation on the first and on the second half of each "
+            "state's runs. For information: nothing here is judged."]
+    checks = metrics.get("checks", {})
+    runs = checks.get("runs")
+    if not runs:
+        return "\n\n".join(head + ["Not in metrics.json."])
+    rows = []
+    for postal in sorted(runs):
+        median = metrics["states"][postal]["neutral"]["median"]
+        chains = runs[postal]["chains"]
+        if any(c["median"] != median for c in chains.values()):
+            rows.append((postal, median, "; ".join(f"run {k}: {c['median']} ({c['p5']} to {c['p95']}, {c['plans']} plans)"
+                                                   for k, c in sorted(chains.items(), key=lambda kv: int(kv[0])))))
+    table = _table(["State", "All runs", "Per run"], rows) if rows else "Every run gives the same median in every state."
+    nat = metrics["national"]["neutral"]
+    halves = checks.get("runs_national", [])
+    nation = _table(["Plans", "Median", "5th percentile", "95th percentile"],
+                    [("All runs", nat["median"], nat.get("p5", ""), nat.get("p95", ""))]
+                    + [(f"Half {i + 1} of the runs", h["median"], h["p5"], h["p95"]) for i, h in enumerate(halves)])
+    return "\n\n".join(head + [table, "District seats of the nation, without the six single-seat states:", nation])
 
 
 def _dra_not_used() -> str:
@@ -348,6 +447,7 @@ def build_report(metrics: dict, crosscheck_dir: Path, notes_path: Path) -> str:
         _whole_unit(metrics, ledger),
         _maps_2024(metrics),
         _plans_and_ties(metrics, ledger),
+        _runs(metrics),
         _join_log(metrics),
         _planscore(metrics, crosscheck_dir, ledger),
         _dra_not_used(),

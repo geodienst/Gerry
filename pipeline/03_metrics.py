@@ -53,6 +53,33 @@ def map_rows(enacted: pd.DataFrame, map_id: str, method: str = "block") -> pd.Da
     return rows.sort_values("district").reset_index(drop=True)
 
 
+def state_runs(ensemble: pd.DataFrame, st: StateConfig) -> tuple[dict, list[np.ndarray]]:
+    """Median and 90% band of the Democratic seats per ALARM chain, the separate runs of the simulation, and the
+    plan counts per seat of the first and the second half of the chains, for the nation (review of October 2026,
+    finding 2: ALARM reruns 11 states because version 15 did not meet its current convergence check)."""
+    seats = seats_by_plan(ensemble)
+    chain = ensemble.drop_duplicates("draw").set_index("draw")["chain"].reindex(seats.index)
+    chains = sorted(int(c) for c in chain.unique())
+    if len(chains) < 2:
+        raise CheckError("ensemble_structure", st.postal, f"{len(chains)} chain, expected two or more")
+    runs = {}
+    for c in chains:
+        samples = seats[chain == c].to_numpy()
+        runs[str(c)] = {"plans": int(samples.size), "median": sample_percentile(samples, 50),
+                        "p5": sample_percentile(samples, 5), "p95": sample_percentile(samples, 95)}
+    half = len(chains) // 2
+    halves = [distribution(seats[chain.isin(part)].to_numpy(), st.seats) for part in (chains[:half], chains[half:])]
+    return {"chains": runs}, halves
+
+
+def district_votes(rows: pd.DataFrame) -> list[dict]:
+    """Votes per enacted district and election, for the PlanScore check in docs/validation.md.
+    A missing election (West Virginia has no 2016 basis) is None."""
+    cols = ("d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20")
+    return [{"district": row["district"], **{c: None if pd.isna(row[c]) else float(row[c]) for c in cols}}
+            for _, row in rows.iterrows()]
+
+
 def map_result(rows: pd.DataFrame, st: StateConfig, map_id: str) -> dict:
     """Seats, shares and the district list of one map."""
     if len(rows) != st.seats or rows["district"].duplicated().any():
@@ -374,7 +401,9 @@ def compute(cfg, idir) -> dict:
     single_seat = read_single_seat_votes(idir, cfg.at_large)
 
     states = {}
-    checks = {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "map_2024": {}, "join_log": join_log}
+    checks = {"plans": {}, "ties": {}, "cd118_vs_alarm": {}, "whole_unit": {}, "map_2024": {}, "district_votes": {},
+              "runs": {}, "join_log": join_log}
+    halves = ([], [])  # per state, the plan counts per seat of the first and the second half of ALARM's chains
     # inputs of the majority thresholds, one entry per state
     votes = {"d": 0.0, "r": 0.0, "enacted_shares": [], "plan_shares": [], "state_shares": [], "state_seats": []}
     senate = {}    # (Democratic, Republican) votes per state for the Senate block
@@ -407,11 +436,18 @@ def compute(cfg, idir) -> dict:
         checks["map_2024"][postal] = {"districts": len(map_rows(enacted, "map_2024")), "changed_blocks": changed,
                                       "seats_2024": states[postal]["redraw"]["seats_2024"],
                                       "seats_enacted": states[postal]["enacted"]}
+        checks["district_votes"][postal] = district_votes(map_rows(enacted, "enacted"))
+        checks["runs"][postal], (first, second) = state_runs(ensemble, st)
+        halves[0].append(first)
+        halves[1].append(second)
         s = states[postal]
         print(f"{postal}: proportional {s['proportional']}, neutral {s['neutral']['median']} "
               f"({s['neutral']['p5']}-{s['neutral']['p95']}), enacted {s['enacted']}")
     national = national_metrics(states, cfg.at_large)
     checks["totals"] = {"district_seats": national["seats"], "at_large": len(cfg.at_large)}
+    # the national neutral-map median and band on each half of the chains, the 44 states convolved as for the site
+    checks["runs_national"] = [{"median": pmf_percentile(pmf, 50), "p5": pmf_percentile(pmf, 5),
+                                "p95": pmf_percentile(pmf, 95)} for pmf in (convolve(h) for h in halves)]
     print(f"US: proportional {national['proportional']}, neutral {national['neutral']['median']} "
           f"({national['neutral']['p5']}-{national['neutral']['p95']}), enacted {national['enacted']}")
     national["majority"] = national_majority(

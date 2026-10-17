@@ -38,7 +38,9 @@ def test_district_votes_splits_ensemble_and_reference(tmp_path):
     stats = read_stats(write_stats(tmp_path / "s.csv", draws=range(2, N_PLANS + 2)))
     ensemble, reference = district_votes(stats, make_state())
     cols = ["state", "draw", "district", "d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20", "d", "r"]
-    assert list(ensemble.columns) == cols and list(reference.columns) == cols
+    # the plans keep ALARM's chain, the run they come from (review of October 2026, finding 2)
+    assert list(ensemble.columns) == cols[:2] + ["chain"] + cols[2:] and list(reference.columns) == cols
+    assert set(ensemble["chain"]) == {1}
     assert len(ensemble) == 2 * N_PLANS
     assert ensemble["draw"].iloc[0] == "2" and ensemble["draw"].iloc[-1] == "5001"
     assert reference.to_dict("records") == [
@@ -53,7 +55,7 @@ def test_district_votes_splits_ensemble_and_reference(tmp_path):
 def test_district_votes_with_one_election(tmp_path):
     stats = read_stats(write_stats(tmp_path / "s.csv", draws=range(1, N_PLANS + 1)))
     ensemble, _ = district_votes(stats, make_state(postal="WV", elections=("pre_20",)))
-    assert list(ensemble.columns) == ["state", "draw", "district", "d_pre_20", "r_pre_20", "d", "r"]
+    assert list(ensemble.columns) == ["state", "draw", "chain", "district", "d_pre_20", "r_pre_20", "d", "r"]
     assert ensemble[["d", "r"]].iloc[0].tolist() == [31.0, 41.0]
 
 
@@ -61,6 +63,14 @@ def test_district_votes_needs_every_district_in_every_plan(tmp_path):
     stats = read_stats(write_stats(tmp_path / "s.csv", draws=range(1, N_PLANS + 1), skip=(17, 2)))
     with pytest.raises(CheckError, match="draw 17"):
         district_votes(stats, make_state())
+
+
+def test_district_votes_needs_a_chain_for_every_plan(tmp_path):
+    path = write_stats(tmp_path / "s.csv", draws=range(1, N_PLANS + 1))
+    text = path.read_text(encoding="utf-8").replace("\n17,1,  1000, 1,", '\n17,1,  1000,"NA",')
+    path.write_text(text, encoding="utf-8")
+    with pytest.raises(CheckError, match="draw 17 has no chain"):
+        district_votes(read_stats(path), make_state())
 
 
 def test_district_votes_needs_5000_plans(tmp_path):

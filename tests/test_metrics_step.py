@@ -71,8 +71,9 @@ def _ensemble():
     rows = []
     for draw, districts in plans.items():
         for i, v in enumerate(districts, start=1):
-            rows.append(["XX", draw, f"{i:02d}"] + _votes(*v))
-    return pd.DataFrame(rows, columns=["state", "draw", "district"] + COLS)
+            # draws 1 and 2 from ALARM's chain 1, 3 and 4 from chain 2
+            rows.append(["XX", draw, 1 if int(draw) <= 2 else 2, f"{i:02d}"] + _votes(*v))
+    return pd.DataFrame(rows, columns=["state", "draw", "chain", "district"] + COLS)
 
 
 def _reference():
@@ -375,7 +376,12 @@ def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
     out = step.compute(cfg, tmp_path)
     assert set(out) == {"national", "states", "checks"}
     # no 2020 shares (pre_20) in the checks since the DRA comparison is gone (Task 2.14x)
-    assert set(out["checks"]) == {"plans", "ties", "cd118_vs_alarm", "whole_unit", "map_2024", "join_log", "totals"}
+    # district_votes, runs and runs_national since the review of October 2026 (findings 4 and 2)
+    assert set(out["checks"]) == {"plans", "ties", "cd118_vs_alarm", "whole_unit", "map_2024", "district_votes", "runs",
+                                  "runs_national", "join_log", "totals"}
+    # draws 1 and 2 (chain 1) give 1 and 2 seats, draws 3 and 4 (chain 2) give 0 and 1
+    assert out["checks"]["runs"]["XX"]["chains"] == {"1": {"plans": 2, "median": 1, "p5": 1, "p95": 2},
+                                                     "2": {"plans": 2, "median": 0, "p5": 0, "p95": 1}}
     assert out["states"]["XX"]["proportional"] == 1             # units 1300 D / 1700 R, as in the hand example
     assert out["checks"]["plans"] == {"XX": 4}
     assert out["checks"]["totals"] == {"district_seats": 3, "at_large": 1}
@@ -569,8 +575,8 @@ def _spread_ensemble():
     rows = []
     for draw, districts in plans.items():
         for i, v in enumerate(districts, start=1):
-            rows.append(["XX", draw, f"{i:02d}"] + _votes(*v))
-    return pd.DataFrame(rows, columns=["state", "draw", "district"] + COLS)
+            rows.append(["XX", draw, 1 if int(draw) <= 2 else 2, f"{i:02d}"] + _votes(*v))
+    return pd.DataFrame(rows, columns=["state", "draw", "chain", "district"] + COLS)
 
 
 def test_state_competitive_percentile_levels():

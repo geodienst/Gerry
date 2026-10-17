@@ -103,7 +103,9 @@ def test_report_cd118_section(crosscheck, notes):
 def test_report_planscore_section(crosscheck, notes):
     report = v.build_report(METRICS, crosscheck, notes)
     # PlanScore +6.70, ours on their votes +6.67, equal-turnout +6.67, our composite +5.00
-    assert "| AA | 2024 U.S. House | +6.70 | +6.67 | +6.67 | ok | +5.00 | yes | explained | https://planscore.org/x (2026-10-12) |" in report
+    # a House election is not a vote basis of ours, so column "Votes" does not judge it
+    assert ("| AA | 2024 U.S. House | +6.70 | +6.67 | +6.67 | ok |  |  | not 2016 or 2020 | +5.00 | yes | explained | "
+            "https://planscore.org/x (2026-10-12) |") in report
     # the sentence above the table names the column that has to match PlanScore
     assert ("\"Equal-turnout formula\" is PlanScore's own formula on its own district votes; "
             "it must match PlanScore to the rounding of its printed value") in report
@@ -256,9 +258,27 @@ def test_report_sections_come_in_the_order_of_the_brief(crosscheck, notes):
     headings = [line[3:] for line in report.splitlines() if line.startswith("## ")]
     assert headings == ["Seat totals", "CD118 maps against ALARM cd_2020",
                         "Whole-unit assignment against block allocation", "Maps of the 2024 election",
-                        "Plans and ties", "Join log",
+                        "Plans and ties", "ALARM runs", "Join log",
                         "PlanScore", "Dave's Redistricting App", "CD120 against state files",
                         "Explanations", "Explanations without an exceedance"]
+
+
+def test_report_runs_section_lists_states_whose_runs_differ(crosscheck, notes):
+    m = copy.deepcopy(METRICS)
+    m["states"]["AA"]["neutral"] = {"median": 2}
+    m["states"]["BB"]["neutral"] = {"median": 1}
+    m["national"]["neutral"].update(p5=1, p95=3)
+    run = lambda median, p5, p95: {"plans": 2500, "median": median, "p5": p5, "p95": p95}  # noqa: E731
+    m["checks"]["runs"] = {"AA": {"chains": {"1": run(2, 1, 3), "2": run(3, 2, 3)}},
+                           "BB": {"chains": {"1": run(1, 0, 1), "2": run(1, 1, 1)}}}
+    m["checks"]["runs_national"] = [{"median": 2, "p5": 1, "p95": 3}, {"median": 3, "p5": 2, "p95": 3}]
+    section = v.build_report(m, crosscheck, notes).split("## ALARM runs")[1].split("\n## ")[0]
+    # AA: run 2 has another median; BB: both runs give 1, so BB is not listed
+    assert "| AA | 2 | run 1: 2 (1 to 3, 2500 plans); run 2: 3 (2 to 3, 2500 plans) |" in section
+    assert "| BB |" not in section
+    assert "| All runs | 2 | 1 | 3 |" in section
+    assert "| Half 2 of the runs | 3 | 2 | 3 |" in section
+    assert "nothing here is judged" in section
 
 
 def test_cd118_other_seat_count_is_open_although_shares_agree(tmp_path):
@@ -367,7 +387,8 @@ def test_planscore_equal_turnout_column_is_its_own_number(tmp_path, notes):
     assert row["reproduced"] == pytest.approx(0.15)
     assert row["equal_turnout"] == pytest.approx(0.15 + 1 / 6)
     report = v.build_report(METRICS, d, notes)
-    assert "| AA | 2024 U.S. House | +31.70 | +15.00 | +31.67 | ok | +5.00 | yes | explained | u (2026-10-12) |" in report
+    assert ("| AA | 2024 U.S. House | +31.70 | +15.00 | +31.67 | ok |  |  | not 2016 or 2020 | +5.00 | yes | explained | "
+            "u (2026-10-12) |") in report
 
 
 def test_reproduction_is_judged_on_the_equal_turnout_number_not_on_ours(tmp_path, notes):
@@ -380,7 +401,8 @@ def test_reproduction_is_judged_on_the_equal_turnout_number_not_on_ours(tmp_path
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     report = v.build_report(METRICS, d, notes)
     assert "- AA planscore_reproduction: PlanScore +15.00, equal-turnout formula +31.67" in report
-    assert "| AA | 2024 U.S. House | +15.00 | +15.00 | +31.67 | open | +5.00 | yes | explained | u (2026-10-12) |" in report
+    assert ("| AA | 2024 U.S. House | +15.00 | +15.00 | +31.67 | open |  |  | not 2016 or 2020 | +5.00 | yes | explained | "
+            "u (2026-10-12) |") in report
 
 
 def _planscore_csv(tmp_path, printed, votes):
@@ -395,14 +417,14 @@ def _planscore_csv(tmp_path, printed, votes):
 def test_reproduction_limit_is_half_the_last_printed_decimal(tmp_path, notes, printed, status):
     # (80,20),(10,30),(25,35): equal-turnout 31.667 points; one printed decimal allows 0.05
     d = _planscore_csv(tmp_path, printed, (("01", 80, 20), ("02", 10, 30), ("03", 25, 35)))
-    assert "| +31.67 | %s | +5.00 |" % status in v.build_report(METRICS, d, notes)
+    assert "| +31.67 | %s |  |  | not 2016 or 2020 | +5.00 |" % status in v.build_report(METRICS, d, notes)
 
 
 def test_reproduction_exactly_half_a_decimal_away_is_in_order(tmp_path, notes):
     # (21000,9000) wins, (2010,7990) loses: V = 23010/40000 = 0.57525, S = 0.5, so equal-turnout
     # is 0.1505 (15.05 points), exactly 0.05 from the printed 15.0; wasted votes (8010-11990)/40000 = -9.95
     d = _planscore_csv(tmp_path, "15.0", (("01", 21000, 9000), ("02", 2010, 7990)))
-    assert "| +15.00 | -9.95 | +15.05 | ok | +5.00 |" in v.build_report(METRICS, d, notes)
+    assert "| +15.00 | -9.95 | +15.05 | ok |  |  | not 2016 or 2020 | +5.00 |" in v.build_report(METRICS, d, notes)
 
 
 @pytest.mark.parametrize("printed, tolerance", [("7", 0.005), ("6.7", 0.0005), ("6.75", 0.00005)])
@@ -453,7 +475,7 @@ def test_note_text_is_folded_to_one_line(tmp_path):
 
 
 @pytest.mark.parametrize("check", ["cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction",
-                                   "planscore", "state_files"])
+                                   "planscore", "planscore_votes", "state_files"])
 def test_load_notes_accepts_each_check_of_the_brief(tmp_path, check):
     p = tmp_path / "notes.yaml"
     p.write_text(f"AA:\n  {check}: Text.\n", encoding="utf-8")
@@ -467,3 +489,88 @@ def test_report_has_a_row_per_state_for_the_maps_of_2024(crosscheck, notes):
     # AA: 120 blocks moved and the seats went from 1 to 2; BB has the same map as in 2024
     assert "| AA | 3 | 120 | 1 | 2 |" in section
     assert "| BB | 2 | 0 | 1 | 1 |" in section
+
+
+# --- PlanScore against our own district votes (review of October 2026, finding 4) -------------------------------
+# AA as the enacted map on the 2020 presidential vote. PlanScore: (60, 40), (30, 70), (45, 55).
+# Ours: (60.1, 40), (30, 70.1), (45, 55): largest difference 0.1 / 60 = 0.17%.
+# Our EG on our votes: wasted D 10.05 + 30 + 45 = 85.05, wasted R 40 + 20.05 + 5 = 65.05, all 300.2 -> +6.66.
+# Our composite: the same districts with the 2016 votes added, (100, 80), (70, 130), (90, 110).
+OURS_2020 = [("01", 60.1, 40.0), ("02", 30.0, 70.1), ("03", 45.0, 55.0)]
+COMPOSITE = [("01", 100.0, 80.0), ("02", 70.0, 130.0), ("03", 90.0, 110.0)]
+
+
+def _composite_eg():
+    d = [c[1] for c in COMPOSITE]
+    r = [c[2] for c in COMPOSITE]
+    return efficiency_gap(d, r, [x > y for x, y in zip(d, r)])
+
+
+def _votes_metrics(ours=OURS_2020, eg=None):
+    m = copy.deepcopy(METRICS)
+    m["states"]["AA"] = {"eg": {"value": _composite_eg() if eg is None else eg},
+                         "districts": [{"id": "99" + k, "d": d, "r": r} for k, d, r in COMPOSITE]}
+    m["checks"]["district_votes"] = {"AA": [{"district": k, "d_pre_16": c[1] - d, "r_pre_16": c[2] - r,
+                                             "d_pre_20": d, "r_pre_20": r}
+                                            for (k, d, r), c in zip(ours, COMPOSITE)]}
+    return m
+
+
+@pytest.fixture
+def president(tmp_path):
+    d = tmp_path / "president"
+    d.mkdir()
+    rows = ["AA,US President 2020,https://planscore.org/x,2026-10-12,yes,6.7,Republicans,%s,%d,%d" % r
+            for r in (("01", 60, 40), ("02", 30, 70), ("03", 45, 55))]
+    (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
+    return d
+
+
+def _open_items(report):
+    return report.split("**Open items")[1].split("\n## ")[0]
+
+
+def test_planscore_votes_match_ours(president, notes):
+    report = v.build_report(_votes_metrics(), president, notes)
+    composite = f"{100 * _composite_eg():+.2f}"
+    assert (f"| AA | US President 2020 | +6.70 | +6.67 | +6.67 | ok | +6.66 | 0.17% | ok | {composite} | yes | "
+            "explained | https://planscore.org/x (2026-10-12) |") in report
+    assert "planscore_votes" not in _open_items(report)
+
+
+def test_planscore_votes_far_from_ours_are_open(president, notes):
+    far = [("01", 63.0, 40.0), ("02", 30.0, 70.0), ("03", 45.0, 55.0)]  # 3 / 60 = 5% more D votes in 01
+    report = v.build_report(_votes_metrics(ours=far), president, notes)
+    assert "- AA planscore_votes: US President 2020: largest district vote difference 5.00%" in _open_items(report)
+
+
+def test_planscore_votes_catch_a_composite_that_does_not_follow_from_the_districts(president, notes):
+    # the reviewer's test: our composite EG for the state set to +100 points
+    report = v.build_report(_votes_metrics(eg=1.0), president, notes)
+    assert "- AA planscore_votes: US President 2020:" in _open_items(report)
+    assert "our composite +100.00 against" in _open_items(report)
+
+
+def test_planscore_votes_can_be_explained(president, tmp_path):
+    p = tmp_path / "notes.yaml"
+    p.write_text("AA:\n  planscore_votes: Made-up explanation.\n", encoding="utf-8")
+    far = [("01", 63.0, 40.0), ("02", 30.0, 70.0), ("03", 45.0, 55.0)]
+    report = v.build_report(_votes_metrics(ours=far), president, p)
+    assert "planscore_votes" not in _open_items(report)
+    assert "- **AA, planscore_votes.** Made-up explanation." in report
+
+
+def test_planscore_votes_pending_without_our_district_votes(president, notes):
+    report = v.build_report(METRICS, president, notes)
+    assert "- AA US President 2020: our district votes are not in metrics.json" in report
+
+
+def test_planscore_votes_not_judged_for_another_map(tmp_path, notes):
+    d = tmp_path / "other"
+    d.mkdir()
+    rows = ["AA,US President 2020,https://planscore.org/x,2026-10-12,no,6.7,Republicans,%s,%d,%d" % r
+            for r in (("01", 60, 40), ("02", 30, 70), ("03", 45, 55))]
+    (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
+    report = v.build_report(_votes_metrics(), d, notes)
+    assert "| different map |" in report
+    assert "planscore_votes" not in _open_items(report)
