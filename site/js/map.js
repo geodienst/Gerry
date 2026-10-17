@@ -192,7 +192,6 @@ export function drawLegend(el, view, colors, close) {
     }
     svg.append('text').attr('x', 10).attr('y', 41).text(LEGEND_TEXT.low);
     svg.append('text').attr('x', width - 10).attr('y', 41).attr('text-anchor', 'end').text(LEGEND_TEXT.high);
-    legend.append('span').attr('class', 'desc').text(`${LEGEND_TEXT.districts} ${LEGEND_TEXT.blank}`);
   } else {
     const boxes = effectBoxes();
     const step = (width - 20) / boxes.length;
@@ -200,6 +199,5 @@ export function drawLegend(el, view, colors, close) {
       svg.append('rect').attr('x', 10 + i * step).attr('y', 4).attr('width', step - 1).attr('height', 12).attr('fill', colors.effect(b.value));
       if (b.label) svg.append('text').attr('x', 10 + i * step + step / 2).attr('y', 28).attr('text-anchor', 'middle').text(b.label);
     });
-    legend.append('span').attr('class', 'desc').text(`${LEGEND_TEXT.states} ${LEGEND_TEXT.blank}`);
   }
 }

@@ -137,7 +137,7 @@ svg { display: block; width: 100%; height: auto; }
   .atlas:is(:fullscreen, .is-full) .mapbox { grid-area: 1 / 1; }
   .atlas:is(:fullscreen, .is-full) .mapbar { grid-row: 2; justify-content: flex-end; }
   .atlas:is(:fullscreen, .is-full) > .record { grid-area: side; gap: 0.55rem; padding: 0.8rem 1rem; }
-  .atlas:is(:fullscreen, .is-full) :is(#tapline, #maphint, .colors) { display: none; }
+  .atlas:is(:fullscreen, .is-full) :is(#tapline, .colors) { display: none; }
   .atlas:is(:fullscreen, .is-full) > .sheet-more:not([hidden]) { grid-area: more; display: grid;
     grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(22rem, 28%); gap: 0.5rem 1.6rem; align-items: start;
     border-top: 1px solid var(--rule); padding-top: 0.7rem; max-height: 40vh; overflow: auto; }
@@ -162,7 +162,6 @@ svg { display: block; width: 100%; height: auto; }
     background: color-mix(in srgb, var(--sheet) 75%, transparent); border: 1px solid var(--rule); border-radius: 4px; }
   .atlas:is(:fullscreen, .is-full) .maphead .legend { position: absolute; left: 0.8rem; bottom: 0.6rem; padding: 0.4rem 0.6rem;
     background: color-mix(in srgb, var(--sheet) 75%, transparent); border: 1px solid var(--rule); border-radius: 4px; }
-  .atlas:is(:fullscreen, .is-full) .legend .desc { display: none; }
 }
 /* Share (owner, October 14, 2026): one quiet button with the usual share icon, at the right of the key findings,
    under the map and beside the seat counts of chapter 02; the short note after a copy */
@@ -177,11 +176,10 @@ svg { display: block; width: 100%; height: auto; }
   background: var(--fg); color: var(--sheet); border-radius: 4px; font-size: 0.875rem; }
 body.map-full { overflow: hidden; }
 .gesture { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 12, 16, 0.6); color: #fff; font-size: 1.1rem; pointer-events: none; text-align: center; padding: 1rem; }
-.maphint { font-size: 0.8rem; color: var(--muted); margin: 0; }
 .tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
 .tip b, .tip span { display: block; }
-/* the title and legend of the map, under it in the block with the hints (owner, October 13, 2026) */
+/* the title and legend of the map, under it in the block with the tap line, the colors and Share (owner, October 13, 2026) */
 .maphead { display: grid; gap: 0.35rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--rule); }
 .maptitle { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; color: var(--fg); letter-spacing: 0; text-transform: none; }
 /* The color choice is a quiet setting under the map, apart from the view buttons. */

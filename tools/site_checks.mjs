@@ -80,6 +80,13 @@ async function map(t) {
   const legend = await t.text('#legend');
   t.check('the district legend runs from 20% to 80% with both ends named',
     ['20%', '80%', 'More Republican', 'More Democratic'].every((part) => legend.includes(part)));
+  // no hint line under the map and no sentence under the legend, in any view (owner, October 17, 2026)
+  const quiet = "!document.getElementById('maphint') && !document.querySelector('#legend .desc') && !document.getElementById('legend').textContent.includes('at-large')";
+  const quietDistricts = await t.js(quiet);
+  await t.js("document.getElementById('view-states').click()");
+  const quietStates = await t.js(quiet);
+  await t.js("document.getElementById('view-districts').click()");
+  t.check('no hint line under the map and no sentence under the legend', quietDistricts && quietStates);
   const fills = "[...document.querySelectorAll('#map path.district')].slice(0, 30).map((p) => p.getAttribute('fill')).join()";
   const party = await t.js(fills);
   await t.js("document.getElementById('palette-neutral').click()");
@@ -911,13 +918,12 @@ async function fullscreen(t) {
       folds: [...document.querySelectorAll('#sheet-more details.fold summary')].map((s) => s.textContent).join() === 'Other measures,Notes',
       foot: !!foot && foot.textContent.includes(' \u00b7 Challenged in court \u00b7 Legal status as of') && foot.textContent.includes('Adopted by'),
       kept: !!document.querySelector('#sheet .headline') && !!document.querySelector('#sheet .k'),
-      noHints: ['tapline', 'maphint'].every((id) => !document.getElementById(id).checkVisibility()) && !document.querySelector('.colors').checkVisibility(),
+      noHints: !document.getElementById('tapline').checkVisibility() && !document.querySelector('.colors').checkVisibility(),
       shareUnderMap: document.getElementById('map-share').checkVisibility() && share.top >= map.bottom - 1 && share.right <= map.right + 1
         && share.bottom <= more.top + 1,
       sideFits: document.getElementById('sheet').scrollHeight <= document.getElementById('sheet').clientHeight + 2,
       stripFits: document.getElementById('sheet-more').scrollHeight <= document.getElementById('sheet-more').clientHeight + 2,
-      inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top,
-      desc: [...document.querySelectorAll('#legend .desc')].every((d) => !d.checkVisibility()) }; })()`);
+      inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top }; })()`);
   t.check('1920 x 1080: full screen as in the mockup: the whole Texas record on the right, a strip under both with the folds under the record, title and legend in the map, Share under it',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
   await t.screenshot('map-full-1920-texas', { viewport: true });
@@ -937,8 +943,8 @@ async function fullscreen(t) {
   await t.js("location.hash = '#TX'");
   await t.until(`${HEADING} === 'Texas'`);
   await t.key('Escape', 27);
-  t.check('back from full screen the record is whole again, with the hints and Share under the map', await t.js(
-    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.getElementById('maphint').checkVisibility() && document.querySelector('.mapfoot .mapbar').contains(document.getElementById('map-share')) && document.getElementById('map-share').checkVisibility()"));
+  t.check('back from full screen the record is whole again, with the tap line, the colors and Share under the map', await t.js(
+    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.getElementById('tapline').checkVisibility() && document.querySelector('.colors').checkVisibility() && document.querySelector('.mapfoot .mapbar').contains(document.getElementById('map-share')) && document.getElementById('map-share').checkVisibility()"));
   await t.load('', { width: 1280, height: 800 });
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(300);

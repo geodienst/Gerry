@@ -96,15 +96,13 @@ test('stateOptions: with single, also the six single-seat states, marked and sor
   assert.ok(stateOptions(results()).every((o) => o.label === o.name));
 });
 
-test('mapHints: mouse, Mac and touch', () => {
+test('mapHints: mouse, Mac and touch, without a hint line under the map (owner, October 17, 2026)', () => {
   assert.deepEqual(mapHints({ touch: false, mac: false }), {
-    hint: 'Click a state to zoom in on its districts. Ctrl + scroll to zoom, drag to move.',
     wheel: 'Use Ctrl + scroll to zoom the map',
     touch: 'Use two fingers to move the map',
   });
-  assert.equal(mapHints({ touch: false, mac: true }).hint, 'Click a state to zoom in on its districts. ⌘ + scroll to zoom, drag to move.');
   assert.equal(mapHints({ touch: false, mac: true }).wheel, 'Use ⌘ + scroll to zoom the map');
-  assert.equal(mapHints({ touch: true, mac: false }).hint, 'Tap a state to zoom in on its districts. Use two fingers to zoom and move the map.');
+  assert.deepEqual(Object.keys(mapHints({ touch: true, mac: false })), ['wheel', 'touch']);
 });
 
 // --- "Drawing effect by state" (Task 6.4) ---

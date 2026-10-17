@@ -60,7 +60,6 @@ async function main() {
     touch: window.matchMedia('(pointer: coarse)').matches,
     mac: /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
   });
-  $('maphint').textContent = hints.hint;
   const outcomesData = outcomesView(results);
   // the answer under the question in the masthead
   $('keyfacts').replaceChildren(...keyFindings(results).map((text) => {

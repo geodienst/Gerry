@@ -111,10 +111,8 @@ export function stateOptions(results, { single = false } = {}) {
 /** The hint under the map and the messages over it (site design, update of October 7). */
 export function mapHints({ touch, mac }) {
   const key = mac ? '⌘' : 'Ctrl';
+  // no hint line under the map (owner, October 17, 2026); these two only show over the map when a gesture needs them
   return {
-    hint: touch
-      ? 'Tap a state to zoom in on its districts. Use two fingers to zoom and move the map.'
-      : `Click a state to zoom in on its districts. ${key} + scroll to zoom, drag to move.`,
     wheel: `Use ${key} + scroll to zoom the map`,
     touch: 'Use two fingers to move the map',
   };
@@ -125,12 +123,10 @@ export const MAP_TITLES = {
   districts: 'Democratic vote share by district', states: 'Drawing effect by state', close: 'Close districts and swing states',
 };
 
+// the two ends of the district scale; no sentence under the legend (owner, October 17, 2026)
 export const LEGEND_TEXT = {
-  districts: 'Democratic share of the two-party vote.',
-  states: 'Seats the enacted map moves toward one party, compared with the neutral-map median.',
   low: 'More Republican',
   high: 'More Democratic',
-  blank: 'Gray: one at-large seat.',
 };
 
 // --- "Drawing effect by state" and the state sheet (Task 6.4) -----------------------------------
