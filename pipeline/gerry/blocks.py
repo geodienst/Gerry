@@ -102,11 +102,15 @@ def _national(zip_path: str, member: str) -> dict[str, pd.DataFrame]:
 
 
 def read_bef(zip_path: Path, kind: str, fips: str, postal: str) -> pd.Series:
-    """Block -> district code for one state. cd119, cd120: national file; cd118: {fips}_{postal}_CD118.txt."""
+    """Block -> district code for one state. cd119, cd120: national file; cd118: {fips}_{postal}_CD118.txt;
+    cd120_2026_08, the CD120 file of August 31, 2026 kept for Missouri's blocked HB 1: CD120_{fips}.txt."""
     if kind in NATIONAL_FILES:
         table = _national(str(Path(zip_path).resolve()), NATIONAL_FILES[kind]).get(fips)
         if table is None:
             raise BlocksError(f"{postal}: no blocks with FIPS {fips} in {zip_path}")
+    elif kind == "cd120_2026_08":
+        with zipfile.ZipFile(zip_path) as zf, zf.open(f"CD120_{fips}.txt") as fh:
+            table = pd.read_csv(fh, engine="c", usecols=["GEOID", "CDFP"], dtype=str, keep_default_na=False)
     elif kind == "cd118":
         with zipfile.ZipFile(zip_path) as zf, zf.open(f"{fips}_{postal}_CD118.txt") as fh:
             # the header is "GEOID, CDFP", with a space

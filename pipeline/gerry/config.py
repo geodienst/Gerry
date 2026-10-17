@@ -26,12 +26,12 @@ CONTROL_VALUES = ("Republican", "Democratic", "Bipartisan", "Nonpartisan")
 
 _STATE_STATUS = ("In effect", "Challenged")
 _EXTRA_MAP_STATUS = ("Blocked",)
-_BEF = ("cd120", "cd118")
+_BEF = ("cd120", "cd118", "cd120_2026_08")
 _UNIT_KINDS = ("vtd", "tract", "county")
 _FILL_KEYS = ("reference_map", "consequence")
 _RESERVED_MAP_IDS = ("enacted", "check_2022", "map_2024")
 _SOURCE_KEYS = (
-    "dataverse_api", "cd118", "cd119", "cd120", "pl94171", "census_vest",
+    "dataverse_api", "cd118", "cd119", "cd120", "cd120_2026_08", "pl94171", "census_vest",
     "tiger_gpkg", "tiger_mo_cd119", "cb_states", "medsl_president",
 )
 _TOP_KEYS = (

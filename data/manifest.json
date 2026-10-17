@@ -451,6 +451,11 @@
   },
   "census/cd120.zip": {
     "url": "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2027/120-congressional-district-befs/cd120.zip",
+    "size": 55241385,
+    "sha256": "bc9a4fc543b8b279ce3663642a5cc4e19e32a8ef84f12371e26f754e5b8cc8a5"
+  },
+  "census/cd120_2026_08.zip": {
+    "url": "https://github.com/Gl1tchWizard/Gerry/releases/download/data-cd120-2026-08-31/cd120.zip",
     "size": 57246616,
     "sha256": "f3074ac5a3b353f9da22baaeb73c47ddd1c9040fffe7f5131f947f35c25a1097"
   },

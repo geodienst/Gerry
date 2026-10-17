@@ -10,7 +10,7 @@ from gerry.config import (
     data_dir, interim_dir, load_config,
 )
 
-SOURCE_KEYS = ("dataverse_api", "cd118", "cd119", "cd120", "pl94171", "census_vest",
+SOURCE_KEYS = ("dataverse_api", "cd118", "cd119", "cd120", "cd120_2026_08", "pl94171", "census_vest",
                "tiger_gpkg", "tiger_mo_cd119", "cb_states", "medsl_president")
 
 
@@ -222,7 +222,8 @@ def test_real_config_has_six_at_large_states(cfg):
 def test_real_config_status_values(cfg):
     assert {s.status for s in cfg.states.values()} <= {"In effect", "Challenged"}
     extra = [m for s in cfg.states.values() for m in s.extra_maps]
-    assert [(m.id, m.status, m.bef) for m in extra] == [("mo_hb1", "Blocked", "cd120")]
+    # HB 1 comes from the CD120 file of August 31, 2026; Census took it out of CD120 on October 6, 2026
+    assert [(m.id, m.status, m.bef) for m in extra] == [("mo_hb1", "Blocked", "cd120_2026_08")]
 
 
 def test_real_config_ensemble_notes_match_spec(cfg):

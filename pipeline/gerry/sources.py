@@ -211,6 +211,9 @@ def plan_downloads(cfg: Config, dv_files: dict[str, dict]) -> list[Download]:
     # the maps of the 2024 election, reference for the redraws (extensions design, chapter 2)
     plan.append(Download("census/cd119.zip", src["cd119"], None, None))
     plan.append(Download("census/cd120.zip", src["cd120"], None, None))
+    # CD120 as Census published it on August 31, 2026, with Missouri's blocked HB 1 (regenerated without it on
+    # October 6, 2026); the pipeline reads only its Missouri file
+    plan.append(Download("census/cd120_2026_08.zip", src["cd120_2026_08"], None, None))
     for p in postals:
         folder = cfg.states[p].name.replace(" ", "_")
         st = p.lower()

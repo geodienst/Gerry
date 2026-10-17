@@ -39,7 +39,7 @@ def test_maps_of_lists_enacted_extra_check_and_2024_maps():
     cfg = load_config()
     join = load_script()
     assert join.maps_of(cfg.states["NV"]) == [("enacted", "cd120"), ("check_2022", "cd118"), ("map_2024", "cd119")]
-    assert join.maps_of(cfg.states["MO"]) == [("enacted", "cd118"), ("mo_hb1", "cd120"), ("check_2022", "cd118"),
+    assert join.maps_of(cfg.states["MO"]) == [("enacted", "cd118"), ("mo_hb1", "cd120_2026_08"), ("check_2022", "cd118"),
                                               ("map_2024", "cd119")]
 
 

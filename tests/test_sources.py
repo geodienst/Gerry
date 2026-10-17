@@ -297,6 +297,7 @@ SOURCES = {
     "cd118": "https://www2.census.gov/x/cd118.zip",
     "cd119": "https://www2.census.gov/x/cd119.zip",
     "cd120": "https://www2.census.gov/x/cd120.zip",
+    "cd120_2026_08": "https://github.com/x/releases/download/data-cd120-2026-08-31/cd120.zip",
     "pl94171": "https://www2.census.gov/pl/{folder}/{st}2020.pl.zip",
     "census_vest": "https://raw.githubusercontent.com/alarm-redist/census-2020/{commit}/census-vest-2020/{st}_2020_{kind}.csv",
     "tiger_gpkg": "https://www2.census.gov/geo/tiger/TGRGPKG26/tlgpkg_2026_us_legislative.gpkg.zip",
@@ -352,6 +353,9 @@ def test_plan_downloads_follows_the_data_dir_layout():
         # the maps of the 2024 election, reference for the redraws (extensions design, chapter 2)
         Download("census/cd119.zip", "https://www2.census.gov/x/cd119.zip", None, None),
         Download("census/cd120.zip", "https://www2.census.gov/x/cd120.zip", None, None),
+        # CD120 as published on 2026-08-31, with Missouri's blocked HB 1 (taken out on 2026-10-06)
+        Download("census/cd120_2026_08.zip", "https://github.com/x/releases/download/data-cd120-2026-08-31/cd120.zip",
+                 None, None),
         Download("census/pl/ca2020.pl.zip", "https://www2.census.gov/pl/California/ca2020.pl.zip", None, None),
         Download("census/pl/nv2020.pl.zip", "https://www2.census.gov/pl/Nevada/nv2020.pl.zip", None, None),
         Download("census/pl/wv2020.pl.zip", "https://www2.census.gov/pl/West_Virginia/wv2020.pl.zip", None, None),

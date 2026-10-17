@@ -118,6 +118,18 @@ def test_read_bef_cd118_reads_the_state_file(tmp_path):
     assert bef.to_dict() == {"290019501001000": "06", "290019501001001": "06"}
 
 
+def test_read_bef_august_cd120_reads_the_state_file(tmp_path):
+    # the CD120 file of August 31, 2026, kept for Missouri's blocked HB 1: Census took HB 1 out of the file on
+    # October 6, 2026, so the state file of the old archive is read, not the national table
+    path = tmp_path / "cd120_2026_08.zip"
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("NationalCD120.txt", "not read")
+        zf.writestr("CD120_29.txt", "GEOID,STATEFP,COUNTYFP,TRACTCE,BLOCKCE,CDFP\n"
+                                    "290019501001000,29,001,950100,1000,06\n290079501001000,29,007,950100,1000,03\n")
+    bef = read_bef(path, "cd120_2026_08", "29", "MO")
+    assert bef.to_dict() == {"290019501001000": "06", "290079501001000": "03"}
+
+
 def test_read_bef_rejects_an_unknown_kind(tmp_path):
     with pytest.raises(BlocksError, match="cd117"):
         read_bef(make_cd120_zip(tmp_path / "cd120.zip"), "cd117", "01", "AL")
