@@ -380,7 +380,8 @@ async function method(t) {
     'Neutral maps that keep old district cores.', 'The national band.', 'Known limits.', 'Sources.']) {
     t.check(`the method has "${part}"`, text.includes(part));
   }
-  t.check('"Known limits" has ten points', await t.js("document.querySelectorAll('#method ul > li').length === 10"));
+  // eleven since the point on ALARM's separate runs (owner, October 17, 2026)
+  t.check('"Known limits" has eleven points', await t.js("document.querySelectorAll('#method ul > li').length === 11"));
   t.check('the method says both ends of the competitive range count', text.includes('Competitive districts have a Democratic share from 45% to 55%, both included.'));
   t.check('the Louisiana limit gives the plan share in words or as a plain percent',
     /Of the [\d,]+ neutral maps, (more than 99%|less than 1%|\d+%) give \d+ Democratic seats?\./.test(text));
