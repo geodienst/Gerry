@@ -130,8 +130,12 @@ svg { display: block; width: 100%; height: auto; }
 @media (min-width: 900px) {
   .atlas:is(:fullscreen, .is-full) { grid-template-columns: minmax(0, 1fr) minmax(22rem, 28%); grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "map side" "map side"; gap: 1rem; }
-  /* the strip runs on under the record (owner, October 14, 2026); a record taller than the room above it scrolls */
+  /* the strip runs on under the record (owner, October 14, 2026); a record too long for the room above the strip
+     takes the whole height and the strip stays under the map (.long, set in main.js; owner, October 17, 2026) */
   .atlas.has-more:is(:fullscreen, .is-full) { grid-template-areas: "map side" "more more"; }
+  .atlas.has-more.long:is(:fullscreen, .is-full) { grid-template-areas: "map side" "more side"; }
+  .atlas.long:is(:fullscreen, .is-full) > .sheet-more:not([hidden]) { grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(14rem, 20rem); }
+  .atlas.long .fs-folds { padding-inline: 0; }
   /* the map with its title and legend over it in one cell, the share button in a row under it */
   .atlas:is(:fullscreen, .is-full) > .mapcol { grid-area: map; gap: 0.5rem; min-height: 0; }
   .atlas:is(:fullscreen, .is-full) .mapbox { grid-area: 1 / 1; }

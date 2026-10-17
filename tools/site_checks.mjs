@@ -927,24 +927,37 @@ async function fullscreen(t) {
   t.check('1920 x 1080: full screen as in the mockup: the whole Texas record on the right, a strip under both with the folds under the record, title and legend in the map, Share under it',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
   await t.screenshot('map-full-1920-texas', { viewport: true });
-  // a longer record at the same size scrolls inside the right column (Arizona, about four lines), for a person to see
+  // option c (owner, October 17, 2026): a record too long for the room above the strip, such as Arizona at this size,
+  // takes the whole height, and the strip stays under the map
   await t.js("location.hash = '#AZ'");
   await t.until(`${HEADING} === 'Arizona'`);
   await t.sleep(1500); // the zoom to the state has ended
+  const long = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
+    const map = r('mapbox'), side = r('sheet'), more = r('sheet-more'), s = document.getElementById('sheet');
+    return { long: document.querySelector('.atlas').classList.contains('long'), fits: s.scrollHeight <= s.clientHeight + 2,
+      sideDown: side.bottom >= more.bottom - 1, stripUnderMap: more.top >= map.bottom - 1 && more.right <= side.left + 1 }; })()`);
+  t.check('1920 x 1080: the longer Arizona record takes the whole height and the strip stays under the map',
+    Object.values(long).every(Boolean), JSON.stringify(long));
   await t.screenshot('map-full-1920-arizona', { viewport: true });
-  // at 1920 x 1080 a longer record scrolls; on a screen of 2560 x 1440 every record fits whole
-  await t.load('#TX', { width: 2560, height: 1440 });
-  await t.until(`${HEADING} === 'Texas'`);
-  await t.js("document.getElementById('map-full').click()");
-  await t.sleep(400);
-  const over = [];
-  for (const postal of await t.js("[...document.querySelectorAll('#pick option')].map((o) => o.value).filter(Boolean)")) {
-    await t.js(`location.hash = '#${postal}'`);
-    await t.sleep(60);
-    const [scroll, client] = await t.js("(() => { const s = document.getElementById('sheet'); return [s.scrollHeight, s.clientHeight]; })()");
-    if (scroll > client + 2) over.push(`${postal} ${scroll - client}px`);
+  // every state record fits whole in full screen, at 1920 x 1080 and at 2560 x 1440; on the larger screen the strip
+  // runs on under every record
+  for (const [width, height] of [[1920, 1080], [2560, 1440]]) {
+    await t.load('#TX', { width, height });
+    await t.until(`${HEADING} === 'Texas'`);
+    await t.js("document.getElementById('map-full').click()");
+    await t.sleep(400);
+    const over = [];
+    const under = [];
+    for (const postal of await t.js("[...document.querySelectorAll('#pick option')].map((o) => o.value).filter(Boolean)")) {
+      await t.js(`location.hash = '#${postal}'`);
+      await t.sleep(60);
+      const [scroll, client, isLong] = await t.js("(() => { const s = document.getElementById('sheet'); return [s.scrollHeight, s.clientHeight, document.querySelector('.atlas').classList.contains('long')]; })()");
+      if (scroll > client + 2) over.push(`${postal} ${scroll - client}px`);
+      if (isLong) under.push(postal);
+    }
+    t.check(`${width} x ${height}: every state record fits whole in full screen${width === 2560 ? ', with the strip under each record' : ''}`,
+      over.length === 0 && (width !== 2560 || under.length === 0), `${over.join(', ')}; strip under the map only: ${under.join(' ') || 'none'}`);
   }
-  t.check('2560 x 1440: every state record fits whole in full screen', over.length === 0, over.join(', '));
   await t.js("location.hash = '#TX'");
   await t.until(`${HEADING} === 'Texas'`);
   await t.key('Escape', 27);
@@ -981,7 +994,7 @@ async function sharing(t) {
     await t.sleep(100);
     return t.js('window.shared');
   };
-  const page = await t.js('location.origin + location.pathname');
+  const page = 'https://somevotes.org/'; // the site's address, also when the page runs elsewhere (owner, October 17, 2026)
   t.check('Share by the key findings gives the address of the site', (await link('share-site')) === page);
   await t.js("location.hash = '#TX'");
   await t.until(`${HEADING} === 'Texas'`);
@@ -999,7 +1012,7 @@ async function sharing(t) {
   await t.js("document.getElementById('share-site').click()");
   await t.sleep(100);
   t.check('without a share sheet the link goes to the clipboard and a short note says so', await t.js(
-    "window.copied === location.origin + location.pathname && document.querySelector('.share-note')?.textContent === 'Link copied'"));
+    "window.copied === 'https://somevotes.org/' && document.querySelector('.share-note')?.textContent === 'Link copied'"));
   // the shared link opens chapter 02 as it was shared; the explainer waits for Play and the Senate block follows
   await t.load('#outcomes', { query: 'count=neutral&vote=49.2' });
   await t.sleep(1500);

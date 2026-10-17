@@ -1,7 +1,7 @@
 // Tests for site/js/hash.js. Run with: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stateFromHash, linkFor, outcomesLink, outcomesFromSearch } from './hash.js';
+import { stateFromHash, linkFor, outcomesLink, outcomesFromSearch, SITE_URL } from './hash.js';
 
 const STATES = { TX: {}, CA: {}, MO: {} };
 
@@ -41,6 +41,12 @@ test('outcomesLink gives the chosen row and the vote share in percent with one d
   assert.equal(outcomesLink('neutral', 0.492), '?count=neutral&vote=49.2#outcomes');
   assert.equal(outcomesLink('enacted', 0.5179747240856283), '?count=enacted&vote=51.8#outcomes');
   assert.equal(outcomesLink('proportional', 0.5), '?count=proportional&vote=50.0#outcomes');
+});
+
+test('the share links start with the site address, somevotes.org for now (to check before launch)', () => {
+  assert.equal(SITE_URL, 'https://somevotes.org/');
+  assert.equal(`${SITE_URL}${linkFor('TX', '')}`, 'https://somevotes.org/#TX');
+  assert.equal(`${SITE_URL}${outcomesLink('neutral', 0.492)}`, 'https://somevotes.org/?count=neutral&vote=49.2#outcomes');
 });
 
 test('outcomesFromSearch reads a link made by outcomesLink back to the row and the stop of the slider', () => {

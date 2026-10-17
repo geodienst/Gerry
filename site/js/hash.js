@@ -29,6 +29,10 @@ export function linkFor(postal, path) {
   return postal ? `#${postal}` : path;
 }
 
+// The address in the links of the share buttons (owner, October 17, 2026: "url will probably be somevotes.org").
+// To check before launch. The page itself can run elsewhere, such as the preview on claude.ai.
+export const SITE_URL = 'https://somevotes.org/';
+
 /**
  * The link to chapter 02 as the reader set it (owner, October 14, 2026): the chosen row and the national vote share on
  * the slider, in percent with one decimal. "neutral" at 0.492 gives "?count=neutral&vote=49.2#outcomes".

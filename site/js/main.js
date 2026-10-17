@@ -1,7 +1,7 @@
 // Entry point: loads site/data/results.json and site/data/map.topojson, then wires chapter 01, the map and the sheet beside it,
 // chapter 03 and the figure in the method (chapter 04).
 // d3 and topojson come from site/vendor/ as globals; the page makes no other requests.
-import { stateFromHash, linkFor, outcomesLink, outcomesFromSearch } from './hash.js';
+import { stateFromHash, linkFor, outcomesLink, outcomesFromSearch, SITE_URL } from './hash.js';
 import { makeColors } from './colors.js';
 import {
   indexResults, stateOptions, mapHints, effectList, nationalView, methodFills, MAP_TITLES, closeLegend,
@@ -95,10 +95,14 @@ async function main() {
     if (!apart) more.replaceChildren();
     more.hidden = !apart;
     atlas.classList.toggle('has-more', Boolean(apart));
+    atlas.classList.remove('long');
     if (index.single[ui.selected]) renderSingle($('sheet'), singleSeatView(results, ui.selected), back);
     else if (ui.selected && apart) renderStateFull($('sheet'), more, recordView(results, ui.selected), colors, back);
     else if (ui.selected) renderState($('sheet'), recordView(results, ui.selected), colors, back);
     else renderList($('sheet'), effectList(results), colors, (postal) => select(postal, { push: true, focus: true }), ui);
+    // The strip runs on under the record when the record fits above it; a longer record takes the whole height and
+    // the strip stays under the map (owner, October 17, 2026, option c).
+    if (apart) atlas.classList.toggle('long', $('sheet').scrollHeight > $('sheet').clientHeight + 2);
   }
 
   function paint() {
@@ -229,12 +233,12 @@ async function main() {
       setTimeout(() => note.remove(), 2000);
     } catch { /* the reader closed the share sheet */ }
   }
-  const page = () => `${location.origin}${location.pathname}`;
-  $('share-site').addEventListener('click', () => share(page()));
-  $('map-share').addEventListener('click', () => share(`${page()}${linkFor(ui.selected, '')}`));
+  // the links name the site's own address, also when the page runs elsewhere (SITE_URL in hash.js)
+  $('share-site').addEventListener('click', () => share(SITE_URL));
+  $('map-share').addEventListener('click', () => share(`${SITE_URL}${linkFor(ui.selected, '')}`));
   $('outcomes-share').addEventListener('click', () => {
     const { key, index } = outcomes.state();
-    share(`${page()}${outcomesLink(key, outcomesData.points[index].share)}`);
+    share(`${SITE_URL}${outcomesLink(key, outcomesData.points[index].share)}`);
   });
 
   const decide = decideView(results);
