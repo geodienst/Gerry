@@ -927,6 +927,11 @@ async function fullscreen(t) {
   t.check('1920 x 1080: full screen as in the mockup: the whole Texas record on the right, a strip under both with the folds under the record, title and legend in the map, Share under it',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
   await t.screenshot('map-full-1920-texas', { viewport: true });
+  // a longer record at the same size scrolls inside the right column (Arizona, about four lines), for a person to see
+  await t.js("location.hash = '#AZ'");
+  await t.until(`${HEADING} === 'Arizona'`);
+  await t.sleep(1500); // the zoom to the state has ended
+  await t.screenshot('map-full-1920-arizona', { viewport: true });
   // at 1920 x 1080 a longer record scrolls; on a screen of 2560 x 1440 every record fits whole
   await t.load('#TX', { width: 2560, height: 1440 });
   await t.until(`${HEADING} === 'Texas'`);
