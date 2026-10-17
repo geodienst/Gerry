@@ -68,7 +68,7 @@ sources:
 # 53 R, 45 D, 2 independents who caucus with the Democrats (counted as D). The vice president, a Republican,
 # breaks a 50-50 tie. Listed with its sources in the Senate section of data/sources.md.
 senate_2026:
-  checked: 2026-10-13
+  checked: 2026-10-17
   sources:
     - https://www.senate.gov/senators/Class_II.htm
     - https://www.senate.gov/senators/Class_III.htm

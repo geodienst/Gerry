@@ -126,7 +126,7 @@ The ALARM simulations use the maps of the 2022 election as their reference plan.
 
 ## Senate seats on the ballot in 2026
 
-Checked 2026-10-13, in `pipeline/config.yaml` under `senate_2026`. The Senate block of chapter 03 uses this list.
+Checked 2026-10-17, in `pipeline/config.yaml` under `senate_2026`. The Senate block of chapter 03 uses this list. Since the check of 2026-10-13 two Class II seats have new holders of the same party, so nothing changes in the counts: Oklahoma (Alan Armstrong, R) and South Carolina (Darline Graham, R).
 
 - Party division of the 119th Congress: 53 Republicans, 45 Democrats and 2 independents who caucus with the Democrats ([U.S. Senate, Party Division](https://www.senate.gov/history/partydiv.htm)). The site counts the independents with the Democrats: 47 against 53.
 - On the ballot on November 3, 2026: the 33 Class II seats, 13 held by Democrats and 20 by Republicans ([U.S. Senate, Class II](https://www.senate.gov/senators/Class_II.htm)), and special elections for two Class III seats held by appointees: Florida (Ashley Moody, R, in the seat Marco Rubio left) and Ohio (Jon Husted, R, in the seat JD Vance left) ([U.S. Senate, Class III](https://www.senate.gov/senators/Class_III.htm); [Ballotpedia, Florida](https://ballotpedia.org/United_States_Senate_special_election_in_Florida,_2026), [Ballotpedia, Ohio](https://ballotpedia.org/United_States_Senate_special_election_in_Ohio,_2026)).
