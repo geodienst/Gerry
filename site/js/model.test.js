@@ -5,7 +5,7 @@ import { results, withExtensions } from './testdata.js';
 import {
   AT_LARGE_TEXT, indexResults, districtLabel, districtTip, stateTip, tapLine, stateOptions, mapHints,
   isClose, isSwing, closeness, closeTip, closeLegend, MAP_TITLES,
-  effectList, positionText, stateSheet, nationalView, methodFills, houseOf,
+  effectList, positionText, stateSheet, nationalView, methodFills, houseOf, districtShares, closeDistricts,
 } from './model.js';
 
 // --- the map (Task 6.2) ---
@@ -318,4 +318,35 @@ test('methodFills: plans, states, ALARM version, dates and Louisiana', () => {
     'la-seats': '1 Democratic seat',
     'share-2024': '49.2%', // the Democratic share of the 2024 presidential vote, for the method
   });
+});
+
+// --- the column beside the map without a state, per view (owner, October 18, 2026) ---
+
+test('districtShares: the districts of the 2026 maps in five-point bins, blue from 50%', () => {
+  // testdata: TX 27.04%, 46.91%, 42.48%, 41.00% and HI 62.13%, 70.11%; the other states have no districts
+  const view = districtShares(results());
+  assert.equal(view.title, 'Districts by Democratic share');
+  assert.equal(view.count, 'Democrats win 2 of 6 districts.');
+  assert.equal(view.hint, 'Click a state on the map for its record.');
+  // from the bin of the lowest share (25%) to the bin of the highest (70%)
+  assert.deepEqual(view.bins.map((b) => [Math.round(b.lo * 100), b.n, b.dem]), [
+    [25, 1, false], [30, 0, false], [35, 0, false], [40, 2, false], [45, 1, false],
+    [50, 0, true], [55, 0, true], [60, 1, true], [65, 0, true], [70, 1, true],
+  ]);
+  assert.equal(view.bins[3].title, '40 to 45%: 2 districts');
+  assert.equal(view.bins[0].title, '25 to 30%: 1 district');
+  assert.equal(view.label, 'Bar chart: 6 districts by Democratic share in steps of 5 points, 2 above 50%.');
+});
+
+test('closeDistricts: districts from 45% to 55%, both included, closest to 50% first', () => {
+  const view = closeDistricts(results());
+  assert.equal(view.title, 'Close districts, 45 to 55%');
+  assert.deepEqual(view.rows.map((r) => [r.label, r.text, r.dem, r.postal]), [['TX-9', '46.9%', false, 'TX']]);
+  assert.equal(view.count, '1 on the 2026 maps.');
+  assert.equal(view.hint, 'Click a district to zoom in.');
+  // the bounds count, and a tie goes by the distance to 50%, then by the label
+  const r = results();
+  r.states.TX.districts = [{ id: '4801', share: 0.45 }, { id: '4802', share: 0.55 }, { id: '4803', share: 0.5501 },
+    { id: '4804', share: 0.499 }];
+  assert.deepEqual(closeDistricts(r).rows.map((x) => x.label), ['TX-4', 'TX-1', 'TX-2']);
 });

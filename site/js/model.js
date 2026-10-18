@@ -322,3 +322,42 @@ export function methodFills(results) {
     ...(results.national.president ? { 'share-2024': share(results.national.president['2024']) } : {}),
   };
 }
+
+// --- The column beside the map without a state follows the view of the map (owner, October 18, 2026) ----------
+// "States: drawing effect" keeps effectList; the two district views get these.
+
+const districtsOf = (results) => Object.entries(results.states).flatMap(([postal, s]) => s.districts.map((d) => ({ ...d, postal })));
+
+/** "Districts: Democratic share": the districts of the 2026 maps in five-point bins of the Democratic share, from the
+ *  bin of the lowest share to that of the highest. A bin counts as Democratic from 50% on. */
+export function districtShares(results) {
+  const all = districtsOf(results).map((d) => d.share);
+  const dem = all.filter((v) => v > 0.5).length;
+  const first = Math.floor(Math.min(...all) * 20);
+  const last = Math.min(19, Math.floor(Math.max(...all) * 20));
+  const bins = [];
+  for (let k = first; k <= last; k += 1) {
+    const n = all.filter((v) => Math.min(19, Math.floor(v * 20)) === k).length;
+    bins.push({ lo: k / 20, hi: (k + 1) / 20, n, dem: k >= 10, title: `${5 * k} to ${5 * k + 5}%: ${count(n)} ${plural(n, 'district', 'districts')}` });
+  }
+  return {
+    title: 'Districts by Democratic share',
+    count: `Democrats win ${count(dem)} of ${count(all.length)} districts.`,
+    bins,
+    hint: 'Click a state on the map for its record.',
+    label: `Bar chart: ${count(all.length)} districts by Democratic share in steps of 5 points, ${count(dem)} above 50%.`,
+  };
+}
+
+/** "Districts: close races": the districts from 45% to 55%, both included as in the method, closest to 50% first. */
+export function closeDistricts(results) {
+  const rows = districtsOf(results).filter((d) => d.share >= 0.45 && d.share <= 0.55)
+    .map((d) => ({ id: d.id, postal: d.postal, label: districtLabel(d.id, d.postal), share: d.share, text: share(d.share), dem: d.share > 0.5 }))
+    .sort((a, b) => Math.abs(a.share - 0.5) - Math.abs(b.share - 0.5) || a.label.localeCompare(b.label));
+  return {
+    title: 'Close districts, 45 to 55%',
+    count: `${count(rows.length)} on the 2026 maps.`,
+    rows,
+    hint: 'Click a district to zoom in.',
+  };
+}
