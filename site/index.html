@@ -49,6 +49,10 @@
         <div class="atlas">
           <div class="mapcol">
             <div class="mapbox" id="mapbox">
+              <div class="maphead">
+                <h3 class="maptitle" id="map-title">Democratic vote share by district</h3>
+                <div class="legend" id="legend"></div>
+              </div>
               <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of the U.S. congressional districts. Choose a state with the State menu or the list."></svg>
               <div class="zoombar">
                 <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
@@ -63,10 +67,6 @@
               <div class="tip" id="tip" hidden></div>
             </div>
             <div class="mapfoot">
-              <div class="maphead">
-                <h3 class="maptitle" id="map-title">Democratic vote share by district</h3>
-                <div class="legend" id="legend"></div>
-              </div>
               <p class="tapline" id="tapline" aria-live="polite"></p>
               <div class="mapbar">
                 <div class="colors" role="group" aria-labelledby="colors-label">

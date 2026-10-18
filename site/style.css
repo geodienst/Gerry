@@ -80,9 +80,9 @@ a { color: var(--ink); }
 /* Chapter 02: map and record side by side from 900px; the record is at least 22rem and otherwise 30% wide. */
 .atlas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(22rem, 30%); gap: clamp(1.2rem, 2.5vw, 2rem); align-items: stretch; }
 @media (max-width: 899.98px) { .atlas { grid-template-columns: minmax(0, 1fr); } }
-/* The map column in three boxes like the record beside it: title and key, the map, and the hints under it;
-   the last box stretches to the bottom of the record. */
-.mapcol { display: grid; grid-template-rows: auto 1fr; gap: 0.7rem; min-width: 0; }
+/* The map column: the map box with its title and legend, and under it the box with the tap line, the colors and
+   Share. Both are as high as their content (owner, October 18, 2026: no box stretches without content). */
+.mapcol { display: grid; grid-template-rows: auto auto; align-content: start; gap: 0.7rem; min-width: 0; }
 .mapfoot { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.5rem; align-content: start; }
 
 .seg { display: inline-flex; border: 1px solid var(--rule); }
@@ -122,7 +122,12 @@ svg { display: block; width: 100%; height: auto; }
 .atlas:is(:fullscreen, .is-full) .mapcol { grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
 .atlas:is(:fullscreen, .is-full) .mapbox { min-height: 0; height: 100%; }
 .atlas:is(:fullscreen, .is-full) #map { width: 100%; height: 100%; }
-.atlas:is(:fullscreen, .is-full) > .record { overflow: auto; min-height: 0; }
+.atlas:is(:fullscreen, .is-full) > .record { overflow: auto; min-height: 0; align-self: stretch; }
+/* in full screen the title and the legend lie over the map (owner, October 14, 2026) */
+.atlas:is(:fullscreen, .is-full) .mapbox { display: block; }
+.atlas:is(:fullscreen, .is-full) .maphead { display: block; position: absolute; inset: 1px; pointer-events: none; }
+.atlas:is(:fullscreen, .is-full) .mapbox .maptitle { position: absolute; top: 0.6rem; left: 0.8rem; margin: 0; }
+.atlas:is(:fullscreen, .is-full) .mapbox .maphead .legend { position: absolute; left: 0.8rem; bottom: 0.6rem; margin: 0; }
 @media (min-width: 900px) { .atlas:is(:fullscreen, .is-full) { grid-template-rows: minmax(0, 1fr); } }
 /* Full screen after the owner's mockup (October 14, 2026): the map large with its title and legend inside it, a state
    record on the right in its own order, and a strip under both with the sorted districts, their notes and two folds */
@@ -160,12 +165,6 @@ svg { display: block; width: 100%; height: auto; }
   .record .foot { border-top: 1px solid var(--rule); padding-top: 0.7rem; display: grid; gap: 0.2rem; }
   .record .foot p { margin: 0; }
   .atlas:is(:fullscreen, .is-full) .mapfoot { display: contents; }
-  .atlas:is(:fullscreen, .is-full) .maphead { grid-area: 1 / 1; position: relative; margin: 1px; padding: 0; border: 0; pointer-events: none;
-    display: block; min-height: 0; }
-  .atlas:is(:fullscreen, .is-full) .maptitle { position: absolute; top: 0.6rem; left: 0.8rem; padding: 0.3rem 0.6rem;
-    background: color-mix(in srgb, var(--sheet) 75%, transparent); border: 1px solid var(--rule); border-radius: 4px; }
-  .atlas:is(:fullscreen, .is-full) .maphead .legend { position: absolute; left: 0.8rem; bottom: 0.6rem; padding: 0.4rem 0.6rem;
-    background: color-mix(in srgb, var(--sheet) 75%, transparent); border: 1px solid var(--rule); border-radius: 4px; }
 }
 /* Share (owner, October 14, 2026): one quiet button with the usual share icon, at the right of the key findings,
    under the map and beside the seat counts of chapter 02; the short note after a copy */
@@ -183,8 +182,15 @@ body.map-full { overflow: hidden; }
 .tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
 .tip b, .tip span { display: block; }
-/* the title and legend of the map, under it in the block with the tap line, the colors and Share (owner, October 13, 2026) */
-.maphead { display: grid; gap: 0.35rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--rule); }
+.maphead { display: contents; }
+/* the title above the map and the legend under it, both in the map box, which grows by their height (owner,
+   October 18, 2026); the same half-transparent labels as in full screen */
+.mapbox { display: grid; grid-template-columns: minmax(0, 1fr); }
+.mapbox .maptitle, .mapbox .maphead .legend { justify-self: start; background: color-mix(in srgb, var(--sheet) 75%, transparent);
+  border: 1px solid var(--rule); border-radius: 4px; }
+.mapbox .maptitle { order: 1; margin: 0.6rem 0.8rem 0; padding: 0.3rem 0.6rem; }
+.mapbox #map { order: 2; }
+.mapbox .maphead .legend { order: 3; margin: 0 0.8rem 0.6rem; padding: 0.4rem 0.6rem; }
 .maptitle { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; color: var(--fg); letter-spacing: 0; text-transform: none; }
 /* The color choice is a quiet setting under the map, apart from the view buttons. */
 .colors { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
@@ -230,7 +236,11 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .note { font-size: 0.87rem; color: var(--muted); margin: 0; }
 .notes { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
 .notes li { font-size: 0.87rem; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 0.65rem; }
-.back { font: inherit; font-size: 0.87rem; background: none; border: 0; color: var(--ink); padding: 0; cursor: pointer; text-decoration: underline; justify-self: start; }
+.back { font: inherit; font-size: 0.87rem; background: none; border: 0; color: var(--ink); padding: 0; cursor: pointer; justify-self: start;
+  display: inline-flex; align-items: center; gap: 0.3rem; }
+/* "Back" with an arrow (owner, October 18, 2026) */
+.back span { text-decoration: underline; text-underline-offset: 0.15em; }
+.back svg { width: 0.9rem; height: 0.9rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.8rem; font-size: 0.87rem; margin: 0; }
 .kv dt { color: var(--muted); }
 .kv dd { margin: 0; font-variant-numeric: tabular-nums; }
@@ -392,6 +402,9 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 /* Chapter 02: tools, the largest effects and the record (Task 7.7) */
 .tools { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; align-items: center; }
 .record { background: var(--sheet); border: 1px solid var(--rule); padding: 1.1rem 1.1rem 1.2rem; display: grid; gap: 0.8rem; min-width: 0; align-content: start; }
+/* the box beside the map is as high as its content, so a short one does not stretch to the map (owner, October 18,
+   2026); in full screen it keeps the whole height */
+.atlas > .record { align-self: start; }
 #sheet-title { font: 700 1.5rem/1.15 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
 .record .k { font-size: 0.8125rem; color: var(--muted); }
 
