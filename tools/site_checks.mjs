@@ -180,6 +180,9 @@ async function list(t) {
       return bars.length === 16 && bars.reduce((n, b) => n + Number(b.querySelector('title').textContent.match(/: (\\d+) district/)[1]), 0) === 429
         && bars.map((b) => b.getAttribute('fill') === blue).join() === Array.from({ length: 16 }, (_, i) => i >= 7).join(); })()`)
     && (await t.text('#sheet > p.note')) === 'Click a state on the map for its record.');
+  // and under it "All states together", as in the list of states (owner, October 18, 2026)
+  t.check('under the districts by share the net of all states, as in the list', await t.js(
+    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h4').textContent === 'All states together' && !!net.querySelector('svg') && /Net: .+\\.$/.test(net.querySelector('p').textContent) && document.getElementById('sheet').lastElementChild === net; })()"));
   // the owner's notes of October 18, 2026: the box is as high as its content; title and legend in the map box
   t.check('a short column box ends after its content, above the bottom of the map column', await t.js(`(() => {
     const record = document.getElementById('sheet').getBoundingClientRect(), col = document.querySelector('.atlas > .mapcol').getBoundingClientRect();

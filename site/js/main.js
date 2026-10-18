@@ -101,7 +101,7 @@ async function main() {
     else if (ui.selected && apart) renderStateFull($('sheet'), more, recordView(results, ui.selected), colors, back);
     else if (ui.selected) renderState($('sheet'), recordView(results, ui.selected), colors, back);
     // without a state the column follows the view of the map (owner, October 18, 2026)
-    else if (ui.view === 'districts') renderDistricts($('sheet'), districtShares(results), colors);
+    else if (ui.view === 'districts') renderDistricts($('sheet'), districtShares(results), effectList(results), colors);
     else if (ui.view === 'close') renderClose($('sheet'), closeDistricts(results), colors, (postal) => select(postal, { push: true, focus: true }));
     else renderList($('sheet'), effectList(results), colors, (postal) => select(postal, { push: true, focus: true }), ui);
     // The strip runs on under the record when the record fits above it; a longer record takes the whole height and

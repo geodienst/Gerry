@@ -39,19 +39,26 @@ export function renderList(el, list, colors, onSelect, ui) {
   }
   const toD = sheet.append('div').attr('class', 'list');
   for (const row of list.toD) stateRow(toD, row, colors, onSelect);
+  netBlock(sheet, list, colors);
+}
+
+/** "All states together": the seats the enacted maps move each way and the net, under a column without a state. */
+function netBlock(sheet, list, colors) {
   const net = sheet.append('div').attr('class', 'net');
   net.append('h4').text('All states together');
   drawNetBar(net.append('div').node(), list, colors);
   net.append('p').attr('class', 'note').text(list.summary);
 }
 
-/** Without a state in the view "Districts: Democratic share": the districts of the 2026 maps by share. */
-export function renderDistricts(el, view, colors) {
+/** Without a state in the view "Districts: Democratic share": the districts of the 2026 maps by share, and under them
+ *  "All states together" as in the list of states (owner, October 18, 2026). */
+export function renderDistricts(el, view, list, colors) {
   const sheet = d3.select(el).html('');
   sheet.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(view.title);
   sheet.append('p').attr('class', 'count').text(view.count);
   drawShareBins(sheet.append('div').attr('class', 'bins').node(), view.bins, colors, view.label);
   sheet.append('p').attr('class', 'note').text(view.hint);
+  netBlock(sheet, list, colors);
 }
 
 /** Without a state in the view "Districts: close races": the close districts, closest first; a click chooses the state. */
