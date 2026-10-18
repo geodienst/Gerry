@@ -331,8 +331,8 @@ export function keyFindings(results) {
     `The enacted maps move ${seats(list.seatsR)} ${list.seatsR === 1 ? 'seat' : 'seats'} toward Republicans and `
       + `${seats(list.seatsD)} toward Democrats. Net effect: ${effect(list.net)}.`,
     // the vote basis, in the owner's words (October 18, 2026); the share of the votes of both years added together
-    `We used the 2016 and 2020 presidential election results (together ${sliderShare(m.base_share)} Democratic) as our `
-      + 'voting baseline for this project. This is not a prediction of the voting results on November 3.',
+    `All numbers use the 2016 and 2020 presidential votes together, ${sliderShare(m.base_share)} Democratic. `
+      + 'They are not a prediction for November 3.',
   ];
 }
 
