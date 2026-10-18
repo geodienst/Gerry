@@ -699,7 +699,9 @@ async function masthead(t) {
   t.check('the line under the title asks the question', (await t.text('.mast .sub')).endsWith('Would the outcome change?')
     && await t.js("!document.querySelector('.mast .eyebrow') && !document.querySelector('.metastrip')"));
   const facts = await t.js("[...document.querySelectorAll('#keyfacts li')].map((li) => li.textContent)");
-  t.check('two key findings follow the masthead, before State by state', facts.length === 2
+  t.check('three key findings follow the masthead, before State by state, the third on the vote basis', facts.length === 3
+    && facts[2] === 'We used the 2016 and 2020 presidential election results (together 51.8% Democratic) as our voting '
+      + 'baseline for this project. This is not a prediction of the voting results on November 3.'
     // the first without the neutral-map threshold (owner, October 18, 2026)
     && /^With the maps the states drew for 2026, Democrats need \d+\.\d% of the two-party vote for a House majority\.$/.test(facts[0])
     && /^The enacted maps move \d+ seats? toward Republicans and \d+ toward Democrats\. Net effect: (0|[RD]\+\d+)\.$/.test(facts[1])

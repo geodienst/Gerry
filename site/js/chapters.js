@@ -317,7 +317,7 @@ function dots(values, step, tickText, rows, base = undefined) {
   return { domain, ticks: ticks.map((value) => ({ value, text: tickText(value) })), rows, ...(base ? { base } : {}) };
 }
 
-/** The answer under the question in the masthead (owner, October 13, 2026): two findings on the 2016 and 2020 votes.
+/** The answer under the question in the masthead (owner, October 13, 2026): two findings on the 2016 and 2020 votes, and the vote basis (owner, October 18, 2026).
  *  The drawing effect by vote share and the competitive districts are further down (owner, the same day). */
 export function keyFindings(results) {
   const n = results.national;
@@ -330,6 +330,9 @@ export function keyFindings(results) {
     // the seats the enacted maps move each way, added up over the states, and the net (owner, October 13, 2026)
     `The enacted maps move ${seats(list.seatsR)} ${list.seatsR === 1 ? 'seat' : 'seats'} toward Republicans and `
       + `${seats(list.seatsD)} toward Democrats. Net effect: ${effect(list.net)}.`,
+    // the vote basis, in the owner's words (October 18, 2026); the share of the votes of both years added together
+    `We used the 2016 and 2020 presidential election results (together ${sliderShare(m.base_share)} Democratic) as our `
+      + 'voting baseline for this project. This is not a prediction of the voting results on November 3.',
   ];
 }
 

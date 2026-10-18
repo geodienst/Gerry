@@ -283,6 +283,9 @@ test('keyFindings: the answer under the question in the masthead', () => {
   assert.deepEqual(keyFindings(r), [
     'With the maps the states drew for 2026, Democrats need 52.4% of the two-party vote for a House majority.',
     'The enacted maps move 6 seats toward Republicans and 4 toward Democrats. Net effect: R+2.',
+    // the vote basis, in the owner's words (October 18, 2026)
+    'We used the 2016 and 2020 presidential election results (together 51.8% Democratic) as our voting baseline for '
+      + 'this project. This is not a prediction of the voting results on November 3.',
   ]);
 });
 
