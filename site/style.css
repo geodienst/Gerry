@@ -211,6 +211,12 @@ body.map-full { overflow: hidden; }
 .row:hover { background: var(--band); }
 .row .v { text-align: right; font-variant-numeric: tabular-nums; }
 .row svg { height: 0.8rem; }
+/* the district views of the column beside the map (owner, October 18, 2026) */
+.record .count { margin: 0; font-size: 0.9375rem; }
+.bins { min-width: 0; }
+.dlist { max-height: 26rem; overflow-y: auto; align-content: start; }
+.row.drow { grid-template-columns: 0.7rem minmax(0, 1fr) 3.6em; }
+.drow .sw { width: 0.6rem; height: 0.6rem; border-radius: 50%; }
 details.zeros > summary { cursor: pointer; font-size: 0.87rem; color: var(--muted); padding: 0.25rem; list-style: none; display: flex; gap: 0.4rem; align-items: center; }
 details.zeros > summary::-webkit-details-marker { display: none; }
 details.zeros > summary::before { content: ""; width: 0.45rem; height: 0.45rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; margin-right: 0.15rem; }

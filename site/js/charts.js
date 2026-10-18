@@ -117,6 +117,31 @@ export function drawSorted(el, sorted, colors, label) {
   svg.append('text').attr('x', m.l).attr('y', H - 6).text('Districts from lowest to highest Democratic share');
 }
 
+/** Districts by Democratic share in five-point bins (owner, October 18, 2026): a bar per bin in the color of the party
+ *  ahead, a dashed line at 50%, the count of each bin as its tooltip. */
+export function drawShareBins(el, bins, colors, label) {
+  const H = 150;
+  const m = { l: 24, r: 6, t: 8, b: 20 };
+  const { svg, width: W } = chartSvg(el, 360, H, label);
+  const x = d3.scaleLinear().domain([bins[0].lo, bins[bins.length - 1].hi]).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([0, d3.max(bins, (b) => b.n)]).nice(4).range([H - m.b, m.t]);
+  for (const v of y.ticks(4)) {
+    svg.append('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(v)).attr('y2', y(v)).attr('stroke', 'var(--rule)');
+    svg.append('text').attr('x', m.l - 4).attr('y', y(v) + 3.5).attr('text-anchor', 'end').text(v);
+  }
+  svg.append('g').selectAll('rect').data(bins).join('rect')
+    .attr('x', (b) => x(b.lo) + 1).attr('width', (b) => Math.max(1, x(b.hi) - x(b.lo) - 2))
+    .attr('y', (b) => y(b.n)).attr('height', (b) => y(0) - y(b.n))
+    .attr('fill', (b) => colors.party(b.dem))
+    .append('title').text((b) => b.title);
+  svg.append('line').attr('x1', x(0.5)).attr('x2', x(0.5)).attr('y1', m.t - 4).attr('y2', H - m.b)
+    .attr('stroke', 'var(--fg)').attr('stroke-dasharray', '4 3');
+  for (const v of [0.2, 0.35, 0.5, 0.65, 0.8]) {
+    if (v < bins[0].lo || v > bins[bins.length - 1].hi) continue;
+    svg.append('text').attr('x', x(v)).attr('y', H - 5).attr('text-anchor', 'middle').text(percentLabel(v));
+  }
+}
+
 /** Net bar under the list: seats toward Republicans to the left, toward Democrats to the right, a marker at the net. */
 export function drawNetBar(el, list, colors) {
   const { svg, width: W } = chartSvg(el, 360, 64, list.bar.label);

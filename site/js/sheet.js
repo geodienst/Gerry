@@ -1,5 +1,5 @@
 // The record beside the map (redesign, chapter 4): without a chosen state the list "Drawing effect by state", with a chosen state its record, for a state with one seat a short record. Texts come from model.js and chapters.js.
-import { drawSorted, drawNetBar, drawDotRows } from './charts.js';
+import { drawSorted, drawNetBar, drawDotRows, drawShareBins } from './charts.js';
 import { EFFECT_MAX } from './colors.js';
 
 const { d3 } = globalThis;
@@ -43,6 +43,31 @@ export function renderList(el, list, colors, onSelect, ui) {
   net.append('h4').text('All states together');
   drawNetBar(net.append('div').node(), list, colors);
   net.append('p').attr('class', 'note').text(list.summary);
+}
+
+/** Without a state in the view "Districts: Democratic share": the districts of the 2026 maps by share. */
+export function renderDistricts(el, view, colors) {
+  const sheet = d3.select(el).html('');
+  sheet.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(view.title);
+  sheet.append('p').attr('class', 'count').text(view.count);
+  drawShareBins(sheet.append('div').attr('class', 'bins').node(), view.bins, colors, view.label);
+  sheet.append('p').attr('class', 'note').text(view.hint);
+}
+
+/** Without a state in the view "Districts: close races": the close districts, closest first; a click chooses the state. */
+export function renderClose(el, view, colors, onSelect) {
+  const sheet = d3.select(el).html('');
+  sheet.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(view.title);
+  sheet.append('p').attr('class', 'count').text(view.count);
+  const list = sheet.append('div').attr('class', 'list dlist');
+  for (const row of view.rows) {
+    const button = list.append('button').attr('type', 'button').attr('class', 'row drow').attr('data-postal', row.postal)
+      .on('click', () => onSelect(row.postal));
+    button.append('i').attr('class', 'sw').attr('aria-hidden', 'true').style('background', colors.party(row.dem));
+    button.append('span').text(row.label);
+    button.append('span').attr('class', 'v').text(row.text);
+  }
+  sheet.append('p').attr('class', 'note').text(view.hint);
 }
 
 function definitionList(parent, items) {

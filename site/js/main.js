@@ -5,10 +5,11 @@ import { stateFromHash, linkFor, outcomesLink, outcomesFromSearch, SITE_URL } fr
 import { makeColors } from './colors.js';
 import {
   indexResults, stateOptions, mapHints, effectList, nationalView, methodFills, MAP_TITLES, closeLegend,
+  districtShares, closeDistricts,
 } from './model.js';
 import { extensionFills } from './extensions.js';
 import { createMap, drawLegend } from './map.js';
-import { renderList, renderState, renderStateFull, renderSingle } from './sheet.js';
+import { renderList, renderState, renderStateFull, renderSingle, renderDistricts, renderClose } from './sheet.js';
 import {
   outcomesView, recordView, singleSeatView, decideView, keyFindings,
 } from './chapters.js';
@@ -99,6 +100,9 @@ async function main() {
     if (index.single[ui.selected]) renderSingle($('sheet'), singleSeatView(results, ui.selected), back);
     else if (ui.selected && apart) renderStateFull($('sheet'), more, recordView(results, ui.selected), colors, back);
     else if (ui.selected) renderState($('sheet'), recordView(results, ui.selected), colors, back);
+    // without a state the column follows the view of the map (owner, October 18, 2026)
+    else if (ui.view === 'districts') renderDistricts($('sheet'), districtShares(results), colors);
+    else if (ui.view === 'close') renderClose($('sheet'), closeDistricts(results), colors, (postal) => select(postal, { push: true, focus: true }));
     else renderList($('sheet'), effectList(results), colors, (postal) => select(postal, { push: true, focus: true }), ui);
     // The strip runs on under the record when the record fits above it; a longer record takes the whole height and
     // the strip stays under the map (owner, October 17, 2026, option c).

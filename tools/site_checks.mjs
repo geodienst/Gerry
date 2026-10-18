@@ -170,7 +170,32 @@ async function map(t) {
 // --- Task 6.6: the list and the sheet ------------------------------------------------------------
 async function list(t) {
   await t.load();
-  t.check('without a state the sheet shows "Drawing effect by state"', await t.until(`${HEADING} === 'Drawing effect by state'`));
+  // Without a state the column follows the view of the map (owner, October 18, 2026). The districts first: a bar per
+  // five points of Democratic share from the lowest district (18.3%, bin 15%) to the highest (92.0%, bin 90%).
+  t.check('without a state, in the view of the districts, the column shows the districts by share',
+    await t.until(`${HEADING} === 'Districts by Democratic share'`)
+    && (await t.text('#sheet .count')) === 'Democrats win 213 of 429 districts.'
+    && await t.js(`(() => { const bars = [...document.querySelectorAll('#sheet .bins rect')];
+      const blue = getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim();
+      return bars.length === 16 && bars.reduce((n, b) => n + Number(b.querySelector('title').textContent.match(/: (\\d+) district/)[1]), 0) === 429
+        && bars.map((b) => b.getAttribute('fill') === blue).join() === Array.from({ length: 16 }, (_, i) => i >= 7).join(); })()`)
+    && (await t.text('#sheet > p.note')) === 'Click a state on the map for its record.');
+  await t.js("document.querySelector('#states .tools').scrollIntoView()");
+  await t.screenshot('districts-1280', { viewport: true });
+  await t.js("document.getElementById('view-close').click()");
+  t.check('in the view of the close races the column lists the 81 close districts, closest first',
+    await t.until(`${HEADING} === 'Close districts, 45 to 55%'`) && (await t.text('#sheet .count')) === '81 on the 2026 maps.'
+    && await t.js(`(() => { const v = [...document.querySelectorAll('#sheet .drow .v')].map((s) => Math.abs(parseFloat(s.textContent) - 50));
+      return v.length === 81 && v.every((x, i) => i === 0 || x >= v[i - 1] - 0.051); })()`));
+  await t.js("document.querySelector('#states .tools').scrollIntoView()");
+  await t.screenshot('close-1280', { viewport: true });
+  const close = await t.js("document.querySelector('#sheet .drow').dataset.postal");
+  await t.js("document.querySelector('#sheet .drow').click()");
+  t.check('a click on a close district opens its state', await t.until(`location.hash === '#${close}' && ${HEADING} !== 'Close districts, 45 to 55%'`));
+  await t.js("document.querySelector('#sheet .back').click()");
+  t.check('"All states" goes back to the close districts', await t.until(`${HEADING} === 'Close districts, 45 to 55%'`));
+  await t.js("document.getElementById('view-states').click()");
+  t.check('with "States: drawing effect" the sheet shows "Drawing effect by state"', await t.until(`${HEADING} === 'Drawing effect by state'`));
   t.check('one row per state, 44 in all', await t.js("document.querySelectorAll('#sheet .row').length === 44"));
   t.check('rows show the effect as R+n, D+n or 0', await t.js("[...document.querySelectorAll('#sheet .row .v')].every((v) => /^(0|[RD]\\+\\d+)$/.test(v.textContent))"));
   t.check('the states without a drawing effect are folded behind one line', await t.js(
@@ -206,6 +231,7 @@ async function list(t) {
 async function sheet(t) {
   await t.load('#TX');
   t.check('#TX opens the sheet for Texas', await t.until(`${HEADING} === 'Texas'`));
+  await t.js("document.getElementById('view-states').click()"); // back from a state, the column shows the list of states
   const texas = await t.text('#sheet');
   for (const part of ['State record', 'All states', 'Legal status as of ', 'Vote-proportional', 'Neutral-map median', 'Enacted maps', 'Geographic effect',
     'Drawing effect', 'neutral maps,', 'Districts, sorted', 'Efficiency gap', 'Mean-median', 'Notes', 'Map file:']) {
@@ -251,8 +277,9 @@ async function sheet(t) {
   await t.key('Escape', 27);
   t.check('Escape goes back to the list and drops the state from the link', await t.until(`${HEADING} === 'Drawing effect by state' && location.hash === ''`));
   await t.load();
+  await t.js("document.getElementById('view-states').click()");
   await t.until(`${HEADING} === 'Drawing effect by state'`);
-  const folded = await t.js("document.querySelector('#sheet details.zeros .row').dataset.postal");
+  const folded =await t.js("document.querySelector('#sheet details.zeros .row').dataset.postal");
   await t.js(`location.hash = '#${folded}'`);
   await t.until(`location.hash === '#${folded}' && ${HEADING} !== 'Drawing effect by state'`);
   await t.js("document.getElementById('sheet').scrollIntoView({ block: 'center' })"); // as a reader scrolls to the sheet
@@ -291,6 +318,7 @@ async function sheet(t) {
   t.check('#WY opens the short record of Wyoming', await t.until(`${HEADING} === 'Wyoming'`)
     && (await t.text('#sheet')).includes(AT_LARGE) && (await t.text('#sheet .headline .big')) === '1 seat'
     && (await t.js("document.getElementById('pick').value")) === 'WY');
+  await t.js("document.getElementById('view-states').click()");
   await t.js("document.getElementById('sheet').scrollIntoView({ block: 'center' })");
   await t.key('Escape', 27);
   t.check('Escape goes from Wyoming back to the list', await t.until(`${HEADING} === 'Drawing effect by state' && location.hash === ''`));
@@ -483,6 +511,8 @@ async function layout(t) {
   }
 
   await t.load();
+  await t.js("document.getElementById('view-states').click()"); // the list of states, with its rows (owner, October 18, 2026)
+  await t.js('document.activeElement?.blur()');
   const order = [];
   for (let i = 0; i < 24; i += 1) {
     await t.key('Tab', 9);
@@ -522,7 +552,8 @@ async function layout(t) {
   t.check('a state chosen with the State menu keeps the focus there and is announced',
     heard.focus === 'pick' && heard.live === 'polite' && heard.text === 'Nevada', JSON.stringify(heard));
   await t.js("document.querySelector('#sheet .back').click()");
-  const cleared = (await t.until(`${HEADING} === 'Drawing effect by state'`)) && await t.text('#sheet-status');
+  // back to the column of the default view, the districts by share (owner, October 18, 2026)
+  const cleared = (await t.until(`${HEADING} === 'Districts by Democratic share'`)) && await t.text('#sheet-status');
   t.check('"All states" empties the live region', cleared === '', JSON.stringify(cleared));
 
   await t.load('', { dark: true });
