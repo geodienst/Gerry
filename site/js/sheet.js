@@ -61,8 +61,9 @@ export function renderDistricts(el, view, list, colors) {
   netBlock(sheet, list, colors);
 }
 
-/** Without a state in the view "Districts: close races": the close districts, closest first; a click chooses the state. */
-export function renderClose(el, view, colors, onSelect) {
+/** Without a state in the view "Districts: close races": the close districts, closest first; a click chooses the state.
+ *  Under them "All states together", as in the other two views (owner, October 18, 2026). */
+export function renderClose(el, view, effects, colors, onSelect) {
   const sheet = d3.select(el).html('');
   sheet.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(view.title);
   sheet.append('p').attr('class', 'count').text(view.count);
@@ -75,6 +76,7 @@ export function renderClose(el, view, colors, onSelect) {
     button.append('span').attr('class', 'v').text(row.text);
   }
   sheet.append('p').attr('class', 'note').text(view.hint);
+  netBlock(sheet, effects, colors);
 }
 
 function definitionList(parent, items) {

@@ -198,6 +198,8 @@ async function list(t) {
     await t.until(`${HEADING} === 'Close districts, 45 to 55%'`) && (await t.text('#sheet .count')) === '81 on the 2026 maps.'
     && await t.js(`(() => { const v = [...document.querySelectorAll('#sheet .drow .v')].map((s) => Math.abs(parseFloat(s.textContent) - 50));
       return v.length === 81 && v.every((x, i) => i === 0 || x >= v[i - 1] - 0.051); })()`));
+  t.check('under the close districts the net of all states as well', await t.js(
+    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h4').textContent === 'All states together' && document.getElementById('sheet').lastElementChild === net; })()"));
   await t.js("document.querySelector('#states .tools').scrollIntoView()");
   await t.screenshot('close-1280', { viewport: true });
   const close = await t.js("document.querySelector('#sheet .drow').dataset.postal");
