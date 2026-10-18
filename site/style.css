@@ -186,8 +186,10 @@ body.map-full { overflow: hidden; }
 /* the title above the map and the legend under it, both in the map box, which grows by their height (owner,
    October 18, 2026); the same half-transparent labels as in full screen */
 .mapbox { display: grid; grid-template-columns: minmax(0, 1fr); }
-.mapbox .maptitle, .mapbox .maphead .legend { justify-self: start; background: color-mix(in srgb, var(--sheet) 75%, transparent);
-  border: 1px solid var(--rule); border-radius: 4px; }
+/* slightly rounded and clearly see-through, with a light blur so the text stays readable over the map in full screen
+   (owner, October 18, 2026) */
+.mapbox .maptitle, .mapbox .maphead .legend { justify-self: start; background: color-mix(in srgb, var(--sheet) 55%, transparent);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); border: 1px solid var(--rule); border-radius: 7px; }
 .mapbox .maptitle { order: 1; margin: 0.6rem 0.8rem 0; padding: 0.3rem 0.6rem; }
 .mapbox #map { order: 2; }
 .mapbox .maphead .legend { order: 3; margin: 0 0.8rem 0.6rem; padding: 0.4rem 0.6rem; }
