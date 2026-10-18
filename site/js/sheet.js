@@ -1,4 +1,4 @@
-// The record beside the map (redesign, chapter 4): without a chosen state the list "Drawing effect by state", with a chosen state its record, for a state with one seat a short record. Texts come from model.js and chapters.js.
+// The record beside the map (redesign, chapter 4): without a chosen state the column of the view on screen (districts by share, the list "Drawing effect by state" or the close districts), with a chosen state its record, for a state with one seat a short record. Texts come from model.js and chapters.js.
 import { drawSorted, drawNetBar, drawDotRows, drawShareBins } from './charts.js';
 import { EFFECT_MAX } from './colors.js';
 
@@ -111,11 +111,6 @@ function headline(parent, value, swatch, lines) {
   for (const line of lines) text.append('p').text(line);
 }
 
-/**
- * One state, in the order of the redesign (chapter 4): everything the sheet of Phase 6 showed, with the
- * headline, and the seat strip in place of the seat axis.
- * @param {object} record recordView(results, postal)
- */
 /** "Back" with an arrow, to the column without a state of the view on screen (owner, October 18, 2026). */
 function backButton(root, onBack) {
   const button = root.append('button').attr('type', 'button').attr('class', 'back').on('click', onBack);
@@ -124,6 +119,11 @@ function backButton(root, onBack) {
   return button;
 }
 
+/**
+ * One state, in the order of the redesign (chapter 4): everything the sheet of Phase 6 showed, with the
+ * headline, and the seat strip in place of the seat axis.
+ * @param {object} record recordView(results, postal)
+ */
 export function renderState(el, record, colors, onBack) {
   const root = d3.select(el).html('');
   backButton(root, onBack);
