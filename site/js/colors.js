@@ -8,7 +8,9 @@ export const SHARE_DOMAIN = [0.2, 0.8]; // district scale; outside it the full p
 export const SHARE_EXPONENT = 0.85; // as in preview version 5
 export const SHARE_TICKS = [0.2, 0.35, 0.5, 0.65, 0.8];
 export const EFFECT_MAX = 6; // drawing effect scale in whole seats; beyond 6 the full pole color
-export const EFFECT_START = 0.3; // effects start 30% of the way to a pole; each seat adds 70%/6 (preview version 5)
+// effects start 45% of the way to a pole and each seat adds 55%/6, so R+1 and D+1 show color (owner, October 18,
+// 2026, variant C; 30% before)
+export const EFFECT_START = 0.45;
 
 /**
  * The scales for one set of poles.

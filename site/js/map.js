@@ -139,6 +139,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
       districts.attr('fill', (f) => (index.single[f.properties.state] ? (close ? colors.poles.mid : colors.blank) : fill(f.properties.id)))
         .classed('quiet', (f) => close && (index.single[f.properties.state] || !isClose(index.shareOf[f.properties.id])));
       root.classed('calm', close);
+      root.classed('drawing', view === 'states'); // gray state lines in the view of the drawing effect (style.css)
       dotLayer.attr('display', close ? null : 'none');
       dots.attr('fill', (f) => colors.party(index.shareOf[f.properties.id] > 0.5));
       states.attr('fill', (f) => (index.single[f.properties.postal] ? colors.blank : colors.effect(index.states[f.properties.postal].effects.drawing)));

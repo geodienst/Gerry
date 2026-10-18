@@ -21,6 +21,7 @@
   --gold: #a87800;
   --blank: #c9ccd1;
   --water: #e5eae6;
+  --edge: #a3aaa5;
   --band: rgba(29, 92, 72, 0.14);
   --focus: var(--ink);
   --font-head: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
@@ -46,6 +47,7 @@
     --gold: #e3b23c;
     --blank: #4a4f56;
     --water: #1b2421;
+    --edge: #66706b;
     --band: rgba(143, 208, 180, 0.16);
   }
 }
@@ -108,7 +110,10 @@ svg { display: block; width: 100%; height: auto; }
 .dots circle { stroke: var(--fg); pointer-events: none; }
 .calm .state.swing { stroke: var(--gold); stroke-width: 2.4; }
 .state.on { stroke: var(--fg); stroke-width: 2.2; }
-.statefill { stroke: var(--sheet); stroke-width: 0.8; cursor: pointer; }
+/* the view "States: drawing effect": thin gray lines, so the states with 0 stand apart from each other and from the
+   water (owner, October 18, 2026, variant C) */
+.statefill { stroke: var(--edge); stroke-width: 0.7; cursor: pointer; }
+.drawing .state:not(.on) { stroke: var(--edge); }
 .zoombar { position: absolute; top: 0.5rem; right: 0.5rem; display: grid; gap: 0.25rem; }
 .zoombar button { font: 600 1rem/1 var(--font-body); width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
 .zoombar button.wide { width: auto; padding-inline: 0.5rem; font-size: 0.8rem; font-weight: 500; }

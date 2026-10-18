@@ -37,11 +37,11 @@ test('share: Lab interpolation with exponent 0.85 between the midpoint and a pol
   assert.equal(c.share(0.35), d3.interpolateLab('#ecebe7', '#e34948')(0.5 ** 0.85));
 });
 
-test('effect: 0 is the midpoint, one seat starts at 0.3 + 0.7/6, six seats and more are the full poles', () => {
+test('effect: 0 is the midpoint, one seat starts at 0.45 + 0.55/6, six seats and more are the full poles', () => {
   const c = makeColors(d3.interpolateLab, POLES['party, light']);
   assert.equal(rgb(c.effect(0)), rgb('#ecebe7'));
-  assert.equal(c.effect(1), d3.interpolateLab('#ecebe7', '#2a78d6')(0.3 + 0.7 / 6));
-  assert.equal(c.effect(-3), d3.interpolateLab('#ecebe7', '#e34948')(0.3 + 0.7 * 3 / 6));
+  assert.equal(c.effect(1), d3.interpolateLab('#ecebe7', '#2a78d6')(0.45 + 0.55 / 6));
+  assert.equal(c.effect(-3), d3.interpolateLab('#ecebe7', '#e34948')(0.45 + 0.55 * 3 / 6));
   assert.equal(rgb(c.effect(6)), rgb('#2a78d6'));
   assert.equal(rgb(c.effect(-6)), rgb('#e34948'));
   assert.equal(rgb(c.effect(-10)), rgb('#e34948'));

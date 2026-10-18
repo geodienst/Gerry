@@ -18,13 +18,13 @@ test('the tokens are those of the redesign, light and dark', () => {
     bg: '#f1f3f0', sheet: '#fbfcfa', fg: '#18201c', muted: '#56615b', rule: '#d3d9d4', ink: '#1d5c48',
     tint: '#e2ebe5', mast: '#143a2f', 'mast-fg': '#eef4f0', 'mast-muted': '#b2c8bd',
     'party-d': '#2a78d6', 'party-r': '#e34948', 'neutral-d': '#01665e', 'neutral-r': '#8c510a',
-    mid: '#ecebe7', blank: '#c9ccd1', water: '#e5eae6', gold: '#a87800',
+    mid: '#ecebe7', blank: '#c9ccd1', water: '#e5eae6', gold: '#a87800', edge: '#a3aaa5',
   });
   assert.deepEqual(MODES.dark, {
     bg: '#0f1513', sheet: '#151d1a', fg: '#e6ece8', muted: '#9eaba4', rule: '#2a3531', ink: '#8fd0b4',
     tint: '#1c2a25', mast: '#0b2920', 'mast-fg': '#e6efe9', 'mast-muted': '#9ab8aa',
     'party-d': '#3987e5', 'party-r': '#e66767', 'neutral-d': '#5ab4ac', 'neutral-r': '#d8b365',
-    mid: '#3a3a37', blank: '#4a4f56', water: '#1b2421', gold: '#e3b23c',
+    mid: '#3a3a37', blank: '#4a4f56', water: '#1b2421', gold: '#e3b23c', edge: '#66706b',
   });
 });
 
