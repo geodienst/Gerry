@@ -324,8 +324,9 @@ export function keyFindings(results) {
   const m = n.majority;
   const list = effectList(results);
   return [
+    // without the neutral-map threshold next to it (owner, October 18, 2026)
     `With the maps the states drew for 2026, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House `
-      + `majority; on neutral maps, ${neededShare(m.neutral.share)}.`,
+      + 'majority.',
     // the seats the enacted maps move each way, added up over the states, and the net (owner, October 13, 2026)
     `The enacted maps move ${seats(list.seatsR)} ${list.seatsR === 1 ? 'seat' : 'seats'} toward Republicans and `
       + `${seats(list.seatsD)} toward Democrats. Net effect: ${effect(list.net)}.`,

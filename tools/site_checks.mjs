@@ -652,7 +652,9 @@ async function masthead(t) {
     && await t.js("!document.querySelector('.mast .eyebrow') && !document.querySelector('.metastrip')"));
   const facts = await t.js("[...document.querySelectorAll('#keyfacts li')].map((li) => li.textContent)");
   t.check('two key findings follow the masthead, before State by state', facts.length === 2
-    && facts[0].startsWith('With the maps the states drew for 2026, Democrats need ') && /^The enacted maps move \d+ seats? toward Republicans and \d+ toward Democrats\. Net effect: (0|[RD]\+\d+)\.$/.test(facts[1])
+    // the first without the neutral-map threshold (owner, October 18, 2026)
+    && /^With the maps the states drew for 2026, Democrats need \d+\.\d% of the two-party vote for a House majority\.$/.test(facts[0])
+    && /^The enacted maps move \d+ seats? toward Republicans and \d+ toward Democrats\. Net effect: (0|[RD]\+\d+)\.$/.test(facts[1])
     && await t.js("document.querySelector('header.mast').nextElementSibling?.classList.contains('keyfacts') === true"), facts.join(' | '));
 }
 
