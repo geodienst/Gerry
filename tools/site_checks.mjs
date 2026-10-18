@@ -180,6 +180,14 @@ async function list(t) {
       return bars.length === 16 && bars.reduce((n, b) => n + Number(b.querySelector('title').textContent.match(/: (\\d+) district/)[1]), 0) === 429
         && bars.map((b) => b.getAttribute('fill') === blue).join() === Array.from({ length: 16 }, (_, i) => i >= 7).join(); })()`)
     && (await t.text('#sheet > p.note')) === 'Click a state on the map for its record.');
+  // the owner's notes of October 18, 2026: the box is as high as its content; title and legend in the map box
+  t.check('a short column box ends after its content, above the bottom of the map column', await t.js(`(() => {
+    const record = document.getElementById('sheet').getBoundingClientRect(), col = document.querySelector('.atlas > .mapcol').getBoundingClientRect();
+    return record.bottom < col.bottom - 100 && Math.abs(record.top - col.top) < 1; })()`));
+  t.check('the title above the map and the legend under it, both in the map box', await t.js(`(() => {
+    const r = (id) => document.getElementById(id).getBoundingClientRect(), box = r('mapbox'), map = r('map'), title = r('map-title'), legend = r('legend');
+    return document.getElementById('mapbox').contains(document.getElementById('legend')) && !document.querySelector('.mapfoot .legend')
+      && title.top >= box.top && title.bottom <= map.top + 1 && legend.top >= map.bottom - 1 && legend.bottom <= box.bottom; })()`));
   await t.js("document.querySelector('#states .tools').scrollIntoView()");
   await t.screenshot('districts-1280', { viewport: true });
   await t.js("document.getElementById('view-close').click()");
@@ -192,8 +200,12 @@ async function list(t) {
   const close = await t.js("document.querySelector('#sheet .drow').dataset.postal");
   await t.js("document.querySelector('#sheet .drow').click()");
   t.check('a click on a close district opens its state', await t.until(`location.hash === '#${close}' && ${HEADING} !== 'Close districts, 45 to 55%'`));
+  t.check('the record starts with "Back" and an arrow', await t.js(
+    "document.querySelector('#sheet .back').textContent === 'Back' && !!document.querySelector('#sheet .back svg path')"));
+  await t.js("document.querySelector('#states .tools').scrollIntoView()");
+  await t.screenshot('record-back-1280', { viewport: true });
   await t.js("document.querySelector('#sheet .back').click()");
-  t.check('"All states" goes back to the close districts', await t.until(`${HEADING} === 'Close districts, 45 to 55%'`));
+  t.check('"Back" goes back to the close districts', await t.until(`${HEADING} === 'Close districts, 45 to 55%'`));
   await t.js("document.getElementById('view-states').click()");
   t.check('with "States: drawing effect" the sheet shows "Drawing effect by state"', await t.until(`${HEADING} === 'Drawing effect by state'`));
   t.check('one row per state, 44 in all', await t.js("document.querySelectorAll('#sheet .row').length === 44"));
@@ -233,7 +245,7 @@ async function sheet(t) {
   t.check('#TX opens the sheet for Texas', await t.until(`${HEADING} === 'Texas'`));
   await t.js("document.getElementById('view-states').click()"); // back from a state, the column shows the list of states
   const texas = await t.text('#sheet');
-  for (const part of ['State record', 'All states', 'Legal status as of ', 'Vote-proportional', 'Neutral-map median', 'Enacted maps', 'Geographic effect',
+  for (const part of ['State record', 'Back', 'Legal status as of ', 'Vote-proportional', 'Neutral-map median', 'Enacted maps', 'Geographic effect',
     'Drawing effect', 'neutral maps,', 'Districts, sorted', 'Efficiency gap', 'Mean-median', 'Notes', 'Map file:']) {
     t.check(`the Texas sheet has "${part}"`, texas.includes(part));
   }
@@ -296,13 +308,13 @@ async function sheet(t) {
   await t.js("document.querySelector('#sheet .row').click()");
   await t.until(`${HEADING} !== 'Drawing effect by state'`);
   await t.js("document.querySelector('#sheet .back').click()");
-  t.check('the button "All states" goes back to the list', await t.until(`${HEADING} === 'Drawing effect by state'`));
+  t.check('the button "Back" goes back to the list', await t.until(`${HEADING} === 'Drawing effect by state'`));
   await t.js("document.querySelector('#sheet details.zeros summary').click()");
   await t.js("document.querySelector('#sheet .row').click()");
   await t.until(`${HEADING} !== 'Drawing effect by state'`);
   await t.js("document.querySelector('#sheet .back').click()");
   await t.until(`${HEADING} === 'Drawing effect by state'`);
-  t.check('the zero states stay unfolded after a state and "All states"', await t.js("document.querySelector('#sheet details.zeros').open"));
+  t.check('the zero states stay unfolded after a state and "Back"', await t.js("document.querySelector('#sheet details.zeros').open"));
   await t.load('#TX');
   await t.until(`${HEADING} === 'Texas'`);
   await t.screenshot('texas-1280');
@@ -554,7 +566,7 @@ async function layout(t) {
   await t.js("document.querySelector('#sheet .back').click()");
   // back to the column of the default view, the districts by share (owner, October 18, 2026)
   const cleared = (await t.until(`${HEADING} === 'Districts by Democratic share'`)) && await t.text('#sheet-status');
-  t.check('"All states" empties the live region', cleared === '', JSON.stringify(cleared));
+  t.check('"Back" empties the live region', cleared === '', JSON.stringify(cleared));
 
   await t.load('', { dark: true });
   await t.js("document.getElementById('view-districts').click()"); // the gradient belongs to the district legend

@@ -116,9 +116,17 @@ function headline(parent, value, swatch, lines) {
  * headline, and the seat strip in place of the seat axis.
  * @param {object} record recordView(results, postal)
  */
+/** "Back" with an arrow, to the column without a state of the view on screen (owner, October 18, 2026). */
+function backButton(root, onBack) {
+  const button = root.append('button').attr('type', 'button').attr('class', 'back').on('click', onBack);
+  button.append('svg').attr('viewBox', '0 0 16 16').attr('aria-hidden', 'true').append('path').attr('d', 'M13 8H3M7 4 3 8l4 4');
+  button.append('span').text('Back');
+  return button;
+}
+
 export function renderState(el, record, colors, onBack) {
   const root = d3.select(el).html('');
-  root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
+  backButton(root, onBack);
   root.append('span').attr('class', 'k').text(record.kicker);
   root.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(record.name);
   const meta = root.append('p').attr('class', 'meta');
@@ -177,7 +185,7 @@ export function renderState(el, record, colors, onBack) {
  */
 export function renderStateFull(el, moreEl, record, colors, onBack) {
   const root = d3.select(el).html('');
-  root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
+  backButton(root, onBack);
   root.append('span').attr('class', 'k').text(record.kicker);
   const name = root.append('div').attr('class', 'fullname');
   name.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(record.name);
@@ -229,7 +237,7 @@ export function renderStateFull(el, moreEl, record, colors, onBack) {
 /** The short record of a state with one seat (redesign, chapter 4). */
 export function renderSingle(el, view, onBack) {
   const root = d3.select(el).html('');
-  root.append('button').attr('type', 'button').attr('class', 'back').text('All states').on('click', onBack);
+  backButton(root, onBack);
   root.append('span').attr('class', 'k').text(view.kicker);
   root.append('h3').attr('id', 'sheet-title').attr('tabindex', -1).text(view.name);
   headline(root, view.headline, 'var(--blank)', view.lines);
