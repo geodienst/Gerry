@@ -1,0 +1,46 @@
+/* Base: the root size, type, layout helpers and text styles shared by every part of the page. */
+/* Sizes in rem; the root grows from 15px (up to about 1300px wide) to 21px on large screens. */
+html { font-size: clamp(15px, 0.45vw + 9px, 21px); }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 1rem/1.5 var(--font-body); }
+[hidden] { display: none !important; }
+/* The inline SVG symbols that icons point to with <use>; takes no room */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* Read by screen readers, not shown */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* A district name such as TX-15 in a sentence: no line break after the hyphen */
+.nowrap { white-space: nowrap; }
+/* Every part spans the window; its content sits in a column of at most 83rem (redesign, open point 8). */
+.wrap { max-width: 83rem; margin: 0 auto; padding-inline: clamp(16px, 2.5vw, 56px); }
+
+h1 { font: 600 clamp(1.6rem, 2.6vw, 2.4rem)/1.15 var(--font-head); margin: 0; text-wrap: balance; }
+h2 { font: 600 1.33rem/1.2 var(--font-head); margin: 0; text-wrap: balance; }
+h3, h4 { font-size: 0.875rem; color: var(--fg); margin: 0; font-weight: 600; }
+.num { font-variant-numeric: tabular-nums; }
+a { color: var(--ink); }
+.load-error { margin: 0; padding: 0.7rem 1rem; border: 1px solid var(--rule); background: var(--sheet); }
+
+.card { background: var(--sheet); border: 1px solid var(--rule); padding: 1rem; display: grid; gap: 0.7rem; min-width: 0; align-content: start; }
+.stack { display: grid; gap: 0.4rem; }
+.trio { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; align-items: baseline; }
+.trio div { display: grid; }
+.trio .lab { font-size: 0.8125rem; color: var(--muted); }
+.trio .val { font: 600 2rem/1.1 var(--font-figure); font-variant-numeric: tabular-nums; }
+.trio .sub { font-size: 0.87rem; color: var(--muted); }
+.effects { margin: 0; font-size: 0.93rem; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[tabindex="-1"]:focus { outline: none; }
+svg { display: block; width: 100%; height: auto; }
+.note { font-size: 0.87rem; color: var(--muted); margin: 0; }
+.notes { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.notes li { font-size: 0.87rem; color: var(--muted); border-left: 2px solid var(--rule); padding-left: 0.65rem; }
+/* The method: one column of about 70 characters */
+.prose { max-width: 70ch; display: grid; gap: 0.8rem; }
+.prose p, .prose ul { margin: 0; }
+.prose ul { padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+.sw { display: inline-block; width: 0.75rem; height: 0.75rem; flex: none; }
+.why summary { cursor: pointer; font-size: 0.8125rem; font-weight: 600; color: var(--fg); }
+.why p { margin: 0.35rem 0 0; max-width: 64ch; }

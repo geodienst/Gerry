@@ -1,0 +1,722 @@
+{
+  "alarm/AL_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392004",
+    "size": 936432,
+    "sha256": "de19a3ce33ea5cdb8f5bba272121627443568ef81cf1e388c5a7f3bc6ec72f96"
+  },
+  "alarm/AL_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392640?format=original",
+    "size": 12350384,
+    "sha256": "96c145c3a4a58a285e9ead4517534ecb9897c26338372f9d2d3fab409065d7f7"
+  },
+  "alarm/AR_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6401159",
+    "size": 905112,
+    "sha256": "6f3cc9865ebb9283941eb0eb2542e2700b3d5b48bc892c1ac0ad7e47e59158f2"
+  },
+  "alarm/AR_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6401158?format=original",
+    "size": 7117573,
+    "sha256": "a9a0e3300aad89fbd12ed7c5de38728acbf356417c0f143af61cef3310f673dc"
+  },
+  "alarm/AZ_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380315",
+    "size": 601572,
+    "sha256": "e6218f214735cfd5791c6c1366b3d3e5582a55ae2603d652fdf5bba407d01d4e"
+  },
+  "alarm/AZ_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392646?format=original",
+    "size": 17476661,
+    "sha256": "e77686182a194ffa77ab110a30ed55cc2777c30c81dd6ebacf4e4b3f1699713f"
+  },
+  "alarm/CA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6391062",
+    "size": 2117872,
+    "sha256": "ad6d0f1b8fcb6d50006fa23da09e9d2f22e55b26dfa422e4433e57745c15a176"
+  },
+  "alarm/CA_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392648?format=original",
+    "size": 75228117,
+    "sha256": "02a84748a89f229170fb549ef3660fa5555cdc85d52c476d35a7221db59ecba5"
+  },
+  "alarm/CO_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380398",
+    "size": 870724,
+    "sha256": "79ee6747ebdb382e75079eae92d33708a6609ed3c5ebdf23b8197761f719f67e"
+  },
+  "alarm/CO_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392660?format=original",
+    "size": 14314605,
+    "sha256": "5c3e0fea4e4220917a7e808de5a6761d77da596845bd924d17550bcd6e75b75f"
+  },
+  "alarm/CT_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6390801",
+    "size": 215760,
+    "sha256": "28db6782fb4556b2021f77892a0d5beb901c70217b3f059109f644ec80d94ed6"
+  },
+  "alarm/CT_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392663?format=original",
+    "size": 8771802,
+    "sha256": "7be37c613f2745a0f94bbc98a037d86119d49a2c97f0df56a5c8fa1b8223323c"
+  },
+  "alarm/FL_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6391914",
+    "size": 1880452,
+    "sha256": "5797ff5010d260bdcc99b770b6827c6955bf34c8e4fb93aa292e411ee88eca31"
+  },
+  "alarm/FL_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392665?format=original",
+    "size": 59831709,
+    "sha256": "fe21166738cddc539d774fd08acbc7976ef0970bf75e1ebebc7b77e6f94fabb1"
+  },
+  "alarm/GA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6894596",
+    "size": 1156076,
+    "sha256": "c2ab47ce8b882e090def03f0a74629a21b42f07e693bb27a7ac51c79180f699f"
+  },
+  "alarm/GA_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/7104088?format=original",
+    "size": 27045537,
+    "sha256": "fad2917d5943b0af8bcc804e4d8fbddb79daf617a7a1254d790b12723ede294d"
+  },
+  "alarm/HI_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380403",
+    "size": 123664,
+    "sha256": "57d37fa8d9ee096e2bc1853b5c39051f20ddb519acf47cab3c28fb14b785f98e"
+  },
+  "alarm/HI_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392669?format=original",
+    "size": 3008883,
+    "sha256": "aceb3fbce56eb395bd9380544361958c7e3e85ac7487a8abb13377d5091b8daa"
+  },
+  "alarm/IA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380310",
+    "size": 162316,
+    "sha256": "15570364d7817b7dd62e13ced9ad920cf8574ac49ed9ca74968fec30139bc24a"
+  },
+  "alarm/IA_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392677?format=original",
+    "size": 7437634,
+    "sha256": "a730fc18d74c0299205fab16ffd5fef4c22d06a6d4b4e1ffbe7dc505312b44c1"
+  },
+  "alarm/ID_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380394",
+    "size": 440368,
+    "sha256": "03defbabbaa5efc43e209c2f148267996cb53d0e6877aa225dd32be3b54db84c"
+  },
+  "alarm/ID_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392671?format=original",
+    "size": 3369027,
+    "sha256": "4bee1016f49bc8361915718eb8b132260c8210b1ea5650713425e63a0bfc8922"
+  },
+  "alarm/IL_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6390560",
+    "size": 1817368,
+    "sha256": "9bb6dcbdd1906cb9045e3efac377399b1d9dcc6280c20d8b4ca4b59f860aeead"
+  },
+  "alarm/IL_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392672?format=original",
+    "size": 30630443,
+    "sha256": "283b54923fd1f719f5861138d4b9115195dc163401b7c53d3119be3250099448"
+  },
+  "alarm/IN_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6911530",
+    "size": 1118796,
+    "sha256": "5a6264cc0308a17f6c80e16eaef52d135e67e64adf4085e0a539cbfbdb7ea12f"
+  },
+  "alarm/IN_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/7104111?format=original",
+    "size": 17094101,
+    "sha256": "3aa01994e01fcda3add7caf08d1e0339ba05a689e06ec528c93ba7c94496895d"
+  },
+  "alarm/KS_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380461",
+    "size": 783948,
+    "sha256": "2c44ceac7ad8e6f9a6d4528fd0b7a5f56a116f39bde91f693fa4e527f48afa62"
+  },
+  "alarm/KS_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392679?format=original",
+    "size": 7037557,
+    "sha256": "11a160e6e3d208fbcb2842b613e6af297ff375784a5c88ff8a4c40303d363303"
+  },
+  "alarm/KY_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6532915",
+    "size": 1276564,
+    "sha256": "31d85301b44182af17fec0b98a94fdb26276683c1f99ef8012e0fb25faa782dc"
+  },
+  "alarm/KY_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6533172?format=original",
+    "size": 9385721,
+    "sha256": "06c2cac1482667796c5c05044dab91d723e80f477200c21bd5154d1e7c65eba6"
+  },
+  "alarm/LA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380465",
+    "size": 1149128,
+    "sha256": "93ee37acca6370f1d18405be42bd1f6d482f2c8a3dabd50688583dd5e69e739c"
+  },
+  "alarm/LA_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392683?format=original",
+    "size": 14640258,
+    "sha256": "bdf4b882c437731f93fad8e4ee0814d5959667fb3c3c0fbc3169ef422e9166f0"
+  },
+  "alarm/MA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380418",
+    "size": 490356,
+    "sha256": "b103e467f00a71dda430118cdb1314077f24b30a3470f8606b96dea77624db58"
+  },
+  "alarm/MA_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392687?format=original",
+    "size": 16103831,
+    "sha256": "34220a38452aa86ed9dd166ae85067deeb901696ad4d2f97bc8fb1fbb216f47d"
+  },
+  "alarm/MD_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6395237",
+    "size": 750036,
+    "sha256": "bb17149b0f0412a4372b4b0eedf9a8ecb53397ab63cbff6c9e0d2ddec03d1fe2"
+  },
+  "alarm/MD_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6395235?format=original",
+    "size": 13794471,
+    "sha256": "2402b6121e4d757d079366b5a4a1c1d404bb76dd1a7e5121a44900d0df874c8a"
+  },
+  "alarm/ME_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380412",
+    "size": 65504,
+    "sha256": "d76863b8ca7b13fe353d42a650630d0f579d961b4c4616b12beae69971b77cab"
+  },
+  "alarm/ME_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392727?format=original",
+    "size": 3118917,
+    "sha256": "cba9f1d157f8c80b63a97cbac76150ea989f048957344cef69d830aeac3cf4ca"
+  },
+  "alarm/MI_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380304",
+    "size": 836836,
+    "sha256": "c455df8896ca850e8ca97e282802901f0efebfca3158db1ea2e6477bb690f514"
+  },
+  "alarm/MI_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392689?format=original",
+    "size": 23374648,
+    "sha256": "5d43c3ce7f0f7b88b40b4b47aa0d89ab5c42a8d90d3e033da32b9e2fb3571f15"
+  },
+  "alarm/MN_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6390829",
+    "size": 947744,
+    "sha256": "e2cfaa8bf1e648533582e107080da0081bbb1c7966ba12007a1d1f068eb5a543"
+  },
+  "alarm/MN_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392691?format=original",
+    "size": 14354613,
+    "sha256": "5d4319949f1c025c87735ad55137dad30e64d420221cd6a68303e9d4d2ca62f8"
+  },
+  "alarm/MO_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6402270",
+    "size": 1096320,
+    "sha256": "d541f020ce6f2ddbcc31e7961b0731b1782baf50b8e386e255547adadb41a1df"
+  },
+  "alarm/MO_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6402267?format=original",
+    "size": 15555087,
+    "sha256": "4d9a9bff18d76e6c6e83cca532baa08e5cbae6a1ea440f90ac69eb315a03a5ce"
+  },
+  "alarm/MS_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380424",
+    "size": 799340,
+    "sha256": "d3c273dbf9e3b33af8854107b3c96248972ff42b986c818fa48efaf3e1aac16c"
+  },
+  "alarm/MS_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392693?format=original",
+    "size": 6357363,
+    "sha256": "f896ad3b788ed2faef50e1e02693bec75f950222cc9497a91701cdc138936d15"
+  },
+  "alarm/MT_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380301",
+    "size": 377396,
+    "sha256": "5820c059b9faf1f5f49811cda0764af1791222467dc3e095c7df0dea8a79e265"
+  },
+  "alarm/MT_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392696?format=original",
+    "size": 3759195,
+    "sha256": "216ae25abdd16ee50227233238104b5707a9c9060e75be8f9801bef0291375ea"
+  },
+  "alarm/NC_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380468",
+    "size": 1187028,
+    "sha256": "20524d958d836d06e4bd60fe9533e575b1cd42809573aab2cbd94ad9f7b7c974"
+  },
+  "alarm/NC_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392710?format=original",
+    "size": 28445903,
+    "sha256": "d0654614f502d97cebd0abe3f23b05a93d96a13b72607d7dd0e00b998dbe0cd3"
+  },
+  "alarm/NE_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6911534",
+    "size": 321680,
+    "sha256": "1510434e55ef185fbf08f53e56da4b64e17dd4cbef456421522bb598f5f82815"
+  },
+  "alarm/NE_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/7104089?format=original",
+    "size": 5308292,
+    "sha256": "40b10c387ac03fddde1e15bcd8668727e6cb8e3ce2750cd352f0ebf795b1e06d"
+  },
+  "alarm/NH_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6381257",
+    "size": 107768,
+    "sha256": "c25abdac4f1a2b69f28b0f5d34f90a2ce0da36a962b1fce8e1a3f978d8183e0c"
+  },
+  "alarm/NH_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392703?format=original",
+    "size": 3439041,
+    "sha256": "b9a22a9494dadaa6ca0637ddc4b3e4446452593918ded05ebaf9dbbfff1c9c4f"
+  },
+  "alarm/NJ_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413620",
+    "size": 1117584,
+    "sha256": "3877d4a70dcbb0e13ba3c8a4d64269cb2cdf111b8dc84d7ab3ea20559005c60d"
+  },
+  "alarm/NJ_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413614?format=original",
+    "size": 19617167,
+    "sha256": "a40e39ff28b295cd3175f856da9fefdb7c0cf65786d3601d62c3c6d5546cfc04"
+  },
+  "alarm/NM_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413617",
+    "size": 682916,
+    "sha256": "ec11f3855c277970d57f8c8c1a817657fc87f59449d5057d287bf1de4ed164f2"
+  },
+  "alarm/NM_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413616?format=original",
+    "size": 5593388,
+    "sha256": "a18e913a4ed11f91f0024b7b6bd7cce71101d251a6b4c1597c1e5845732c9d94"
+  },
+  "alarm/NV_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380432",
+    "size": 427948,
+    "sha256": "17924cc4bf27bd0cd75d8d861a52d0a389fed7fa8810019aac93f484867efdaf"
+  },
+  "alarm/NV_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392701?format=original",
+    "size": 7257601,
+    "sha256": "64e22a4b718debe72d06a258a8f7b8fa918050fd9f2370273a55d6d0adcf3572"
+  },
+  "alarm/NY_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6390958",
+    "size": 2161820,
+    "sha256": "41b1f7f8f77c152ec2746330e7ab4490cd59ffeaaab8e3e34ac33738d7392a0b"
+  },
+  "alarm/NY_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392708?format=original",
+    "size": 45155897,
+    "sha256": "90225befb029133d1b1b9e3560b2a242f328512478f720448a929ce6d2680813"
+  },
+  "alarm/OH_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380290",
+    "size": 1767944,
+    "sha256": "b00f99f46a702557d40fd7a7a53533ce9e0acd4e6bf69a405d5ebec23b2f2ecb"
+  },
+  "alarm/OH_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392713?format=original",
+    "size": 27327014,
+    "sha256": "7dd84943428384c0455fa6f32965d7dfa53bc80837ecee640e800554a36a0c8e"
+  },
+  "alarm/OK_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380442",
+    "size": 691780,
+    "sha256": "36ea8de05152ccc54417b10ab807067157c67149fa50a1fb72f93fdd59f52282"
+  },
+  "alarm/OK_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392715?format=original",
+    "size": 8971812,
+    "sha256": "9af002a218f05204108448380e678d1362d9f51a9d5c1e876d21e2d44e0b69f7"
+  },
+  "alarm/OR_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/10384152",
+    "size": 545904,
+    "sha256": "7b0a49bb5115965f23c276a3d3c46671604b2ca30b9275d88b82349dcb1faf64"
+  },
+  "alarm/OR_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/10384154?format=original",
+    "size": 11876399,
+    "sha256": "c2e1aed424c1d652f5cb7155b78693a34634058c7d79257c65b318e8375f9ab7"
+  },
+  "alarm/PA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413618",
+    "size": 1883556,
+    "sha256": "20bee4bf447772ab0c147615381eb7b0256b22e3f7ccc89e3ca507e3be88e64b"
+  },
+  "alarm/PA_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413613?format=original",
+    "size": 29652744,
+    "sha256": "484fa79a51b92b179426b27d0ee3b14c8377ac7a6c040173e45a10480fac1310"
+  },
+  "alarm/RI_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380457",
+    "size": 120580,
+    "sha256": "dc41bfd06c10d78cab979f7800444cd6f08ab17cb2d3f8719c51f127af6b7963"
+  },
+  "alarm/RI_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392721?format=original",
+    "size": 3349008,
+    "sha256": "dd9b7b3003e6fad4c3a3c6ae8473c94ebbb8ac595e2733f8a37608361a5cf49c"
+  },
+  "alarm/SC_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392412",
+    "size": 831092,
+    "sha256": "7ee5a0565dac72db3a43e1530eda214cced03e9a2c4cbef9c5b0fda0c71074e1"
+  },
+  "alarm/SC_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392630?format=original",
+    "size": 12385391,
+    "sha256": "a321198fc1fad85594a385040bdbfee6b8344da468bb6c77a314201ecfa02c0f"
+  },
+  "alarm/TN_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392403",
+    "size": 1071116,
+    "sha256": "4634edca8de8d2842980d04de77d21c91cae7a23c5eb753ebce23a987f03c5e4"
+  },
+  "alarm/TN_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392722?format=original",
+    "size": 12322959,
+    "sha256": "e0730cff009f5d704357ace255a817be0413ffe9e98b2c970ec896a988221db9"
+  },
+  "alarm/TX_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6381253",
+    "size": 3134408,
+    "sha256": "25aaf67556d8ac0c74aa24e53a447d96f8a72a0a36dbb3434220c774965bf8c7"
+  },
+  "alarm/TX_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392725?format=original",
+    "size": 83765617,
+    "sha256": "600c22189c88c601cb6f35bc11e8e8a58df0223e712914d411db6195c674fa78"
+  },
+  "alarm/UT_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6395233",
+    "size": 765000,
+    "sha256": "75afe004b2f7ecc90008afd6c40b3cf0719385cde5ccd819cf6402058e702c5e"
+  },
+  "alarm/UT_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/7104118?format=original",
+    "size": 7457663,
+    "sha256": "fcc3f839825ffaa82d2811fdc693c184752e1df2f68100a742fa91dece935264"
+  },
+  "alarm/VA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413619",
+    "size": 1069268,
+    "sha256": "729b849fde5aa37629d04800bcc4decedeeb4f8989c4818b9bd82c752d9f47a8"
+  },
+  "alarm/VA_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6413612?format=original",
+    "size": 17921919,
+    "sha256": "970b722df42043dc6d16b27980f6505fa23d6dd8b10adae042303617aaa66238"
+  },
+  "alarm/WA_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380284",
+    "size": 1490760,
+    "sha256": "c2fe5e469979a9994b46af6c497e9a955981187034f7c58f6b75a81351725956"
+  },
+  "alarm/WA_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392733?format=original",
+    "size": 19948627,
+    "sha256": "76415d01e07b6def47e690d84ffb570528980ee8d02782d78411f9a4e74b4b82"
+  },
+  "alarm/WI_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380453",
+    "size": 1442220,
+    "sha256": "2bb66b131fa1ff6c244b9bfd4d4faebadbe46d3833c35d1fadc28612237d0182"
+  },
+  "alarm/WI_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392734?format=original",
+    "size": 14314605,
+    "sha256": "251cb5f51261327a0b5e27287a7313a9fa15f20a3fe849d5952e1d0988b8ff67"
+  },
+  "alarm/WV_cd_2020_map.rds": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6380448",
+    "size": 17740,
+    "sha256": "92d352b8fd85eb1c7e3c90c27df7659e58e27c2491dfb340f1ab272ec2a67a14"
+  },
+  "alarm/WV_cd_2020_stats.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/6392761?format=original",
+    "size": 2158565,
+    "sha256": "ca3967948a7866c2d926964ec10a45234ff65bfda3266338d7d54a3d44e87e0f"
+  },
+  "census/cd118.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2023/118-congressional-district-bef/cd118.zip",
+    "size": 25922515,
+    "sha256": "a2f38d0dd7c207fa144a88b66df9f59f8a6e5c27e932fbd4a32d1bcf587c5763"
+  },
+  "census/cd119.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2025/119-congressional-district-befs/cd119.zip",
+    "size": 22959130,
+    "sha256": "1433feb5178dc7b4188ee30f5f7f715851f4400740b8fe1ce606a876c6294bd6"
+  },
+  "census/cd120.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/rdo/mapping-files/2027/120-congressional-district-befs/cd120.zip",
+    "size": 55241385,
+    "sha256": "bc9a4fc543b8b279ce3663642a5cc4e19e32a8ef84f12371e26f754e5b8cc8a5"
+  },
+  "census/cd120_2026_08.zip": {
+    "url": "https://github.com/geodienst/Gerry/releases/download/data-cd120-2026-08-31/cd120.zip",
+    "size": 57246616,
+    "sha256": "f3074ac5a3b353f9da22baaeb73c47ddd1c9040fffe7f5131f947f35c25a1097"
+  },
+  "census/pl/al2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Alabama/al2020.pl.zip",
+    "size": 23974872,
+    "sha256": "bd3fbbf22615b166869f9119aa12017b9a7b82baf0f22a9170e92a88a397cd77"
+  },
+  "census/pl/ar2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Arkansas/ar2020.pl.zip",
+    "size": 20179961,
+    "sha256": "940ad2916676e443dfdab98c3e145fcf62ef9dcd9f10c763ccdb195f4d5f132e"
+  },
+  "census/pl/az2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Arizona/az2020.pl.zip",
+    "size": 23082436,
+    "sha256": "56997e8b1b5175148fd3e1157ab57eee7c1722221cafebfd5d12fe2e687b2aff"
+  },
+  "census/pl/ca2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/California/ca2020.pl.zip",
+    "size": 79627235,
+    "sha256": "e02c83c85a9a5d69ded4bf0d4c8ebe3f4bcd2d8e5911db765e9e42915ad1f753"
+  },
+  "census/pl/co2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Colorado/co2020.pl.zip",
+    "size": 24215854,
+    "sha256": "fce76008aedd10681bf0e57fa366ca788d280264edfe91e7d80a9b33ae86ab2c"
+  },
+  "census/pl/ct2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Connecticut/ct2020.pl.zip",
+    "size": 10254583,
+    "sha256": "c4a2d42a79c52de10ea9397cca43db59c2df38e6d6e66b4396a0de8bd3f66780"
+  },
+  "census/pl/fl2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Florida/fl2020.pl.zip",
+    "size": 65962055,
+    "sha256": "fdcc98180f634b69c40ed1d71a63fe00fdda4cda3e35fbaa6382336501f4b0cf"
+  },
+  "census/pl/ga2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Georgia/ga2020.pl.zip",
+    "size": 35831859,
+    "sha256": "26434588ceab435fa33a138ff999e4187c923a74732fcc488c3a0597b4adebcb"
+  },
+  "census/pl/hi2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Hawaii/hi2020.pl.zip",
+    "size": 3817508,
+    "sha256": "b7e1ba6350c5d75267b688504052af001ad227763995f6bb26ccdd92fc45261f"
+  },
+  "census/pl/ia2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Iowa/ia2020.pl.zip",
+    "size": 21713685,
+    "sha256": "c55e8276080b684431b8629269d4225c31080ea17257a737f9d99e3cf2ac6822"
+  },
+  "census/pl/id2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Idaho/id2020.pl.zip",
+    "size": 10025551,
+    "sha256": "89345b6d5d12ccdec8af4039b0a6f1f5ba4cd7ca86c8f73ad6250b5713e3df47"
+  },
+  "census/pl/il2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Illinois/il2020.pl.zip",
+    "size": 64763317,
+    "sha256": "e73f82d6aea0b9b372e9f8572c6edbedfa72ae9fc2039da84faf0cdf0c478a32"
+  },
+  "census/pl/in2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Indiana/in2020.pl.zip",
+    "size": 32611077,
+    "sha256": "5f4999237a9bf3b3337865494d0d62c0a1dc620cad7e48caebaa83811f95901a"
+  },
+  "census/pl/ks2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Kansas/ks2020.pl.zip",
+    "size": 23446925,
+    "sha256": "ac6b4ae5e2af4c8d639b46748d55927ee7821756f6073cc4f8238c1fb00498ee"
+  },
+  "census/pl/ky2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Kentucky/ky2020.pl.zip",
+    "size": 22595797,
+    "sha256": "252a04b760e4da69665d5654108be2b63d55d294c1c0c608bfc7e7fcf2360ac4"
+  },
+  "census/pl/la2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Louisiana/la2020.pl.zip",
+    "size": 23768295,
+    "sha256": "d8d9ea96195f2b848be70ef33dcb224d433d8d58025e11aaa0432c5211e5345c"
+  },
+  "census/pl/ma2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Massachusetts/ma2020.pl.zip",
+    "size": 21002060,
+    "sha256": "9857362fbc1162d3943685134a77a91542a70eb667f3477559d07fd0a81e4889"
+  },
+  "census/pl/md2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Maryland/md2020.pl.zip",
+    "size": 18262586,
+    "sha256": "9af1e1f0185b6219a9432132ef78e47c2d74c474948d2ed6004c7061412393f3"
+  },
+  "census/pl/me2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Maine/me2020.pl.zip",
+    "size": 6098405,
+    "sha256": "f9bb6fe4cf13bb28b44e4d6a8d5d3e5209f9249ebc402db7ea5c24f8a673ac07"
+  },
+  "census/pl/mi2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Michigan/mi2020.pl.zip",
+    "size": 39966651,
+    "sha256": "971bd53abeb1d905bb9b09bfe4dc1afe8514a916f24d285b289e0f66ec5cfb62"
+  },
+  "census/pl/mn2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Minnesota/mn2020.pl.zip",
+    "size": 29625918,
+    "sha256": "7d30974597e73893d25ffef0975c8e673afcc1166f9919d5ff2a466a2e0e188f"
+  },
+  "census/pl/mo2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Missouri/mo2020.pl.zip",
+    "size": 35967209,
+    "sha256": "900d8a3bcc59e2cc3c174730e2a8704bd653af1fc043c9fbd73196e1c0d7fba5"
+  },
+  "census/pl/ms2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Mississippi/ms2020.pl.zip",
+    "size": 16282867,
+    "sha256": "cb64e3465cee9623dc574605f4dfcada33eaea6833062d31f769811fd20a5f26"
+  },
+  "census/pl/mt2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Montana/mt2020.pl.zip",
+    "size": 9835205,
+    "sha256": "e01288ce3ae37ae732eb61d40268c6ac3ec8f9772c8609c6e9ca538bdd0bc130"
+  },
+  "census/pl/nc2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/North_Carolina/nc2020.pl.zip",
+    "size": 37553822,
+    "sha256": "04f2f250dad877d237d94f553f9cb2209594c2a021d15f9fdeedd4404db538db"
+  },
+  "census/pl/ne2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Nebraska/ne2020.pl.zip",
+    "size": 13595569,
+    "sha256": "29298d68a5905cf9cb14cd64e35750d14727a330c5940ccf5238a8ae6e110300"
+  },
+  "census/pl/nh2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/New_Hampshire/nh2020.pl.zip",
+    "size": 4807476,
+    "sha256": "31852c0cfa871ea81f933bb1df904f0d45997097e38ade83db87ba58255d4468"
+  },
+  "census/pl/nj2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/New_Jersey/nj2020.pl.zip",
+    "size": 34066393,
+    "sha256": "caf0da4a9e9d46ced3f8020a7a2bf5240cd8805ed0679716f0cb2b8fcc65e811"
+  },
+  "census/pl/nm2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/New_Mexico/nm2020.pl.zip",
+    "size": 15295141,
+    "sha256": "77133ba4bb2fb2c28d39993bb4cff5f1c42823c9d13b75e51e8ecf986354c259"
+  },
+  "census/pl/nv2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Nevada/nv2020.pl.zip",
+    "size": 11597053,
+    "sha256": "ac7e792e0a1d6248ff1700159f4ec6a3a7b3330ebe10899bb4f47ab97c19952d"
+  },
+  "census/pl/ny2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/New_York/ny2020.pl.zip",
+    "size": 72608321,
+    "sha256": "9d046014bee6b61afa808c5dfe841a6d036c77bff70197472fbdd291a40b8ce2"
+  },
+  "census/pl/oh2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Ohio/oh2020.pl.zip",
+    "size": 51648259,
+    "sha256": "ceef338247ad2dccc267885f2879e167ab6730c7a332d3ceb5aef9d6e2338aa0"
+  },
+  "census/pl/ok2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Oklahoma/ok2020.pl.zip",
+    "size": 24870369,
+    "sha256": "e95c99e6385f4ed3a5ea67962444a53ad7a731f26d1dd88df2efde504f101dff"
+  },
+  "census/pl/or2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Oregon/or2020.pl.zip",
+    "size": 14707780,
+    "sha256": "f8e7fa8c331446850b1bf545e6c4aa63733373f582b11edd6b3cf31016bc4509"
+  },
+  "census/pl/pa2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Pennsylvania/pa2020.pl.zip",
+    "size": 57240396,
+    "sha256": "2d33a7dab29c8dd5692bbde203d253e06eebbc44fcbaa96b1caa958d454026ae"
+  },
+  "census/pl/ri2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Rhode_Island/ri2020.pl.zip",
+    "size": 4269011,
+    "sha256": "a2a6de20d0bac0dfe91aef66d3c2dde0eb768863884fbc45d4f3df5c49f5dcd0"
+  },
+  "census/pl/sc2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/South_Carolina/sc2020.pl.zip",
+    "size": 22200586,
+    "sha256": "e8996f6873405d6c048c42e8878231fc7f152564295498ff586a041648a46bb5"
+  },
+  "census/pl/tn2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Tennessee/tn2020.pl.zip",
+    "size": 25279315,
+    "sha256": "89f843dbc717409169fef44df2682548c308c06c0d825451bf2e78340234daf2"
+  },
+  "census/pl/tx2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Texas/tx2020.pl.zip",
+    "size": 99593751,
+    "sha256": "6fee8ca5759eb4942db25a59b8cbd3439ad4188279fccff87dac70a89ceca6ff"
+  },
+  "census/pl/ut2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Utah/ut2020.pl.zip",
+    "size": 13713435,
+    "sha256": "4e6de13cd7b5307bfdd327446dd7107e2fdb790903f59186bb8285881531d0f0"
+  },
+  "census/pl/va2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Virginia/va2020.pl.zip",
+    "size": 28074582,
+    "sha256": "e33c7c1ac0aa84b5fe5ba20188d2e562c5c96b1c02f59e766e18d037b23df9e8"
+  },
+  "census/pl/wa2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Washington/wa2020.pl.zip",
+    "size": 36824364,
+    "sha256": "dde77f2db632a4af274a968c39a7ab58fac6cfd90718e4a72ec239b84980db5b"
+  },
+  "census/pl/wi2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/Wisconsin/wi2020.pl.zip",
+    "size": 34725175,
+    "sha256": "e70f80ef4a803cdeb1e1767fc42e13f7d01ce9f98566c82ca4c2379aa9809f7f"
+  },
+  "census/pl/wv2020.pl.zip": {
+    "url": "https://www2.census.gov/programs-surveys/decennial/2020/data/01-Redistricting_File--PL_94-171/West_Virginia/wv2020.pl.zip",
+    "size": 9611980,
+    "sha256": "8356c49f300e9c18658de56c06e551f5e8cb591c395fc3d1748077d46322889b"
+  },
+  "census/tiger/cb_2025_us_state_500k.zip": {
+    "url": "https://www2.census.gov/geo/tiger/GENZ2025/shp/cb_2025_us_state_500k.zip",
+    "size": 3245373,
+    "sha256": "9cbfe171dad1555e11770c981d8f4db9e687a65c86f5bdae684eeb487e2e9b80"
+  },
+  "census/tiger/tl_2025_29_cd119.zip": {
+    "url": "https://www2.census.gov/geo/tiger/TIGER2025/CD/tl_2025_29_cd119.zip",
+    "size": 735859,
+    "sha256": "1e289687c4dd7ec9be62823d63124036605ea93ffe27286aaa9d2818b1ba4090"
+  },
+  "census/tiger/tlgpkg_2026_us_legislative.gpkg.zip": {
+    "url": "https://www2.census.gov/geo/tiger/TGRGPKG26/tlgpkg_2026_us_legislative.gpkg.zip",
+    "size": 249289919,
+    "sha256": "fffb2f36a12302df89cf4273f2592218be055a4b8409f6aef89412210d6e8ec1"
+  },
+  "census_vest/ca_2020_block.csv": {
+    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/ca_2020_block.csv",
+    "size": 60691645,
+    "sha256": "62ef731d31f3606fff8ac38b94ea7ffee97edd495a6ebac52ab2296330f81bf9"
+  },
+  "census_vest/hi_2020_block.csv": {
+    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/hi_2020_block.csv",
+    "size": 1970679,
+    "sha256": "91842d8bc4e918949a1a058bc9b9a694e10065b517e3f7af72858a60d002b4cf"
+  },
+  "census_vest/me_2020_block.csv": {
+    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/me_2020_block.csv",
+    "size": 5472083,
+    "sha256": "fcf51278f33cd4099998564638fcc359baf8e272eb0e7983809b9701a77283e3"
+  },
+  "census_vest/or_2020_block.csv": {
+    "url": "https://raw.githubusercontent.com/alarm-redist/census-2020/243c8a8134ecf8151777a9388c48323e274767e2/census-vest-2020/or_2020_block.csv",
+    "size": 20997143,
+    "sha256": "ba856bc13ea54aa98faec4493f35811dda52f0a20b8b38540a39c04e340e3144"
+  },
+  "medsl/1976-2024-president.csv": {
+    "url": "https://dataverse.harvard.edu/api/access/datafile/13887042",
+    "size": 514108,
+    "sha256": "9936410a6dd4ecc8be7fe202c6dff5b5f8fee59d88f35ab542ed12879941dcb7"
+  }
+}

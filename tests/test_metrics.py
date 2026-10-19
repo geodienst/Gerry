@@ -1,0 +1,741 @@
+"""Tests for gerry/metrics.py. Every expected value is worked out by hand in the comments."""
+import numpy as np
+import pandas as pd
+import pytest
+
+from gerry import metrics as m
+
+
+# Task 2.1: dem_wins
+
+def test_dem_wins_majority_decides():
+    # district 1: D 60 > R 40 -> D; district 2: D 30 < R 70 -> R
+    assert m.dem_wins([60, 30], [40, 70]).tolist() == [True, False]
+
+
+def test_dem_wins_tie_goes_to_2020_winner():
+    # district 1: composite 100-100, 2020 alone D 55 > R 45 -> D
+    # district 2: composite 100-100, 2020 alone D 40 < R 60 -> R
+    # district 3: composite D 120 > R 80 -> D; its 2020 votes (10-90) do not count
+    wins = m.dem_wins([100, 100, 120], [100, 100, 80], d20=[55, 40, 10], r20=[45, 60, 90])
+    assert wins.tolist() == [True, False, True]
+
+
+def test_dem_wins_double_tie_names_position():
+    # position 1 is tied in the composite (50-50) and in 2020 (25-25)
+    with pytest.raises(m.TieError, match=r"position\(s\) \[1\]") as err:
+        m.dem_wins([60, 50], [40, 50], d20=[30, 25], r20=[20, 25])
+    assert err.value.positions == (1,)
+
+
+def test_dem_wins_tie_without_2020_votes_raises():
+    with pytest.raises(m.TieError, match=r"position\(s\) \[0\]"):
+        m.dem_wins([50], [50])
+
+
+def test_dem_wins_rejects_missing_votes():
+    with pytest.raises(ValueError, match="missing"):
+        m.dem_wins([np.nan, 10], [5, 20])
+
+
+# Task 2.2: largest_remainder
+
+def test_largest_remainder_larger_remainder_wins():
+    # 60 to 40, 4 seats: quota D = 60 * 4 / 100 = 2.4, quota R = 4 - 2.4 = 1.6
+    # floors 2 + 1 = 3, one seat left; remainders 0.4 (D) and 0.6 (R) -> R
+    assert m.largest_remainder(60, 40, 4) == 2
+    # quota D 2.8, R 1.2, floors 2 + 1, remainders 0.8 vs 0.2 -> leftover seat to D
+    assert m.largest_remainder(70, 30, 4) == 3
+
+
+def test_largest_remainder_nevada():
+    # Nevada composite: D 1,242,313.3, R 1,181,550.1, 4 seats
+    # quota D = 4 * 0.5125344 = 2.0501, quota R = 1.9499
+    # floors 2 + 1, remainders 0.0501 (D) and 0.9499 (R) -> R; D keeps 2
+    assert m.largest_remainder(1242313.3, 1181550.1, 4) == 2
+
+
+def test_largest_remainder_whole_quotas():
+    # 75 to 25, 4 seats: quotas 3.0 and 1.0, no seat left over
+    assert m.largest_remainder(75, 25, 4) == 3
+
+
+def test_largest_remainder_equal_remainders_go_to_more_votes():
+    # 5 to 3, 4 seats: quota D = 5 * 4 / 8 = 2.5, quota R = 1.5, both remainders 0.5
+    # D has more votes (5 > 3) and gets the last seat: 2 + 1 = 3
+    assert m.largest_remainder(5, 3, 4) == 3
+    # mirrored: R has more votes, D keeps its floor of 1
+    assert m.largest_remainder(3, 5, 4) == 1
+
+
+def test_largest_remainder_full_tie_raises():
+    # 10 to 10, 3 seats: quotas 1.5 and 1.5, equal remainders and equal votes
+    with pytest.raises(m.TieError):
+        m.largest_remainder(10, 10, 3)
+
+
+def test_largest_remainder_rejects_bad_input():
+    with pytest.raises(ValueError):
+        m.largest_remainder(0, 0, 4)
+    with pytest.raises(ValueError):
+        m.largest_remainder(10, 20, 0)
+
+
+# Task 2.3: seats_by_plan and distribution
+
+def _ensemble(rows):
+    return pd.DataFrame(rows, columns=["state", "draw", "district", "d", "r", "d_pre_20", "r_pre_20"])
+
+
+def test_seats_by_plan_counts_dem_districts_per_draw():
+    ens = _ensemble([
+        # draw "1": 01 D (60 > 40), 02 R (30 < 70) -> 1 seat
+        ("NV", "1", "01", 60, 40, 30, 20),
+        ("NV", "1", "02", 30, 70, 15, 35),
+        # draw "2": both tied 50-50; 2020 gives 01 to D (30 > 20), 02 to R (10 < 40) -> 1 seat
+        ("NV", "2", "01", 50, 50, 30, 20),
+        ("NV", "2", "02", 50, 50, 10, 40),
+        # draw "7": 01 D (80 > 20), 02 D (55 > 45) -> 2 seats
+        ("NV", "7", "01", 80, 20, 40, 10),
+        ("NV", "7", "02", 55, 45, 30, 20),
+    ])
+    assert m.seats_by_plan(ens).to_dict() == {"1": 1, "2": 1, "7": 2}
+
+
+def test_seats_by_plan_double_tie_names_state_plan_and_district():
+    ens = _ensemble([
+        ("NV", "1", "01", 60, 40, 30, 20),
+        ("NV", "1", "02", 30, 70, 15, 35),
+        ("NV", "9", "01", 50, 50, 25, 25),  # tied in the composite and in 2020
+        ("NV", "9", "02", 30, 70, 15, 35),
+    ])
+    with pytest.raises(m.TieError, match="NV plan 9 district 01"):
+        m.seats_by_plan(ens)
+
+
+def test_distribution_counts_plans_per_seat_count():
+    # 4 seats, so counts for 0 to 4 seats; samples 1, 1, 2, 3, 3, 3 -> [0, 2, 1, 3, 0]
+    assert m.distribution([1, 1, 2, 3, 3, 3], 4).tolist() == [0, 2, 1, 3, 0]
+
+
+def test_distribution_rejects_impossible_counts():
+    with pytest.raises(ValueError):
+        m.distribution([5], 4)
+    with pytest.raises(ValueError):
+        m.distribution([], 4)
+
+
+# Task 2.4: sample_percentile and pmf_percentile
+
+def test_sample_percentile_takes_lower_middle_value():
+    # samples 1, 1, 2, 2: share of plans with at most 1 seat = 2/4 = 0.5 >= 0.5
+    # so the median is 1, never the average 1.5
+    assert m.sample_percentile([1, 1, 2, 2], 50) == 1
+    # 1, 1, 3, 3: share with at most 1 seat = 0.5 >= 0.5 -> 1; averaging would give 2
+    assert m.sample_percentile([1, 1, 3, 3], 50) == 1
+    # q = 51: 0.5 < 0.51 <= 1.0 -> 2; a "lower" rule would give 1
+    assert m.sample_percentile([1, 1, 2, 2], 51) == 2
+
+
+def test_sample_percentile_with_many_equal_values():
+    # 7 plans with 2 seats, 3 with 3: cumulative share 0.7 at 2 seats, 1.0 at 3
+    # p5: 0.7 >= 0.05 -> 2; median: 0.7 >= 0.5 -> 2; p95: 0.7 < 0.95 <= 1.0 -> 3
+    samples = [2] * 7 + [3] * 3
+    assert [m.sample_percentile(samples, q) for q in (5, 50, 95)] == [2, 2, 3]
+
+
+def test_sample_percentile_all_equal():
+    # West Virginia: every plan gives 0 seats
+    assert [m.sample_percentile([0] * 5000, q) for q in (5, 50, 95)] == [0, 0, 0]
+
+
+def test_sample_percentile_rejects_q_out_of_range():
+    with pytest.raises(ValueError):
+        m.sample_percentile([1, 2], 101)
+
+
+def test_pmf_percentile_matches_hand_cdf():
+    # plans per seat count 0..3: 1, 3, 4, 2 (10 plans); cumulative 0.1, 0.4, 0.8, 1.0
+    # p5: 0.1 >= 0.05 -> 0; median: 0.4 < 0.5 <= 0.8 -> 2; p95: 0.8 < 0.95 <= 1.0 -> 3
+    assert [m.pmf_percentile([1, 3, 4, 2], q) for q in (5, 50, 95)] == [0, 2, 3]
+
+
+def test_pmf_percentile_skips_seat_counts_without_plans():
+    # no plan has 0 seats, so the 0th percentile is 1, as numpy gives for the samples
+    assert m.pmf_percentile([0, 5, 5], 0) == 1
+    assert m.sample_percentile([1] * 5 + [2] * 5, 0) == 1
+
+
+def test_pmf_percentile_tolerates_float_error():
+    # twelve seat counts with one plan each: in floats the cumulative share at 5 is
+    # 0.49999999999999994, just under 0.5; by hand it is 6/12 = 0.5, so the median is 5
+    assert np.cumsum(np.ones(12) / 12)[5] < 0.5
+    assert m.pmf_percentile(np.ones(12), 50) == 5
+    assert m.sample_percentile(range(12), 50) == 5
+
+
+def test_percentiles_at_exact_boundaries_take_the_lower_value():
+    # 5000 plans; the cumulative share at 0 seats hits q exactly, so the answer is 0
+    # p5: 250 / 5000 = 0.05; median: 2500 / 5000 = 0.5; p95: 4750 / 5000 = 0.95
+    for zeros, q in ((250, 5), (2500, 50), (4750, 95)):
+        samples = [0] * zeros + [1] * (5000 - zeros)
+        assert m.sample_percentile(samples, q) == 0
+        assert m.pmf_percentile([zeros, 5000 - zeros], q) == 0
+
+
+def test_pmf_percentile_agrees_with_samples():
+    # Nevada's distribution: 13 plans with 1 seat, 1901 with 2, 3086 with 3
+    samples = [1] * 13 + [2] * 1901 + [3] * 3086
+    pmf = m.distribution(samples, 4)
+    for q in (0, 1, 5, 25, 50, 75, 95, 100):
+        assert m.pmf_percentile(pmf, q) == m.sample_percentile(samples, q)
+
+
+# Task 2.5: position and pmf_position
+
+def test_position_counts_fewer_equal_more():
+    # 10 plans with seats 1, 2, 2, 3, 3, 3, 3, 4, 4, 5; enacted 3
+    # fewer: 1, 2, 2 = 3/10 = 0.3; equal: 4/10 = 0.4; more: 4, 4, 5 = 0.3
+    # midrank = 0.3 + 0.4 / 2 = 0.5
+    pos = m.position([1, 2, 2, 3, 3, 3, 3, 4, 4, 5], 3)
+    assert pos == pytest.approx({"fewer": 0.3, "equal": 0.4, "more": 0.3, "midrank": 0.5})
+
+
+def test_position_nevada():
+    # Nevada: enacted 3; 13 + 1901 = 1914 plans fewer (0.3828), 3086 equal (0.6172), none more
+    # midrank = 0.3828 + 0.6172 / 2 = 0.6914
+    samples = [1] * 13 + [2] * 1901 + [3] * 3086
+    pos = m.position(samples, 3)
+    assert pos == pytest.approx({"fewer": 0.3828, "equal": 0.6172, "more": 0.0, "midrank": 0.6914})
+
+
+def test_pmf_position_from_counts():
+    # plans per seat count 0..3: 1, 3, 4, 2; value 2
+    # fewer = (1 + 3) / 10 = 0.4; equal = 4/10 = 0.4; more = 2/10 = 0.2; midrank = 0.4 + 0.2 = 0.6
+    pos = m.pmf_position([1, 3, 4, 2], 2)
+    assert pos == pytest.approx({"fewer": 0.4, "equal": 0.4, "more": 0.2, "midrank": 0.6})
+
+
+def test_pmf_position_rejects_value_outside_range():
+    with pytest.raises(ValueError):
+        m.pmf_position([1, 3, 4, 2], 4)
+
+
+# Task 2.6: effects and outside_band
+
+def test_effects_geographic_and_drawing():
+    # California: proportional 34, median 45, enacted 48
+    # geographic = 45 - 34 = 11; drawing = 48 - 45 = 3
+    assert m.effects(34, 45, 48) == {"geographic": 11, "drawing": 3}
+    # Texas: proportional 18, median 17, enacted 11 -> geographic -1, drawing -6
+    assert m.effects(18, 17, 11) == {"geographic": -1, "drawing": -6}
+
+
+def test_outside_band():
+    # Texas band 15..20: 11 is below it; 15 and 20 are on the edges and count as inside; 21 is above
+    assert m.outside_band(11, 15, 20) is True
+    # 14 lies just below the band 15..20
+    assert m.outside_band(14, 15, 20) is True
+    assert m.outside_band(15, 15, 20) is False
+    assert m.outside_band(20, 15, 20) is False
+    assert m.outside_band(21, 15, 20) is True
+
+
+# Task 2.7: efficiency_gap
+
+def test_efficiency_gap_five_districts():
+    # district  D   R   T    winner  wasted D       wasted R
+    # 1         80  20  100  D       80 - 50 = 30   20
+    # 2         55  45  100  D       55 - 50 = 5    45
+    # 3         30  70  100  R       30             70 - 50 = 20
+    # 4         48  72  120  R       48             72 - 60 = 12
+    # 5         35  45   80  R       35             45 - 40 = 5
+    # wasted D = 148, wasted R = 102, all votes = 500
+    # EG = (148 - 102) / 500 = 0.092, positive: more Democratic votes wasted, favors Republicans
+    d = [80, 55, 30, 48, 35]
+    r = [20, 45, 70, 72, 45]
+    assert m.efficiency_gap(d, r, m.dem_wins(d, r)) == pytest.approx(0.092)
+
+
+def test_efficiency_gap_mirror_favors_democrats():
+    # swap the parties of the five-district example: wasted D 102, wasted R 148
+    # EG = (102 - 148) / 500 = -0.092
+    d = [20, 45, 70, 72, 45]
+    r = [80, 55, 30, 48, 35]
+    assert m.efficiency_gap(d, r, m.dem_wins(d, r)) == pytest.approx(-0.092)
+
+
+def test_efficiency_gap_uses_given_winners():
+    # district 1 is 50-50; district 2 is D 30, R 70 (R wins: wasted D 30, wasted R 70 - 50 = 20)
+    # D declared winner of district 1: wasted D 50 - 50 = 0, wasted R 50
+    #   EG = ((0 + 30) - (50 + 20)) / 200 = -0.2
+    # R declared winner of district 1: wasted D 50, wasted R 0
+    #   EG = ((50 + 30) - (0 + 20)) / 200 = 0.3
+    assert m.efficiency_gap([50, 30], [50, 70], [True, False]) == pytest.approx(-0.2)
+    assert m.efficiency_gap([50, 30], [50, 70], [False, False]) == pytest.approx(0.3)
+
+
+# Task 2.8: mean_median
+
+def test_mean_median_odd_count():
+    # shares 0.30, 0.45, 0.50, 0.60, 0.80: mean = 2.65 / 5 = 0.53, median = 0.50
+    # MM = 0.53 - 0.50 = 0.03, positive: favors Republicans
+    assert m.mean_median([0.30, 0.45, 0.50, 0.60, 0.80]) == pytest.approx(0.03)
+
+
+def test_mean_median_three_districts():
+    # 0.20, 0.50, 0.50: mean = 1.2 / 3 = 0.4, median 0.5 -> MM = -0.1, favors Democrats
+    assert m.mean_median([0.20, 0.50, 0.50]) == pytest.approx(-0.1)
+
+
+def test_mean_median_even_count_averages_the_middle_two():
+    # 0.35, 0.40, 0.55, 0.70 (given unsorted): mean = 2.0 / 4 = 0.5
+    # median = (0.40 + 0.55) / 2 = 0.475; MM = 0.5 - 0.475 = 0.025
+    assert m.mean_median([0.70, 0.35, 0.55, 0.40]) == pytest.approx(0.025)
+
+
+def test_mean_median_none_for_two_districts():
+    assert m.mean_median([0.3, 0.6]) is None
+
+
+# Task 2.9: linear_band and sorted_band
+
+def test_linear_band_interpolates():
+    # five values 0.10 .. 0.50; numpy's linear rule puts q at position (n - 1) * q / 100
+    # p5: 4 * 0.05 = 0.2 -> 0.10 + 0.2 * (0.20 - 0.10) = 0.12
+    # median: position 2 -> 0.30
+    # p95: 4 * 0.95 = 3.8 -> 0.40 + 0.8 * (0.50 - 0.40) = 0.48
+    band = m.linear_band([0.50, 0.10, 0.40, 0.20, 0.30])
+    assert band == pytest.approx({"median": 0.30, "p5": 0.12, "p95": 0.48})
+    # 0.10, 0.20, 0.30, 0.40, 1.00: median 0.30, mean 0.40
+    # p5 = 0.10 + 0.2 * 0.10 = 0.12, p95 = 0.40 + 0.8 * 0.60 = 0.88
+    assert m.linear_band([1.00, 0.10, 0.40, 0.20, 0.30]) == pytest.approx(
+        {"median": 0.30, "p5": 0.12, "p95": 0.88})
+    with pytest.raises(ValueError, match="no values"):
+        m.linear_band([])
+
+
+def test_sorted_band_sorts_each_plan_first():
+    # plan A: 0.6, 0.4 -> sorted 0.4, 0.6
+    # plan B: 0.3, 0.5 -> 0.3, 0.5
+    # plan C: 0.7, 0.2 -> 0.2, 0.7
+    # lowest district: 0.2, 0.3, 0.4; position (3 - 1) * q / 100
+    #   p5: 0.1 -> 0.2 + 0.1 * 0.1 = 0.21; p50: 0.3; p95: 1.9 -> 0.3 + 0.9 * 0.1 = 0.39
+    # highest district: 0.5, 0.6, 0.7
+    #   p5: 0.5 + 0.1 * 0.1 = 0.51; p50: 0.6; p95: 0.6 + 0.9 * 0.1 = 0.69
+    band = m.sorted_band(np.array([[0.6, 0.4], [0.3, 0.5], [0.7, 0.2]]))
+    assert band["p5"] == pytest.approx([0.21, 0.51])
+    assert band["p50"] == pytest.approx([0.3, 0.6])
+    assert band["p95"] == pytest.approx([0.39, 0.69])
+    assert isinstance(band["p50"], list)
+    # p5, p50 and p95 are plain lists with one entry per district (two here)
+    assert all(isinstance(v, list) and len(v) == 2 for v in band.values())
+    # one district, plans 0.9, 0.1, 0.2: sorted 0.1, 0.2, 0.9; median 0.2 (mean would be 0.4)
+    # p5 = 0.1 + 0.1 * 0.1 = 0.11; p95 = 0.2 + 0.9 * 0.7 = 0.83
+    one = m.sorted_band(np.array([[0.9], [0.1], [0.2]]))
+    assert one["p5"] == pytest.approx([0.11])
+    assert one["p50"] == pytest.approx([0.2])
+    assert one["p95"] == pytest.approx([0.83])
+
+
+# Task 2.10: convolve and is_narrow
+
+THREE = [np.array([1, 3]), np.array([2, 2]), np.array([0, 1, 1])]
+
+
+def test_convolve_three_distributions():
+    # A (1 seat): plans [1, 3] -> P = [0.25, 0.75]
+    # B (1 seat): plans [2, 2] -> P = [0.5, 0.5]
+    # C (2 seats): plans [0, 1, 1] -> P = [0, 0.5, 0.5]
+    # A*B: P(0) = 0.25 * 0.5 = 0.125; P(1) = 0.25 * 0.5 + 0.75 * 0.5 = 0.5; P(2) = 0.75 * 0.5 = 0.375
+    # (A*B)*C: P(0) = 0.125 * 0 = 0
+    #          P(1) = 0.125 * 0.5 = 0.0625
+    #          P(2) = 0.125 * 0.5 + 0.5 * 0.5 = 0.3125
+    #          P(3) = 0.5 * 0.5 + 0.375 * 0.5 = 0.4375
+    #          P(4) = 0.375 * 0.5 = 0.1875
+    assert m.convolve(THREE) == pytest.approx([0, 0.0625, 0.3125, 0.4375, 0.1875])
+    with pytest.raises(ValueError, match="no distributions"):
+        m.convolve([])
+
+
+def test_convolution_percentiles_and_position():
+    pmf = m.convolve(THREE)
+    # cumulative: 0, 0.0625, 0.375, 0.8125, 1.0
+    # p5: 0.0625 >= 0.05 -> 1; median: 0.375 < 0.5 <= 0.8125 -> 3; p95: 0.8125 < 0.95 -> 4
+    assert [m.pmf_percentile(pmf, q) for q in (5, 50, 95)] == [1, 3, 4]
+    # value 2: fewer = 0 + 0.0625; equal = 0.3125; more = 0.4375 + 0.1875 = 0.625
+    # midrank = 0.0625 + 0.3125 / 2 = 0.21875
+    assert m.pmf_position(pmf, 2) == pytest.approx(
+        {"fewer": 0.0625, "equal": 0.3125, "more": 0.625, "midrank": 0.21875})
+
+
+def test_is_narrow():
+    # Louisiana: 4989 of 5000 plans give 1 seat, 0.9978 >= 0.95
+    assert m.is_narrow([1, 4989, 10]) is True
+    # exactly 95% counts as narrow, 94% does not
+    assert m.is_narrow([5, 95]) is True
+    assert m.is_narrow([6, 94]) is False
+    # 949 / 1000 = 94.9% < 95%; in integers 949 * 20 = 18980 < 19 * 1000 = 19000
+    assert m.is_narrow([51, 949]) is False
+    # Nevada: largest share 3086 / 5000 = 0.6172
+    assert m.is_narrow([0, 13, 1901, 3086, 0]) is False
+    # no plans at all
+    with pytest.raises(ValueError, match="no plans"):
+        m.is_narrow([0, 0])
+
+
+# Task 5.4: competitive districts, seats under a uniform swing, the enacted threshold
+
+def test_competitive_counts_45_to_55_percent_bounds_included():
+    # 0.45 and 0.55 are the bounds and count; 0.449 and 0.551 lie outside; 0.5 counts -> 3
+    assert m.competitive([0.45, 0.55, 0.449, 0.551, 0.5]) == 3
+
+
+def test_competitive_counts_per_plan():
+    # plans as rows: (0.45, 0.6) -> 1; (0.5, 0.52) -> 2; (0.3, 0.7) -> 0
+    assert m.competitive(np.array([[0.45, 0.6], [0.5, 0.52], [0.3, 0.7]])).tolist() == [1, 2, 0]
+
+
+def test_seats_at_swing_adds_the_swing_to_every_district():
+    shares = [0.6, 0.48, 0.45, 0.3]
+    # swing 0: only 0.6 lies above one half
+    assert m.seats_at_swing(shares, 0.0) == 1
+    # +0.03: 0.63, 0.51, 0.48, 0.33 -> 2
+    assert m.seats_at_swing(shares, 0.03) == 2
+    # -0.11: 0.49, 0.37, 0.34, 0.19 -> 0
+    assert m.seats_at_swing(shares, -0.11) == 0
+
+
+def test_seats_at_swing_on_one_half_is_not_democratic():
+    # 0.375 + 0.125 = 0.5 exactly (binary fractions, no rounding): not above one half
+    assert m.seats_at_swing([0.375, 0.625], 0.125) == 1
+
+
+def test_seats_at_swing_per_plan():
+    # (0.6, 0.4) - 0.015 = (0.585, 0.385) -> 1; (0.52, 0.51) - 0.015 = (0.505, 0.495) -> 1
+    assert m.seats_at_swing(np.array([[0.6, 0.4], [0.52, 0.51]]), -0.015).tolist() == [1, 1]
+
+
+def test_enacted_threshold_is_one_half_minus_the_needed_share():
+    shares = [0.48, 0.7, 0.4, 0.52, 0.55]
+    # high to low: 0.7, 0.55, 0.52, 0.48, 0.4
+    # needed 3: h = 0.52, swing 0.5 - 0.52 = -0.02
+    assert m.enacted_threshold(shares, 3) == pytest.approx(-0.02)
+    # needed 4: h = 0.48, swing 0.5 - 0.48 = +0.02
+    assert m.enacted_threshold(shares, 4) == pytest.approx(0.02)
+
+
+def test_enacted_threshold_is_the_edge_of_the_majority():
+    shares = [0.75, 0.625, 0.375]
+    # needed 2: h = 0.625, swing 0.5 - 0.625 = -0.125 (binary fractions, exact)
+    swing = m.enacted_threshold(shares, 2)
+    assert swing == -0.125
+    # at the threshold the second district sits on one half and does not count yet; just above it does
+    assert m.seats_at_swing(shares, swing) == 1
+    assert m.seats_at_swing(shares, swing + 0.001) == 2
+
+
+def test_enacted_threshold_needs_a_count_within_the_districts():
+    with pytest.raises(ValueError, match="needed"):
+        m.enacted_threshold([0.6, 0.4], 3)
+    with pytest.raises(ValueError, match="needed"):
+        m.enacted_threshold([0.6, 0.4], 0)
+
+
+def test_competitive_bounds_have_no_tolerance():
+    # 1e-9 outside either bound is outside; the real ensemble has shares 3e-7 outside (OH 0.4499997, NM 0.5500004)
+    assert m.competitive([0.45 - 1e-9, 0.45, 0.55, 0.55 + 1e-9]) == 2
+
+
+def test_enacted_threshold_accepts_the_first_and_the_last_district():
+    # needed 1: h = 0.6, swing 0.5 - 0.6 = -0.1; needed 2, all districts: h = 0.4, swing 0.5 - 0.4 = +0.1
+    assert m.enacted_threshold([0.6, 0.4], 1) == pytest.approx(-0.1)
+    assert m.enacted_threshold([0.6, 0.4], 2) == pytest.approx(0.1)
+
+
+def test_enacted_threshold_counts_tied_shares_one_by_one():
+    # high to low 0.6, 0.55, 0.55, 0.4: the 2nd and the 3rd highest are both 0.55 -> swing 0.5 - 0.55 = -0.05 for both
+    shares = [0.55, 0.4, 0.6, 0.55]
+    assert m.enacted_threshold(shares, 2) == pytest.approx(-0.05)
+    assert m.enacted_threshold(shares, 3) == pytest.approx(-0.05)
+    # at that swing only 0.6 lies above one half; just above it both 0.55 do: 1 district, then 3
+    swing = m.enacted_threshold(shares, 2)
+    assert m.seats_at_swing(shares, swing) == 1
+    assert m.seats_at_swing(shares, swing + 0.001) == 3
+
+
+def test_enacted_threshold_is_exact_and_not_on_the_grid():
+    # 0.5 - 0.52005 = -0.02005, not the -0.0200 of a grid of 0.0001; district 2 sits on one half to the last bit
+    shares = [0.6, 0.52005, 0.4]
+    swing = m.enacted_threshold(shares, 2)
+    assert swing == pytest.approx(-0.02005, abs=1e-12)
+    assert m.seats_at_swing(shares, swing) == 1
+    assert m.seats_at_swing(shares, swing + 1e-9) == 2
+
+
+# Task 5.5: the grid of swings, the neutral and the proportional threshold
+
+def test_smallest_swing_finds_the_first_grid_point():
+    # grid steps of 0.0001: s >= 0.0123 first holds at step 123
+    assert m.smallest_swing(lambda s: s >= 0.0123) == pytest.approx(0.0123)
+    # s > -0.00015 first holds at step -1
+    assert m.smallest_swing(lambda s: s > -0.00015) == pytest.approx(-0.0001)
+
+
+def test_smallest_swing_accepts_the_upper_edge_only():
+    # +0.05 (step 500) is the last grid point and counts
+    assert m.smallest_swing(lambda s: s >= 0.05) == pytest.approx(0.05)
+    # at -0.05 (step -500) the condition must still be false; s > -0.05 first holds at step -499
+    assert m.smallest_swing(lambda s: s > -0.05) == pytest.approx(-0.0499)
+
+
+def test_smallest_swing_stops_outside_five_points():
+    with pytest.raises(m.SwingRangeError, match="already true"):
+        m.smallest_swing(lambda s: True)
+    with pytest.raises(m.SwingRangeError, match="still false"):
+        m.smallest_swing(lambda s: False)
+
+
+# Two made-up states with 2 districts each. Every share ends in 5 in the fifth decimal, so no district
+# lands exactly on one half at a grid point. A district turns Democratic once the swing passes 0.5 - share:
+#   AA plan 1: -0.10005, +0.09995   AA plan 2: -0.05005, -0.02005
+#   AA plan 3: +0.04495, +0.19995   AA plan 4: -0.01005, +0.00995
+#   BB plan 1: -0.20005, +0.02995   BB plan 2: +0.01005, +0.03995
+AA_PLANS = np.array([[0.60005, 0.40005], [0.55005, 0.52005], [0.45505, 0.30005], [0.51005, 0.49005]])
+BB_PLANS = np.array([[0.70005, 0.47005], [0.48995, 0.46005]])
+
+
+def test_majority_probability_convolves_the_states():
+    # swing 0: AA plans give 1, 2, 0, 1 seats -> P(AA) = [0.25, 0.5, 0.25]; BB 1, 0 -> P(BB) = [0.5, 0.5, 0]
+    # P(sum) = [0.125, 0.375, 0.375, 0.125, 0] -> 3 or more: 0.125
+    assert m.majority_probability([AA_PLANS, BB_PLANS], 0.0, 3) == pytest.approx(0.125)
+    # +0.02: AA 1, 2, 0, 2 -> [0.25, 0.25, 0.5]; BB 1, 1 -> [0, 1, 0]
+    # sum = AA + 1, so 3 or more means AA = 2: 0.5
+    assert m.majority_probability([AA_PLANS, BB_PLANS], 0.02, 3) == pytest.approx(0.5)
+    # +0.035: AA as at +0.02; BB 2, 1 -> [0, 0.5, 0.5]
+    # 3 or more: P(AA = 2) + P(AA = 1) * P(BB = 2) = 0.5 + 0.25 * 0.5 = 0.625
+    assert m.majority_probability([AA_PLANS, BB_PLANS], 0.035, 3) == pytest.approx(0.625)
+
+
+def test_neutral_threshold_at_5_50_and_95_percent():
+    # P(3 or more districts) by swing, from the turning points above:
+    #   up to -0.02005: 0          -0.02005 to +0.00995: 0.125     +0.00995 to +0.01005: 0.25
+    #   +0.01005 to +0.02995: 0.5  +0.02995 to +0.03995: 0.625     +0.03995 to +0.04495: 0.75
+    #   above +0.04495: 1
+    # first grid point above -0.02005 is step -200, above +0.01005 step 101, above +0.04495 step 450
+    plans = [AA_PLANS, BB_PLANS]
+    assert m.neutral_threshold(plans, 3, 0.05) == pytest.approx(-0.02)
+    assert m.neutral_threshold(plans, 3, 0.5) == pytest.approx(0.0101)
+    assert m.neutral_threshold(plans, 3, 0.95) == pytest.approx(0.045)
+
+
+def test_proportional_at_swing_sums_largest_remainder_over_states():
+    # 4 seats at 0.55005: quota 2.2002, remainders 0.2002 (D) and 0.7998 (R) -> 2
+    # 3 seats at 0.38005: quota 1.14015, remainders 0.14015 and 0.85985 -> 1; together 3
+    assert m.proportional_at_swing([0.55005, 0.38005], [4, 3], 0.0) == 3
+    # +0.08: 4 * 0.63005 = 2.5202, remainders 0.5202 and 0.4798 -> 3
+    #        3 * 0.46005 = 1.38015, remainders 0.38015 and 0.61985 -> 1; together 4
+    assert m.proportional_at_swing([0.55005, 0.38005], [4, 3], 0.08) == 4
+
+
+def test_proportional_at_swing_rejects_a_share_outside_0_to_1():
+    # 0.97 + 0.04 = 1.01
+    with pytest.raises(ValueError, match="outside"):
+        m.proportional_at_swing([0.97], [2], 0.04)
+
+
+def test_proportional_threshold():
+    # 2 seats each, at 0.72005 and 0.40005: 1 + 1 seats at swing 0
+    # the first state gets its second seat once 2 * (0.72005 + s) > 1.5, so s > 0.02995 (step 300);
+    # the second state keeps 1 seat from -0.05 to +0.05 (2 * 0.35005 = 0.7001 up to 2 * 0.45005 = 0.9001)
+    assert m.proportional_threshold([0.72005, 0.40005], [2, 2], 3) == pytest.approx(0.03)
+
+
+def test_smallest_swing_returns_k_divided_by_the_grid():
+    # exact == on purpose: pytest.approx would hide the one-ulp gap. 3 / 10000 is the float nearest 0.0003, while
+    # 3 * 0.0001 is 0.00030000000000000003 and -3 * 0.0001 is -0.00030000000000000003
+    assert m.smallest_swing(lambda s: s >= 0.0003) == 0.0003
+    assert m.smallest_swing(lambda s: s >= -0.0003) == -0.0003
+    # strict: step 3 does not pass s > 0.0003, step 4 is the first that does
+    assert m.smallest_swing(lambda s: s > 0.0003) == 0.0004
+
+
+def test_smallest_swing_probes_its_edges_with_max_steps():
+    # max_steps=3: the probes sit at -3 / 10000 = -0.0003 and +3 / 10000 = 0.0003
+    with pytest.raises(m.SwingRangeError, match="already true"):
+        m.smallest_swing(lambda s: s >= -0.0003, max_steps=3)
+    with pytest.raises(m.SwingRangeError, match="still false"):
+        m.smallest_swing(lambda s: s > 0.0003, max_steps=3)
+    # step 2 is inside the range and step 4 is outside it
+    assert m.smallest_swing(lambda s: s >= 0.0002, max_steps=3) == 0.0002
+    with pytest.raises(m.SwingRangeError, match="still false"):
+        m.smallest_swing(lambda s: s >= 0.0004, max_steps=3)
+
+
+def test_smallest_swing_range_ends_at_exactly_five_points():
+    # step 501 (+0.0501) is out of range; a condition true from -0.0501 on is already true at step -500
+    with pytest.raises(m.SwingRangeError, match="still false"):
+        m.smallest_swing(lambda s: s >= 0.0501)
+    with pytest.raises(m.SwingRangeError, match="already true"):
+        m.smallest_swing(lambda s: s > -0.0501)
+
+
+def test_neutral_threshold_tolerates_float_error():
+    # One state, 12 plans of 11 districts. Plan j has j districts at 0.6 and the rest at 0.3, except plan 6: it has
+    # 5 at 0.6, one at 0.49995 and 5 at 0.3, so it reaches 6 seats from step 1 on (0.49995 + 0.0001 > 0.5).
+    # Up to step 0 the seat counts 0..4 have one plan, 5 has two, 6 has none and 7..11 have one: P(6 or more) = 5/12.
+    # From step 1 every count 0..11 has one plan: P(6 or more) = 6/12 = 0.5 by hand, but six times 1/12 is
+    # 0.49999999999999994 in floats, just under 0.5.
+    plans = np.array([[0.6] * j + [0.3] * (11 - j) for j in range(12)])
+    plans[6] = [0.6] * 5 + [0.49995] + [0.3] * 5
+    assert m.majority_probability([plans], 0.0001, 6) < 0.5
+    assert m.neutral_threshold([plans], 6, 0.5) == pytest.approx(0.0001)
+
+
+def test_neutral_threshold_does_not_round_a_real_shortfall_up():
+    # One state, one district, 10,000 plans: 4,999 at 0.9, 5,000 at 0.1 and one at 0.49995. P(1 district) is 0.4999
+    # up to step 0 and 0.5 from step 1 on. A shortfall of 1e-4 is not float noise.
+    shares = np.array([[0.9]] * 4999 + [[0.1]] * 5000 + [[0.49995]])
+    assert m.neutral_threshold([shares], 1, 0.5) == pytest.approx(0.0001)
+
+
+def test_proportional_at_swing_rejects_lists_of_different_length():
+    with pytest.raises(ValueError):
+        m.proportional_at_swing([0.55, 0.38], [4], 0.0)
+
+
+def test_proportional_at_swing_guard_has_two_sides_and_keeps_the_edges():
+    # 0.03 - 0.04 = -0.01
+    with pytest.raises(ValueError, match="outside"):
+        m.proportional_at_swing([0.03], [2], -0.04)
+    # exactly 0 and exactly 1 are shares: 3 seats at 0 give 0, 2 seats at 1 give 2
+    assert m.proportional_at_swing([0.0, 1.0], [3, 2], 0.0) == 2
+
+
+# The vote slider (plan 2026-10-08-vote-slider)
+
+SWING_ENACTED = [0.6, 0.49, 0.45, 0.52]   # four enacted districts over the two states of AA_PLANS and BB_PLANS
+
+
+def test_swing_point_at_the_base():
+    point = m.swing_point(0.0, state_shares=[0.55005, 0.38005], state_seats=[2, 2],
+                          plan_shares=[AA_PLANS, BB_PLANS], enacted_shares=SWING_ENACTED)
+    # proportional: 2 * 0.55005 = 1.1001 -> 1; 2 * 0.38005 = 0.7601, remainder 0.7601 beats 0.2399 -> 1; together 2
+    assert point["proportional"] == 2
+    # enacted: 0.6 and 0.52 lie above one half
+    assert point["enacted"] == 2
+    # neutral, from test_majority_probability_convolves_the_states: P = [0.125, 0.375, 0.375, 0.125, 0]
+    # cumulative 0.125, 0.5, 0.875, 1 -> 5th percentile 0, median 1, 95th percentile 3
+    assert point["neutral"] == {"median": 1, "p5": 0, "p95": 3}
+    # outcomes with more than 2 Democratic districts: P(3) = 0.125
+    assert point["more"] == pytest.approx(0.125)
+
+
+def test_swing_point_moves_every_count_with_the_swing():
+    point = m.swing_point(0.02, state_shares=[0.55005, 0.38005], state_seats=[2, 2],
+                          plan_shares=[AA_PLANS, BB_PLANS], enacted_shares=SWING_ENACTED)
+    # proportional: 2 * 0.57005 = 1.1401 -> 1; 2 * 0.40005 = 0.8001 -> 1; together 2
+    assert point["proportional"] == 2
+    # enacted: 0.62, 0.51, 0.47, 0.54 -> 3
+    assert point["enacted"] == 3
+    # neutral: AA [0.25, 0.25, 0.5], BB always 1 -> P = [0, 0.25, 0.25, 0.5, 0]; cumulative 0, 0.25, 0.5, 1
+    assert point["neutral"] == {"median": 2, "p5": 1, "p95": 3}
+    # nothing above 3
+    assert point["more"] == pytest.approx(0.0)
+
+
+# Task 5.18: the Senate block
+
+# five made-up states with their (Democratic, Republican) votes
+SENATE_VOTES = {"AA": (600, 400), "BB": (300, 700), "CC": (550, 450), "DD": (480, 520), "EE": (450, 550)}
+
+
+def test_senate_majority_hand_example():
+    res = m.senate_majority(SENATE_VOTES, 3, around=1)
+    # national share: (600 + 300 + 550 + 480 + 450) / 5000 = 2380 / 5000 = 0.476
+    assert res["base_share"] == pytest.approx(0.476)
+    # shares from high to low: AA 0.6, CC 0.55, DD 0.48, EE 0.45, BB 0.3; the third is 0.48
+    # threshold 0.476 + 0.5 - 0.48 = 0.496
+    assert res["share"] == pytest.approx(0.496)
+    assert res["states_needed"] == 3
+    # at the real votes AA and CC lie above one half: 2 states, 4 seats
+    assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
+    # the states ranked 3 - 1 to 3 + 1
+    assert [t["postal"] for t in res["tipping"]] == ["CC", "DD", "EE"]
+    assert [t["share"] for t in res["tipping"]] == pytest.approx([0.55, 0.48, 0.45])
+    assert list(res) == ["base_share", "states_needed", "share", "states_at_base", "seats_at_base", "tipping"]
+
+
+def test_senate_majority_lists_two_ranks_on_each_side_by_default():
+    # needed 3 of 5 states: ranks 1 to 5, every state from high to low
+    res = m.senate_majority(SENATE_VOTES, 3)
+    assert [t["postal"] for t in res["tipping"]] == ["AA", "CC", "DD", "EE", "BB"]
+
+
+def test_senate_majority_a_state_on_one_half_does_not_count():
+    # shares 0.75, 0.625, 0.5 and 0.375 (binary fractions, exact); national share 12 / 22
+    votes = {"AA": (3, 1), "BB": (5, 3), "CC": (1, 1), "DD": (3, 5)}
+    res = m.senate_majority(votes, 3, around=1)
+    # CC sits on one half and does not count at the real votes
+    assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
+    # the third highest share is 0.5: swing 0, so the threshold is the national share itself
+    assert res["share"] == res["base_share"] == pytest.approx(12 / 22)
+    assert [t["postal"] for t in res["tipping"]] == ["BB", "CC", "DD"]
+
+
+def test_senate_majority_orders_equal_shares_by_postal_code():
+    # AA and CC both 2 / 5 = 0.4, BB 0.6; national share (2 + 3 + 2) / 15 = 7 / 15
+    res = m.senate_majority({"CC": (2, 3), "BB": (3, 2), "AA": (2, 3)}, 2, around=1)
+    assert [t["postal"] for t in res["tipping"]] == ["BB", "AA", "CC"]
+    # the second highest share is 0.4: 7 / 15 + 0.5 - 0.4
+    assert res["share"] == pytest.approx(7 / 15 + 0.1)
+
+
+def test_senate_majority_needs_the_ranks_around_the_threshold():
+    # needed 2 of 2 states with two ranks on each side: ranks 0 to 4 do not all exist
+    with pytest.raises(ValueError, match="ranks"):
+        m.senate_majority({"AA": (1, 2), "BB": (2, 1)}, 2)
+
+
+def test_senate_majority_can_take_the_share_of_the_vote_slider():
+    # the same states, with the national share of the House (owner, October 13, 2026): 0.5 + 0.5 - 0.48
+    res = m.senate_majority(SENATE_VOTES, 3, around=1, base_share=0.5)
+    assert (res["base_share"], res["share"]) == (0.5, pytest.approx(0.52))
+    assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
+
+
+# The Senate seats on the ballot in 2026 (owner, October 13, 2026)
+
+# the five states above, each with one seat on the ballot and the party that holds it now; 5 seats not on it
+SENATE_SHARES = {"AA": 0.6, "BB": 0.3, "CC": 0.55, "DD": 0.48, "EE": 0.45}
+SENATE_HELD = {"AA": "D", "BB": "R", "CC": "R", "DD": "D", "EE": "R"}
+
+
+def test_senate_election_hand_example():
+    # 10 seats; Democrats need 6 (a Republican breaks a tie) and hold 3 of the 5 not on the ballot: 3 of the 5 up
+    res = m.senate_election(SENATE_SHARES, SENATE_HELD, {"D": 3, "R": 2}, 6, base_share=0.5)
+    assert (res["up"], res["needed"], res["majority"]) == (5, 3, 6)
+    assert res["held"] == {"D": 2, "R": 3} and res["not_up"] == {"D": 3, "R": 2}
+    # from high to low: AA 0.6, CC 0.55, DD 0.48, EE 0.45, BB 0.3; the third is 0.48: 0.5 + 0.5 - 0.48
+    assert res["share"] == pytest.approx(0.52)
+    # at 0.5: AA and CC, so 3 + 2 = 5 of 10
+    assert (res["won_at_base"], res["seats_at_base"]) == (2, 5)
+    assert [(s["postal"], s["held"]) for s in res["seats"]] == [("AA", "D"), ("CC", "R"), ("DD", "D"), ("EE", "R"),
+                                                                ("BB", "R")]
+    assert list(res) == ["base_share", "up", "held", "not_up", "majority", "needed", "share", "won_at_base",
+                         "seats_at_base", "seats"]
+
+
+def test_senate_seats_at_follows_the_vote_slider():
+    res = m.senate_election(SENATE_SHARES, SENATE_HELD, {"D": 3, "R": 2}, 6, base_share=0.5)
+    # at 0.5 the base: 5; at 0.53 DD (0.51) joins: 6; at 0.6 EE (0.55) too: 7; at 0.38 AA drops to 0.48: 3
+    assert [m.senate_seats_at(res, share) for share in (0.5, 0.53, 0.6, 0.38)] == [5, 6, 7, 3]
+
+
+def test_senate_election_checks_its_input():
+    with pytest.raises(ValueError, match="held"):
+        m.senate_election(SENATE_SHARES, {"AA": "D"}, {"D": 3, "R": 2}, 6, base_share=0.5)
+    # Democrats would need none or more seats than are on the ballot
+    for not_up_d in (6, 0):
+        with pytest.raises(ValueError, match="need"):
+            m.senate_election(SENATE_SHARES, SENATE_HELD, {"D": not_up_d, "R": 5 - not_up_d}, 6, base_share=0.5)

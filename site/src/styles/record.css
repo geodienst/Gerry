@@ -1,0 +1,63 @@
+/* The column beside the map: the list of states, the district views and the record of one state. */
+/* The sheet */
+.pill { display: inline-block; font-size: 0.8rem; padding: 0.05rem 0.5rem; border: 1px solid var(--rule); color: var(--muted); }
+.meta { font-size: 0.87rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.25rem 0.65rem; align-items: center; margin: 0; }
+.list { display: grid; gap: 2px; }
+.row { display: grid; grid-template-columns: 9.5em minmax(0, 1fr) 3.2em; gap: 0.5rem; align-items: center; font: inherit; font-size: 0.87rem; padding: 0.12rem 0.25rem; cursor: pointer; border: 0; background: transparent; color: var(--fg); text-align: left; width: 100%; }
+.row:hover { background: var(--band); }
+.row .v { text-align: right; font-variant-numeric: tabular-nums; }
+.row svg { height: 0.8rem; }
+/* the district views of the column beside the map (owner, October 18, 2026) */
+.record .count { margin: 0; font-size: 0.9375rem; }
+.bins { min-width: 0; }
+.dlist { max-height: 26rem; overflow-y: auto; align-content: start; }
+.row.drow { grid-template-columns: 0.7rem minmax(0, 1fr) 3.6em; }
+.drow .sw { width: 0.6rem; height: 0.6rem; border-radius: 50%; }
+details.zeros > summary { cursor: pointer; font-size: 0.87rem; color: var(--muted); padding: 0.25rem; list-style: none; display: flex; gap: 0.4rem; align-items: center; }
+details.zeros > summary::-webkit-details-marker { display: none; }
+details.zeros > summary::before { content: ""; width: 0.45rem; height: 0.45rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; margin-right: 0.15rem; }
+details.zeros[open] > summary::before { transform: rotate(45deg); }
+.net { display: grid; gap: 0.35rem; border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+.net svg text { font-size: 11px; font-family: var(--font-body); fill: var(--fg); }
+.axis text, .chart text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
+.axis line, .axis path { stroke: var(--rule); }
+.chart .mark-label { fill: var(--fg); paint-order: stroke; stroke: var(--sheet); stroke-width: 3px; stroke-linejoin: round; }
+.chart .bar { fill: var(--muted); fill-opacity: 0.75; }
+.back { font: inherit; font-size: 0.87rem; background: none; border: 0; color: var(--ink); padding: 0; cursor: pointer; justify-self: start;
+  display: inline-flex; align-items: center; gap: 0.3rem; }
+/* "Back" with an arrow (owner, October 18, 2026) */
+.back span { text-decoration: underline; text-underline-offset: 0.15em; }
+.back svg { width: 0.9rem; height: 0.9rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.8rem; font-size: 0.87rem; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+
+/* Extensions: a rule sets the lines on competitive districts and the redraw in the sheet apart from the caption
+   of "Districts, sorted" (Task 6.12). */
+.extras { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+.record { background: var(--sheet); border: 1px solid var(--rule); padding: 1.1rem 1.1rem 1.2rem; display: grid; gap: 0.8rem; min-width: 0; align-content: start; }
+/* the box beside the map is as high as its content, so a short one does not stretch to the map (owner, October 18,
+   2026); in full screen it keeps the whole height */
+.atlas > .record { align-self: start; }
+#sheet-title { font: 700 1.5rem/1.15 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
+.record .k { font-size: 0.8125rem; color: var(--muted); }
+
+/* The record: headline, three numbers and the rows of dots (Task 7.8) */
+.headline { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.2rem 0.9rem; align-items: center; padding-block: 0.7rem; border-block: 1px solid var(--rule); }
+.headline .big { font: 700 2.6rem/1 var(--font-figure); font-variant-numeric: tabular-nums; display: inline-flex; gap: 0.5rem; align-items: center; }
+.headline .big i { width: 0.9rem; height: 2.2rem; display: inline-block; }
+.headline p { margin: 0; font-size: 0.94rem; line-height: 1.4; }
+/* Each column is at least as wide as its longest word, so a label such as "Vote-proportional" stays on one line
+   (sheet.js wraps each word in .nowrap); at 22rem the three labels fit at 0.75rem. */
+.record .trio { display: grid; grid-template-columns: repeat(3, minmax(min-content, 1fr)); gap: 0.5rem; }
+.record .trio .lab { font-size: 0.75rem; }
+/* The three values on one line, also when a label such as "Neutral-map median" takes two lines */
+.record .trio > div { grid-row: span 3; grid-template-rows: subgrid; row-gap: 0; }
+.record .trio .lab { align-self: end; }
+.dotrows .grid { stroke: var(--rule); }
+.dotrows .lbl, .dotrows .baselbl { fill: var(--fg); font-weight: 600; }
+.dotrows .bandr { fill: var(--tint); stroke: var(--ink); }
+.dotrows .mk { fill: var(--sheet); stroke: var(--fg); stroke-width: 1.5; }
+.dotrows .mk.filled { fill: var(--fg); }
+.dotrows .base { stroke: var(--fg); stroke-dasharray: 3 3; }

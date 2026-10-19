@@ -1,0 +1,44 @@
+/* The frame of the page: masthead, key findings, chapter heads, About and the footer. */
+/* Redesign: masthead, meta strip and chapter heads (Task 7.6) */
+.mast { background: var(--mast); color: var(--mast-fg); padding-block: clamp(1.3rem, 3vw, 2.4rem) clamp(1.2rem, 2.6vw, 2rem); }
+.mast .wrap { display: grid; gap: 0.7rem; }
+.mast h1 { margin: 0; font: 700 clamp(1.9rem, 1.2rem + 2vw, 2.9rem)/1.1 var(--font-head); letter-spacing: -0.01em; max-width: 36ch; text-wrap: balance; }
+.mast .sub { margin: 0; font-size: 1.0625rem; line-height: 1.5; max-width: 80ch; }
+/* The byline as a news story has it: author, date, and a link to the method. */
+/* Justitia at the top right of the masthead (owner, October 13, 2026): a black line drawing on white, turned into
+   light lines on the dark green; left out on narrow screens, where the title needs the width */
+.mast .wrap { position: relative; }
+.mast-art { position: absolute; right: 0; top: 50%; transform: translateY(-50%); height: 118%; max-height: 19rem; filter: invert(1); mix-blend-mode: screen; opacity: 0.85; pointer-events: none; }
+@media (max-width: 900px) { .mast-art { display: none; } }
+.mast .byline { margin: 0; font-size: 0.9375rem; color: var(--mast-muted); display: flex; flex-wrap: wrap; gap: 0.2rem 1.5rem; }
+.mast .byline .author { color: var(--mast-fg); font-weight: 700; text-decoration: none; }
+.mast .byline .author:hover { text-decoration: underline; }
+/* About this project, at the end of the page */
+.about { border-top: 1px solid var(--rule); padding-block: 2rem 2.4rem; }
+.about h2 { font: 700 1.25rem/1.2 var(--font-head); margin: 0 0 0.6rem; }
+.about p { max-width: 64ch; margin: 0.45rem 0 0; }
+.mast .byline a { color: var(--mast-fg); text-underline-offset: 0.2em; }
+.mast a:focus-visible { outline-color: var(--mast-fg); }
+/* The key findings under the masthead: the answer to its question (owner, October 13, 2026) */
+.keyfacts { border-bottom: 1px solid var(--rule); background: var(--sheet); }
+.keyfacts .wrap { padding-block: 1.3rem 1.4rem; display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.8rem 2rem; }
+.keyfacts ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; flex: 1 1 30rem; min-width: 0; }
+.keyfacts li { position: relative; padding-left: 1.1rem; max-width: 78ch; }
+.keyfacts li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.4rem; height: 0.4rem; background: var(--ink); }
+.chapter { padding-block: clamp(2rem, 5vw, 3.6rem); border-bottom: 1px solid var(--rule); }
+.chapter > .wrap { display: grid; gap: 1.4rem; }
+.chead { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.9rem; align-items: baseline; }
+.chead .no { font: 700 0.8125rem/1 var(--font-body); color: var(--ink); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; border: 1px solid currentColor; padding: 0.3rem 0.4rem; }
+.chead h2 { font: 700 1.5rem/1.2 var(--font-head); }
+.chead p { grid-column: 2; color: var(--muted); max-width: 64ch; margin: 0.4rem 0 0; }
+/* the key sentence of chapter 01: the threshold (a data reviewer, October 13) */
+.chead p.lead { color: var(--fg); font: 600 1.1875rem/1.4 var(--font-head); margin-top: 0.7rem; }
+/* The footer: sources and licenses left, the Geodienst right (Task 7.10) */
+footer { padding-block: 1.8rem 2.6rem; font-size: 0.8rem; color: var(--muted); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 0.8rem 2rem; align-items: center; justify-content: space-between; }
+footer p { margin: 0 0 0.3rem; max-width: 90ch; }
+.credit { display: inline-flex; gap: 0.55rem; align-items: center; color: var(--fg); text-decoration: none; font-weight: 600; }
+.credit:hover { text-decoration: underline; }
+.credit img { width: 1.25rem; height: 1.25rem; }
+/* In dark mode the logo sits on a light disc so its red stays readable. */
+@media (prefers-color-scheme: dark) { .credit img { background: #fff; padding: 0.15rem; border-radius: 50%; } }
