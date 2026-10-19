@@ -21,7 +21,7 @@
 .grid3 h3 { font: 700 1.1875rem/1.25 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
 .figs { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; align-items: baseline; }
 .figs div { display: grid; }
-.figs b { font: 700 2rem/1.05 var(--font-head); font-variant-numeric: tabular-nums; }
+.figs b { font: 700 2rem/1.05 var(--font-figure); font-variant-numeric: tabular-nums; }
 .figs span { font-size: 0.8125rem; color: var(--muted); }
 /* Two columns only where a column of 22rem fits, so a name such as "North Carolina" stays on one line. */
 .changes { list-style: none; margin: 0; padding: 0; columns: 2 22rem; column-gap: 1.4rem; font-size: 0.87rem; }

@@ -577,8 +577,8 @@ async function layout(t) {
 
   await t.load('', { dark: true });
   await t.js("document.getElementById('view-districts').click()"); // the gradient belongs to the district legend
-  t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(15, 21, 19)'
-    && (await t.js("getComputedStyle(document.querySelector('header.mast')).backgroundColor")) === 'rgb(11, 41, 32)');
+  t.check('dark mode uses the dark tokens', (await t.js('getComputedStyle(document.body).backgroundColor')) === 'rgb(17, 17, 17)'
+    && (await t.js("getComputedStyle(document.querySelector('header.mast')).backgroundColor")) === 'rgb(0, 0, 0)');
   t.check('dark mode paints the map and the waffle with the dark poles',
     (await t.js("document.querySelector('#legend linearGradient stop:last-child').getAttribute('stop-color')")) === 'rgb(57, 135, 229)'
     && (await t.js("document.querySelector('#waffle rect.seat').getAttribute('fill')")) === '#3987e5');
