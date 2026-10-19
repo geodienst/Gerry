@@ -1,3 +1,5 @@
+import * as f from '../site/src/lib/format.ts';
+
 // Browser checks for tools/check_site.mjs, one group per task of docs/superpowers/plans/2026-10-07-site.md and per chapter of docs/superpowers/plans/2026-10-08-redesign.md.
 // A group gets `t` with: load, js, text, until, center, mouse, click, key, tab, sleep, check, screenshot.
 // The checks test structure and the form of the texts, not numbers that change with the data.
@@ -710,8 +712,9 @@ async function masthead(t) {
 
 async function outcomes(t) {
   await t.load();
-  // The numbers the rows should show, formatted with the page's own format.js.
-  const want = await t.js(`Promise.all([${DATA}, import(new URL('js/format.js', location.href))]).then(([r, f]) => {
+  // The numbers the rows should show, formatted with the site's own format.ts (the built page bundles it, so it is
+  // imported here in Node) from the results.json the page loads.
+  const want = ((r) => {
     const n = r.national;
     // every count is shown in the House of 435: the districts plus the 2 Democratic single seats (Delaware, Vermont)
     const plus = (v) => f.seats(v + 2);
@@ -720,7 +723,7 @@ async function outcomes(t) {
       finding: 'In this comparison, with the 2016 and 2020 votes (' + f.sliderShare(n.majority.base_share) + ' for Democrats), the enacted maps shift '
         + f.effectWords(n.effects.drawing) + '. They give Democrats ' + plus(n.enacted) + ' seats, where the neutral-map median gives '
         + plus(n.neutral.median) + '.' };
-  })`);
+  })(await t.js(DATA));
   const rows = await t.js(`[...document.querySelectorAll('#scen [role=radio]')].map((b) => ({ label: b.querySelector('.lab').textContent,
     value: b.querySelector('.big .n').textContent, checked: b.getAttribute('aria-checked'), tab: b.tabIndex }))`);
   t.check('three rows labeled Vote-proportional, Neutral-map median and Enacted maps, with the numbers of results.json plus Delaware and Vermont',
@@ -1048,7 +1051,8 @@ async function sharing(t) {
         && map.checkVisibility() && !document.querySelector('.zoombar #map-share'),
       outcomesRight: document.querySelector('#outcomes .whead').contains(out) && r(out).left >= r('readout').right && r(out).bottom <= r('waffle').top
         && r(out).right <= r('waffle').right + 1,
-      dots: [...document.querySelectorAll('.sharebtn')].map((b) => b.querySelectorAll('svg circle').length === 3 && b.textContent === 'Share').join() === 'true,true,true' };
+      dots: document.querySelectorAll('#icon-share circle').length === 3
+        && [...document.querySelectorAll('.sharebtn')].map((b) => Boolean(b.querySelector('svg use[href="#icon-share"]')) && b.textContent === 'Share').join() === 'true,true,true' };
   })()`);
   t.check('Share sits at the right of the key findings, under the map and at the right above the House, each with three dots',
     Object.values(place).every(Boolean), JSON.stringify(place));

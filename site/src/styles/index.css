@@ -1,0 +1,12 @@
+/* Some votes are more equal than others: the style sheet, imported by src/main.ts and bundled by Vite.
+   Design: docs/superpowers/specs/2026-10-08-redesign-design.md on top of docs/superpowers/specs/2026-10-06-site-design.md.
+   The order of the partials is the order of the cascade; a later partial may rely on an earlier one. */
+@import './tokens.css';
+@import './base.css';
+@import './controls.css';
+@import './page.css';
+@import './map.css';
+@import './record.css';
+@import './outcomes.css';
+@import './detail.css';
+@import './method.css';

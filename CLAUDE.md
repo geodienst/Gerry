@@ -39,7 +39,7 @@ Het goedgekeurde ontwerp staat in `docs/superpowers/specs/2026-10-05-gerrymander
 - **Pijplijn**: Python 3, `geopandas`, `pandas`, `pyarrow`. Scripts genummerd in `pipeline/` (01_download, 02_join, 03_metrics, 04_export), aangestuurd door een `Makefile`. Tussenresultaten als Parquet.
 - **Tests**: `pytest` voor alle metriekfuncties, met kleine handberekende voorbeelden.
 - **Output voor de frontend**: TopoJSON (vereenvoudigd met `mapshaper`) plus één JSON met alle cijfers per staat en district.
-- **Frontend**: vanilla JS en D3 met `geoAlbersUsa` (Alaska en Hawaii als inzet). Geen tegelservers, geen API-keys, geen trackers, geen externe diensten. Single-page, statisch te hosten.
+- **Frontend**: TypeScript en D3 met `geoAlbersUsa` (Alaska en Hawaii als inzet), gebouwd met Vite tot statische bestanden in `dist/` (`pnpm build`). Code in `site/src/` (`lib/` puur, `ui/` DOM en D3, `app/` de bedrading), statische bestanden in `site/public/`, tests in `site/test/` met `node --test`. D3 en topojson-client komen uit npm en worden meegebundeld. Geen tegelservers, geen API-keys, geen trackers, geen externe diensten. Single-page, statisch te hosten. Pakketbeheer met `pnpm`.
 - **UI-taal**: Engels (Amerikaans publiek). Labels neutraal: "Vote-proportional", "Neutral-map median", "Enacted maps" (besluit van de eigenaar, 8 oktober 2026; daarvoor "Proportional", "Neutral baseline", "Enacted"). Geen partijdige of emotionele bewoording; de cijfers spreken.
 
 ## Skills

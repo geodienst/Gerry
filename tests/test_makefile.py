@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 MAKEFILE = Path(__file__).resolve().parents[1] / "Makefile"
-TARGETS = ("all", "download", "join", "metrics", "export", "test", "serve")
+TARGETS = ("all", "download", "join", "metrics", "export", "test", "typecheck", "build", "serve")
 # Shell tools and chaining that break under cmd.exe, plus commands the project bans.
 FORBIDDEN = ("&&", "||", ";", "rm ", "cp ", "mv ", "mkdir ", "source ", "cd ", "python3", "npx")
 
@@ -38,6 +38,6 @@ def test_recipes_use_no_shell_tools():
 
 
 def test_python_recipes_use_py_variable():
-    python_lines = [line for line in recipe_lines() if not line.startswith("node ")]
+    python_lines = [line for line in recipe_lines() if not line.startswith(("node ", "pnpm "))]
     assert python_lines
     assert all(line.startswith("$(PY) ") for line in python_lines)

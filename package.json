@@ -4,16 +4,30 @@
   "private": true,
   "description": "Static map that compares proportional, neutral and enacted House seat counts by state",
   "type": "module",
+  "packageManager": "pnpm@10.33.2",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
-    "vendor": "node -e \"const fs=require('fs');fs.mkdirSync('site/vendor',{recursive:true});for(const[f,t]of[['d3/dist/d3.min.js','d3.min.js'],['d3/LICENSE','d3.LICENSE.txt'],['topojson-client/dist/topojson-client.min.js','topojson-client.min.js'],['topojson-client/LICENSE','topojson-client.LICENSE.txt']])fs.copyFileSync('node_modules/'+f,'site/vendor/'+t)\"",
-    "test": "node --test \"site/js/*.test.js\""
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"site/test/*.test.ts\"",
+    "check": "pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
+    "@fontsource-variable/public-sans": "^5.3.0",
+    "@fontsource-variable/source-serif-4": "^5.3.1",
+    "@types/d3": "^7.4.3",
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.5",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
     "d3": "7.9.0",
     "mapshaper": "0.7.77",
-    "topojson-client": "3.1.0"
+    "topojson-client": "3.1.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
   }
 }

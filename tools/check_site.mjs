@@ -1,7 +1,9 @@
 // Headless check of the site in Edge or Chrome over the DevTools protocol, without extra packages.
 // The checks themselves are in tools/site_checks.mjs, one group per task of the site plan.
 //
-//   node tools/check_site.mjs                             serves site/ itself on 127.0.0.1
+// It checks the built page in dist/, so run pnpm build first.
+//
+//   node tools/check_site.mjs                             serves dist/ itself on 127.0.0.1
 //   node tools/check_site.mjs --url http://127.0.0.1:8000/   checks a running server (make serve)
 //   node tools/check_site.mjs --only map,sheet            runs only these groups
 //   node tools/check_site.mjs --shots <folder>            writes full-page screenshots for a person to look at
@@ -16,11 +18,11 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GROUPS } from './site_checks.mjs';
 
-const SITE = resolve(fileURLToPath(new URL('../site/', import.meta.url)));
+const SITE = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.json': 'application/json', '.topojson': 'application/json', '.txt': 'text/plain; charset=utf-8',
-  '.svg': 'image/svg+xml',
+  '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2',
 };
 const BROWSERS = [
   process.env.BROWSER,
@@ -35,7 +37,7 @@ const sleep = (ms) => new Promise((done) => { setTimeout(done, ms); });
 const args = process.argv.slice(2);
 const option = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
 
-/** A static server for site/, so the check needs no other process. */
+/** A static server for dist/, so the check needs no other process. */
 function serve() {
   const server = createServer((req, res) => {
     const path = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
@@ -117,6 +119,10 @@ async function openTab(ws) {
 async function main() {
   const only = option('--only')?.split(',');
   const shots = option('--shots');
+  if (!option('--url') && !existsSync(join(SITE, 'index.html'))) {
+    console.error('dist/index.html is missing: run pnpm build first');
+    process.exit(1);
+  }
   const server = option('--url') ? null : await serve();
   const base = option('--url') ?? `http://127.0.0.1:${server.address().port}/`;
   const origin = new URL(base).origin;

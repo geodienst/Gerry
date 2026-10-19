@@ -1,4 +1,4 @@
-"""Note texts and the contents of site/data/results.json."""
+"""Note texts and the contents of site/public/data/results.json."""
 from __future__ import annotations
 
 import math
@@ -162,7 +162,7 @@ def _state_entry(postal: str, cfg: Config, m: dict) -> dict:
 
 
 def build_results(metrics: dict, cfg: Config, generated: str) -> dict:
-    """The contents of site/data/results.json (chapter 7 of the spec)."""
+    """The contents of site/public/data/results.json (chapter 7 of the spec)."""
     if set(metrics["states"]) != set(cfg.states):
         raise CheckError("export_states", "US", f"metrics.json has {sorted(metrics['states'])}, "
                          f"config.yaml has {sorted(cfg.states)}")

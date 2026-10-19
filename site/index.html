@@ -7,12 +7,12 @@
   <meta name="description" content="What if we used the same votes to divide the 435 House seats in three different ways: using each party&#39;s share of the vote, neutral maps drawn by a computer, or the maps the states drew for 2026? Would the outcome change?">
   <meta name="author" content="Govert Schoof">
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="style.css">
-  <script defer src="vendor/d3.min.js"></script>
-  <script defer src="vendor/topojson-client.min.js"></script>
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="./src/main.ts"></script>
 </head>
 <body>
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="icon-share" viewBox="0 0 16 16"><g fill="currentColor"><circle cx="12" cy="3.5" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12.5" r="2"/></g><path d="M5.7 7 10.3 4.5M5.7 9l4.6 2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  </svg>
   <header class="mast">
     <div class="wrap">
       <img class="mast-art" src="img/justice.webp" alt="">
@@ -25,7 +25,7 @@
     <div class="wrap">
       <h2 class="visually-hidden" id="keyfacts-title">Key findings</h2>
       <ul id="keyfacts"></ul>
-      <button type="button" class="sharebtn" id="share-site"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="12" cy="3.5" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12.5" r="2"/><path d="M5.7 7 10.3 4.5M5.7 9l4.6 2.5"/></svg>Share</button>
+      <button type="button" class="sharebtn" id="share-site"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
     </div>
   </section>
   <p class="load-error wrap" id="load-error" role="alert" hidden></p>
@@ -74,7 +74,7 @@
                   <button type="button" id="palette-party" aria-pressed="true">Red and blue</button>
                   <button type="button" id="palette-neutral" aria-pressed="false">Teal and brown</button>
                 </div>
-                <button type="button" class="sharebtn" id="map-share" aria-label="Share this view"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="12" cy="3.5" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12.5" r="2"/><path d="M5.7 7 10.3 4.5M5.7 9l4.6 2.5"/></svg>Share</button>
+                <button type="button" class="sharebtn" id="map-share" aria-label="Share this view"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
               </div>
             </div>
           </div>
@@ -111,7 +111,7 @@
           <div class="waffle">
             <div class="whead">
               <div class="readout" id="readout" aria-live="polite"></div>
-              <button type="button" class="sharebtn" id="outcomes-share"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="12" cy="3.5" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12.5" r="2"/><path d="M5.7 7 10.3 4.5M5.7 9l4.6 2.5"/></svg>Share</button>
+              <button type="button" class="sharebtn" id="outcomes-share"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
             </div>
             <svg id="waffle" class="chart" role="img" aria-labelledby="waffle-label"><title id="waffle-label"></title></svg>
             <div class="tip" id="waffle-tip" hidden></div>
@@ -250,7 +250,7 @@
     <div class="wrap">
       <div>
         <p>Data generated <span data-fill="generated"></span>. Legal status as of <span data-fill="status-date"></span>. ALARM dataset version <span data-fill="alarm-version"></span>.</p>
-        <p>Map drawn with D3 and topojson-client, both under the ISC license: <a href="vendor/d3.LICENSE.txt">D3 license</a>, <a href="vendor/topojson-client.LICENSE.txt">topojson-client license</a>.</p>
+        <p>Map drawn with D3 and topojson-client, both under the ISC license: <a href="licenses/d3.txt">D3 license</a>, <a href="licenses/topojson-client.txt">topojson-client license</a>.</p>
       </div>
       <a class="credit" href="https://rug.nl/geo"><img src="img/geodienst.svg" alt="" width="20" height="20"><span>Geodienst, University of Groningen</span></a>
     </div>

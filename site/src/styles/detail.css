@@ -1,0 +1,32 @@
+/* Chapter 03, In detail: the grid of cards, the redraw list and the tables by political control. */
+/* Extensions: the tables by political control (Task 6.13). The number columns shrink to their heads,
+   which are the same in both tables, so the columns line up and the first column takes the rest. */
+#control table { border-collapse: collapse; font-size: 0.87rem; width: 100%; }
+#control caption { text-align: left; font-weight: 600; padding-bottom: 0.3rem; }
+#control th, #control td { text-align: left; padding: 0.25rem 0; border-bottom: 1px solid var(--rule); font-weight: 400; }
+#control thead th { color: var(--muted); }
+#control .num { text-align: right; font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; padding-left: 1.25rem; }
+
+/* the Senate card in chapter 03: a line above its title that sets it apart from the maps */
+.grid3 .kicker { margin: 0 0 -0.5rem; font-size: 0.8125rem; color: var(--muted); }
+
+/* Chapter 03: a grid of cards (Task 7.9). Four columns from 1280px, so a narrow card is at least 280 chart
+   units wide and its chart text stays at 10px or more; the mockup switched at 1080px. */
+.grid3 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.grid3 > section { background: var(--sheet); padding: 1.1rem 1.1rem 1.25rem; display: grid; gap: 0.7rem; align-content: start; min-width: 0; }
+.grid3 > section p { margin: 0; max-width: 70ch; }
+.grid3 .wide { grid-column: span 2; }
+@media (max-width: 1279.98px) { .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .grid3 { grid-template-columns: minmax(0, 1fr); } .grid3 .wide { grid-column: auto; } }
+.grid3 h3 { font: 700 1.1875rem/1.25 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
+.figs { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; align-items: baseline; }
+.figs div { display: grid; }
+.figs b { font: 700 2rem/1.05 var(--font-head); font-variant-numeric: tabular-nums; }
+.figs span { font-size: 0.8125rem; color: var(--muted); }
+/* Two columns only where a column of 22rem fits, so a name such as "North Carolina" stays on one line. */
+.changes { list-style: none; margin: 0; padding: 0; columns: 2 22rem; column-gap: 1.4rem; font-size: 0.87rem; }
+.changes li { break-inside: avoid; display: flex; justify-content: space-between; gap: 0.6rem; border-bottom: 1px solid var(--rule); padding-block: 0.25rem; }
+.changes li > :first-child { white-space: nowrap; }
+.changes .v { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.tables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; align-items: start; }
+@media (max-width: 520px) { .tables { grid-template-columns: minmax(0, 1fr); } }

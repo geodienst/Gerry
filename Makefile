@@ -1,11 +1,11 @@
-# Run from the repository root after activating .venv.
+# Run from the repository root after activating .venv and running pnpm install.
 # Every recipe is one command without shell tools, so it runs the same under
 # cmd.exe and sh on Windows.
 
 PY ?= python
 export PYTHONUTF8 := 1
 
-.PHONY: all download join metrics export test test-py test-js serve
+.PHONY: all download join metrics export test test-py test-js typecheck build serve check-site
 
 all: download join metrics export
 
@@ -27,7 +27,19 @@ test-py:
 	$(PY) -m pytest
 
 test-js:
-	node --test "site/js/*.test.js"
+	pnpm test
 
+typecheck:
+	pnpm typecheck
+
+# Writes the static site to dist/
+build:
+	pnpm build
+
+# Serves dist/ (run make build first) on http://127.0.0.1:8000/
 serve:
-	$(PY) -m http.server 8000 --bind 127.0.0.1 --directory site
+	$(PY) -m http.server 8000 --bind 127.0.0.1 --directory dist
+
+# Browser checks of dist/ in headless Edge or Chrome (run make build first)
+check-site:
+	node tools/check_site.mjs

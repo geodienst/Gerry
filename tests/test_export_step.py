@@ -1,5 +1,5 @@
 """Tests for pipeline/04_export.py with every slow step replaced by a stand-in. They pin the order of the
-checks, that nothing reaches site/data/ before all of them have passed, and the LF line ends of results.json."""
+checks, that nothing reaches site/public/data/ before all of them have passed, and the LF line ends of results.json."""
 import importlib.util
 import json
 from pathlib import Path
@@ -31,7 +31,7 @@ class FakeFrame:
 
 def stub_steps(tmp_path, monkeypatch, *, results=None, map_text="{}", fail=None):
     """Replace the steps of main() by stand-ins that record their name; the one named in `fail` raises
-    CheckError. Returns the recorded calls and the site/data folder (not created yet)."""
+    CheckError. Returns the recorded calls and the site/public/data folder (not created yet)."""
     calls = []
     site = tmp_path / "site" / "data"
     interim = tmp_path / "interim"

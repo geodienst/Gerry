@@ -1,0 +1,27 @@
+/* Chapter 04, Methodology: the effect-size chart and the method fold. */
+/* the drawing effect at every stop of the slider, at the bottom of chapter 01 */
+/* the effect size of the enacted maps, in a box above the method (owner, October 13) */
+/* the effect size as the first part of the method fold (owner, October 17, 2026), without a frame of its own */
+.byvote { margin: 0 0 1.4rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); display: grid; gap: 0.5rem; }
+.byvote h3 { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; letter-spacing: 0; text-transform: none; color: var(--fg); }
+.byvote p { margin: 0; max-width: 72ch; }
+#byvote-chart { min-width: 0; }
+.byvote-chart { display: block; }
+.byvote-chart .grid { stroke: var(--rule); }
+.byvote-chart .zero { stroke: var(--fg); }
+.byvote-chart .axis { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.byvote-chart .example { fill: var(--fg); font-size: 12px; font-weight: 600; }
+.byvote-chart .lead { stroke: var(--muted); stroke-dasharray: 2 2; }
+.byvote-chart .here { stroke: var(--fg); stroke-width: 1.5; }
+
+/* Chapter 04: the method folds; the national seat axis is a figure in it (Task 7.10) */
+details.method { background: var(--sheet); border: 1px solid var(--rule); }
+details.method > summary { cursor: pointer; list-style: none; padding: 1rem 1.1rem; display: flex; gap: 0.8rem; align-items: baseline; font-weight: 600; }
+details.method > summary::-webkit-details-marker { display: none; }
+details.method > summary::before { content: "+"; font: 700 1.1rem/1 var(--font-body); color: var(--ink); width: 1rem; flex: none; }
+details.method[open] > summary::before { content: "\2212"; }
+details.method > summary span { color: var(--muted); font-weight: 400; font-size: 0.8125rem; }
+@media (max-width: 520px) { details.method > summary { flex-wrap: wrap; } details.method > summary span { flex-basis: 100%; padding-left: 1.8rem; } }
+.mbody { padding: 0 1.1rem 1.2rem 2.9rem; }
+@media (max-width: 520px) { .mbody { padding-left: 1.1rem; } }
+.figure { margin: 0; display: grid; gap: 0.4rem; }

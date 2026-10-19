@@ -166,7 +166,7 @@ def topojson_bounds(topo):
 
 
 @pytest.mark.skipif(shutil.which("node") is None or not MAPSHAPER_JS.exists(),
-                    reason="needs node and npm install (node_modules/mapshaper)")
+                    reason="needs node and pnpm install (node_modules/mapshaper)")
 def test_build_topojson_writes_district_and_state_layers(tmp_path):
     districts = gpd.GeoDataFrame({"id": ["0101", "0102", "0200"], "state": ["AL", "AL", "AK"]},
                                  geometry=[box(0, 0, 1, 1), box(1, 0, 2, 1), box(3, 0, 4, 1)], crs="EPSG:4326")
@@ -188,7 +188,7 @@ def test_build_topojson_writes_district_and_state_layers(tmp_path):
 
 
 @pytest.mark.skipif(shutil.which("node") is None or not MAPSHAPER_JS.exists(),
-                    reason="needs node and npm install (node_modules/mapshaper)")
+                    reason="needs node and pnpm install (node_modules/mapshaper)")
 def test_build_topojson_simplifies_by_the_given_percentage(tmp_path):
     circle = Point(0.5, 0.5).buffer(0.4, quad_segs=50)              # 200 segments
     districts = gpd.GeoDataFrame({"id": ["0101", "0102"], "state": ["AL", "AL"]},

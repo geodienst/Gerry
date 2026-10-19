@@ -1,7 +1,7 @@
-"""Step 4: write site/data/results.json and site/data/map.topojson.
+"""Step 4: write site/public/data/results.json and site/public/data/map.topojson.
 
 Reads data/interim/metrics.json, pipeline/config.yaml and the TIGER geometry. Checks every multi-seat
-map against its block file before anything is written to site/data/.
+map against its block file before anything is written to site/public/data/.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from gerry.geometry import build_topojson, load_districts, national_outline
 SIMPLIFY_PCT = 3
 MAX_MAP_BYTES = 1_000_000
 HOUSE_SEATS = 435
-SITE_DATA = REPO_ROOT / "site" / "data"
+SITE_DATA = REPO_ROOT / "site" / "public" / "data"
 
 
 def check_all_geometry(cfg: Config, districts: gpd.GeoDataFrame, root: Path) -> None:
@@ -51,7 +51,7 @@ def main() -> None:
         raise CheckError("export_seats", "US", f"{national['seats']} seats plus {len(national['single_seat'])} "
                          f"single-seat states is {total}, expected {HOUSE_SEATS}")
     # Serialise now: a NaN (allow_nan=False) stops the export here, before the slow work and before
-    # anything is written to site/data/.
+    # anything is written to site/public/data/.
     text = json.dumps(results, ensure_ascii=False, indent=1, allow_nan=False) + "\n"
 
     print("Loading district geometry")
@@ -77,8 +77,8 @@ def main() -> None:
     shutil.copyfile(map_tmp, SITE_DATA / "map.topojson")
     # tracked in git: LF on Windows too
     (SITE_DATA / "results.json").write_text(text, encoding="utf-8", newline="\n")
-    print(f"Wrote site/data/results.json ({len(results['states'])} states) "
-          f"and site/data/map.topojson ({size:,} bytes)")
+    print(f"Wrote site/public/data/results.json ({len(results['states'])} states) "
+          f"and site/public/data/map.topojson ({size:,} bytes)")
 
 
 if __name__ == "__main__":
