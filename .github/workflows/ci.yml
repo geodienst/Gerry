@@ -1,0 +1,71 @@
+# Lint, typecheck, unit tests and the site in a browser, on every push and pull request.
+# Python and TypeScript run on Linux. The browser checks run on Windows with Edge: they measure the layout to
+# the pixel, and the site's system fonts (Segoe UI) are what the checks were written against.
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # pnpm comes through corepack, in the version package.json names; no prompt before the download
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+jobs:
+  python:
+    name: Python (ruff, pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m ruff check .
+      # the tests marked `data` need the downloads (data/raw, data/interim) and skip without them
+      - run: python -m pytest
+
+  typescript:
+    name: TypeScript (eslint, tsc, node --test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # the build first, so the test of the page size has a dist/ to measure
+      - run: pnpm build
+      - run: pnpm test
+
+  site:
+    name: Site in a browser
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # serves dist/ itself and drives Edge headless over the DevTools protocol
+      - run: node tools/check_site.mjs

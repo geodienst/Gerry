@@ -6,8 +6,16 @@ import pytest
 import yaml
 
 from gerry.config import (
-    ADOPTED_BY_VALUES, CONTROL_VALUES, ENSEMBLE_NOTE_KEYS, REPO_ROOT, STATE_NOTE_KEYS, ConfigError, ExtraMap,
-    data_dir, interim_dir, load_config,
+    ADOPTED_BY_VALUES,
+    CONTROL_VALUES,
+    ENSEMBLE_NOTE_KEYS,
+    REPO_ROOT,
+    STATE_NOTE_KEYS,
+    ConfigError,
+    ExtraMap,
+    data_dir,
+    interim_dir,
+    load_config,
 )
 
 SOURCE_KEYS = ("dataverse_api", "cd118", "cd119", "cd120", "cd120_2026_08", "pl94171", "census_vest",
@@ -138,7 +146,7 @@ BAD_VALUES = [
     ("states.NM.adopted_by", "Court", "court"),            # a court is Nonpartisan (NM: Bipartisan)
     ("states.MO.control", "Nonpartisan", "legislature"),   # a legislature never is
     ("states.NM.adopted_note", "", "adopted_note"),
-    # the Senate seats on the ballot in 2026 (owner, October 13, 2026)
+    # the Senate seats on the ballot in 2026
     ("senate_2026", None, "missing keys"),
     ("senate_2026.tie", "I", "tie"),
     ("senate_2026.up.TX", "R", "not in states"),

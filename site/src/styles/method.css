@@ -1,7 +1,6 @@
 /* Chapter 04, Methodology: the effect-size chart and the method fold. */
 /* the drawing effect at every stop of the slider, at the bottom of chapter 01 */
-/* the effect size of the enacted maps, in a box above the method (owner, October 13) */
-/* the effect size as the first part of the method fold (owner, October 17, 2026), without a frame of its own */
+/* the effect size as the first part of the method fold, without a frame of its own */
 .byvote { margin: 0 0 1.4rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); display: grid; gap: 0.5rem; }
 .byvote h3 { font: 700 1.1875rem/1.25 var(--font-head); margin: 0; letter-spacing: 0; text-transform: none; color: var(--fg); }
 .byvote p { margin: 0; max-width: 72ch; }

@@ -5,8 +5,8 @@
 .seg button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); }
 select { font: inherit; font-size: 0.87rem; padding: 0.3rem 0.4rem; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); }
 .pick { font-size: 0.87rem; color: var(--muted); display: flex; gap: 0.4rem; align-items: center; }
-/* Share (owner, October 14, 2026): one quiet button with the usual share icon, at the right of the key findings,
-   under the map and beside the seat counts of chapter 02; the short note after a copy */
+/* Share: one quiet button with the usual share icon, at the right of the key findings,
+   under the map and beside the seat counts of chapter 01; the short note after a copy */
 .sharebtn { display: inline-flex; align-items: center; gap: 0.45rem; flex: none; font: 500 0.87rem/1 var(--font-body); padding: 0.4rem 0.65rem;
   border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
 .sharebtn:hover { border-color: var(--ink); }

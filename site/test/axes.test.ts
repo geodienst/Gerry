@@ -114,7 +114,7 @@ test('netBar: bars from the center, scaled to the larger side, and the net marke
   assert.equal(narrow.anchor, 'end');
 });
 
-// --- marker lines (review of Task 6.7) ---
+// --- marker lines ---
 
 test('markerSegments: a line with no label in its way runs from its label to the plot', () => {
   assert.deepEqual(markerSegments(100, 25, 102, []), [[25, 102]]);
@@ -137,7 +137,7 @@ test('markerSegments: a gap at each label in the way, 2 units around its box', (
   assert.deepEqual(markerSegments(132, 25, 102, [row0]), [[25, 102]]);
 });
 
-// --- the House of 435 in chapter 01 (owner concept, October 8, 2026) ---
+// --- the House of 435 in chapter 01 ---
 
 test('houseLayout: two halves of 217 seats and a middle seat at the top, 7 rows wide or 14 rows compact', () => {
   assert.equal(HOUSE.half, 217);

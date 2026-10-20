@@ -8,26 +8,59 @@ Run from the repo root: python pipeline/03_metrics.py
 from __future__ import annotations
 
 import json
-from typing import Mapping
+from collections.abc import Mapping
+from itertools import pairwise
 
 import numpy as np
 import pandas as pd
 
 from gerry.checks import CheckError
-from gerry.config import (ADOPTED_BY_VALUES, CONTROL_VALUES, REPO_ROOT, AtLargeState, StateConfig, data_dir,
-                          interim_dir, load_config)
+from gerry.config import (
+    ADOPTED_BY_VALUES,
+    CONTROL_VALUES,
+    REPO_ROOT,
+    AtLargeState,
+    StateConfig,
+    data_dir,
+    interim_dir,
+    load_config,
+)
+from gerry.metrics import (
+    MAX_SWING_STEPS,
+    SWING_GRID,
+    SwingRangeError,
+    TieError,
+    competitive,
+    convolve,
+    dem_wins,
+    distribution,
+    effects,
+    efficiency_gap,
+    enacted_threshold,
+    is_narrow,
+    largest_remainder,
+    linear_band,
+    mean_median,
+    neutral_threshold,
+    outside_band,
+    pmf_percentile,
+    pmf_position,
+    position,
+    proportional_threshold,
+    sample_percentile,
+    seats_by_plan,
+    senate_election,
+    senate_majority,
+    senate_seats_at,
+    sorted_band,
+    swing_point,
+)
 from gerry.president import national_share, read_president
-from gerry.metrics import (MAX_SWING_STEPS, SWING_GRID, SwingRangeError, TieError, competitive, convolve,
-                           dem_wins, distribution, effects, efficiency_gap, enacted_threshold, is_narrow,
-                           largest_remainder, linear_band, mean_median, neutral_threshold, outside_band,
-                           pmf_percentile, pmf_position, position, proportional_threshold, sample_percentile,
-                           seats_by_plan, senate_election, senate_majority, senate_seats_at, sorted_band,
-                           swing_point)
 from gerry.validation import build_report
 
 HOUSE_SEATS = 435
 HOUSE_MAJORITY = 218
-# Owner decision 1 (extensions design, chapter 6): each single-seat state goes to the party that won it in
+# Decision 1 of the extensions design (chapter 6): each single-seat state goes to the party that won it in
 # both the 2016 and the 2020 presidential election.
 SINGLE_SEAT_PARTY = {"AK": "R", "DE": "D", "ND": "R", "SD": "R", "VT": "D", "WY": "R"}
 # Senate block (extensions design, chapter 7): 51 of 100 seats; at 50-50 the vice president decides, a
@@ -35,7 +68,7 @@ SINGLE_SEAT_PARTY = {"AK": "R", "DE": "D", "ND": "R", "SD": "R", "VT": "D", "WY"
 SENATE_STATES = 50
 SENATE_STATES_NEEDED = 26
 WIN_COLS = ["d", "r", "d_pre_20", "r_pre_20"]
-# The vote slider (plan 2026-10-08-vote-slider, owner decision): 47.0% to 56.0% in steps of 0.1 point.
+# The vote slider (plan 2026-10-08-vote-slider): 47.0% to 56.0% in steps of 0.1 point.
 SWING_SHARES = [round(0.47 + k / 1000, 3) for k in range(91)]
 
 
@@ -55,8 +88,8 @@ def map_rows(enacted: pd.DataFrame, map_id: str, method: str = "block") -> pd.Da
 
 def state_runs(ensemble: pd.DataFrame, st: StateConfig) -> tuple[dict, list[np.ndarray]]:
     """Median and 90% band of the Democratic seats per ALARM chain, the separate runs of the simulation, and the
-    plan counts per seat of the first and the second half of the chains, for the nation (review of October 2026,
-    finding 2: ALARM reruns 11 states because version 15 did not meet its current convergence check)."""
+    plan counts per seat of the first and the second half of the chains, for the nation. ALARM reruns 11 states
+    because version 15 did not meet its current convergence check; this shows how far the runs agree."""
     seats = seats_by_plan(ensemble)
     chain = ensemble.drop_duplicates("draw").set_index("draw")["chain"].reindex(seats.index)
     chains = sorted(int(c) for c in chain.unique())
@@ -90,7 +123,7 @@ def map_result(rows: pd.DataFrame, st: StateConfig, map_id: str) -> dict:
     r = rows["r"].to_numpy(dtype=float)
     shares = d / (d + r)
     districts = [{"id": st.fips + district, "share": float(share), "d": float(dv), "r": float(rv)}
-                 for district, share, dv, rv in zip(rows["district"], shares, d, r)]
+                 for district, share, dv, rv in zip(rows["district"], shares, d, r, strict=True)]
     return {"enacted": int(wins.sum()), "districts": districts, "shares": shares, "wins": wins, "d": d, "r": r}
 
 
@@ -193,7 +226,7 @@ def state_checks(st: StateConfig, enacted: pd.DataFrame, ensemble: pd.DataFrame,
                          f"districts differ: ours {ours['district'].tolist()}, ALARM {alarm['district'].tolist()}")
     reference_check = {
         "districts": [{"district": dist, "ours": float(a), "alarm": float(b)}
-                      for dist, a, b in zip(ours["district"], _shares(ours), _shares(alarm))],
+                      for dist, a, b in zip(ours["district"], _shares(ours), _shares(alarm), strict=True)],
         "seats_ours": int(district_wins(ours, f"{st.postal} check_2022").sum()),
         "seats_alarm": int(district_wins(alarm, f"{st.postal} ALARM cd_2020").sum()),
     }
@@ -206,7 +239,7 @@ def state_checks(st: StateConfig, enacted: pd.DataFrame, ensemble: pd.DataFrame,
             raise CheckError("whole_unit", st.postal, f"{map_id}: block and whole-unit districts differ")
         block_wins = district_wins(block, f"{st.postal} {map_id} block")
         whole_wins = district_wins(whole, f"{st.postal} {map_id} whole_unit")
-        for i, (b_share, w_share) in enumerate(zip(_shares(block), _shares(whole))):
+        for i, (b_share, w_share) in enumerate(zip(_shares(block), _shares(whole), strict=True)):
             whole_unit.append({"map_id": map_id, "district": block["district"].iloc[i],
                                "block": float(b_share), "whole": float(w_share),
                                "block_dem": bool(block_wins[i]), "whole_dem": bool(whole_wins[i])})
@@ -305,10 +338,11 @@ def national_swing(*, base_share: float, base: dict, state_shares, state_seats, 
                    "more": base["position"]["more"], "base": True})
     points.sort(key=lambda p: p["share"])
     series = {"proportional": lambda p: p["proportional"], "enacted": lambda p: p["enacted"],
-              "neutral median": lambda p: p["neutral"]["median"], "neutral 5th percentile": lambda p: p["neutral"]["p5"],
+              "neutral median": lambda p: p["neutral"]["median"],
+              "neutral 5th percentile": lambda p: p["neutral"]["p5"],
               "neutral 95th percentile": lambda p: p["neutral"]["p95"]}
     for name, value in series.items():
-        for a, b in zip(points, points[1:]):
+        for a, b in pairwise(points):
             if value(b) < value(a):
                 raise CheckError("swing_monotone", "US", f"{name}: {value(a)} at {a['share']:.4f} but {value(b)} "
                                                          f"at {b['share']:.4f}")
@@ -371,14 +405,14 @@ def read_single_seat_votes(idir, at_large: Mapping[str, AtLargeState]) -> dict[s
 
 def national_senate(votes: Mapping[str, tuple[float, float]], base_share: float) -> dict:
     """All 100 seats at once (extensions design, ch. 7), from the (Democratic, Republican) votes of every state,
-    on `base_share`, the national share of the House and the vote slider (owner, October 13, 2026)."""
+    on `base_share`, the national share of the House and the vote slider."""
     if len(votes) != SENATE_STATES:
         raise CheckError("senate_states", "US", f"{len(votes)} states with votes, expected {SENATE_STATES}")
     return senate_majority(votes, SENATE_STATES_NEEDED, base_share=base_share)
 
 
 def national_senate_2026(senate, votes: Mapping[str, tuple[float, float]], base_share: float) -> dict:
-    """The seats on the ballot on November 3, 2026 (owner, October 13, 2026): `senate` is config.yaml's
+    """The seats on the ballot on November 3, 2026: `senate` is config.yaml's
     senate_2026, `votes` the (Democratic, Republican) votes of every state. Democrats need more than half of the
     Senate, or half when the vice president is a Democrat."""
     if senate is None:
@@ -484,7 +518,7 @@ def compute(cfg, idir) -> dict:
         parts = [f"{value} {e['states']} states, {e['seats']} seats, drawing {e['drawing']:+d}"
                  for value, e in national[field].items()]
         print(f"US {field}: " + "; ".join(parts))
-    # the Senate on the House share of the vote slider (owner, October 13, 2026)
+    # the Senate on the House share of the vote slider
     base_share = national["majority"]["base_share"]
     national["senate"] = national_senate({**senate, **single_seat}, base_share)
     sen = national["senate"]

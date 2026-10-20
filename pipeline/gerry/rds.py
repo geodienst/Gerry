@@ -65,7 +65,7 @@ def read_rds_table(path: Path) -> pd.DataFrame:
     if obj.info.type != _T.VEC or "names" not in attrs:
         raise ValueError(f"{path}: not a data frame or named list")
     columns = {}
-    for name, col in zip(_strings(attrs["names"]), obj.value):
+    for name, col in zip(_strings(attrs["names"]), obj.value, strict=True):
         values = _column(col)
         if values is not None:
             columns[name] = values

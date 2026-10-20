@@ -12,7 +12,7 @@ import type { SeatMarks } from './axes.ts';
 
 // The names of the three counts and the two effects, as the site writes them.
 export const LABELS: Record<CountKey, string> = { proportional: 'Vote-proportional', neutral: 'Neutral-map median', enacted: 'Enacted maps' };
-// The rows of dots (drawDotRows) have 112 units for a label: there the short forms (owner decision, October 8, 2026).
+// The rows of dots (drawDotRows) have 112 units for a label: there the short forms.
 export const SHORT_LABELS: Record<CountKey, string> = { proportional: 'Proportional', neutral: 'Neutral median', enacted: 'Enacted' };
 export const EFFECT_LABELS = { geographic: 'Geographic effect', drawing: 'Drawing effect' } as const;
 
@@ -65,14 +65,14 @@ export function stateTip(index: Index, postal: Postal): Tip {
   };
 }
 
-// --- The view "Districts: close races" (owner idea, October 8, 2026) -------------------------------
+// --- The view "Districts: close races" -------------------------------
 
 /** A Democratic share from 45% to 55%, both included: the competitive range of chapter 03. */
 export const isClose = (fraction: number): boolean => fraction >= 0.45 && fraction <= 0.55;
 
 /**
- * A swing state: 48.5% to 51.5% Democratic statewide on the 2016 and 2020 votes (owner decision, October 9, 2026:
- * the seven battleground states of 2024 plus Florida). The six single-seat states are left out.
+ * A swing state: 48.5% to 51.5% Democratic statewide on the 2016 and 2020 votes (the seven battleground states
+ * of 2024 plus Florida). The six single-seat states are left out.
  */
 export const isSwing = (index: Pick<Index, 'states'>, postal: Postal): boolean => Boolean(index.states[postal]) && Math.abs(index.states[postal].d_share - 0.5) <= 0.015;
 
@@ -102,7 +102,7 @@ export function closeLegend(results: Results) {
   const index = { states: results.states };
   const swing = Object.keys(results.states).filter((postal) => isSwing(index, postal)).length;
   return {
-    // two layers, each with one job (expert feedback, October 9): gold outlines for swing states, rings for close calls
+    // two layers, each with one job: gold outlines for swing states, rings for close calls
     items: [
       { key: 'swing', text: 'Gold outline: swing state, 48.5% to 51.5% Democratic statewide' },
       { key: 'tight', text: 'Thick ring: close call, under 2 points apart' }, { key: 'near', text: 'Thin ring: 2 to 5 points apart' },
@@ -134,7 +134,7 @@ export function stateOptions(results: Results, { single = false } = {}): { posta
 /** The hint under the map and the messages over it (site design, update of October 7). */
 export function mapHints({ mac }: { touch: boolean; mac: boolean }) {
   const key = mac ? '⌘' : 'Ctrl';
-  // no hint line under the map (owner, October 17, 2026); these two only show over the map when a gesture needs them
+  // no hint line under the map; these two only show over the map when a gesture needs them
   return {
     wheel: `Use ${key} + scroll to zoom the map`,
     touch: 'Use two fingers to move the map',
@@ -147,7 +147,7 @@ export const MAP_TITLES: Record<MapView, string> = {
   districts: 'Democratic vote share by district', states: 'Drawing effect by state', close: 'Close districts and swing states',
 };
 
-// the two ends of the district scale; no sentence under the legend (owner, October 17, 2026)
+// the two ends of the district scale
 export const LEGEND_TEXT = {
   low: 'More Republican',
   high: 'More Democratic',
@@ -286,7 +286,7 @@ export const SINGLE_SEAT_PARTY: Record<Postal, Party> = { DE: 'D', VT: 'D', AK: 
 
 /**
  * The House: the districts of results.json plus the single-seat states, and how many of those go to each party. The
- * national counts are shown in this House (owner decision, October 11, 2026): the single-seat states add the same
+ * national counts are shown in this House: the single-seat states add the same
  * seats to every count, so the effects stay as they are.
  */
 export function houseOf(results: Results): { total: number; dSingle: number; rSingle: number } {
@@ -346,7 +346,7 @@ export function methodFills(results: Results): Record<string, string> {
   };
 }
 
-// --- The column beside the map without a state follows the view of the map (owner, October 18, 2026) ----------
+// --- The column beside the map without a state follows the view of the map ----------
 // "States: drawing effect" keeps effectList; the two district views get these.
 
 const districtsOf = (results: Results) => Object.entries(results.states).flatMap(([postal, s]) => s.districts.map((d) => ({ ...d, postal })));

@@ -1,0 +1,16 @@
+# ruff for pipeline/, tests/ and tools/: run `python -m ruff check .` from the repository root.
+line-length = 120
+target-version = "py312"
+extend-exclude = ["data", "site", "node_modules", ".superpowers"]
+
+[lint]
+# pycodestyle, pyflakes, import order, bugbear and pyupgrade
+select = ["E", "W", "F", "I", "B", "UP"]
+
+[lint.isort]
+# the pipeline scripts import the package as `gerry` (pytest.ini puts pipeline/ on the path)
+known-first-party = ["gerry"]
+
+[lint.per-file-ignores]
+# test data (CSV headers, example dictionaries, expected table rows) reads better on one line
+"tests/*" = ["E501"]

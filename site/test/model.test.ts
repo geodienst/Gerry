@@ -39,7 +39,7 @@ test('tooltips: a district, a state, and a single-seat state', () => {
 test('close races: 45% to 55% Democratic, both ends included, for districts and for whole states', () => {
   assert.deepEqual([0.4499, 0.45, 0.5, 0.55, 0.5501].map(isClose), [false, true, true, true, false]);
   const index = indexResults(results());
-  // swing states: 48.5% to 51.5% statewide (owner decision, October 9). CA keeps the testdata default 0.5: a swing
+  // swing states: 48.5% to 51.5% statewide. CA keeps the testdata default 0.5: a swing
   // state; TX at 46.35% and HI at 66.03% are not; WY has one seat
   assert.deepEqual(['CA', 'TX', 'HI', 'WY'].map((p) => isSwing(index, p)), [true, false, false, false]);
   // dots by the margin between the parties, |2 * share - 1|: under 2 points 'tight', 2 to 5 points 'near'
@@ -60,7 +60,7 @@ test('closeTip: the district share, marked when close, and the close districts o
 
 test('closeLegend: the three fills, the outline and the national counts', () => {
   const legend = closeLegend(withExtensions());
-  // two layers, each with one job (expert feedback, October 9): gold outlines for swing states, rings for close calls
+  // two layers, each with one job: gold outlines for swing states, rings for close calls
   assert.deepEqual(legend.items, [
     { key: 'swing', text: 'Gold outline: swing state, 48.5% to 51.5% Democratic statewide' },
     { key: 'tight', text: 'Thick ring: close call, under 2 points apart' }, { key: 'near', text: 'Thin ring: 2 to 5 points apart' },
@@ -97,7 +97,7 @@ test('stateOptions: with single, also the six single-seat states, marked and sor
   assert.ok(stateOptions(results()).every((o) => o.label === o.name));
 });
 
-test('mapHints: mouse, Mac and touch, without a hint line under the map (owner, October 17, 2026)', () => {
+test('mapHints: mouse, Mac and touch, without a hint line under the map', () => {
   assert.deepEqual(mapHints({ touch: false, mac: false }), {
     wheel: 'Use Ctrl + scroll to zoom the map',
     touch: 'Use two fingers to move the map',
@@ -277,7 +277,7 @@ test('nationalView: the strip with the three numbers, the effects and the positi
   // 6 entries in single_seat -> "six"; their names sorted alphabetically; 429 + 6 = 435 seats
   assert.equal(view.note, '435 seats. The six states with one at-large seat (Alaska, Delaware, North Dakota, South Dakota, Vermont, '
     + 'Wyoming) count the same in all three ways, for the party that won them in 2016 and 2020; they cannot be redrawn.');
-  // every count of 429 plus the 2 Democratic single-seat states (owner decision, October 11): 224 -> 226, the band
+  // every count of 429 plus the 2 Democratic single-seat states: 224 -> 226, the band
   // 217 to 229 -> 219 to 231, 213 -> 215; the effects stay as they are
   assert.deepEqual(view.trio.map((t) => [t.value, t.sub]), [['226', 'seats follow the vote'], ['225', '90% of outcomes: 219 to 231'], ['215', 'maps used in 2026']]);
   // geographic -1 -> "R+1", one seat (singular); drawing -10 -> "R+10", 10 seats
@@ -321,7 +321,7 @@ test('methodFills: plans, states, ALARM version, dates and Louisiana', () => {
   });
 });
 
-// --- the column beside the map without a state, per view (owner, October 18, 2026) ---
+// --- the column beside the map without a state, per view ---
 
 test('districtShares: the districts of the 2026 maps in five-point bins, blue from 50%', () => {
   // testdata: TX 27.04%, 46.91%, 42.48%, 41.00% and HI 62.13%, 70.11%; the other states have no districts

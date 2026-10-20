@@ -31,64 +31,10 @@
   <p class="load-error wrap" id="load-error" role="alert" hidden></p>
 
   <main>
-    <section class="chapter" id="states" aria-labelledby="h02">
-      <div class="wrap">
-        <div class="chead">
-          <span class="no">01</span>
-          <h2 id="h02">State by state</h2>
-          <p>Pick a state to compare the three different seat counts.</p>
-        </div>
-        <div class="tools">
-          <label class="pick" for="pick">State <select id="pick"><option value="">All states</option></select></label>
-          <div class="seg" role="group" aria-label="Map view">
-            <button type="button" id="view-districts" aria-pressed="true">Districts: Democratic share</button>
-            <button type="button" id="view-states" aria-pressed="false">States: drawing effect</button>
-            <button type="button" id="view-close" aria-pressed="false">Districts: close races</button>
-          </div>
-        </div>
-        <div class="atlas">
-          <div class="mapcol">
-            <div class="mapbox" id="mapbox">
-              <div class="maphead">
-                <h3 class="maptitle" id="map-title">Democratic vote share by district</h3>
-                <div class="legend" id="legend"></div>
-              </div>
-              <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of the U.S. congressional districts. Choose a state with the State menu or the list."></svg>
-              <div class="zoombar">
-                <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
-                <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
-                <button type="button" id="zoom-reset" class="wide" aria-label="All states">All</button>
-                <button type="button" id="map-full" aria-label="Full screen" aria-pressed="false" title="Full screen">
-                  <svg class="enter" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
-                  <svg class="leave" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4"/></svg>
-                </button>
-              </div>
-              <div class="gesture" id="gesture" hidden></div>
-              <div class="tip" id="tip" hidden></div>
-            </div>
-            <div class="mapfoot">
-              <p class="tapline" id="tapline" aria-live="polite"></p>
-              <div class="mapbar">
-                <div class="colors" role="group" aria-labelledby="colors-label">
-                  <span id="colors-label">Colors</span>
-                  <button type="button" id="palette-party" aria-pressed="true">Red and blue</button>
-                  <button type="button" id="palette-neutral" aria-pressed="false">Teal and brown</button>
-                </div>
-                <button type="button" class="sharebtn" id="map-share" aria-label="Share this view"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
-              </div>
-            </div>
-          </div>
-          <aside class="record" id="sheet" aria-labelledby="sheet-title"></aside>
-          <div class="sheet-more" id="sheet-more" hidden></div>
-        </div>
-        <p class="visually-hidden" id="sheet-status" aria-live="polite"></p>
-      </div>
-    </section>
-
     <section class="chapter" id="outcomes" aria-labelledby="h01">
       <div class="wrap">
         <div class="chead">
-          <span class="no">02</span>
+          <span class="no">01</span>
           <h2 id="h01">The same votes. Three different outcomes.</h2>
         </div>
         <div class="ohead">
@@ -137,6 +83,60 @@
           </div>
         </div>
         <details class="why neutral-more"><summary>How the neutral maps are made</summary><div id="spread"></div></details>
+      </div>
+    </section>
+
+    <section class="chapter" id="states" aria-labelledby="h02">
+      <div class="wrap">
+        <div class="chead">
+          <span class="no">02</span>
+          <h2 id="h02">State by state</h2>
+          <p>Pick a state to compare the three different seat counts.</p>
+        </div>
+        <div class="tools">
+          <label class="pick" for="pick">State <select id="pick"><option value="">All states</option></select></label>
+          <div class="seg" role="group" aria-label="Map view">
+            <button type="button" id="view-districts" aria-pressed="true">Districts: Democratic share</button>
+            <button type="button" id="view-states" aria-pressed="false">States: drawing effect</button>
+            <button type="button" id="view-close" aria-pressed="false">Districts: close races</button>
+          </div>
+        </div>
+        <div class="atlas">
+          <div class="mapcol">
+            <div class="mapbox" id="mapbox">
+              <div class="maphead">
+                <h3 class="maptitle" id="map-title">Democratic vote share by district</h3>
+                <div class="legend" id="legend"></div>
+              </div>
+              <svg id="map" viewBox="0 0 975 610" role="img" aria-label="Map of the U.S. congressional districts. Choose a state with the State menu or the list."></svg>
+              <div class="zoombar">
+                <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+                <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
+                <button type="button" id="zoom-reset" class="wide" aria-label="All states">All</button>
+                <button type="button" id="map-full" aria-label="Full screen" aria-pressed="false" title="Full screen">
+                  <svg class="enter" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg>
+                  <svg class="leave" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2v4H2M14 6h-4V2M10 14v-4h4M2 10h4v4"/></svg>
+                </button>
+              </div>
+              <div class="gesture" id="gesture" hidden></div>
+              <div class="tip" id="tip" hidden></div>
+            </div>
+            <div class="mapfoot">
+              <p class="tapline" id="tapline" aria-live="polite"></p>
+              <div class="mapbar">
+                <div class="colors" role="group" aria-labelledby="colors-label">
+                  <span id="colors-label">Colors</span>
+                  <button type="button" id="palette-party" aria-pressed="true">Red and blue</button>
+                  <button type="button" id="palette-neutral" aria-pressed="false">Teal and brown</button>
+                </div>
+                <button type="button" class="sharebtn" id="map-share" aria-label="Share this view"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
+              </div>
+            </div>
+          </div>
+          <aside class="record" id="sheet" aria-labelledby="sheet-title"></aside>
+          <div class="sheet-more" id="sheet-more" hidden></div>
+        </div>
+        <p class="visually-hidden" id="sheet-status" aria-live="polite"></p>
       </div>
     </section>
 
@@ -206,7 +206,7 @@
             <p><b>How to read the three numbers.</b> All numbers count Democratic seats in the U.S. House. <i>Vote-proportional</i> gives each state's seats in proportion to its two-party vote. <i>Neutral-map median</i> is the median of <span data-fill="plans"></span> maps per state drawn by a computer that follows each state's rules but ignores party. <i>Enacted maps</i> is what the maps used on November 3, 2026 produce with the same votes. The difference between the first two is the geographic effect; the difference between the last two is the drawing effect. The neutral maps follow the rules ALARM applied in each state, such as the Voting Rights Act and old district cores in five states. In Arizona and Colorado they also favor competitive districts, which takes vote data. Both effects include what these rules do. An effect shows its direction: R+6 means 6 seats toward Republicans, D+3 means 3 seats toward Democrats.</p>
             <p><b>The six states with one seat.</b> Alaska, Delaware, North Dakota, South Dakota, Vermont and Wyoming elect one representative for the whole state. There is nothing to draw, so all three counts give the same result: the party that won the state in 2016 and 2020, Democrats in Delaware and Vermont and Republicans in the other four. The national numbers include these six seats; they do not change the effects. On the vote slider none of the six changes sides, which the pipeline checks at every step.</p>
             <p><b>Why neutral maps are not proportional.</b> Each district elects one winner, so the party with more votes in a state usually wins a larger share of its seats than of its votes. Democratic voters also live closer together, mostly in cities, so neutral maps often put many of them in a few districts that Democrats win by large margins. The geographic effect is the sum of both.</p>
-            <p><b>Votes.</b> We use the 2016 and 2020 presidential results added together, by voting district (by census tract in California, Hawaii, Maine and Oregon, by county in Iowa and West Virginia; West Virginia uses 2020 only), as prepared by the ALARM Project. The enacted seats come from assigning these votes to the 2026 districts, not from House results. With these votes the enacted seats can differ from what happened in 2024. We use presidential votes because House results depend on the maps themselves: in safe districts one party often has no candidate, and incumbents run ahead of their party. Presidential votes are cast everywhere for the same two candidates, so they can be counted on any map. Adding 2016 and 2020 evens out the candidates of a single year. In 2024 Democrats won <span data-fill="share-2024"></span> of the two-party presidential vote; the vote slider in chapter 02 shows a year like that.</p>
+            <p><b>Votes.</b> We use the 2016 and 2020 presidential results added together, by voting district (by census tract in California, Hawaii, Maine and Oregon, by county in Iowa and West Virginia; West Virginia uses 2020 only), as prepared by the ALARM Project. The enacted seats come from assigning these votes to the 2026 districts, not from House results. With these votes the enacted seats can differ from what happened in 2024. We use presidential votes because House results depend on the maps themselves: in safe districts one party often has no candidate, and incumbents run ahead of their party. Presidential votes are cast everywhere for the same two candidates, so they can be counted on any map. Adding 2016 and 2020 evens out the candidates of a single year. In 2024 Democrats won <span data-fill="share-2024"></span> of the two-party presidential vote; the vote slider in chapter 01 shows a year like that.</p>
             <p><b>The Voting Rights Act.</b> The law can require districts where a minority group forms a large share of the voters. In seat counts such districts can look like packing. ALARM's neutral maps follow the Voting Rights Act as courts applied it before Louisiana v. Callais (April 2026). Where a map adopted after that ruling removed such districts, the change shows up in the drawing effect. The notes per state say what ALARM did there.</p>
             <p><b>Neutral maps that keep old district cores.</b> In Kansas and Nebraska, ALARM's neutral maps keep the cores of the districts drawn after the 2010 census. In Louisiana, New Mexico and Utah they keep those of the 2021 or 2022 map. In New Mexico, and largely in Louisiana, that pulls the drawing effect toward zero.</p>
             <p><b>The national band.</b> The national neutral-map median combines the <span data-fill="states"></span> states as if their neutral maps were drawn independently. The national effects therefore differ slightly from the sum of the state effects.</p>
@@ -214,7 +214,7 @@
               <div id="method-axis"></div>
               <figcaption class="note" id="method-caption"></figcaption>
             </figure>
-            <p id="method-extensions"><b>Extensions.</b> The majority threshold shifts every district's Democratic share by the same amount until Democrats hold <span data-fill="house-majority"></span> of the <span data-fill="house-seats"></span> seats, the six states with one seat included. The vote slider in chapter 02 uses the same shift for every district, every neutral map and every state, from 47% to 56% of the two-party vote. The enacted maps have fewer competitive districts than neutral maps, so they move less when the vote shifts, and the drawing effect depends on the vote share. Competitive districts have a Democratic share from 45% to 55%, both included. The map view "Districts: close races" shows them in the color of the party they lean to, with a dot where the parties are less than 5 points apart and a larger dot under 2 points; its swing states vote 48.5% to 51.5% Democratic on the 2016 and 2020 votes together. Redraws compare the 2026 maps with the maps of the 2024 election (U.S. Census Bureau, 119th Congress). "Adopted by" says which body adopted the map and which party, if any, could adopt it alone. The Senate block takes the 35 seats on the ballot on November 3, 2026 (33 regular seats and special elections for the seats that JD Vance in Ohio and Marco Rubio in Florida left in 2025) and the parties that hold the other 65, from the U.S. Senate's lists as of <span data-fill="senate-checked"></span>. The two independents count with the Democrats, with whom they caucus. Each seat on the ballot goes to the party that won its state's presidential vote in 2016 and 2020 together, shifted by the same amount as on the vote slider. A majority is 51 of 100 seats: at 50 to 50 the vice president, a Republican since January 2025, decides. If all 100 seats were chosen at once, with both seats of a state going to one party, Democrats would need <span data-fill="senate-all"></span> of the two-party vote for <span data-fill="senate-states"></span> states, because every state has two senators whatever its population.</p>
+            <p id="method-extensions"><b>Extensions.</b> The majority threshold shifts every district's Democratic share by the same amount until Democrats hold <span data-fill="house-majority"></span> of the <span data-fill="house-seats"></span> seats, the six states with one seat included. The vote slider in chapter 01 uses the same shift for every district, every neutral map and every state, from 47% to 56% of the two-party vote. The enacted maps have fewer competitive districts than neutral maps, so they move less when the vote shifts, and the drawing effect depends on the vote share. Competitive districts have a Democratic share from 45% to 55%, both included. The map view "Districts: close races" shows them in the color of the party they lean to, with a dot where the parties are less than 5 points apart and a larger dot under 2 points; its swing states vote 48.5% to 51.5% Democratic on the 2016 and 2020 votes together. Redraws compare the 2026 maps with the maps of the 2024 election (U.S. Census Bureau, 119th Congress). "Adopted by" says which body adopted the map and which party, if any, could adopt it alone. The Senate block takes the 35 seats on the ballot on November 3, 2026 (33 regular seats and special elections for the seats that JD Vance in Ohio and Marco Rubio in Florida left in 2025) and the parties that hold the other 65, from the U.S. Senate's lists as of <span data-fill="senate-checked"></span>. The two independents count with the Democrats, with whom they caucus. Each seat on the ballot goes to the party that won its state's presidential vote in 2016 and 2020 together, shifted by the same amount as on the vote slider. A majority is 51 of 100 seats: at 50 to 50 the vice president, a Republican since January 2025, decides. If all 100 seats were chosen at once, with both seats of a state going to one party, Democrats would need <span data-fill="senate-all"></span> of the two-party vote for <span data-fill="senate-states"></span> states, because every state has two senators whatever its population.</p>
             <p><b>Known limits.</b></p>
             <ul>
               <li>The smallest vote units are voting districts in 38 states, census tracts in California, Hawaii, Maine and Oregon, and counties in Iowa and West Virginia, as in ALARM's map files. Where such a unit crosses a district line, we split its votes over its census blocks by voting-age population. In the four tract states the split follows the block votes in ALARM's census-2020 files.</li>
@@ -238,7 +238,7 @@
     <section class="about" id="about" aria-labelledby="about-title">
       <div class="wrap">
         <h2 id="about-title">About this project</h2>
-        <p>Made by Govert Schoof, founder of the Geodienst, the geospatial expertise centre of the University of Groningen, and co-founder of <a href="https://geominds.nl">Geominds.nl</a>, which builds geo-AI for real-world mapping.</p>
+        <p>Made by Govert Schoof, founder of the <a href="https://rug.nl/geo">Geodienst</a>, the geospatial expertise centre of the University of Groningen, liaison at <a href="https://www.rug.nl/jantina-tammes-school/">Jantina Tammes School</a>, and co-founder of <a href="https://geominds.nl">Geominds.nl</a>, which builds geo-AI for real-world mapping.</p>
         <p>Thanks to <a href="https://www.rug.nl/staff/m.l.thompson/">Mark Thompson</a>, Vincent, JW and <a href="https://elmeriniemi.com/">Elmeri</a> for reviewing the work and for their feedback.</p>
         <p>This project has no client and no funding. I made it because I thought it was worth doing.</p>
         <p>Questions or corrections: please contact the press office of the University of Groningen. Errors will be corrected.</p>
@@ -250,7 +250,7 @@
     <div class="wrap">
       <div>
         <p>Data generated <span data-fill="generated"></span>. Legal status as of <span data-fill="status-date"></span>. ALARM dataset version <span data-fill="alarm-version"></span>.</p>
-        <p>Map drawn with D3 and topojson-client, both under the ISC license: <a href="licenses/d3.txt">D3 license</a>, <a href="licenses/topojson-client.txt">topojson-client license</a>. Type set in Public Sans and Source Serif 4, both under the SIL Open Font License: <a href="licenses/public-sans.txt">Public Sans license</a>, <a href="licenses/source-serif-4.txt">Source Serif 4 license</a>.</p>
+        <p>Map drawn with D3 and topojson-client, both under the ISC license: <a href="licenses/d3.txt">D3 license</a>, <a href="licenses/topojson-client.txt">topojson-client license</a>.</p>
       </div>
       <a class="credit" href="https://rug.nl/geo"><img src="img/geodienst.svg" alt="" width="20" height="20"><span>Geodienst, University of Groningen</span></a>
     </div>

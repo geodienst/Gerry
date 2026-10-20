@@ -1,6 +1,7 @@
 """Reference numbers from the feasibility check (plan, Interfaces). Needs
 data/interim/metrics.json from 02_join.py and 03_metrics.py on the real data."""
 import json
+from itertools import pairwise
 
 import numpy as np
 import pandas as pd
@@ -152,7 +153,7 @@ def test_overview_per_control_and_body(metrics):
         # the sum of the state drawing effects: -10 on 2026-10-06
         drawing = sum(e["drawing"] for e in table.values())
         assert drawing == sum(s["effects"]["drawing"] for s in states.values()) == -10
-    # the totals approved by the owner on 2026-10-07 (config.yaml after Task 5.10), in the order of the design
+    # the totals of config.yaml after Task 5.10, in the order of the design
     assert metrics["national"]["by_control"] == {
         "Republican": {"states": 16, "seats": 165, "drawing": -17},
         "Democratic": {"states": 8, "seats": 118, "drawing": 9},
@@ -172,7 +173,7 @@ def test_senate(metrics):
     sen = metrics["national"]["senate"]
     # prototype run of 2026-10-07: the 44 states of the vote basis and the six single-seat states (MIT file)
     assert (sen["states_needed"], sen["states_at_base"], sen["seats_at_base"]) == (26, 22, 44)
-    # on the share of the House and the vote slider (owner, October 13, 2026)
+    # on the share of the House and the vote slider
     assert sen["base_share"] == metrics["national"]["majority"]["base_share"] == pytest.approx(0.5179747, abs=5e-7)
     # the 26th highest state share is Florida's 0.4878762: 0.5179747 + 0.5 - 0.4878762
     assert sen["share"] == pytest.approx(0.5300985, abs=5e-7)
@@ -204,10 +205,10 @@ def test_senate_2026(metrics):
     # every point of the slider has the Senate seats, rising with the share, 47 at the base
     points = metrics["national"]["swing"]["points"]
     assert [p["senate"] for p in points if p["base"]] == [47]
-    assert all(a["senate"] <= b["senate"] for a, b in zip(points, points[1:]))
+    assert all(a["senate"] <= b["senate"] for a, b in pairwise(points))
 
 
-# --- review of October 2026: metrics.json against the interim data and a formula of its own --------------------
+# --- metrics.json against the interim data and a formula of its own --------------------
 ENSEMBLE = interim_dir() / "ensemble_districts.parquet"
 ENACTED = interim_dir() / "enacted_districts.parquet"
 needs_interim = pytest.mark.skipif(not (ENSEMBLE.exists() and ENACTED.exists()), reason="run 02_join.py first")
@@ -230,7 +231,7 @@ def test_wasted_votes_gap_by_hand():
 
 @needs_interim
 def test_metrics_json_follows_from_the_interim_data(metrics):
-    # a metrics.json left over from an earlier join fails here (the reviewer's point on stale output)
+    # a metrics.json left over from an earlier join fails here
     ensemble = pd.read_parquet(ENSEMBLE, columns=["state", "draw", "district", "d", "r", "d_pre_20", "r_pre_20"])
     enacted = pd.read_parquet(ENACTED)
     enacted = enacted[(enacted["map_id"] == "enacted") & (enacted["method"] == "block")]
@@ -245,8 +246,8 @@ def test_metrics_json_follows_from_the_interim_data(metrics):
 
 
 def test_efficiency_gap_follows_from_the_district_votes(metrics):
-    # every state's EG again with the formula above: a broken efficiency_gap or a changed number (the reviewer
-    # set Nevada to +100 points) fails here
+    # every state's EG again with the formula above: a broken efficiency_gap or a changed number, such as Nevada
+    # set to +100 points, fails here
     for postal, s in metrics["states"].items():
         d = [x["d"] for x in s["districts"]]
         r = [x["r"] for x in s["districts"]]
@@ -254,7 +255,7 @@ def test_efficiency_gap_follows_from_the_district_votes(metrics):
 
 
 def test_alarm_runs_back_the_method_text(metrics):
-    # site/index.html, Known limits (owner, October 17, 2026): the runs of version 15 give the same national median
+    # site/index.html, Known limits: the runs of version 15 give the same national median
     # and band, the same median in the 11 states ALARM reruns, and in Texas 18 instead of 17 in one run
     html = (REPO_ROOT / "site" / "index.html").read_text(encoding="utf-8")
     assert ("ALARM is rerunning its neutral maps for 11 states. Its separate runs of version 15 give the same national "

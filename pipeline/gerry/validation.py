@@ -15,8 +15,8 @@ Input files (UTF-8, comma-separated, header row, every value read as text):
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,7 @@ SHARE_TOLERANCE = 0.005       # 0.5 percentage point, as a fraction
 EXPECTED_PLANS = 5000
 CHECK_KEYS = ("cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction", "planscore", "planscore_votes",
               "state_files")
-# PlanScore against our own district votes of the same election, on the same map (review of October 2026):
+# PlanScore against our own district votes of the same election, on the same map:
 PLANSCORE_VOTE_TOLERANCE = 0.03   # largest relative difference of a district's Democratic or Republican votes
 PLANSCORE_EG_TOLERANCE = 0.001    # 0.1 point between our EG on our votes and our EG on PlanScore's votes
 PLANSCORE_COLUMNS = ("state", "election", "url", "accessed", "same_map", "planscore_eg_pct",
@@ -90,7 +90,8 @@ def planscore_comparison(df: pd.DataFrame) -> list[dict]:
                 raise ValueError(f"planscore.csv: {state} {election} has more than one {col}")
         first = rows.iloc[0]
         if first["planscore_favors"] not in ("Republicans", "Democrats"):
-            raise ValueError(f"planscore.csv: planscore_favors must be Republicans or Democrats, got {first['planscore_favors']!r}")
+            raise ValueError("planscore.csv: planscore_favors must be Republicans or Democrats, "
+                             f"got {first['planscore_favors']!r}")
         if first["same_map"] not in ("yes", "no"):
             raise ValueError(f"planscore.csv: same_map must be yes or no, got {first['same_map']!r}")
         text = first["planscore_eg_pct"]
@@ -106,7 +107,8 @@ def planscore_comparison(df: pd.DataFrame) -> list[dict]:
             "tolerance": 0.5 * 10.0 ** -decimals / 100,
             "reproduced": efficiency_gap(d, r, wins),
             "equal_turnout": equal_turnout_gap(d, r, wins),
-            "districts": {_district_key(k): (float(dv), float(rv)) for k, dv, rv in zip(rows["district"], d, r)},
+            "districts": {_district_key(k): (float(dv), float(rv))
+                          for k, dv, rv in zip(rows["district"], d, r, strict=True)},
         })
     return out
 
@@ -220,7 +222,8 @@ def _cd118(metrics: dict, ledger: _Ledger) -> str:
         "## CD118 maps against ALARM cd_2020",
         "Our block allocation on the 2022 maps (Census CD118) against ALARM's reference plan `cd_2020`, "
         "same vote basis. Threshold: at most 0.5 points per district and the same number of Democratic seats.",
-        _table(["State", "Districts", "Largest difference (points)", "D seats, ours", "D seats, ALARM", "Status"], rows),
+        _table(["State", "Districts", "Largest difference (points)", "D seats, ours", "D seats, ALARM", "Status"],
+               rows),
     ]
     if details:
         parts += ["Districts above the threshold:",
@@ -372,7 +375,7 @@ def _planscore(metrics: dict, crosscheck_dir: Path, ledger: _Ledger) -> str:
 
 
 def _runs(metrics: dict) -> str:
-    """ALARM's separate runs per state and for the nation (review of October 2026, finding 2). For information."""
+    """ALARM's separate runs per state and for the nation. For information."""
     head = ["## ALARM runs",
             "ALARM draws the neutral maps of each state in two or four separate runs (chains). The table lists the "
             "states where a run has another median of Democratic seats than all runs together, with the median and "
@@ -387,9 +390,11 @@ def _runs(metrics: dict) -> str:
         median = metrics["states"][postal]["neutral"]["median"]
         chains = runs[postal]["chains"]
         if any(c["median"] != median for c in chains.values()):
-            rows.append((postal, median, "; ".join(f"run {k}: {c['median']} ({c['p5']} to {c['p95']}, {c['plans']} plans)"
-                                                   for k, c in sorted(chains.items(), key=lambda kv: int(kv[0])))))
-    table = _table(["State", "All runs", "Per run"], rows) if rows else "Every run gives the same median in every state."
+            per_run = (f"run {k}: {c['median']} ({c['p5']} to {c['p95']}, {c['plans']} plans)"
+                       for k, c in sorted(chains.items(), key=lambda kv: int(kv[0])))
+            rows.append((postal, median, "; ".join(per_run)))
+    table = (_table(["State", "All runs", "Per run"], rows) if rows
+             else "Every run gives the same median in every state.")
     nat = metrics["national"]["neutral"]
     halves = checks.get("runs_national", [])
     nation = _table(["Plans", "Median", "5th percentile", "95th percentile"],
@@ -399,8 +404,8 @@ def _runs(metrics: dict) -> str:
 
 
 def _dra_not_used() -> str:
-    """The DRA section, a fixed text: DRA is not used (owner decision of 7 October 2026), so nothing here is
-    open or pending, and a dra.csv in data/crosscheck/ is ignored."""
+    """The DRA section, a fixed text: DRA is not used, as its terms of use forbid automated access, so nothing
+    here is open or pending, and a dra.csv in data/crosscheck/ is ignored."""
     return "\n\n".join([
         "## Dave's Redistricting App",
         "Not used. DRA's terms of use, updated July 31, 2026, do not allow automated access to the site, or copying "
@@ -427,7 +432,8 @@ def _state_files(crosscheck_dir: Path, ledger: _Ledger) -> str:
             raise ValueError(f"state_files.csv: one_to_one must be True or False, got {row.one_to_one!r}")
         census, matching, only_state = int(row.blocks_census), int(row.blocks_matching), int(row.only_state)
         one_to_one = row.one_to_one == "True"
-        what = f"{census - matching} of {census} blocks outside the matching district, {only_state} only in the state source"
+        what = (f"{census - matching} of {census} blocks outside the matching district, "
+                f"{only_state} only in the state source")
         if not one_to_one:
             what += ", district matching not one-to-one"
         status = ledger.judge(row.state, "state_files", matching == census and only_state == 0 and one_to_one, what)

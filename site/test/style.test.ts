@@ -12,16 +12,16 @@ type Tokens = Record<string, string>;
 // for any values.
 const EXPECTED: Record<'light' | 'dark', Tokens> = {
   light: {
-    bg: '#f2f2f2', sheet: '#ffffff', fg: '#141414', muted: '#5a5a5a', rule: '#d4d4d4', ink: '#141414',
-    tint: '#e8e8e8', mast: '#141414', 'mast-fg': '#f5f5f5', 'mast-muted': '#b8b8b8',
+    bg: '#f1f3f0', sheet: '#fbfcfa', fg: '#18201c', muted: '#56615b', rule: '#d3d9d4', ink: '#1d5c48',
+    tint: '#e2ebe5', mast: '#143a2f', 'mast-fg': '#eef4f0', 'mast-muted': '#b2c8bd',
     'party-d': '#2a78d6', 'party-r': '#e34948', 'neutral-d': '#01665e', 'neutral-r': '#8c510a',
-    mid: '#ecebe7', blank: '#c9ccd1', water: '#e9e9e9', gold: '#a87800', edge: '#a6a6a6',
+    mid: '#ecebe7', blank: '#c9ccd1', water: '#e5eae6', gold: '#a87800', edge: '#a3aaa5',
   },
   dark: {
-    bg: '#111111', sheet: '#1a1a1a', fg: '#ececec', muted: '#a3a3a3', rule: '#333333', ink: '#ececec',
-    tint: '#2a2a2a', mast: '#000000', 'mast-fg': '#f0f0f0', 'mast-muted': '#a8a8a8',
+    bg: '#0f1513', sheet: '#151d1a', fg: '#e6ece8', muted: '#9eaba4', rule: '#2a3531', ink: '#8fd0b4',
+    tint: '#1c2a25', mast: '#0b2920', 'mast-fg': '#e6efe9', 'mast-muted': '#9ab8aa',
     'party-d': '#3987e5', 'party-r': '#e66767', 'neutral-d': '#5ab4ac', 'neutral-r': '#d8b365',
-    mid: '#3a3a37', blank: '#4a4f56', water: '#1e1e1e', gold: '#e3b23c', edge: '#6b6b6b',
+    mid: '#3a3a37', blank: '#4a4f56', water: '#1b2421', gold: '#e3b23c', edge: '#66706b',
   },
 };
 
@@ -110,8 +110,8 @@ test('the zoom hint over the map is readable on its lightest colors', () => {
 });
 
 test('every brace in each style sheet is matched, so no rule is skipped', () => {
-  // October 13, 2026: a stray } after the key findings made the browser skip the next rule, the space around every
-  // chapter. Comments hold no rules; the depth must never drop below zero and must end at zero.
+  // A stray } once made the browser skip the next rule, the space around every chapter. Comments hold no rules;
+  // the depth must never drop below zero and must end at zero.
   for (const file of sheets) {
     let depth = 0;
     for (const [i, ch] of [...readFileSync(join(STYLES, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')].entries()) {

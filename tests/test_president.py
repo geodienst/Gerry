@@ -114,7 +114,7 @@ def test_single_seat_states_match_the_official_results():
         assert (got["d"], got["r"]) == (d16 + d20, r16 + r20), postal
 
 
-# The national two-party share of a year, for the 2024 example on the vote slider (Mark Thompson's question, October 12)
+# The national two-party share of a year, for the 2024 example on the vote slider
 
 def test_national_share_adds_the_nominees_on_every_line_in_every_state(tmp_path):
     from gerry.president import national_share

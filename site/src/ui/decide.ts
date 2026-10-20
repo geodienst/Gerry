@@ -1,4 +1,4 @@
-// Chapter 03, "In detail" (redesign, chapter 5; owner, October 13, 2026): competitive districts, redraws since 2024,
+// Chapter 03, "In detail" (redesign, chapter 5): competitive districts, redraws since 2024,
 // the tables by political control and, last, the Senate. Texts from lib/chapters.ts (decideView);
 // this module only fills the cards and draws the two axes.
 import { select } from 'd3';
@@ -16,7 +16,7 @@ function figures(el: HTMLElement, items: { value: string; label: string }[]) {
   }
 }
 
-/** The Senate at one stop of the vote slider in chapter 01 (owner, October 13, 2026): the seats it gives, and which
+/** The Senate at one stop of the vote slider in chapter 01: the seats it gives, and which
  *  seats change party. `point` is a stop of outcomesView().points. */
 export function showSenate(view: DecideView, point: OutcomesPoint) {
   const at = view.senate.at(point);

@@ -5,7 +5,6 @@ import pytest
 
 from gerry import metrics as m
 
-
 # Task 2.1: dem_wins
 
 def test_dem_wins_majority_decides():
@@ -698,13 +697,13 @@ def test_senate_majority_needs_the_ranks_around_the_threshold():
 
 
 def test_senate_majority_can_take_the_share_of_the_vote_slider():
-    # the same states, with the national share of the House (owner, October 13, 2026): 0.5 + 0.5 - 0.48
+    # the same states, with the national share of the House: 0.5 + 0.5 - 0.48
     res = m.senate_majority(SENATE_VOTES, 3, around=1, base_share=0.5)
     assert (res["base_share"], res["share"]) == (0.5, pytest.approx(0.52))
     assert (res["states_at_base"], res["seats_at_base"]) == (2, 4)
 
 
-# The Senate seats on the ballot in 2026 (owner, October 13, 2026)
+# The Senate seats on the ballot in 2026
 
 # the five states above, each with one seat on the ballot and the party that holds it now; 5 seats not on it
 SENATE_SHARES = {"AA": 0.6, "BB": 0.3, "CC": 0.55, "DD": 0.48, "EE": 0.45}

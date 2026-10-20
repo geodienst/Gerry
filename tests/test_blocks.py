@@ -4,10 +4,19 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from gerry.blocks import (PL_GEO_FIELDS, BlocksError, _national, block_weighted, changed_blocks, read_bef,
-                          read_pl_blocks, read_pl_counties, unit_of_block, whole_unit)
+from gerry.blocks import (
+    PL_GEO_FIELDS,
+    BlocksError,
+    _national,
+    block_weighted,
+    changed_blocks,
+    read_bef,
+    read_pl_blocks,
+    read_pl_counties,
+    unit_of_block,
+    whole_unit,
+)
 from gerry.config import data_dir
-
 
 # ---- P.L. 94-171 fixtures: geo header with 97 fields, segment 2 with 152 fields ----
 

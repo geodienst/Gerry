@@ -9,7 +9,12 @@ from shapely.geometry import Point, box
 from gerry.checks import CheckError
 from gerry.config import REPO_ROOT, load_config
 from gerry.geometry import (
-    MAPSHAPER_JS, STATE_POSTAL, build_topojson, load_districts, mapshaper_cmd, national_outline,
+    MAPSHAPER_JS,
+    STATE_POSTAL,
+    build_topojson,
+    load_districts,
+    mapshaper_cmd,
+    national_outline,
 )
 
 GPKG_NAME = "tlgpkg_2026_us_legislative.gpkg"

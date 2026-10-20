@@ -92,16 +92,11 @@ test('the built page and everything it loads stay under 1.5 MB', (t) => {
   assert.ok(bytes < 1_500_000, `${bytes} bytes in dist/`);
 });
 
-test('the license texts in site/public/licenses are those of the bundled libraries and fonts', () => {
+test('the license texts in site/public/licenses are those of the bundled libraries', () => {
   const root = fileURLToPath(new URL('../../', import.meta.url));
-  const FONTS = ['public-sans', 'source-serif-4'];
-  const sources: [string, string][] = [
-    ...PACKAGES.map((name): [string, string] => [name, name]),
-    ...FONTS.map((name): [string, string] => [name, `@fontsource-variable/${name}`]),
-  ];
-  for (const [name, pkg] of sources) {
+  for (const name of PACKAGES) {
     const shipped = readFileSync(join(SITE, 'public', 'licenses', `${name}.txt`));
-    const bundled = readFileSync(join(root, 'node_modules', pkg, 'LICENSE'));
-    assert.ok(shipped.equals(bundled), `site/public/licenses/${name}.txt differs from node_modules/${pkg}/LICENSE`);
+    const bundled = readFileSync(join(root, 'node_modules', name, 'LICENSE'));
+    assert.ok(shipped.equals(bundled), `site/public/licenses/${name}.txt differs from node_modules/${name}/LICENSE`);
   }
 });

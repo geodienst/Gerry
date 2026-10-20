@@ -89,7 +89,7 @@ export function controlTables(results: Results) {
 }
 export type ControlTables = ReturnType<typeof controlTables>;
 
-// --- The Senate (Task 6.14; the seats on the ballot in 2026, owner, October 13, 2026) -------------------------
+// --- The Senate (Task 6.14; the seats on the ballot in 2026) -------------------------
 
 const SUFFIX: Record<number, string> = { 1: 'st', 2: 'nd', 3: 'rd' };
 const ordinal = (n: number): string => `${n}${[11, 12, 13].includes(n % 100) ? 'th' : SUFFIX[n % 10] ?? 'th'}`;
@@ -136,7 +136,7 @@ export function senateView(results: Results) {
       return {
         seats: total,
         figure: { value: `${count(total)} of 100`, label: `Democratic seats at ${point.label}` },
-        text: `${where}, as on the vote slider in chapter 02, Democrats would win ${count(won.length)} of the ${count(s.up)} `
+        text: `${where}, as on the vote slider in chapter 01, Democrats would win ${count(won.length)} of the ${count(s.up)} `
           + `seats on the ballot and hold ${count(total)} of 100. `
           + (changes.length ? `Seats that change party: ${changes.join('; ')}.` : 'No seat changes party.'),
       };

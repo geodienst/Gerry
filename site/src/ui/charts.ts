@@ -126,7 +126,7 @@ export function drawSorted(el: HTMLElement, sorted: Sorted, colors: Colors, labe
   svg.append('text').attr('x', m.l).attr('y', H - 6).text('Districts from lowest to highest Democratic share');
 }
 
-/** Districts by Democratic share in five-point bins (owner, October 18, 2026): a bar per bin in the color of the party
+/** Districts by Democratic share in five-point bins: a bar per bin in the color of the party
  *  ahead, a dashed line at 50%, the count of each bin as its tooltip. */
 export function drawShareBins(el: HTMLElement, bins: DistrictShares['bins'], colors: Colors, label: string) {
   const H = 150;

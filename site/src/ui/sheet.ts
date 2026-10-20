@@ -65,7 +65,7 @@ function netBlock<E extends HTMLElement>(sheet: Block<E>, list: EffectList, colo
 }
 
 /** Without a state in the view "Districts: Democratic share": the districts of the 2026 maps by share, and under them
- *  "All states together" as in the list of states (owner, October 18, 2026). */
+ *  "All states together" as in the list of states. */
 export function renderDistricts(el: HTMLElement, view: DistrictShares, list: EffectList, colors: Colors) {
   const sheet = clear(el);
   title(sheet, view.title);
@@ -76,7 +76,7 @@ export function renderDistricts(el: HTMLElement, view: DistrictShares, list: Eff
 }
 
 /** Without a state in the view "Districts: close races": the close districts, closest first; a click chooses the state.
- *  Under them "All states together", as in the other two views (owner, October 18, 2026). */
+ *  Under them "All states together", as in the other two views. */
 export function renderClose(el: HTMLElement, view: CloseDistricts, effects: EffectList, colors: Colors, onSelect: OnSelect) {
   const sheet = clear(el);
   title(sheet, view.title);
@@ -135,7 +135,7 @@ function headline<E extends HTMLElement>(parent: Block<E>, value: string, swatch
   for (const line of lines) text.append('p').text(line);
 }
 
-/** "Back" with an arrow, to the column without a state of the view on screen (owner, October 18, 2026). */
+/** "Back" with an arrow, to the column without a state of the view on screen. */
 function backButton<E extends HTMLElement>(root: Block<E>, onBack: () => void) {
   const button = root.append('button').attr('type', 'button').attr('class', 'back').on('click', onBack);
   button.append('svg').attr('viewBox', '0 0 16 16').attr('aria-hidden', 'true').append('path').attr('d', 'M13 8H3M7 4 3 8l4 4');
@@ -216,7 +216,7 @@ export function renderState(el: HTMLElement, record: RecordView, colors: Colors,
 }
 
 /**
- * One state in full screen, after the owner's mockup (October 14, 2026): the record on the right in its own order, ending
+ * One state in full screen: the record on the right in its own order, ending
  * with the map, its status and who adopted it; under the map and the record a strip with the sorted districts, their
  * notes, and the other measures and the notes folded.
  * @param el the sheet on the right
@@ -229,7 +229,7 @@ export function renderStateFull(el: HTMLElement, moreEl: HTMLElement, record: Re
   title(name, record.name);
   name.append('span').attr('class', 'seats').text(record.seatCount);
   recordNumbers(root, record, colors);
-  // each effect with its note on a line of its own, as in the mockup
+  // each effect with its note on a line of its own
   definitionList(root, record.effects, true);
   root.append('p').attr('class', 'note').text(record.position);
   if (record.blocked) {

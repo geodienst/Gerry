@@ -24,7 +24,7 @@ a { color: var(--ink); }
 .trio { display: flex; flex-wrap: wrap; gap: 0.5rem 1.8rem; align-items: baseline; }
 .trio div { display: grid; }
 .trio .lab { font-size: 0.8125rem; color: var(--muted); }
-.trio .val { font: 600 2rem/1.1 var(--font-figure); font-variant-numeric: tabular-nums; }
+.trio .val { font: 600 2rem/1.1 var(--font-head); font-variant-numeric: tabular-nums; }
 .trio .sub { font-size: 0.87rem; color: var(--muted); }
 .effects { margin: 0; font-size: 0.93rem; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }

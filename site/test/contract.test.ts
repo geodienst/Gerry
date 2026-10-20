@@ -501,7 +501,7 @@ test('the Senate seats on the ballot in 2026 follow from the state shares and th
   const { national, states } = data().results;
   const s = national.senate_2026;
   const all = [...Object.keys(states), ...national.single_seat.map((x) => x.postal)];
-  // owner, October 13, 2026: the House share of the vote slider, 100 seats, a Republican vice president
+  // the House share of the vote slider, 100 seats, a Republican vice president
   assert.equal(s.base_share, national.majority.base_share);
   assert.equal(s.up + s.not_up.D + s.not_up.R, 100);
   assert.equal(s.held.D + s.held.R, s.up);

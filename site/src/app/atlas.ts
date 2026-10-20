@@ -1,7 +1,6 @@
-// Chapter 01, "State by state": the map with its three views, the State menu, the zoom bar, full screen, and the
-// column beside the map. Without a state the column follows the view of the map (owner, October 18, 2026); with a
-// state it holds the state's record, split over the column and a strip under the map in full screen from 900px
-// (owner's mockup, October 14, 2026).
+// Chapter 02, "State by state": the map with its three views, the State menu, the zoom bar, full screen, and the
+// column beside the map. Without a state the column follows the view of the map; with a state it holds the state's
+// record, split over the column and a strip under the map in full screen from 900px.
 import { SITE_URL, linkFor } from '../lib/hash.ts';
 import {
   MAP_TITLES, closeDistricts, closeLegend, districtShares, effectList, mapHints, stateOptions,
@@ -80,7 +79,7 @@ export function createAtlas({ results, topology, index, colors: initialColors, r
     else if (ui.view === 'close') renderClose(sheet, closeDistricts(results), effects, colors, onRow);
     else renderList(sheet, effects, colors, onRow, ui);
     // The strip runs on under the record when the record fits above it; a longer record takes the whole height and
-    // the strip stays under the map (owner, October 17, 2026, option c).
+    // the strip stays under the map.
     if (apart) atlas.classList.toggle('long', sheet.scrollHeight > sheet.clientHeight + 2);
   }
 
