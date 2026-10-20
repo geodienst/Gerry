@@ -32,7 +32,7 @@ export function linkFor(postal: Postal, path: string): string {
 export const SITE_URL = 'https://somevotes.org/';
 
 /**
- * The link to chapter 02 as the reader set it (owner, October 14, 2026): the chosen row and the national vote share on
+ * The link to chapter 01 as the reader set it: the chosen row and the national vote share on
  * the slider, in percent with one decimal. "neutral" at 0.492 gives "?count=neutral&vote=49.2#outcomes".
  * @param key the chosen row: proportional, neutral or enacted
  * @param share the Democratic share of the two-party vote at the stop on screen, as a fraction
@@ -45,7 +45,7 @@ export function outcomesLink(key: string, share: number): string {
  * The row and the stop of the slider in a link made by outcomesLink, or null when the link has neither.
  * An unknown row gives key null; a share half a stop (0.05 points) or more from every stop gives index null.
  * @param search location.search
- * @param keys the rows of chapter 02
+ * @param keys the rows of chapter 01
  * @param shares the share at each stop of the slider, as fractions
  */
 export function outcomesFromSearch<K extends string = CountKey>(

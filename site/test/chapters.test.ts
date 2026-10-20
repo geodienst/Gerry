@@ -133,7 +133,7 @@ test('outcomesView: the drawing effect at every stop of the slider, with a few e
   assert.equal(byVote.text, 'The enacted maps have fewer close districts than neutral maps, so they react less when the '
     + 'national vote shifts. When Democrats win less than 51.8% of the national two-party vote, the enacted maps give them '
     + 'more seats than neutral maps would. From 51.8% on they give them fewer. Each bar shows the drawing effect at one '
-    + 'position of the vote slider in chapter 02; the dark line marks where the slider stands.');
+    + 'position of the vote slider in chapter 01; the dark line marks where the slider stands.');
   assert.equal(byVote.axis, 'Democratic share of the national two-party vote');
   // examples: the stop nearest 2024 (here 50.0%, not 49.2%, so no year), 50%, the 2016 and 2020 votes, the strongest effect
   assert.deepEqual(byVote.examples, [

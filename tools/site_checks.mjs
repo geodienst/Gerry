@@ -533,11 +533,13 @@ async function layout(t) {
   await t.js("document.getElementById('view-states').click()"); // the list of states, with its rows (owner, October 18, 2026)
   await t.js('document.activeElement?.blur()');
   const order = [];
-  for (let i = 0; i < 24; i += 1) {
+  for (let i = 0; i < 32; i += 1) {
     await t.key('Tab', 9);
     order.push(await t.js("(() => { const el = document.activeElement; return el.closest('#map') ? 'map shape' : el.id || el.getAttribute('class') || el.tagName; })()"));
   }
-  // State by state comes first since October 13, 2026; the rows of the national count follow the list
+  t.check('the chapters run 01 the national count, 02 State by state, 03 In detail, 04 Methodology', await t.js(
+    "[...document.querySelectorAll('main > .chapter')].map((c) => `${c.id} ${c.querySelector('.chead .no').textContent}`).join() === 'outcomes 01,states 02,decide 03,method 04'"));
+  // the national count comes first; State by state follows with its menu, views, zoom, colors and the list
   const wanted = ['pick', 'view-districts', 'view-states', 'view-close', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
   t.check('Tab reaches the State menu, the view buttons, the zoom buttons, the color buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
@@ -553,7 +555,9 @@ async function layout(t) {
   await t.key('Tab', 9);
   t.check('the third Tab lands on Share by the key findings', await t.js("document.activeElement === document.getElementById('share-site')"));
   await t.key('Tab', 9);
-  t.check('the fourth Tab lands on the State menu of chapter 01', await t.js("document.activeElement === document.getElementById('pick')"));
+  // chapter 01 is the national count: the chosen row of its radio group is the one tab stop of the rows
+  t.check('the fourth Tab lands on the chosen count of chapter 01', await t.js(
+    "document.activeElement === document.querySelector('#scen [aria-checked=true]') && !!document.activeElement.closest('#outcomes')"));
   await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
   const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
     outline: getComputedStyle(el).outlineStyle, group: el.parentElement.getAttribute('role'), name: el.parentElement.getAttribute('aria-label') }; })()`);
@@ -658,7 +662,7 @@ async function senate(t) {
       .test(await t.text('#senate-text')), await t.text('#senate-text'));
   t.check('the Senate block says it is not an effect of maps', (await t.text('#senate-note')).endsWith('none of this is an effect of maps.'));
   const at = await t.text('#senate-at');
-  t.check('at the start the Senate block shows the 2016 and 2020 votes', /^With the 2016 and 2020 votes \(\d+\.\d%\), as on the vote slider in chapter 02, Democrats would win \d+ of the \d+ seats on the ballot and hold \d+ of 100\./.test(at), at);
+  t.check('at the start the Senate block shows the 2016 and 2020 votes', /^With the 2016 and 2020 votes \(\d+\.\d%\), as on the vote slider in chapter 01, Democrats would win \d+ of the \d+ seats on the ballot and hold \d+ of 100\./.test(at), at);
   const stops = await t.js('document.getElementById("vote").max');
   await t.js(`(() => { const s = document.getElementById('vote'); s.value = '${stops}'; s.dispatchEvent(new Event('input')); })()`);
   const moved = await t.text('#senate-at');
@@ -1038,7 +1042,7 @@ async function fullscreen(t) {
   t.check('Escape brings the map back into the page', !off.full && off.pressed === 'false' && off.height < on.height, JSON.stringify(off));
 }
 
-// --- Share (owner, October 14, 2026): by the key findings, under the map and above the House in chapter 02 ------------
+// --- Share: by the key findings, under the map and above the House in chapter 01 ------------
 async function sharing(t) {
   await t.load('', { width: 1280, height: 800 });
   // a catcher in place of the device's share sheet, so the checks see the link each button gives
@@ -1066,7 +1070,7 @@ async function sharing(t) {
   await t.js("location.hash = '#TX'");
   await t.until(`${HEADING} === 'Texas'`);
   t.check('Share under the map gives the map with its state', (await link('map-share')) === `${page}#TX`);
-  // chapter 02 on the neutral maps at 49.2% of the vote
+  // chapter 01 on the neutral maps at 49.2% of the vote
   await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
   await t.js(`(() => { const s = document.getElementById('vote');
     s.value = String([...Array(Number(s.max) + 1).keys()].find((i) => { s.value = String(i); s.dispatchEvent(new Event('input')); return document.getElementById('vote-out').textContent === '49.2%'; }));
@@ -1080,22 +1084,22 @@ async function sharing(t) {
   await t.sleep(100);
   t.check('without a share sheet the link goes to the clipboard and a short note says so', await t.js(
     "window.copied === 'https://somevotes.org/' && document.querySelector('.share-note')?.textContent === 'Link copied'"));
-  // the shared link opens chapter 02 as it was shared; the explainer waits for Play and the Senate block follows
+  // the shared link opens chapter 01 as it was shared; the explainer waits for Play and the Senate block follows
   await t.load('#outcomes', { query: 'count=neutral&vote=49.2' });
   await t.sleep(1500);
   const opened = await t.js(`({ row: document.querySelector('#scen [aria-checked=true] .lab')?.textContent, vote: document.getElementById('vote-out').textContent,
     tour: document.getElementById('tour-count').textContent === '' && document.getElementById('tour-play').textContent === 'Play',
     senate: document.getElementById('senate-figures').textContent.includes('49.2%'),
     inView: Math.abs(document.getElementById('outcomes').getBoundingClientRect().top) < 4 })`);
-  t.check('a shared link opens chapter 02 on its row and vote share, with the explainer waiting', opened.row === 'Neutral-map median'
+  t.check('a shared link opens chapter 01 on its row and vote share, with the explainer waiting', opened.row === 'Neutral-map median'
     && opened.vote === '49.2%' && opened.tour && opened.senate && opened.inView, JSON.stringify(opened));
 }
 
-// --- Task 7.7: chapter 01, the map and the list beside it ------------------------------------------------------
+// --- Task 7.7: chapter 02, the map and the list beside it ------------------------------------------------------
 async function largest(t) {
   await t.load();
-  // the row of the largest effects above the map is gone: the list beside the map shows them (owner, October 13, 2026)
-  t.check('chapter 01 holds the tools, the map and the sheet, and no row of buttons above the map', await t.js(`(() => {
+  // the row of the largest effects above the map is gone: the list beside the map shows them
+  t.check('chapter 02 holds the tools, the map and the sheet, and no row of buttons above the map', await t.js(`(() => {
     const ch = document.getElementById('states');
     return !!ch && ['pick', 'map', 'legend', 'sheet'].every((id) => ch.contains(document.getElementById(id)))
       && !document.getElementById('largest') && !document.querySelector('.chip')

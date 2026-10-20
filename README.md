@@ -78,7 +78,7 @@ The frontend lives in `site/`:
 - `public/`: files copied as they are, such as the data, the images and the license texts.
 - `test/`: `node --test` tests in TypeScript, run by `pnpm test`.
 
-The page opens with two key findings under the title. Then come four numbered chapters: a map in three views (Democratic share, drawing effect, close races) with a record per state (01), the national count three ways, with a short explainer that plays by itself, a waffle of the House of 435 seats and a slider for the national vote share (02), close districts, redraws since 2024, political control and the Senate in 2026 (03), and the method, with the drawing effect at every point of the slider and the details folded (04). `#TX` in the address opens a state; `#method` opens the method.
+The page opens with three key findings under the title. Then come four numbered chapters: the national count three ways, with a short explainer that plays by itself, a waffle of the House of 435 seats and a slider for the national vote share (01), a map in three views (Democratic share, drawing effect, close races) with a column beside it that follows the view and a record per state (02), close districts, redraws since 2024, political control and the Senate in 2026 (03), and the method, with the drawing effect at every point of the slider and the details folded (04). `#TX` in the address opens a state, `?count=neutral&vote=49.2#outcomes` opens chapter 01 on a count and a vote share, and `#method` opens the method.
 
 ## Sources and licenses
 

@@ -37,7 +37,7 @@ test('stateFromHash accepts a single-seat state only when the caller passes the 
 const KEYS = ['proportional', 'neutral', 'enacted'];
 const SHARES = [0.47, 0.471, 0.492, 0.5, 0.5179747240856283, 0.56];
 
-test('outcomesLink gives the chosen row and the vote share in percent with one decimal, at chapter 02', () => {
+test('outcomesLink gives the chosen row and the vote share in percent with one decimal, at chapter 01', () => {
   assert.equal(outcomesLink('neutral', 0.492), '?count=neutral&vote=49.2#outcomes');
   assert.equal(outcomesLink('enacted', 0.5179747240856283), '?count=enacted&vote=51.8#outcomes');
   assert.equal(outcomesLink('proportional', 0.5), '?count=proportional&vote=50.0#outcomes');

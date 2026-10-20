@@ -1,5 +1,5 @@
-// Entry point: loads data/results.json and data/map.topojson, then wires the key findings, chapter 01 (the map and the
-// sheet beside it, app/atlas.ts), chapter 02, chapter 03 and the figure in the method (chapter 04).
+// Entry point: loads data/results.json and data/map.topojson, then wires the key findings, chapter 01, chapter 02 (the map
+// and the sheet beside it, app/atlas.ts), chapter 03 and the figure in the method (chapter 04).
 // Vite bundles d3, topojson-client and the styles into the page; the page requests only its two data files.
 import './styles/index.css';
 import { stateFromHash, outcomesLink, outcomesFromSearch, SITE_URL } from './lib/hash.ts';
@@ -34,7 +34,7 @@ async function main() {
   // the answer under the question in the masthead
   $('keyfacts').replaceChildren(...keyFindings(results).map((text) => node('li', {}, text)));
   const outcomes = renderOutcomes(outcomesData, { reduceMotion: lessMotion });
-  // a link from the share button of chapter 02 sets its row and vote share; the explainer then waits for Play
+  // a link from the share button of chapter 01 sets its row and vote share; the explainer then waits for Play
   const shared = outcomesFromSearch(location.search, outcomesData.rows.map((row) => row.key), outcomesData.points.map((p) => p.share));
   createTour(outcomesData.tour, outcomes, { reduceMotion: lessMotion, hold: Boolean(shared) });
   outcomes.paint(colors);
@@ -80,7 +80,7 @@ async function main() {
   darkMode.addEventListener('change', () => setPalette(palette));
 
   // Share (owner, October 14, 2026): the button by the key findings shares the site, the one by the seat counts of
-  // chapter 02 the chosen row and vote share (?count=neutral&vote=49.2#outcomes); the one under the map is in
+  // chapter 01 the chosen row and vote share (?count=neutral&vote=49.2#outcomes); the one under the map is in
   // app/atlas.ts. The links name the site's own address, also when the page runs elsewhere (SITE_URL in lib/hash.ts).
   $('share-site').addEventListener('click', () => share(SITE_URL));
   $('outcomes-share').addEventListener('click', () => {
