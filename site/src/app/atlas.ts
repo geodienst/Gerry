@@ -57,7 +57,23 @@ export function createAtlas({ results, topology, index, colors: initialColors, r
 
   const pick = $<HTMLSelectElement>('pick');
   for (const option of stateOptions(results, { single: true })) pick.append(new Option(option.label, option.postal));
-  pick.addEventListener('change', () => select(pick.value, { push: true }));
+  // Arrow keys on a closed menu choose a state at each press; the menu then has to stay in view, so only a choice
+  // made with a mouse or a finger brings the record up.
+  let keyed = false;
+  pick.addEventListener('keydown', () => { keyed = true; });
+  pick.addEventListener('pointerdown', () => { keyed = false; });
+  pick.addEventListener('blur', () => { keyed = false; });
+  pick.addEventListener('change', () => {
+    select(pick.value, { push: true });
+    // on a phone the record lies under the map, below the screen; bring it up
+    if (pick.value && window.innerWidth < 900 && !keyed) reveal(true);
+  });
+
+  /** Bring the chosen state into view: chapter 02 with the menu, the map and the record, on a phone the record itself. */
+  function reveal(smooth = false) {
+    const target = window.innerWidth < 900 ? sheet : $('states');
+    target.scrollIntoView({ block: 'start', behavior: smooth && !reduceMotion() ? 'smooth' : 'auto' });
+  }
 
   const atlas = document.querySelector<HTMLElement>('.atlas')!; // the map, the block under it and the sheet beside it
   const fullButton = $<HTMLButtonElement>('map-full');
@@ -140,6 +156,10 @@ export function createAtlas({ results, topology, index, colors: initialColors, r
 
   return {
     select,
+    /** Bring the chosen state into view unless the map or the record already is, as after a link to a state. */
+    reveal() {
+      if (!inView($('mapbox')) && !inView(sheet)) reveal();
+    },
     /** Lay out the column again, as after a resize. */
     renderSheet,
     /** New colors after a palette or theme change. */

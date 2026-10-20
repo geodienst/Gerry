@@ -1143,6 +1143,26 @@ async function tapline(t) {
   t.check('a tooltip of the old view goes when the view changes under a resting mouse', shown && await t.js("document.getElementById('tip').hidden"));
 }
 
+// --- Links: a state, back to a chapter, a shared row and vote share --------------------------------------------------
+async function links(t) {
+  await t.load('#TX', { width: 1280, height: 800 });
+  t.check('a link to a state opens on chapter 02 with that state', await t.until(`${HEADING} === 'Texas'`)
+    && await t.js("scrollY > 0 && Math.abs(document.getElementById('states').getBoundingClientRect().top) < 4"));
+  await t.load('#TX', { width: 390, height: 844 });
+  t.check('on a phone a link to a state opens on its record', await t.until(`${HEADING} === 'Texas'`)
+    && await t.js("Math.abs(document.getElementById('sheet').getBoundingClientRect().top) < 4"));
+  await t.load('#method', { width: 1280, height: 800 });
+  await t.js("{ const p = document.getElementById('pick'); p.value = 'TX'; p.dispatchEvent(new Event('change')) }");
+  await t.until("location.hash === '#TX'");
+  await t.js('history.back()');
+  t.check('back from a state to #method shows the whole map again', await t.until(`location.hash === '#method' && ${HEADING} === 'Districts by Democratic share'`));
+  await t.load('#outcomes', { width: 1280, height: 800, query: 'notour&count=neutral&vote=49.2' });
+  const kept = await t.js("location.search.includes('count=neutral') && location.search.includes('vote=49.2')");
+  await t.js("document.querySelectorAll('#scen [role=radio]')[0].click()");
+  t.check('a shared row and vote share leave the address once the reader changes chapter 01', kept
+    && await t.js("!location.search.includes('count=') && !location.search.includes('vote=') && location.search.includes('notour')"));
+}
+
 export const GROUPS = [
   { name: 'masthead', run: masthead },
   { name: 'outcomes', run: outcomes },
@@ -1162,4 +1182,5 @@ export const GROUPS = [
   { name: 'tour', run: tour },
   { name: 'share', run: sharing },
   { name: 'tapline', run: tapline },
+  { name: 'links', run: links },
 ];
