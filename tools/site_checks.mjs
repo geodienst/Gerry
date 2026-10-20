@@ -539,6 +539,12 @@ async function layout(t) {
   }
   t.check('the chapters run 01 the national count, 02 State by state, 03 In detail, 04 Methodology', await t.js(
     "[...document.querySelectorAll('main > .chapter')].map((c) => `${c.id} ${c.querySelector('.chead .no').textContent}`).join() === 'outcomes 01,states 02,decide 03,method 04'"));
+  const heads = await t.js(`(() => {
+    const size = (el) => parseFloat(getComputedStyle(el).fontSize);
+    return { titles: [...document.querySelectorAll('.chapter .chead h2')].map(size), lead: size(document.getElementById('outcomes-lead')) };
+  })()`);
+  t.check('the four chapter titles have one size, at least a quarter larger than the lead sentence of chapter 01',
+    heads.titles.length === 4 && heads.titles.every((s) => s === heads.titles[0]) && heads.titles[0] >= 1.25 * heads.lead, JSON.stringify(heads));
   // the national count comes first; State by state follows with its menu, views, zoom, colors and the list
   const wanted = ['pick', 'view-districts', 'view-states', 'view-close', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
   t.check('Tab reaches the State menu, the view buttons, the zoom buttons, the color buttons and the list, in that order',
