@@ -187,7 +187,8 @@ async function list(t) {
   // five points of Democratic share from the lowest district (18.3%, bin 15%) to the highest (92.0%, bin 90%).
   t.check('without a state, in the view of the districts, the column shows the districts by share',
     await t.until(`${HEADING} === 'Districts by Democratic share'`)
-    && (await t.text('#sheet .count')) === 'Democrats win 213 of 429 districts.'
+    && (await t.text('#sheet .count')) === 'With the 2016 and 2020 votes, Democrats win 213 of 429 districts. '
+      + 'The six states with one seat add 2 Democratic seats, for 215 of 435.'
     && await t.js(`(() => { const bars = [...document.querySelectorAll('#sheet .bins rect')];
       const blue = getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim();
       return bars.length === 16 && bars.reduce((n, b) => n + Number(b.querySelector('title').textContent.match(/: (\\d+) district/)[1]), 0) === 429
