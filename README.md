@@ -88,5 +88,4 @@ The page opens with two key findings under the title. Then come four numbered ch
 - MIT Election Data and Science Lab, U.S. President 1976-2024, Harvard Dataverse, doi:10.7910/DVN/42MVDX, version 10.1. CC0 1.0. The Senate block takes the 2016 and 2020 votes of the six states with one seat from it, and the site the national two-party shares of 2016, 2020 and 2024.
 - U.S. Senate, lists of Class II and Class III senators and the party division, as of October 13, 2026: the seats on the ballot in 2026 and who holds the others (`data/sources.md`, Senate section).
 - D3 and topojson-client, ISC license. Vite bundles them from npm; their license texts are in `site/public/licenses/`.
-- Public Sans and Source Serif 4, SIL Open Font License 1.1. Vite bundles the latin subset from the `@fontsource-variable` packages; their license texts are in `site/public/licenses/`.
 - The site footer credits the Geodienst of the University of Groningen, with its logo from `site/public/img/geodienst.svg` and a link to https://rug.nl/geo.

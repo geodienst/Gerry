@@ -45,7 +45,7 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 
 /* The record: headline, three numbers and the rows of dots (Task 7.8) */
 .headline { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.2rem 0.9rem; align-items: center; padding-block: 0.7rem; border-block: 1px solid var(--rule); }
-.headline .big { font: 700 2.6rem/1 var(--font-figure); font-variant-numeric: tabular-nums; display: inline-flex; gap: 0.5rem; align-items: center; }
+.headline .big { font: 700 2.6rem/1 var(--font-head); font-variant-numeric: tabular-nums; display: inline-flex; gap: 0.5rem; align-items: center; }
 .headline .big i { width: 0.9rem; height: 2.2rem; display: inline-block; }
 .headline p { margin: 0; font-size: 0.94rem; line-height: 1.4; }
 /* Each column is at least as wide as its longest word, so a label such as "Vote-proportional" stays on one line
