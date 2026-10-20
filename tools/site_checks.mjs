@@ -1066,7 +1066,7 @@ async function sharing(t) {
       outcomesRight: document.querySelector('#outcomes .whead').contains(out) && r(out).left >= r('readout').right && r(out).bottom <= r('waffle').top
         && r(out).right <= r('waffle').right + 1,
       dots: document.querySelectorAll('#icon-share circle').length === 3
-        && [...document.querySelectorAll('.sharebtn')].map((b) => Boolean(b.querySelector('svg use[href="#icon-share"]')) && b.textContent === 'Share').join() === 'true,true,true' };
+        && [...document.querySelectorAll('#share-site, #map-share, #outcomes-share')].map((b) => Boolean(b.querySelector('svg use[href="#icon-share"]')) && b.textContent === 'Share').join() === 'true,true,true' };
   })()`);
   t.check('Share sits at the right of the key findings, under the map and at the right above the House, each with three dots',
     Object.values(place).every(Boolean), JSON.stringify(place));
@@ -1201,6 +1201,41 @@ async function phone(t) {
   await t.tab('Emulation.setTouchEmulationEnabled', { enabled: false });
 }
 
+// --- Graphics to reuse: two images with their captions, a download and a copy each, and the terms -------------------
+async function graphics(t) {
+  await t.load('', { width: 1280, height: 800 });
+  const drawn = await t.js(`[...document.querySelectorAll('#graphics .gcard canvas')].map((c) => [c.width, c.height,
+    c.toDataURL('image/png').length, c.getAttribute('aria-label')?.length ?? 0])`);
+  t.check('two images are drawn at 2400 pixels wide, each with a text alternative', drawn.length === 2
+    && drawn.every(([w, h, size, alt]) => w === 2400 && h > 1000 && size > 50000 && alt > 40), JSON.stringify(drawn));
+  const captions = await t.js("[...document.querySelectorAll('#graphics .caption')].map((p) => p.textContent)");
+  t.check('each image has a caption that names the votes, the credit, the address and the license',
+    captions.length === 2 && captions.every((c) => c.endsWith('Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).'))
+    && captions[0].startsWith('With the 2016 and 2020 presidential votes, the maps used on November 3, 2026 give Democrats '), JSON.stringify(captions));
+  t.check('the terms name CC BY 4.0 with a link to the license and the credit', await t.js(`(() => { const p = document.querySelector('#graphics .terms');
+    return p.querySelector('a').getAttribute('href') === 'https://creativecommons.org/licenses/by/4.0/' && p.textContent.includes('Credit: Govert Schoof, Geodienst, University of Groningen, somevotes.org.'); })()`));
+  // a catcher for the file the browser would save
+  await t.js(`window.saved = []; HTMLAnchorElement.prototype.click = function () { if (this.download) window.saved.push([this.download, this.href.slice(0, 5)]); }`);
+  await t.js("document.querySelectorAll('#graphics [data-action=download]').forEach((b) => b.click())");
+  t.check('Download PNG saves each image under its own name', await t.until('window.saved.length === 2', 3000)
+    && await t.js("window.saved.map((s) => s.join(' ')).join() === 'somevotes-national-51-8.png blob:,somevotes-drawing-effect-by-state.png blob:'"),
+    await t.js('JSON.stringify(window.saved)'));
+  await t.js("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } })");
+  await t.js("document.querySelector('#graphic-states [data-action=copy]').click()");
+  t.check('Copy caption puts the caption on the clipboard, with a short note', await t.until("document.querySelector('.share-note')?.textContent === 'Caption copied'", 2000)
+    && await t.js("window.copied === document.querySelector('#graphic-states .caption').textContent"));
+  // the national image follows the slider of chapter 01: the caption and the text alternative at once, the image
+  // itself a moment after the last stop
+  const image = "document.querySelector('#graphic-national canvas').toDataURL('image/png')";
+  await t.js(`window.imageBefore = ${image}; true`);
+  await t.js("{ const s = document.getElementById('vote'); s.value = '0'; s.dispatchEvent(new Event('input')) }");
+  t.check('the national image, its caption and its text alternative follow the slider', await t.js(
+    "document.querySelector('#graphic-national .caption').textContent.startsWith('With Democrats at ' + document.getElementById('vote-out').textContent + ' of the two-party vote, ')"
+    + " && document.querySelector('#graphic-national canvas').getAttribute('aria-label').startsWith(document.getElementById('outcomes-lead').textContent)")
+    && await t.until(`${image} !== window.imageBefore`, 2000));
+  await t.screenshot('graphics-1280', { viewport: false });
+}
+
 export const GROUPS = [
   { name: 'masthead', run: masthead },
   { name: 'outcomes', run: outcomes },
@@ -1222,4 +1257,5 @@ export const GROUPS = [
   { name: 'tapline', run: tapline },
   { name: 'links', run: links },
   { name: 'phone', run: phone },
+  { name: 'graphics', run: graphics },
 ];

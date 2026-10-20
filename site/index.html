@@ -12,6 +12,7 @@
 <body>
   <svg class="sprite" aria-hidden="true">
     <symbol id="icon-share" viewBox="0 0 16 16"><g fill="currentColor"><circle cx="12" cy="3.5" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12.5" r="2"/></g><path d="M5.7 7 10.3 4.5M5.7 9l4.6 2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 16 16"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </svg>
   <header class="mast">
     <div class="wrap">
@@ -232,6 +233,36 @@
             <p><b>Sources.</b> Neutral maps and votes: ALARM Project, 50-State Redistricting Simulations, version <span data-fill="alarm-version"></span> (McCartan, Imai and others; Harvard Dataverse, <a href="https://doi.org/10.7910/DVN/SLCD3E">doi:10.7910/DVN/SLCD3E</a>), CC0. ALARM's vote data build on precinct results from the Voting and Election Science Team (CC BY 4.0). Block votes for splitting tracts in California, Hawaii, Maine and Oregon: ALARM Project, census-2020 files (CC BY-SA 4.0). Boundaries and block files: U.S. Census Bureau, TIGER/Line 2026 (2025 for Missouri), the 2025 cartographic boundary file for the state outlines, and the block equivalency files for the 118th, 119th and 120th Congress (public domain). Presidential results of the six states with one seat, for the Senate block, and the national shares of 2016, 2020 and 2024: MIT Election Data and Science Lab, U.S. President 1976-2024, version 10.1 (Harvard Dataverse, <a href="https://doi.org/10.7910/DVN/42MVDX">doi:10.7910/DVN/42MVDX</a>), CC0. Senate seats on the ballot and party division: U.S. Senate, <a href="https://www.senate.gov/senators/Class_II.htm">Class II</a> and <a href="https://www.senate.gov/senators/Class_III.htm">Class III</a> senators and <a href="https://www.senate.gov/history/partydiv.htm">party division</a>, as of <span data-fill="senate-checked"></span>. Legal status as of <span data-fill="status-date"></span>. Cross-checked against PlanScore for seven states.</p>
           </div>
         </details>
+      </div>
+    </section>
+
+    <section class="graphics" id="graphics" aria-labelledby="graphics-title">
+      <div class="wrap">
+        <h2 id="graphics-title">Graphics to reuse</h2>
+        <p class="intro">Two images for articles and posts. Each one names the votes, the date of the maps, the sources and this site. The first follows the vote share chosen in chapter 01.</p>
+        <div class="gcards">
+          <figure class="gcard" id="graphic-national">
+            <canvas role="img"></canvas>
+            <figcaption>
+              <p class="caption"></p>
+              <div class="gbar">
+                <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download PNG</button>
+                <button type="button" class="sharebtn" data-action="copy">Copy caption</button>
+              </div>
+            </figcaption>
+          </figure>
+          <figure class="gcard" id="graphic-states">
+            <canvas role="img"></canvas>
+            <figcaption>
+              <p class="caption"></p>
+              <div class="gbar">
+                <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download PNG</button>
+                <button type="button" class="sharebtn" data-action="copy">Copy caption</button>
+              </div>
+            </figcaption>
+          </figure>
+        </div>
+        <p class="terms">You may reuse the images and their captions, also commercially, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Credit: Govert Schoof, Geodienst, University of Groningen, somevotes.org.</p>
       </div>
     </section>
 
