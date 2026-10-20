@@ -153,15 +153,13 @@ export function drawShareBins(el: HTMLElement, bins: DistrictShares['bins'], col
 
 /** Net bar under the list: seats toward Republicans to the left, toward Democrats to the right, a marker at the net. */
 export function drawNetBar(el: HTMLElement, list: EffectList, colors: Colors) {
-  const { svg, width: W } = chartSvg(el, 360, 64, list.bar.label);
+  const { svg, width: W } = chartSvg(el, 360, 38, list.bar.label);
   const bar = netBar(list.seatsR, list.seatsD, W);
   svg.append('rect').attr('x', bar.left.x).attr('y', 18).attr('width', bar.left.width).attr('height', 14).attr('fill', colors.party(false));
   svg.append('rect').attr('x', bar.right.x).attr('y', 18).attr('width', bar.right.width).attr('height', 14).attr('fill', colors.party(true));
-  svg.append('line').attr('x1', bar.center).attr('x2', bar.center).attr('y1', 12).attr('y2', 38).attr('stroke', 'var(--muted)');
+  svg.append('line').attr('x1', bar.center).attr('x2', bar.center).attr('y1', 12).attr('y2', 36).attr('stroke', 'var(--muted)');
   svg.append('text').attr('x', 4).attr('y', 12).text(list.bar.left);
   svg.append('text').attr('x', W - 4).attr('y', 12).attr('text-anchor', 'end').text(list.bar.right);
-  svg.append('path').attr('d', `M${bar.netX},38 l-6,9 h12 z`).attr('fill', 'var(--fg)');
-  svg.append('text').attr('x', bar.netX).attr('y', 60).attr('text-anchor', bar.anchor).style('font-weight', 600).text(list.bar.net);
 }
 
 /**

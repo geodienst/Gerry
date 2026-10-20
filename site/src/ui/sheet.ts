@@ -39,6 +39,7 @@ function stateRow<E extends HTMLElement>(parent: Block<E>, row: EffectRow, color
  */
 export function renderList(el: HTMLElement, list: EffectList, colors: Colors, onSelect: OnSelect, ui: { zerosOpen: boolean }) {
   const sheet = clear(el);
+  netBlock(sheet, list, colors);
   title(sheet, 'Drawing effect by state');
   sheet.append('p').attr('class', 'note')
     .text('Seats each enacted map moves toward one party, compared with the median of its neutral maps. Select a state for its numbers.');
@@ -53,32 +54,36 @@ export function renderList(el: HTMLElement, list: EffectList, colors: Colors, on
   }
   const toD = sheet.append('div').attr('class', 'list');
   for (const row of list.toD) stateRow(toD, row, colors, onSelect);
-  netBlock(sheet, list, colors);
 }
 
-/** "All states together": the seats the enacted maps move each way and the net, under a column without a state. */
+/** "All states together" at the top of a column without a state: the net of the seats the enacted maps move each way,
+ *  large as in the headline of a state record, then the bar of both sides and the sentence with the sums. */
 function netBlock<E extends HTMLElement>(sheet: Block<E>, list: EffectList, colors: Colors) {
   const net = sheet.append('div').attr('class', 'net');
-  net.append('h4').text('All states together');
+  net.append('h3').text('All states together');
+  const big = net.append('p').attr('class', 'big');
+  big.append('i').attr('aria-hidden', 'true').style('background', colors.effect(list.net));
+  big.append('span').text(list.bar.net);
   drawNetBar(net.append('div').node()!, list, colors);
   net.append('p').attr('class', 'note').text(list.summary);
 }
 
-/** Without a state in the view "Districts: Democratic share": the districts of the 2026 maps by share, and under them
- *  "All states together" as in the list of states. */
+/** Without a state in the view "Districts: Democratic share": "All states together", then the districts of the 2026
+ *  maps by share. */
 export function renderDistricts(el: HTMLElement, view: DistrictShares, list: EffectList, colors: Colors) {
   const sheet = clear(el);
+  netBlock(sheet, list, colors);
   title(sheet, view.title);
   sheet.append('p').attr('class', 'count').text(view.count);
   drawShareBins(sheet.append('div').attr('class', 'bins').node()!, view.bins, colors, view.label);
   sheet.append('p').attr('class', 'note').text(view.hint);
-  netBlock(sheet, list, colors);
 }
 
-/** Without a state in the view "Districts: close races": the close districts, closest first; a click chooses the state.
- *  Under them "All states together", as in the other two views. */
+/** Without a state in the view "Districts: close races": "All states together", then the close districts, closest
+ *  first; a click chooses the state. */
 export function renderClose(el: HTMLElement, view: CloseDistricts, effects: EffectList, colors: Colors, onSelect: OnSelect) {
   const sheet = clear(el);
+  netBlock(sheet, effects, colors);
   title(sheet, view.title);
   sheet.append('p').attr('class', 'count').text(view.count);
   const list = sheet.append('div').attr('class', 'list dlist');
@@ -90,7 +95,6 @@ export function renderClose(el: HTMLElement, view: CloseDistricts, effects: Effe
     button.append('span').attr('class', 'v').text(row.text);
   }
   sheet.append('p').attr('class', 'note').text(view.hint);
-  netBlock(sheet, effects, colors);
 }
 
 /** Labels and values; `stacked` puts each note on a line of its own, without its parentheses (full screen). */

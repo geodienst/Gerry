@@ -96,22 +96,18 @@ test('sortedDomain: at least 20% to 80% with a margin of 2 points', () => {
   assert.deepEqual(sortedDomain({ enacted: [0.01, 0.99], p5: [0.005, 0.95], p95: [0.02, 0.995] }), [0, 1]);
 });
 
-test('netBar: bars from the center, scaled to the larger side, and the net marker', () => {
-  // scale = (180 - 20) / 6 = 26.67 per seat; net = 4 - 6 = -2 -> 180 - 53.33
+test('netBar: bars from the center, scaled to the larger side', () => {
+  // scale = (180 - 20) / 6 = 26.67 per seat
   const bar = netBar(6, 4, 360);
   assert.equal(bar.center, 180);
   assert.deepEqual(bar.left, { x: 20, width: 160 });
   assert.equal(bar.right.x, 180); // the bar toward Democrats starts at the center
   assert.ok(Math.abs(bar.right.width - 106.667) < 1e-3);
-  assert.ok(Math.abs(bar.netX - 126.667) < 1e-3);
-  assert.equal(bar.anchor, 'middle');
-  assert.equal(netBar(0, 0, 360).netX, 180);
-  assert.equal(netBar(10, 0, 360).anchor, 'start'); // scale 160 / 10 = 16: 180 - 10 * 16 = 20 < 60
-  assert.equal(netBar(0, 10, 360).anchor, 'end'); // 180 + 10 * 16 = 340 > 360 - 60 = 300
-  // width 300: center 150, scale (150 - 20) / 10 = 13, netX 150 + 10 * 13 = 280 > 300 - 60 = 240
+  assert.deepEqual(netBar(0, 0, 360), { center: 180, left: { x: 180, width: 0 }, right: { x: 180, width: 0 } });
+  // width 300: center 150, scale (150 - 20) / 10 = 13
   const narrow = netBar(0, 10, 300);
   assert.equal(narrow.center, 150);
-  assert.equal(narrow.anchor, 'end');
+  assert.equal(narrow.right.width, 130);
 });
 
 // --- marker lines ---

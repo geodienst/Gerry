@@ -182,9 +182,9 @@ async function list(t) {
       return bars.length === 16 && bars.reduce((n, b) => n + Number(b.querySelector('title').textContent.match(/: (\\d+) district/)[1]), 0) === 429
         && bars.map((b) => b.getAttribute('fill') === blue).join() === Array.from({ length: 16 }, (_, i) => i >= 7).join(); })()`)
     && (await t.text('#sheet > p.note')) === 'Click a state on the map for its record.');
-  // and under it "All states together", as in the list of states
-  t.check('under the districts by share the net of all states, as in the list', await t.js(
-    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h4').textContent === 'All states together' && !!net.querySelector('svg') && /Net: .+\\.$/.test(net.querySelector('p').textContent) && document.getElementById('sheet').lastElementChild === net; })()"));
+  // and above it "All states together", as in the list of states: the net large, the bar of both sides, the sums
+  t.check('above the districts by share the net of all states, large, as in the list', await t.js(
+    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h3').textContent === 'All states together' && /^Net (0|[RD]\\+\\d+)$/.test(net.querySelector('.big').textContent) && !!net.querySelector('svg') && /Net: .+\\.$/.test(net.querySelector('p.note').textContent) && document.getElementById('sheet').firstElementChild === net; })()"));
   // the box is as high as its content; title and legend in the map box
   t.check('a short column box ends after its content, above the bottom of the map column', await t.js(`(() => {
     const record = document.getElementById('sheet').getBoundingClientRect(), col = document.querySelector('.atlas > .mapcol').getBoundingClientRect();
@@ -200,8 +200,8 @@ async function list(t) {
     await t.until(`${HEADING} === 'Close districts, 45 to 55%'`) && (await t.text('#sheet .count')) === '81 on the 2026 maps.'
     && await t.js(`(() => { const v = [...document.querySelectorAll('#sheet .drow .v')].map((s) => Math.abs(parseFloat(s.textContent) - 50));
       return v.length === 81 && v.every((x, i) => i === 0 || x >= v[i - 1] - 0.051); })()`));
-  t.check('under the close districts the net of all states as well', await t.js(
-    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h4').textContent === 'All states together' && document.getElementById('sheet').lastElementChild === net; })()"));
+  t.check('above the close districts the net of all states as well', await t.js(
+    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h3').textContent === 'All states together' && document.getElementById('sheet').firstElementChild === net; })()"));
   await t.js("document.querySelector('#states .tools').scrollIntoView()");
   await t.screenshot('close-1280', { viewport: true });
   const close = await t.js("document.querySelector('#sheet .drow').dataset.postal");
@@ -230,8 +230,8 @@ async function list(t) {
   })()`));
   await t.js("document.querySelector('#sheet details.zeros summary').click()");
   t.check('the line with the arrow unfolds them', await t.js("document.querySelector('#sheet details.zeros').open"));
-  t.check('the net bar names both sides and the net', await t.js(
-    "(() => { const s = document.querySelector('#sheet .net svg'); return s !== null && s.textContent.includes('toward Republicans') && s.textContent.includes('toward Democrats') && /Net (0|[RD]\\+\\d+)/.test(s.textContent); })()"));
+  t.check('the net bar names both sides without a marker under it, and the net stands large above it, on top of the list', await t.js(
+    "(() => { const net = document.querySelector('#sheet .net'), s = net?.querySelector('svg'); return s != null && s.textContent.includes('toward Republicans') && s.textContent.includes('toward Democrats') && !s.querySelector('path') && !/Net/.test(s.textContent) && /^Net (0|[RD]\\+\\d+)$/.test(net.querySelector('.big').textContent) && document.getElementById('sheet').firstElementChild === net; })()"));
   t.check('the net bar puts Republicans left in their color and Democrats right', await t.js(`(() => {
     const s = document.querySelector('#sheet .net svg');
     const [l, r] = s.querySelectorAll('rect');
@@ -243,7 +243,7 @@ async function list(t) {
       && Number(l.getAttribute('x')) + Number(l.getAttribute('width')) <= c + 0.01 && Number(r.getAttribute('x')) >= c - 0.01
       && left.textContent.endsWith('toward Republicans') && right.textContent.endsWith('toward Democrats');
   })()`));
-  t.check('a sentence under the net bar gives the sums', /Net: .+\.$/.test(await t.text('#sheet .net p')));
+  t.check('a sentence under the net bar gives the sums', /Net: .+\.$/.test(await t.text('#sheet .net p.note')));
   await t.screenshot('list-1280');
 }
 

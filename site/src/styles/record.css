@@ -17,7 +17,10 @@ details.zeros > summary { cursor: pointer; font-size: 0.87rem; color: var(--mute
 details.zeros > summary::-webkit-details-marker { display: none; }
 details.zeros > summary::before { content: ""; width: 0.45rem; height: 0.45rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; margin-right: 0.15rem; }
 details.zeros[open] > summary::before { transform: rotate(45deg); }
-.net { display: grid; gap: 0.35rem; border-top: 1px solid var(--rule); padding-top: 0.7rem; }
+/* "All states together" at the top of a column without a state: the net large, as in the headline of a record */
+.net { display: grid; gap: 0.45rem; border-bottom: 1px solid var(--rule); padding-bottom: 0.9rem; }
+.net .big { margin: 0; font: 700 2.2rem/1 var(--font-head); font-variant-numeric: tabular-nums; display: inline-flex; gap: 0.5rem; align-items: center; }
+.net .big i { width: 0.8rem; height: 1.9rem; display: inline-block; }
 .net svg text { font-size: 11px; font-family: var(--font-body); fill: var(--fg); }
 .axis text, .chart text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); }
 .axis line, .axis path { stroke: var(--rule); }
