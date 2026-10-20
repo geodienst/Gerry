@@ -5,7 +5,7 @@
 PY ?= python
 export PYTHONUTF8 := 1
 
-.PHONY: all download join metrics export test test-py test-js typecheck build serve check-site
+.PHONY: all download join metrics export test test-py test-js lint lint-py lint-js typecheck build serve check-site
 
 all: download join metrics export
 
@@ -28,6 +28,15 @@ test-py:
 
 test-js:
 	pnpm test
+
+# ruff for the Python, eslint for the JavaScript, the compiler for the TypeScript
+lint: lint-py lint-js typecheck
+
+lint-py:
+	$(PY) -m ruff check .
+
+lint-js:
+	pnpm lint
 
 typecheck:
 	pnpm typecheck
