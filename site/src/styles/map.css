@@ -21,6 +21,8 @@
 .dots circle { stroke: var(--fg); pointer-events: none; }
 .calm .state.swing { stroke: var(--gold); stroke-width: 2.4; }
 .state.on { stroke: var(--fg); stroke-width: 2.2; }
+/* the district the tap line under the map names */
+.district.picked { stroke: var(--fg); stroke-width: 1.6; }
 /* the view "States: drawing effect": thin gray lines, so the states with 0 stand apart from each other and from the
    water */
 .statefill { stroke: var(--edge); stroke-width: 0.7; cursor: pointer; }

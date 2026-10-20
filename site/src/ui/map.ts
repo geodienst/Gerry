@@ -63,8 +63,14 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   }
   const hideTip = () => { tip.hidden = true; };
 
+  // The state the tap line speaks of; another state or another view clears the line (paint).
+  let tapped: Postal | null = null;
   function choose(postal: Postal, districtId: string | null) {
     tapline.textContent = tapLine(index, districtId ?? '', postal, view);
+    tapped = postal;
+    // outline the district the line names, so it can be found again after the map zooms to its state
+    districts.classed('picked', (f) => f.properties.id === districtId);
+    districts.filter('.picked').raise();
     if (index.states[postal] || index.single[postal]) onSelect(postal);
   }
 
@@ -145,6 +151,12 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
      * swing states get a thick outline.
      */
     paint(colors: Colors, nextView: MapView, selected: Postal) {
+      if (nextView !== view) hideTip(); // a tooltip of the old view would stay until the mouse moves
+      if (nextView !== view || selected !== tapped) {
+        tapline.textContent = '';
+        tapped = null;
+        districts.classed('picked', false);
+      }
       view = nextView;
       const close = view === 'close';
       const fill = (id: string) => {
@@ -169,6 +181,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     },
     /** Zoom to a state, or back to the whole map for "". */
     zoomTo(postal: Postal, animate: boolean) {
+      hideTip(); // the map moves away under the pointer
       const feature = statesGeo.features.find((f) => f.properties.postal === postal);
       if (!feature) {
         move(animate).call(zoom.transform, zoomIdentity);

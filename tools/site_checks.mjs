@@ -1105,6 +1105,32 @@ async function largest(t) {
   })()`));
 }
 
+// --- The tap line and the tooltip follow the state and the view ----------------------------------------------------
+async function tapline(t) {
+  await t.load('', { width: 1280, height: 800 });
+  await t.click(await t.center(districtOf('TX')));
+  const named = await t.text('#tapline');
+  t.check('a click on a district names it under the map and outlines it', /^TX-\d+: /.test(named)
+    && await t.js("(() => { const p = document.querySelectorAll('#map path.district.picked'); return p.length === 1 && p[0].__data__.properties.state === 'TX'; })()"), named);
+  await t.js("{ const p = document.getElementById('pick'); p.value = 'CA'; p.dispatchEvent(new Event('change')) }");
+  t.check('another state from the menu clears the line and the outline', await t.until(`${HEADING} === 'California'`)
+    && (await t.text('#tapline')) === '' && await t.js("!document.querySelector('#map path.district.picked')"));
+  await t.sleep(1200); // the zoom to California
+  await t.click(await t.center(districtOf('CA')));
+  const before = await t.text('#tapline');
+  await t.js("document.getElementById('view-states').click()");
+  t.check('another view clears the line', before.startsWith('CA-') && (await t.text('#tapline')) === '', before);
+  await t.js("document.getElementById('view-districts').click()");
+  await t.click(await t.center(districtOf('CA')));
+  await t.js("document.querySelector('#sheet .back').click()");
+  t.check('Back to all states clears the line', await t.until(`${HEADING} === 'Districts by Democratic share'`) && (await t.text('#tapline')) === '');
+  await t.sleep(1200);
+  await t.mouse('mouseMoved', await t.center(districtOf('TX')));
+  const shown = await t.js("!document.getElementById('tip').hidden");
+  await t.js("document.getElementById('view-close').click()");
+  t.check('a tooltip of the old view goes when the view changes under a resting mouse', shown && await t.js("document.getElementById('tip').hidden"));
+}
+
 export const GROUPS = [
   { name: 'masthead', run: masthead },
   { name: 'outcomes', run: outcomes },
@@ -1123,4 +1149,5 @@ export const GROUPS = [
   { name: 'senate', run: senate },
   { name: 'tour', run: tour },
   { name: 'share', run: sharing },
+  { name: 'tapline', run: tapline },
 ];
