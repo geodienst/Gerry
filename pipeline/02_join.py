@@ -18,10 +18,26 @@ from pathlib import Path
 
 import pandas as pd
 
-from gerry.blocks import (BlocksError, block_weighted, changed_blocks, read_bef, read_pl_blocks, read_pl_counties,
-                          unit_of_block, whole_unit)
-from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
-                          check_geoids, check_reference_labels, check_units_linked, check_vap_pop)
+from gerry.blocks import (
+    BlocksError,
+    block_weighted,
+    changed_blocks,
+    read_bef,
+    read_pl_blocks,
+    read_pl_counties,
+    unit_of_block,
+    whole_unit,
+)
+from gerry.checks import (
+    CheckError,
+    check_conservation,
+    check_district_count,
+    check_ensemble_totals,
+    check_geoids,
+    check_reference_labels,
+    check_units_linked,
+    check_vap_pop,
+)
 from gerry.config import data_dir, interim_dir, load_config
 from gerry.ensemble import district_votes, read_stats, reference_labels
 from gerry.president import PresidentError, read_president, two_party_votes

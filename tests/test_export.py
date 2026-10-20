@@ -6,8 +6,17 @@ import pytest
 
 from gerry.checks import CheckError
 from gerry.config import (
-    COMPUTED_NOTE_KEYS, ENSEMBLE_NOTE_KEYS, REPO_ROOT, STATE_NOTE_KEYS, AtLargeState, Config,
-    ConfigError, EnsembleConfig, ExtraMap, StateConfig, load_config,
+    COMPUTED_NOTE_KEYS,
+    ENSEMBLE_NOTE_KEYS,
+    REPO_ROOT,
+    STATE_NOTE_KEYS,
+    AtLargeState,
+    Config,
+    ConfigError,
+    EnsembleConfig,
+    ExtraMap,
+    StateConfig,
+    load_config,
 )
 from gerry.export import NOTE_TEXTS, build_results, resolve_notes
 

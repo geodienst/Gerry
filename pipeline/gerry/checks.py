@@ -52,7 +52,7 @@ def parse_sources_md(path: Path) -> dict:
         if key == "multi":
             # extensions design, chapter 4: who adopted the map, under whose control, with the sources
             rows = [(postal, {**row, "adoption": _column(header, raw, _ADOPTION, heading)})
-                    for (postal, row), raw in zip(rows, cells)]
+                    for (postal, row), raw in zip(rows, cells, strict=True)]
         if key == "blocked":
             grouped: dict[str, list[dict]] = {}
             for postal, row in rows:
@@ -156,7 +156,7 @@ def _table(lines: list[str], heading: str) -> tuple[list[str], list[dict[str, st
         if len(cells) != len(header):
             raise CheckError("sources_md", "US", f"row under '{heading}' has {len(cells)} cells, "
                                                  f"header has {len(header)}: {line}")
-        rows.append(dict(zip(header, cells)))
+        rows.append(dict(zip(header, cells, strict=True)))
     return header, rows
 
 

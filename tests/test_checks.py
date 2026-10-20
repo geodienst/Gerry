@@ -1,8 +1,16 @@
 import pandas as pd
 import pytest
 
-from gerry.checks import (CheckError, check_conservation, check_district_count, check_ensemble_totals,
-                          check_geoids, check_reference_labels, check_units_linked, check_vap_pop)
+from gerry.checks import (
+    CheckError,
+    check_conservation,
+    check_district_count,
+    check_ensemble_totals,
+    check_geoids,
+    check_reference_labels,
+    check_units_linked,
+    check_vap_pop,
+)
 
 
 def units_table():

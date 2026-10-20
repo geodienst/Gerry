@@ -1,8 +1,8 @@
 """Tests for pipeline/03_metrics.py on a made-up state with 3 seats and 4 plans.
 Every expected value is worked out by hand in the comments."""
 import dataclasses
-from datetime import date
 import importlib.util
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 

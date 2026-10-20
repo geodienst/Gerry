@@ -61,7 +61,8 @@ def test_our_district_votes_match_planscore_on_the_same_map(rows):
         rep = [ours[k][f"r_pre_{year}"] for k in keys]
         ps_d = [r["districts"][k][0] for k in keys]
         ps_r = [r["districts"][k][1] for k in keys]
-        largest = max(max(abs(a / b - 1) for a, b in zip(d, ps_d)), max(abs(a / b - 1) for a, b in zip(rep, ps_r)))
+        largest = max(max(abs(a / b - 1) for a, b in zip(d, ps_d, strict=True)),
+                      max(abs(a / b - 1) for a, b in zip(rep, ps_r, strict=True)))
         assert largest <= 0.03, (r["state"], r["election"], largest)
         assert abs(_wasted_votes_gap(d, rep) - _wasted_votes_gap(ps_d, ps_r)) <= 0.001, (r["state"], r["election"])
         checked += 1

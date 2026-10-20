@@ -5,7 +5,6 @@ import pytest
 
 from gerry import metrics as m
 
-
 # Task 2.1: dem_wins
 
 def test_dem_wins_majority_decides():

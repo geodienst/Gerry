@@ -1,6 +1,7 @@
 """Reference numbers from the feasibility check (plan, Interfaces). Needs
 data/interim/metrics.json from 02_join.py and 03_metrics.py on the real data."""
 import json
+from itertools import pairwise
 
 import numpy as np
 import pandas as pd
@@ -204,7 +205,7 @@ def test_senate_2026(metrics):
     # every point of the slider has the Senate seats, rising with the share, 47 at the base
     points = metrics["national"]["swing"]["points"]
     assert [p["senate"] for p in points if p["base"]] == [47]
-    assert all(a["senate"] <= b["senate"] for a, b in zip(points, points[1:]))
+    assert all(a["senate"] <= b["senate"] for a, b in pairwise(points))
 
 
 # --- review of October 2026: metrics.json against the interim data and a formula of its own --------------------

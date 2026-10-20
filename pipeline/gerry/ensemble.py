@@ -79,7 +79,7 @@ def reference_labels(stats: pd.DataFrame, map_pop: pd.Series, postal: str) -> di
     always number the districts alike (Oregon)."""
     ref = stats[stats["draw"].astype(str).str.strip() == REFERENCE_DRAW]
     labels = {}
-    for label, pop in zip(_district_codes(ref["district"], postal), pd.to_numeric(ref["total_pop"])):
+    for label, pop in zip(_district_codes(ref["district"], postal), pd.to_numeric(ref["total_pop"]), strict=True):
         hits = list(map_pop.index[map_pop == pop])
         if len(hits) != 1:
             raise CheckError("reference_labels", postal, f"cd_2020 district {label} (population {int(pop)}) "

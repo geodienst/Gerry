@@ -39,7 +39,8 @@ def national_share(table: pd.DataFrame, year: str, states: int = 51) -> float:
     if found != states:
         raise PresidentError(f"{year}: {found} states in the file, expected {states}")
     ballot = part[part["writein"].str.upper() == "FALSE"]
-    d, r = (int(ballot.loc[ballot["candidate"] == NOMINEES[year][party], "candidatevotes"].sum()) for party in ("d", "r"))
+    d, r = (int(ballot.loc[ballot["candidate"] == NOMINEES[year][party], "candidatevotes"].sum())
+            for party in ("d", "r"))
     if d == 0 or r == 0:
         raise PresidentError(f"{year}: no votes for a nominee")
     return d / (d + r)

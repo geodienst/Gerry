@@ -67,7 +67,7 @@ def crosscheck(tmp_path):
     # AA: (60, 40) D wins, (30, 70) R, (45, 55) R
     # wasted D = 10 + 30 + 45 = 85, wasted R = 40 + 20 + 5 = 65, all votes 300
     # EG = 20 / 300 = 0.0667: 6.67 points, PlanScore prints 6.7 favoring Republicans
-    rows = ["AA,2024 U.S. House,https://planscore.org/x,2026-10-12,yes,6.7,Republicans,%s,%d,%d" % r
+    rows = [f"AA,2024 U.S. House,https://planscore.org/x,2026-10-12,yes,6.7,Republicans,{r[0]},{r[1]},{r[2]}"
             for r in (("01", 60, 40), ("02", 30, 70), ("03", 45, 55))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     return d
@@ -169,7 +169,7 @@ def test_report_has_no_em_dash(crosscheck, notes):
 def test_failed_reproduction_is_open(tmp_path, notes):
     d = tmp_path / "cc"
     d.mkdir()
-    rows = ["AA,2024 U.S. House,https://planscore.org/x,2026-10-12,yes,5.0,Republicans,%s,%d,%d" % r
+    rows = [f"AA,2024 U.S. House,https://planscore.org/x,2026-10-12,yes,5.0,Republicans,{r[0]},{r[1]},{r[2]}"
             for r in (("01", 60, 40), ("02", 30, 70), ("03", 45, 55))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     report = v.build_report(METRICS, d, notes)
@@ -268,7 +268,8 @@ def test_report_runs_section_lists_states_whose_runs_differ(crosscheck, notes):
     m["states"]["AA"]["neutral"] = {"median": 2}
     m["states"]["BB"]["neutral"] = {"median": 1}
     m["national"]["neutral"].update(p5=1, p95=3)
-    run = lambda median, p5, p95: {"plans": 2500, "median": median, "p5": p5, "p95": p95}  # noqa: E731
+    def run(median, p5, p95):
+        return {"plans": 2500, "median": median, "p5": p5, "p95": p95}
     m["checks"]["runs"] = {"AA": {"chains": {"1": run(2, 1, 3), "2": run(3, 2, 3)}},
                            "BB": {"chains": {"1": run(1, 0, 1), "2": run(1, 1, 1)}}}
     m["checks"]["runs_national"] = [{"median": 2, "p5": 1, "p95": 3}, {"median": 3, "p5": 2, "p95": 3}]
@@ -380,7 +381,7 @@ def test_planscore_equal_turnout_column_is_its_own_number(tmp_path, notes):
     d.mkdir()
     # (80, 20), (10, 30), (25, 35): wasted-votes EG 0.15, equal-turnout 0.15 + 1/6 = 0.31667
     # PlanScore prints 31.7, the equal-turnout number: "Reproduced" judges that column, not ours (+15.00)
-    rows = ["AA,2024 U.S. House,u,2026-10-12,yes,31.7,Republicans,%s,%d,%d" % r
+    rows = [f"AA,2024 U.S. House,u,2026-10-12,yes,31.7,Republicans,{r[0]},{r[1]},{r[2]}"
             for r in (("01", 80, 20), ("02", 10, 30), ("03", 25, 35))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     [row] = v.planscore_comparison(v.read_crosscheck(d / "planscore.csv", v.PLANSCORE_COLUMNS))
@@ -396,7 +397,7 @@ def test_reproduction_is_judged_on_the_equal_turnout_number_not_on_ours(tmp_path
     d.mkdir()
     # same votes as above, but PlanScore prints 15.0: that is our wasted-votes number (+15.00),
     # not the equal-turnout number (+31.67), so the reproduction is open
-    rows = ["AA,2024 U.S. House,u,2026-10-12,yes,15.0,Republicans,%s,%d,%d" % r
+    rows = [f"AA,2024 U.S. House,u,2026-10-12,yes,15.0,Republicans,{r[0]},{r[1]},{r[2]}"
             for r in (("01", 80, 20), ("02", 10, 30), ("03", 25, 35))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     report = v.build_report(METRICS, d, notes)
@@ -408,7 +409,7 @@ def test_reproduction_is_judged_on_the_equal_turnout_number_not_on_ours(tmp_path
 def _planscore_csv(tmp_path, printed, votes):
     d = tmp_path / "cc"
     d.mkdir()
-    rows = ["AA,2024 U.S. House,u,2026-10-12,yes,%s,Republicans,%s,%d,%d" % (printed, *r) for r in votes]
+    rows = [f"AA,2024 U.S. House,u,2026-10-12,yes,{printed},Republicans,{r[0]},{r[1]},{r[2]}" for r in votes]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     return d
 
@@ -417,7 +418,7 @@ def _planscore_csv(tmp_path, printed, votes):
 def test_reproduction_limit_is_half_the_last_printed_decimal(tmp_path, notes, printed, status):
     # (80,20),(10,30),(25,35): equal-turnout 31.667 points; one printed decimal allows 0.05
     d = _planscore_csv(tmp_path, printed, (("01", 80, 20), ("02", 10, 30), ("03", 25, 35)))
-    assert "| +31.67 | %s |  |  | not 2016 or 2020 | +5.00 |" % status in v.build_report(METRICS, d, notes)
+    assert f"| +31.67 | {status} |  |  | not 2016 or 2020 | +5.00 |" in v.build_report(METRICS, d, notes)
 
 
 def test_reproduction_exactly_half_a_decimal_away_is_in_order(tmp_path, notes):
@@ -503,7 +504,7 @@ COMPOSITE = [("01", 100.0, 80.0), ("02", 70.0, 130.0), ("03", 90.0, 110.0)]
 def _composite_eg():
     d = [c[1] for c in COMPOSITE]
     r = [c[2] for c in COMPOSITE]
-    return efficiency_gap(d, r, [x > y for x, y in zip(d, r)])
+    return efficiency_gap(d, r, [x > y for x, y in zip(d, r, strict=True)])
 
 
 def _votes_metrics(ours=OURS_2020, eg=None):
@@ -512,7 +513,7 @@ def _votes_metrics(ours=OURS_2020, eg=None):
                          "districts": [{"id": "99" + k, "d": d, "r": r} for k, d, r in COMPOSITE]}
     m["checks"]["district_votes"] = {"AA": [{"district": k, "d_pre_16": c[1] - d, "r_pre_16": c[2] - r,
                                              "d_pre_20": d, "r_pre_20": r}
-                                            for (k, d, r), c in zip(ours, COMPOSITE)]}
+                                            for (k, d, r), c in zip(ours, COMPOSITE, strict=True)]}
     return m
 
 
@@ -520,7 +521,7 @@ def _votes_metrics(ours=OURS_2020, eg=None):
 def president(tmp_path):
     d = tmp_path / "president"
     d.mkdir()
-    rows = ["AA,US President 2020,https://planscore.org/x,2026-10-12,yes,6.7,Republicans,%s,%d,%d" % r
+    rows = [f"AA,US President 2020,https://planscore.org/x,2026-10-12,yes,6.7,Republicans,{r[0]},{r[1]},{r[2]}"
             for r in (("01", 60, 40), ("02", 30, 70), ("03", 45, 55))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     return d
@@ -568,7 +569,7 @@ def test_planscore_votes_pending_without_our_district_votes(president, notes):
 def test_planscore_votes_not_judged_for_another_map(tmp_path, notes):
     d = tmp_path / "other"
     d.mkdir()
-    rows = ["AA,US President 2020,https://planscore.org/x,2026-10-12,no,6.7,Republicans,%s,%d,%d" % r
+    rows = [f"AA,US President 2020,https://planscore.org/x,2026-10-12,no,6.7,Republicans,{r[0]},{r[1]},{r[2]}"
             for r in (("01", 60, 40), ("02", 30, 70), ("03", 45, 55))]
     (d / "planscore.csv").write_text(PLANSCORE_HEADER + "\n".join(rows) + "\n", encoding="utf-8")
     report = v.build_report(_votes_metrics(), d, notes)

@@ -6,8 +6,16 @@ import pytest
 import yaml
 
 from gerry.config import (
-    ADOPTED_BY_VALUES, CONTROL_VALUES, ENSEMBLE_NOTE_KEYS, REPO_ROOT, STATE_NOTE_KEYS, ConfigError, ExtraMap,
-    data_dir, interim_dir, load_config,
+    ADOPTED_BY_VALUES,
+    CONTROL_VALUES,
+    ENSEMBLE_NOTE_KEYS,
+    REPO_ROOT,
+    STATE_NOTE_KEYS,
+    ConfigError,
+    ExtraMap,
+    data_dir,
+    interim_dir,
+    load_config,
 )
 
 SOURCE_KEYS = ("dataverse_api", "cd118", "cd119", "cd120", "cd120_2026_08", "pl94171", "census_vest",

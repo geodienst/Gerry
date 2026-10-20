@@ -5,7 +5,7 @@ efficiency gap and mean-median are positive when they favor Republicans.
 """
 from __future__ import annotations
 
-from typing import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 
 import numpy as np
 import pandas as pd

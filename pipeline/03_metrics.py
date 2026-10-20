@@ -8,21 +8,54 @@ Run from the repo root: python pipeline/03_metrics.py
 from __future__ import annotations
 
 import json
-from typing import Mapping
+from collections.abc import Mapping
+from itertools import pairwise
 
 import numpy as np
 import pandas as pd
 
 from gerry.checks import CheckError
-from gerry.config import (ADOPTED_BY_VALUES, CONTROL_VALUES, REPO_ROOT, AtLargeState, StateConfig, data_dir,
-                          interim_dir, load_config)
+from gerry.config import (
+    ADOPTED_BY_VALUES,
+    CONTROL_VALUES,
+    REPO_ROOT,
+    AtLargeState,
+    StateConfig,
+    data_dir,
+    interim_dir,
+    load_config,
+)
+from gerry.metrics import (
+    MAX_SWING_STEPS,
+    SWING_GRID,
+    SwingRangeError,
+    TieError,
+    competitive,
+    convolve,
+    dem_wins,
+    distribution,
+    effects,
+    efficiency_gap,
+    enacted_threshold,
+    is_narrow,
+    largest_remainder,
+    linear_band,
+    mean_median,
+    neutral_threshold,
+    outside_band,
+    pmf_percentile,
+    pmf_position,
+    position,
+    proportional_threshold,
+    sample_percentile,
+    seats_by_plan,
+    senate_election,
+    senate_majority,
+    senate_seats_at,
+    sorted_band,
+    swing_point,
+)
 from gerry.president import national_share, read_president
-from gerry.metrics import (MAX_SWING_STEPS, SWING_GRID, SwingRangeError, TieError, competitive, convolve,
-                           dem_wins, distribution, effects, efficiency_gap, enacted_threshold, is_narrow,
-                           largest_remainder, linear_band, mean_median, neutral_threshold, outside_band,
-                           pmf_percentile, pmf_position, position, proportional_threshold, sample_percentile,
-                           seats_by_plan, senate_election, senate_majority, senate_seats_at, sorted_band,
-                           swing_point)
 from gerry.validation import build_report
 
 HOUSE_SEATS = 435
@@ -90,7 +123,7 @@ def map_result(rows: pd.DataFrame, st: StateConfig, map_id: str) -> dict:
     r = rows["r"].to_numpy(dtype=float)
     shares = d / (d + r)
     districts = [{"id": st.fips + district, "share": float(share), "d": float(dv), "r": float(rv)}
-                 for district, share, dv, rv in zip(rows["district"], shares, d, r)]
+                 for district, share, dv, rv in zip(rows["district"], shares, d, r, strict=True)]
     return {"enacted": int(wins.sum()), "districts": districts, "shares": shares, "wins": wins, "d": d, "r": r}
 
 
@@ -193,7 +226,7 @@ def state_checks(st: StateConfig, enacted: pd.DataFrame, ensemble: pd.DataFrame,
                          f"districts differ: ours {ours['district'].tolist()}, ALARM {alarm['district'].tolist()}")
     reference_check = {
         "districts": [{"district": dist, "ours": float(a), "alarm": float(b)}
-                      for dist, a, b in zip(ours["district"], _shares(ours), _shares(alarm))],
+                      for dist, a, b in zip(ours["district"], _shares(ours), _shares(alarm), strict=True)],
         "seats_ours": int(district_wins(ours, f"{st.postal} check_2022").sum()),
         "seats_alarm": int(district_wins(alarm, f"{st.postal} ALARM cd_2020").sum()),
     }
@@ -206,7 +239,7 @@ def state_checks(st: StateConfig, enacted: pd.DataFrame, ensemble: pd.DataFrame,
             raise CheckError("whole_unit", st.postal, f"{map_id}: block and whole-unit districts differ")
         block_wins = district_wins(block, f"{st.postal} {map_id} block")
         whole_wins = district_wins(whole, f"{st.postal} {map_id} whole_unit")
-        for i, (b_share, w_share) in enumerate(zip(_shares(block), _shares(whole))):
+        for i, (b_share, w_share) in enumerate(zip(_shares(block), _shares(whole), strict=True)):
             whole_unit.append({"map_id": map_id, "district": block["district"].iloc[i],
                                "block": float(b_share), "whole": float(w_share),
                                "block_dem": bool(block_wins[i]), "whole_dem": bool(whole_wins[i])})
@@ -305,10 +338,11 @@ def national_swing(*, base_share: float, base: dict, state_shares, state_seats, 
                    "more": base["position"]["more"], "base": True})
     points.sort(key=lambda p: p["share"])
     series = {"proportional": lambda p: p["proportional"], "enacted": lambda p: p["enacted"],
-              "neutral median": lambda p: p["neutral"]["median"], "neutral 5th percentile": lambda p: p["neutral"]["p5"],
+              "neutral median": lambda p: p["neutral"]["median"],
+              "neutral 5th percentile": lambda p: p["neutral"]["p5"],
               "neutral 95th percentile": lambda p: p["neutral"]["p95"]}
     for name, value in series.items():
-        for a, b in zip(points, points[1:]):
+        for a, b in pairwise(points):
             if value(b) < value(a):
                 raise CheckError("swing_monotone", "US", f"{name}: {value(a)} at {a['share']:.4f} but {value(b)} "
                                                          f"at {b['share']:.4f}")

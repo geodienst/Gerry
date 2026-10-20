@@ -69,7 +69,8 @@ def test_single_seat_votes_reads_the_single_seat_states_in_order(tmp_path):
 def tiny_result(join, postal):
     """What join_state returns for one state, cut down to one district: enough for write_outputs and the log line."""
     votes = dict.fromkeys(["d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20", "d", "r"], 1.0)
-    frame = lambda **keys: pd.DataFrame([{**keys, **votes}])
+    def frame(**keys):
+        return pd.DataFrame([{**keys, **votes}])
     return join.StateResult(
         units=frame(unit_id="1"), enacted=frame(state=postal, map_id="enacted", method="block", district="01"),
         ensemble=frame(state=postal, draw="1", district="01"), reference=frame(state=postal, district="01"),
@@ -163,7 +164,8 @@ def shares(frame):
 def test_nevada_join_reproduces_the_reference_numbers():
     result = load_script().join_state(load_config(), "NV", data_dir())
     enacted = result.enacted
-    pick = lambda map_id, method: enacted[(enacted["map_id"] == map_id) & (enacted["method"] == method)]
+    def pick(map_id, method):
+        return enacted[(enacted["map_id"] == map_id) & (enacted["method"] == method)]
     block = shares(pick("enacted", "block"))
     # plan skeleton, "Referentiegetallen": Nevada, Enacted per district (block method)
     assert block.round(6).to_dict() == {"01": 0.547901, "02": 0.436352, "03": 0.534711, "04": 0.548082}
@@ -193,7 +195,8 @@ def test_nevada_join_reproduces_the_reference_numbers():
 def test_alabama_join_has_another_map_in_2024():
     result = load_script().join_state(load_config(), "AL", data_dir())
     enacted = result.enacted
-    pick = lambda map_id: enacted[(enacted["map_id"] == map_id) & (enacted["method"] == "block")]
+    def pick(map_id):
+        return enacted[(enacted["map_id"] == map_id) & (enacted["method"] == "block")]
     # the 2024 court map (CD119) against the legislature's 2023 plan (CD120): 23,529 blocks moved
     assert result.log["map_2024_changed_blocks"] == 23529
     # prototype on the real data: two districts above one half on the 2024 map, one on the 2026 map
@@ -208,7 +211,8 @@ def test_alabama_join_has_another_map_in_2024():
 def test_missouri_2024_map_is_its_enacted_2022_map():
     result = load_script().join_state(load_config(), "MO", data_dir())
     enacted = result.enacted
-    pick = lambda map_id: enacted[(enacted["map_id"] == map_id) & (enacted["method"] == "block")]
+    def pick(map_id):
+        return enacted[(enacted["map_id"] == map_id) & (enacted["method"] == "block")]
     # Missouri votes on its 2022 map (CD118), the map of 2024 (CD119): no block moved. CD120 holds HB 1 of 2025,
     # which is blocked; against CD120 the log would say 53,433 blocks.
     assert result.log["map_2024_changed_blocks"] == 0
