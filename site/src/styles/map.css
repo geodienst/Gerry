@@ -30,6 +30,12 @@
 .zoombar { position: absolute; top: 0.5rem; right: 0.5rem; display: grid; gap: 0.25rem; }
 .zoombar button { font: 600 1rem/1 var(--font-body); width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
 .zoombar button.wide { width: auto; padding-inline: 0.5rem; font-size: 0.8rem; font-weight: 500; }
+/* On a narrow screen the map is too low for the buttons to lie over it: they covered New England, New Jersey and
+   Delaware, so a tap there hit a button. They form a row under the map instead; in full screen the map fills the
+   box and they stay on it. */
+@media (max-width: 899.98px) {
+  .atlas:not(:fullscreen, .is-full) .mapbox .zoombar { position: static; order: 2; display: flex; justify-content: flex-end; margin: 0.3rem 0.8rem 0.5rem; }
+}
 /* the full-screen button and the map in full screen */
 .zoombar #map-full { display: grid; place-items: center; }
 .zoombar #map-full svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; }

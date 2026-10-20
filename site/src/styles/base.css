@@ -43,4 +43,5 @@ svg { display: block; width: 100%; height: auto; }
 }
 .sw { display: inline-block; width: 0.75rem; height: 0.75rem; flex: none; }
 .why summary { cursor: pointer; font-size: 0.8125rem; font-weight: 600; color: var(--fg); }
+@media (pointer: coarse) { .why summary { padding-block: 0.35rem; } } /* a larger target for a finger */
 .why p { margin: 0.35rem 0 0; max-width: 64ch; }

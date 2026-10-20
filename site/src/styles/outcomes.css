@@ -70,6 +70,22 @@
 /* the mark of the 2016 and 2020 votes sits above the line, apart from the scale */
 /* on a phone every other percent of the scale keeps its number */
 @media (max-width: 480px) { .vote-ticks .tk:not(.base):nth-child(even) span { visibility: hidden; } }
+/* On a touch screen only the thumb takes the finger, so a scroll that starts on the track leaves the vote share as
+   it is; the thumb is larger to hold. */
+@media (pointer: coarse) {
+  .vote { --thumb: 1.6rem; }
+  #vote { pointer-events: none; }
+  #vote::-webkit-slider-thumb { pointer-events: auto; }
+  #vote::-moz-range-thumb { pointer-events: auto; }
+}
+/* In one column the key and the sentence under the House go under the slider, so the counts above the House, the
+   squares and the slider stay close together while the slider moves. */
+@media (max-width: 880px) {
+  .waffle > .wkey, .waffle > #outcomes-beats { order: 1; }
+}
+/* On a phone the lead keeps four lines, so it does not push the slider up or down when its length changes. */
+@media (max-width: 480px) { .ohead .lead { min-height: calc(4 * 1.35em); } }
+@media (max-width: 359.98px) { .ohead .lead { min-height: calc(5 * 1.35em); } } /* five lines on the narrowest phones */
 #waffle .changed polygon { fill: var(--sheet); }
 .wkey .cd { width: 0.75rem; height: 0.75rem; background: var(--fg); border-radius: 0; display: grid; place-items: center; }
 .wkey .cd::after { content: ""; width: 0.55rem; height: 0.55rem; background: var(--sheet);

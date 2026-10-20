@@ -1163,6 +1163,44 @@ async function links(t) {
     && await t.js("!location.search.includes('count=') && !location.search.includes('vote=') && location.search.includes('notour')"));
 }
 
+// --- A phone: the map under the fingers, the slider by its thumb, the House and the slider together -----------------
+async function phone(t) {
+  await t.tab('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await t.load('', { width: 390, height: 844 });
+  t.check('on a phone the zoom buttons form a row under the map, not over it', await t.js(`(() => {
+    const bar = document.querySelector('.zoombar'), map = document.getElementById('map').getBoundingClientRect();
+    return getComputedStyle(bar).position === 'static' && bar.getBoundingClientRect().top >= map.bottom - 1; })()`));
+  // a hit test: the thumb takes a finger, the track around it does not
+  t.check('on a touch screen the slider takes the finger on its thumb only', await t.js(`(() => {
+    const s = document.getElementById('vote');
+    s.scrollIntoView({ block: 'center' });
+    const r = s.getBoundingClientRect(), y = r.top + r.height / 2;
+    const at = (v) => r.left + r.height / 2 + ((v - Number(s.min)) / (Number(s.max) - Number(s.min))) * (r.width - r.height);
+    const far = Number(s.value) > (Number(s.min) + Number(s.max)) / 2 ? Number(s.min) : Number(s.max);
+    return matchMedia('(pointer: coarse)').matches && getComputedStyle(s).pointerEvents === 'none'
+      && document.elementFromPoint(at(Number(s.value)), y) === s && document.elementFromPoint(at(far), y) !== s;
+  })()`));
+  t.check('in one column the key of the House goes under the slider', await t.js(
+    "document.querySelector('.waffle .wkey').getBoundingClientRect().top > document.getElementById('vote').getBoundingClientRect().bottom"));
+  await t.js("{ const p = document.getElementById('pick'); p.scrollIntoView({ block: 'center' }); p.value = 'NC'; p.dispatchEvent(new Event('change')) }");
+  t.check('on a phone a state from the menu brings its record up', await t.until(`${HEADING} === 'North Carolina'`)
+    && await t.until("Math.abs(document.getElementById('sheet').getBoundingClientRect().top) < 4", 3000));
+  // arrow keys on the menu choose at each press, so they leave the menu where it is
+  await t.js("document.getElementById('pick').scrollIntoView({ block: 'center' }); document.getElementById('pick').focus()");
+  const menuTop = await t.js("Math.round(document.getElementById('pick').getBoundingClientRect().top)");
+  await t.js("{ const p = document.getElementById('pick'); p.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })); p.value = 'NE'; p.dispatchEvent(new Event('change')) }");
+  t.check('a state chosen with the keys on the menu keeps the menu in view', await t.until(`${HEADING} === 'Nebraska'`)
+    && Math.abs((await t.js("document.getElementById('pick').getBoundingClientRect().top")) - menuTop) < 4);
+  // in full screen the zoom buttons stay on the map
+  await t.js("document.getElementById('map-full').click()");
+  await t.sleep(400);
+  t.check('in full screen on a phone the zoom buttons lie on the map', await t.js(`(() => {
+    const bar = document.querySelector('.zoombar').getBoundingClientRect(), box = document.getElementById('mapbox').getBoundingClientRect();
+    return bar.bottom <= box.bottom + 1 && bar.top >= box.top - 1; })()`));
+  await t.js("document.getElementById('map-full').click()");
+  await t.tab('Emulation.setTouchEmulationEnabled', { enabled: false });
+}
+
 export const GROUPS = [
   { name: 'masthead', run: masthead },
   { name: 'outcomes', run: outcomes },
@@ -1183,4 +1221,5 @@ export const GROUPS = [
   { name: 'share', run: sharing },
   { name: 'tapline', run: tapline },
   { name: 'links', run: links },
+  { name: 'phone', run: phone },
 ];
