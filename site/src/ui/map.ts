@@ -231,4 +231,7 @@ export function drawLegend(el: HTMLElement, view: MapView, colors: Colors, close
       if (b.label) svg.append('text').attr('x', 10 + i * step + step / 2).attr('y', 28).attr('text-anchor', 'middle').text(b.label);
     });
   }
+  const blank = legend.append('span').attr('class', 'item');
+  blank.append('i').attr('class', 'sw pale').attr('aria-hidden', 'true').style('background', colors.blank);
+  blank.append('span').text(LEGEND_TEXT.blank);
 }

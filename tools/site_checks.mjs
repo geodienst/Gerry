@@ -89,6 +89,17 @@ async function map(t) {
   const quietStates = await t.js(quiet);
   await t.js("document.getElementById('view-districts').click()");
   t.check('no hint line under the map and no sentence under the legend', quietDistricts && quietStates);
+  // the six states with one seat are gray in both views; the legend says what the gray is
+  const grayItem = (shapes, key) => `(() => {
+    const item = [...document.querySelectorAll('#legend .item')].find((s) => s.textContent === 'Gray: one seat, no districts');
+    const wyoming = [...document.querySelectorAll('${shapes}')].find((p) => p.__data__.properties.${key} === 'WY');
+    return !!item && getComputedStyle(item.querySelector('i.sw')).backgroundColor === getComputedStyle(wyoming).fill; })()`;
+  const grayDistricts = await t.js(grayItem('#map path.district', 'state'));
+  await t.js("document.getElementById('view-states').click()");
+  const grayStates = await t.js(grayItem('#map path.statefill', 'postal'));
+  await t.js("document.getElementById('view-districts').click()");
+  t.check('the legend of the districts and of the drawing effect names the gray of the six states with one seat',
+    grayDistricts && grayStates, JSON.stringify({ grayDistricts, grayStates }));
   const fills = "[...document.querySelectorAll('#map path.district')].slice(0, 30).map((p) => p.getAttribute('fill')).join()";
   const party = await t.js(fills);
   await t.js("document.getElementById('palette-neutral').click()");

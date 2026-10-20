@@ -151,6 +151,8 @@ export const MAP_TITLES: Record<MapView, string> = {
 export const LEGEND_TEXT = {
   low: 'More Republican',
   high: 'More Democratic',
+  // the six states with one seat, gray in the views of the districts and of the drawing effect
+  blank: 'Gray: one seat, no districts',
 };
 
 // --- "Drawing effect by state" and the state sheet (Task 6.4) -----------------------------------
