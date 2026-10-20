@@ -48,7 +48,7 @@ function rowOf(point: { rows: CountRow[] }, key: CountKey): CountRow {
 /**
  * The rows, effects, band and sentences of chapter 01 at one point of the vote slider (plan 2026-10-08-vote-slider):
  * a point of results.national.swing, or the base point with the main numbers. Every count is shown in the House of
- * `total` seats: the districts plus `offset`, the single-seat states fixed as Democratic (owner decision, October 11).
+ * `total` seats: the districts plus `offset`, the single-seat states fixed as Democratic.
  */
 function pointView(raw: RawPoint, { offset, total }: { offset: number; total: number }) {
   const p = {
@@ -84,7 +84,7 @@ function pointView(raw: RawPoint, { offset, total }: { offset: number; total: nu
       lo: p5, hi: p95,
       key: `Outlined: where the Democratic seats end in 90% of neutral outcomes (${seatSpan(p5, p95)} of ${seats(total)})`,
     },
-    // One finding beside the waffle, said as the result of this comparison (expert feedback, October 8, 2026).
+    // One finding beside the waffle, said as the result of this comparison.
     finding: drawing === 0
       ? `In this comparison, ${at}, the enacted maps give Democrats ${seats(p.enacted)} seats, the same as the neutral-map median.`
       : `In this comparison, ${at}, the enacted maps shift ${effectWords(drawing)}. `
@@ -111,8 +111,7 @@ export function outcomesView(results: Results) {
   const points = [...(n.swing?.points ?? []).filter((p) => !p.base && sliderShare(p.share) !== sliderShare(base.share)), base]
     .sort((a, b) => a.share - b.share).map((raw) => {
       const p = { ...pointView(raw, { offset: house.dSingle, total: house.total }), more: raw.more };
-      // The large sentence above the House and the 99% sentence under it, in the owner's words (review of October 13,
-      // 2026), at every stop of the slider.
+      // The large sentence above the House and the 99% sentence under it, at every stop of the slider.
       const e = rowOf(p, 'enacted').seats;
       const short = majority - e;
       const part = planShare(p.more);
@@ -130,8 +129,8 @@ export function outcomesView(results: Results) {
   // under the slider, so the line, the sentence and the waffle at that stop agree. -1: not within the slider.
   const reach = Object.fromEntries(COUNT_KEYS.map((key) => [key,
     points.findIndex((p) => rowOf(p, key).seats >= majority)])) as Record<CountKey, number>;
-  // Why presidential votes of 2016 and 2020, and the explainer at the top of the chapter (Mark Thompson's feedback,
-  // October 12). The fifth step goes to the stop nearest the Democratic share of the 2024 presidential vote.
+  // Why presidential votes of 2016 and 2020, and the explainer at the top of the chapter. The fifth step goes to
+  // the stop nearest the Democratic share of the 2024 presidential vote.
   const p2024 = n.president?.['2024'];
   const near2024 = p2024 === undefined ? -1
     : points.reduce((best, p, i) => (Math.abs(p.share - p2024) < Math.abs(points[best].share - p2024) ? i : best), 0);
@@ -164,7 +163,7 @@ export function outcomesView(results: Results) {
   }
   const lead = main.lead;
   const gap = neededGap(m.enacted.share, m.neutral.share);
-  // The drawing effect at every stop of the slider, with a few examples (same reviewer): the effect is not one number.
+  // The drawing effect at every stop of the slider, with a few examples: the effect is not one number.
   const seatsAt = (point: { rows: CountRow[] }, key: CountKey): number => rowOf(point, key).seats;
   const bars = points.map((p, index) => {
     const drawing = seatsAt(p, 'enacted') - seatsAt(p, 'neutral');
@@ -180,8 +179,8 @@ export function outcomesView(results: Results) {
     .map((b) => ({ index: b.index, label: b.label, value: b.value,
       note: b.index === baseIndex ? '2016 + 2020' : p2024 !== undefined && b.label === sliderShare(p2024) ? '2024' : '' }));
   const line = examples.map((e) => `${e.label}${e.note ? ` (${e.note})` : ''}: ${e.value}`).join('; ');
-  // where the effect turns: the first stop toward Republicans, and the stops just below it without an effect (owner,
-  // October 13: say whose vote the percentage is)
+  // where the effect turns: the first stop toward Republicans, and the stops just below it without an effect; the
+  // sentence says whose vote the percentage is
   const turn = bars.findIndex((b) => b.drawing < 0);
   let even = turn;
   while (even > 0 && bars[even - 1].drawing === 0) even -= 1;
@@ -201,8 +200,8 @@ export function outcomesView(results: Results) {
     label: `Drawing effect at each point of the vote slider, from ${points[0].label} to ${points[points.length - 1].label}. ${line}.`,
     max: Math.max(5, Math.ceil(Math.max(...bars.map((b) => Math.abs(b.drawing))) / 5) * 5),
   };
-  // A plain scale under the slider: the stops at whole percents, and a mark at the 2016 and 2020 votes (feedback of
-  // October 11: labels per count looked like choices between the counts).
+  // A plain scale under the slider: the stops at whole percents, and a mark at the 2016 and 2020 votes. No labels
+  // per count, which looked like choices between the counts.
   const scale = points.map((p, index) => ({ p, index }))
     .filter(({ p }) => !p.base && Math.abs(p.share * 100 - Math.round(p.share * 100)) < 1e-6)
     .map(({ p, index }) => ({ index, label: percentLabel(p.share) }));
@@ -355,20 +354,20 @@ function dots(values: number[], step: number, tickText: (value: number) => strin
   return { domain, ticks: ticks.map((value) => ({ value, text: tickText(value) })), rows, ...(base ? { base } : {}) };
 }
 
-/** The answer under the question in the masthead (owner, October 13, 2026): two findings on the 2016 and 2020 votes, and the vote basis (owner, October 18, 2026).
- *  The drawing effect by vote share and the competitive districts are further down (owner, the same day). */
+/** The answer under the question in the masthead: two findings on the 2016 and 2020 votes, and the vote basis.
+ *  The drawing effect by vote share and the competitive districts are further down. */
 export function keyFindings(results: Results): string[] {
   const n = results.national;
   const m = n.majority;
   const list = effectList(results);
   return [
-    // without the neutral-map threshold next to it (owner, October 18, 2026)
+    // without the neutral-map threshold next to it
     `With the maps the states drew for 2026, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House `
       + 'majority.',
-    // the seats the enacted maps move each way, added up over the states, and the net (owner, October 13, 2026)
+    // the seats the enacted maps move each way, added up over the states, and the net
     `The enacted maps move ${seats(list.seatsR)} ${plural(list.seatsR, 'seat', 'seats')} toward Republicans and `
       + `${seats(list.seatsD)} toward Democrats. Net effect: ${effect(list.net)}.`,
-    // the vote basis, in the owner's words (October 18, 2026); the share of the votes of both years added together
+    // the vote basis: the share of the votes of both years added together
     `All numbers use the 2016 and 2020 presidential votes together, ${sliderShare(m.base_share)} Democratic. `
       + 'They are not a prediction for November 3.',
   ];

@@ -110,8 +110,8 @@ test('the zoom hint over the map is readable on its lightest colors', () => {
 });
 
 test('every brace in each style sheet is matched, so no rule is skipped', () => {
-  // October 13, 2026: a stray } after the key findings made the browser skip the next rule, the space around every
-  // chapter. Comments hold no rules; the depth must never drop below zero and must end at zero.
+  // A stray } once made the browser skip the next rule, the space around every chapter. Comments hold no rules;
+  // the depth must never drop below zero and must end at zero.
   for (const file of sheets) {
     let depth = 0;
     for (const [i, ch] of [...readFileSync(join(STYLES, file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')].entries()) {

@@ -66,7 +66,7 @@ sources:
   # file 1976-2024-president.csv, CC0 1.0. A Dataverse file id always serves the same file.
   medsl_president: https://dataverse.harvard.edu/api/access/datafile/13887042
 
-# Senate block (owner, October 13, 2026): the seats on the ballot on November 3, 2026 and the party that holds
+# Senate block: the seats on the ballot on November 3, 2026 and the party that holds
 # each now, and the seats not on the ballot by party. Class II (33 seats) from the Senate's list; the special
 # elections for the Class III seats of Florida (Rubio) and Ohio (Vance), held by appointees. Party division
 # 53 R, 45 D, 2 independents who caucus with the Democrats (counted as D). The vice president, a Republican,

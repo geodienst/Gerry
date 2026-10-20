@@ -13,7 +13,7 @@ import { senateView, redrawView, controlTables } from '../src/lib/extensions.ts'
 
 test('labels: the three ways of counting and the two effects, as CLAUDE.md names them', () => {
   assert.deepEqual(LABELS, { proportional: 'Vote-proportional', neutral: 'Neutral-map median', enacted: 'Enacted maps' });
-  // short forms for the rows of dots, where the label column is 112 units wide (owner decision, October 8, 2026)
+  // short forms for the rows of dots, where the label column is 112 units wide
   assert.deepEqual(SHORT_LABELS, { proportional: 'Proportional', neutral: 'Neutral median', enacted: 'Enacted' });
   assert.deepEqual(EFFECT_LABELS, { geographic: 'Geographic effect', drawing: 'Drawing effect' });
 });
@@ -21,9 +21,9 @@ test('labels: the three ways of counting and the two effects, as CLAUDE.md names
 test('outcomesView: three rows, the two effects between them, the band and the sentences', () => {
   // testdata national: 429 districts; proportional 224, neutral 223 (p5 217, p95 229), enacted 213; geographic -1,
   // drawing -10; position.more 0.9972; seven states; Texas first with 5,000 maps. Every count is shown in the House of
-  // 435 (owner decision, October 11): plus the 2 Democratic single-seat states -> 226, 225 (219 to 231), 215.
+  // 435: plus the 2 Democratic single-seat states -> 226, 225 (219 to 231), 215.
   const view = outcomesView(withExtensions());
-  // the owner's review (October 13): 215 is 218 - 3; position.more 0.9972 -> "More than 99%", under the House
+  // 215 is 218 - 3; position.more 0.9972 -> "More than 99%", under the House
   assert.equal(view.lead, 'With these votes, Democrats would win 215 seats on the 2026 maps, three short of a majority. '
     + 'The median result on the neutral maps is 225.');
   assert.equal(view.points[view.baseIndex].beats, 'More than 99% of the simulated neutral maps give Democrats more seats '
@@ -98,11 +98,11 @@ test('outcomesView: one view per point of the vote slider, the base point as the
   assert.equal(half.valueText, '50.0% of the two-party vote for Democrats');
   assert.equal(base.valueText, '51.8% of the two-party vote for Democrats, the 2016 and 2020 result');
   // the slider: a plain scale at the whole percents among the stops, and a mark at the 2016 and 2020 votes
-  // (feedback of October 11: the threshold labels looked like choices). testdata stops: 50%, the base, 53%
+  // (no threshold labels, which looked like choices). testdata stops: 50%, the base, 53%
   assert.deepEqual(view.slider.scale, [{ index: 0, label: '50%' }, { index: 2, label: '53%' }]);
   assert.deepEqual(view.slider.base, { index: 1, label: '2016 and 2020 votes' });
   assert.equal(view.slider.label, 'Democratic share of the national two-party vote');
-  // under the slider, in the words of the owner's mockup: 52.4% against 51.2%, 1.2 points
+  // under the slider: 52.4% against 51.2%, 1.2 points
   assert.equal(view.slider.caption, 'Each marker shows where a count reaches 218 seats. On the enacted maps, Democrats need '
     + '1.2 points more than on neutral maps. The slider moves every district by the same amount; it is not a forecast.');
   // why presidential votes of 2016 and 2020; plans 5,000 per state; 2024 at 49.2499% -> 49.2%
@@ -278,12 +278,11 @@ test('singleSeatView: the short record of a state with one seat', () => {
 
 test('keyFindings: the answer under the question in the masthead', () => {
   const r = withExtensions();
-  // thresholds 52.4% and 51.2%; the states move 4 + 2 = 6 seats toward Republicans and 1 + 3 = 4 toward Democrats, net R+2 (the drawing effect by vote share and the
-  // competitive districts moved down, owner, October 13)
+  // threshold 52.4%; the states move 4 + 2 = 6 seats toward Republicans and 1 + 3 = 4 toward Democrats, net R+2
   assert.deepEqual(keyFindings(r), [
     'With the maps the states drew for 2026, Democrats need 52.4% of the two-party vote for a House majority.',
     'The enacted maps move 6 seats toward Republicans and 4 toward Democrats. Net effect: R+2.',
-    // the vote basis, in the owner's words (October 18, 2026)
+    // the vote basis
     'All numbers use the 2016 and 2020 presidential votes together, 51.8% Democratic. They are not a prediction for '
       + 'November 3.',
   ]);

@@ -142,7 +142,7 @@ export function withExtensions(): Results {
     base_share: 0.5172, states_needed: 26, share: 0.5291, states_at_base: 22, seats_at_base: 44,
     tipping: [{ postal: 'WI', share: 0.5051 }],
   };
-  // the Senate seats on the ballot in 2026 (owner, October 13, 2026): five made-up seats, 48 D and 47 R not on it
+  // the Senate seats on the ballot in 2026: five made-up seats, 48 D and 47 R not on it
   r.national.senate_2026 = {
     checked: '2026-10-13', base_share: 0.518, up: 5, held: { D: 2, R: 3 }, not_up: { D: 48, R: 47 }, majority: 51,
     needed: 3, share: 0.5301, won_at_base: 2, seats_at_base: 50,

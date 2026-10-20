@@ -27,8 +27,8 @@ export function linkFor(postal: Postal, path: string): string {
   return postal ? `#${postal}` : path;
 }
 
-// The address in the links of the share buttons (owner, October 17, 2026: "url will probably be somevotes.org").
-// To check before launch. The page itself can run elsewhere, such as the preview on claude.ai.
+// The address in the links of the share buttons, the planned address of the site; check it before launch. The
+// page itself can run elsewhere, such as the preview on claude.ai.
 export const SITE_URL = 'https://somevotes.org/';
 
 /**

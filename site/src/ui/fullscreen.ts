@@ -1,4 +1,4 @@
-// Full screen for the map, the block under it and the sheet (owner, October 13, 2026): the browser's full screen where
+// Full screen for the map, the block under it and the sheet: the browser's full screen where
 // the page may use it, otherwise the map column covers the window (.is-full). The same button or Escape goes back.
 
 export interface FullScreen {

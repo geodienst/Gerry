@@ -1,4 +1,4 @@
-// Share (owner, October 14, 2026): the device's share sheet where there is one, else the link goes to the clipboard
+// Share: the device's share sheet where there is one, else the link goes to the clipboard
 // with a short note. No outside services.
 
 export async function share(url: string): Promise<void> {

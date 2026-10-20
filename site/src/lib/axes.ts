@@ -29,8 +29,8 @@ export const BASE_FONT = 15; // px; chart text is 11 units, so 11px at this root
 
 /**
  * Width of a chart in viewBox units for a box of `containerPx` CSS pixels. One unit is
- * 1/15 rem, so chart text grows with the page from 15px to 21px (site design, update of
- * October 7) and does not shrink in a narrow sheet; between `min` and `max` units.
+ * 1/15 rem, so chart text grows with the page from 15px to 21px and does not shrink in a
+ * narrow sheet; between `min` and `max` units.
  */
 export function chartUnits(containerPx: number, rootPx: number, max: number, min = 280): number {
   return Math.round(Math.max(min, Math.min(max, (containerPx * BASE_FONT) / rootPx)));
@@ -112,7 +112,7 @@ export function netBar(seatsR: number, seatsD: number, width = 360) {
   };
 }
 
-// --- The House of 435 in chapter 01 (owner concept, October 8, 2026) ------------------------------
+// --- The House of 435 in chapter 01 ------------------------------
 // Two halves of 217 seats, Democrats from the left and Republicans from the right, and the middle seat
 // (seat 218, the majority) at the top of the column between them, in the grid like the rest. Each half fills
 // from its outer column inward, every column bottom up, so the change of color ends next to the middle seat.

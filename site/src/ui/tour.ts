@@ -1,4 +1,4 @@
-// The explainer at the top of chapter 01 (Mark Thompson's feedback, October 12, 2026): a few steps that play by
+// The explainer at the top of chapter 01: a few steps that play by
 // themselves once the chapter is in view and drive the rows, the waffle and the slider. Pause and Skip while it plays,
 // Replay afterwards. A click on a row or a move of the slider hands the controls to the reader. With reduced motion it
 // waits for Play. Texts come from lib/chapters.ts (outcomesView().tour); this module only plays them.

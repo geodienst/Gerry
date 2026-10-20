@@ -227,7 +227,7 @@ def toy_metrics():
             # extensions (Task 5.19): the Senate block, passed through unchanged
             "senate": {"base_share": 0.55, "states_needed": 26, "share": 0.53, "states_at_base": 27,
                        "seats_at_base": 54, "tipping": [{"postal": "HI", "share": 0.5}]},
-            # the Senate seats on the ballot in 2026 (owner, October 13, 2026), passed through unchanged
+            # the Senate seats on the ballot in 2026, passed through unchanged
             "senate_2026": {"checked": "2026-10-13", "base_share": 0.55, "up": 1, "held": {"D": 0, "R": 1},
                             "not_up": {"D": 50, "R": 49}, "majority": 51, "needed": 1, "share": 0.6,
                             "won_at_base": 0, "seats_at_base": 50,

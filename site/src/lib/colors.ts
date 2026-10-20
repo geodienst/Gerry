@@ -14,11 +14,10 @@ export interface Poles {
 export type Interpolate = (a: string, b: string) => (t: number) => string;
 
 export const SHARE_DOMAIN: readonly [number, number] = [0.2, 0.8]; // district scale; outside it the full pole color
-export const SHARE_EXPONENT = 0.85; // as in preview version 5
+export const SHARE_EXPONENT = 0.85; // below 1, so shares near 50% already show some color
 export const SHARE_TICKS = [0.2, 0.35, 0.5, 0.65, 0.8];
 export const EFFECT_MAX = 6; // drawing effect scale in whole seats; beyond 6 the full pole color
-// effects start 45% of the way to a pole and each seat adds 55%/6, so R+1 and D+1 show color (owner, October 18,
-// 2026, variant C; 30% before)
+// effects start 45% of the way to a pole and each seat adds 55%/6, so R+1 and D+1 already show color
 export const EFFECT_START = 0.45;
 
 /**

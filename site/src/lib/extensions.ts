@@ -89,7 +89,7 @@ export function controlTables(results: Results) {
 }
 export type ControlTables = ReturnType<typeof controlTables>;
 
-// --- The Senate (Task 6.14; the seats on the ballot in 2026, owner, October 13, 2026) -------------------------
+// --- The Senate (Task 6.14; the seats on the ballot in 2026) -------------------------
 
 const SUFFIX: Record<number, string> = { 1: 'st', 2: 'nd', 3: 'rd' };
 const ordinal = (n: number): string => `${n}${[11, 12, 13].includes(n % 100) ? 'th' : SUFFIX[n % 10] ?? 'th'}`;

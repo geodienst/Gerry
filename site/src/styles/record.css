@@ -7,7 +7,7 @@
 .row:hover { background: var(--band); }
 .row .v { text-align: right; font-variant-numeric: tabular-nums; }
 .row svg { height: 0.8rem; }
-/* the district views of the column beside the map (owner, October 18, 2026) */
+/* the district views of the column beside the map */
 .record .count { margin: 0; font-size: 0.9375rem; }
 .bins { min-width: 0; }
 .dlist { max-height: 26rem; overflow-y: auto; align-content: start; }
@@ -25,7 +25,7 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
 .chart .bar { fill: var(--muted); fill-opacity: 0.75; }
 .back { font: inherit; font-size: 0.87rem; background: none; border: 0; color: var(--ink); padding: 0; cursor: pointer; justify-self: start;
   display: inline-flex; align-items: center; gap: 0.3rem; }
-/* "Back" with an arrow (owner, October 18, 2026) */
+/* "Back" with an arrow */
 .back span { text-decoration: underline; text-underline-offset: 0.15em; }
 .back svg { width: 0.9rem; height: 0.9rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 0.15rem 0.8rem; font-size: 0.87rem; margin: 0; }
@@ -37,8 +37,8 @@ details.zeros[open] > summary::before { transform: rotate(45deg); }
    of "Districts, sorted" (Task 6.12). */
 .extras { border-top: 1px solid var(--rule); padding-top: 0.7rem; }
 .record { background: var(--sheet); border: 1px solid var(--rule); padding: 1.1rem 1.1rem 1.2rem; display: grid; gap: 0.8rem; min-width: 0; align-content: start; }
-/* the box beside the map is as high as its content, so a short one does not stretch to the map (owner, October 18,
-   2026); in full screen it keeps the whole height */
+/* the box beside the map is as high as its content, so a short one does not stretch to the map; in full screen it
+   keeps the whole height */
 .atlas > .record { align-self: start; }
 #sheet-title { font: 700 1.5rem/1.15 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
 .record .k { font-size: 0.8125rem; color: var(--muted); }

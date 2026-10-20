@@ -45,7 +45,7 @@ def _check_plans(plans: pd.DataFrame, seats: int, postal: str, label: str) -> No
 
 def district_votes(stats: pd.DataFrame, st: StateConfig) -> tuple[pd.DataFrame, pd.DataFrame]:
     """(ensemble, reference) with columns state, draw, district, d_<e>, r_<e>, d, r. The ensemble also keeps
-    ALARM's chain, the separate run each plan comes from (review of October 2026, finding 2)."""
+    ALARM's chain, the separate run each plan comes from."""
     out = pd.DataFrame({"state": st.postal, "draw": stats["draw"].astype(str).str.strip(),
                         "chain": pd.to_numeric(stats["chain"], errors="coerce").astype("Int64"),
                         "district": _district_codes(stats["district"], st.postal)})

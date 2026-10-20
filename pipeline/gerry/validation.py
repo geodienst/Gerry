@@ -28,7 +28,7 @@ SHARE_TOLERANCE = 0.005       # 0.5 percentage point, as a fraction
 EXPECTED_PLANS = 5000
 CHECK_KEYS = ("cd118_vs_alarm", "whole_unit", "plans", "planscore_reproduction", "planscore", "planscore_votes",
               "state_files")
-# PlanScore against our own district votes of the same election, on the same map (review of October 2026):
+# PlanScore against our own district votes of the same election, on the same map:
 PLANSCORE_VOTE_TOLERANCE = 0.03   # largest relative difference of a district's Democratic or Republican votes
 PLANSCORE_EG_TOLERANCE = 0.001    # 0.1 point between our EG on our votes and our EG on PlanScore's votes
 PLANSCORE_COLUMNS = ("state", "election", "url", "accessed", "same_map", "planscore_eg_pct",
@@ -375,7 +375,7 @@ def _planscore(metrics: dict, crosscheck_dir: Path, ledger: _Ledger) -> str:
 
 
 def _runs(metrics: dict) -> str:
-    """ALARM's separate runs per state and for the nation (review of October 2026, finding 2). For information."""
+    """ALARM's separate runs per state and for the nation. For information."""
     head = ["## ALARM runs",
             "ALARM draws the neutral maps of each state in two or four separate runs (chains). The table lists the "
             "states where a run has another median of Democratic seats than all runs together, with the median and "
@@ -404,8 +404,8 @@ def _runs(metrics: dict) -> str:
 
 
 def _dra_not_used() -> str:
-    """The DRA section, a fixed text: DRA is not used (owner decision of 7 October 2026), so nothing here is
-    open or pending, and a dra.csv in data/crosscheck/ is ignored."""
+    """The DRA section, a fixed text: DRA is not used, as its terms of use forbid automated access, so nothing
+    here is open or pending, and a dra.csv in data/crosscheck/ is ignored."""
     return "\n\n".join([
         "## Dave's Redistricting App",
         "Not used. DRA's terms of use, updated July 31, 2026, do not allow automated access to the site, or copying "

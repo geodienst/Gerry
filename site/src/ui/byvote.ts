@@ -1,4 +1,4 @@
-// The drawing effect along the vote slider, at the bottom of chapter 01 (a data reviewer, October 13, 2026): one bar per
+// The drawing effect along the vote slider, at the bottom of chapter 01: one bar per
 // stop of the slider, up for an effect toward Democrats and down toward Republicans, labels for a few examples and a
 // line at the stop the slider shows. Drawn at the width of its box in pixels, so the text keeps its size on a phone.
 // Texts from lib/chapters.ts (outcomesView().byVote); this module only draws.

@@ -79,7 +79,7 @@ async function main() {
   }
   darkMode.addEventListener('change', () => setPalette(palette));
 
-  // Share (owner, October 14, 2026): the button by the key findings shares the site, the one by the seat counts of
+  // Share: the button by the key findings shares the site, the one by the seat counts of
   // chapter 01 the chosen row and vote share (?count=neutral&vote=49.2#outcomes); the one under the map is in
   // app/atlas.ts. The links name the site's own address, also when the page runs elsewhere (SITE_URL in lib/hash.ts).
   $('share-site').addEventListener('click', () => share(SITE_URL));
@@ -90,7 +90,7 @@ async function main() {
 
   const decide = decideView(results);
   renderDecide(decide);
-  // the Senate block follows the vote slider of chapter 01 (owner, October 13, 2026)
+  // the Senate block follows the vote slider of chapter 01
   let senatePoint = outcomesData.points[outcomesData.baseIndex];
   showSenate(decide, senatePoint);
   outcomes.onPoint((at) => { senatePoint = outcomesData.points[at]; showSenate(decide, senatePoint); });

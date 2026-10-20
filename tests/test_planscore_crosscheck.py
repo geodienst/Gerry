@@ -32,7 +32,7 @@ def _wasted_votes_gap(d, r):
 
 
 def test_ours_on_planscore_votes_is_the_wasted_votes_gap(rows):
-    # review of October 2026: an efficiency_gap that returned 0 passed the test below; it fails here
+    # an efficiency_gap that returned 0 would pass the test below; it fails here
     for r in rows:
         dem = [v[0] for v in r["districts"].values()]
         rep = [v[1] for v in r["districts"].values()]

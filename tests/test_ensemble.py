@@ -38,7 +38,7 @@ def test_district_votes_splits_ensemble_and_reference(tmp_path):
     stats = read_stats(write_stats(tmp_path / "s.csv", draws=range(2, N_PLANS + 2)))
     ensemble, reference = district_votes(stats, make_state())
     cols = ["state", "draw", "district", "d_pre_16", "r_pre_16", "d_pre_20", "r_pre_20", "d", "r"]
-    # the plans keep ALARM's chain, the run they come from (review of October 2026, finding 2)
+    # the plans keep ALARM's chain, the run they come from
     assert list(ensemble.columns) == cols[:2] + ["chain"] + cols[2:] and list(reference.columns) == cols
     assert set(ensemble["chain"]) == {1}
     assert len(ensemble) == 2 * N_PLANS

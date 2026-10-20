@@ -318,7 +318,7 @@ def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, aroun
     threshold is the national share plus 0.5 - h, with h the needed-th highest state share (exact, as
     enacted_threshold). A state exactly on one half does not count. Also the states and seats at the real votes,
     and the states ranked needed - around to needed + around, from high to low (equal shares by postal code).
-    The national share is `base_share` if given (the House share of the vote slider, owner, October 13, 2026),
+    The national share is `base_share` if given (the House share of the vote slider),
     else the share of all the votes in `votes`."""
     postals = sorted(votes)
     first, last = needed - around, needed + around
@@ -342,7 +342,7 @@ def senate_majority(votes: Mapping[str, tuple[float, float]], needed: int, aroun
 
 def senate_election(shares: Mapping[str, float], held: Mapping[str, str], not_up: Mapping[str, int], majority: int,
                     base_share: float) -> dict:
-    """The Senate seats on one ballot (owner, October 13, 2026). `shares` maps each state with a seat on the ballot
+    """The Senate seats on one ballot. `shares` maps each state with a seat on the ballot
     to its Democratic share of the two-party presidential vote, `held` to the party ("D" or "R") that holds that
     seat now; `not_up` gives the seats of each party that are not on the ballot. A seat goes to the party with
     more of its state's vote, as in senate_majority. Democrats need `majority` seats in all: the seats on the

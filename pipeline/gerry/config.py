@@ -102,7 +102,7 @@ class EnsembleConfig:
 
 @dataclass(frozen=True)
 class SenateConfig:
-    """The Senate seats on the ballot on November 3, 2026 (owner, October 13, 2026)."""
+    """The Senate seats on the ballot on November 3, 2026."""
     checked: date
     sources: tuple[str, ...]
     tie: str                 # party of the vice president, who breaks a 50-50 tie

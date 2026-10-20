@@ -376,7 +376,7 @@ def test_compute_assembles_states_national_and_checks(tmp_path, monkeypatch):
     out = step.compute(cfg, tmp_path)
     assert set(out) == {"national", "states", "checks"}
     # no 2020 shares (pre_20) in the checks since the DRA comparison is gone (Task 2.14x)
-    # district_votes, runs and runs_national since the review of October 2026 (findings 4 and 2)
+    # district_votes for the PlanScore check, runs and runs_national for ALARM's separate runs
     assert set(out["checks"]) == {"plans", "ties", "cd118_vs_alarm", "whole_unit", "map_2024", "district_votes", "runs",
                                   "runs_national", "join_log", "totals"}
     # draws 1 and 2 (chain 1) give 1 and 2 seats, draws 3 and 4 (chain 2) give 0 and 1
@@ -787,7 +787,7 @@ def test_seats_needed_stops_on_an_extra_single_seat_state():
         step.seats_needed({**six, "MT": AtLargeState("MT", "Montana", "30")})
 
 
-def test_single_seat_party_is_owner_decision_1():
+def test_single_seat_states_go_to_the_party_that_won_both_elections():
     assert step.SINGLE_SEAT_PARTY == {"AK": "R", "DE": "D", "ND": "R", "SD": "R", "VT": "D", "WY": "R"}
 
 
@@ -894,7 +894,7 @@ def test_national_senate_uses_the_number_of_states_needed(monkeypatch):
     res = step.national_senate(votes, 0.476)
     # 0.476 + 0.5 - 0.48 = 0.496; ranks 3 - 2 to 3 + 2, high to low
     assert (res["states_needed"], res["share"]) == (3, pytest.approx(0.496))
-    # on the share of the House (owner, October 13, 2026)
+    # on the share of the House
     assert step.national_senate(votes, 0.5)["share"] == pytest.approx(0.52)
     assert [t["postal"] for t in res["tipping"]] == ["AA", "CC", "DD", "EE", "BB"]
 
@@ -906,7 +906,7 @@ def test_compute_adds_the_senate(tmp_path, monkeypatch):
     # XX: the votes of its units, 1300 D and 1700 R; WY: 400 D and 600 R from single_seat_votes.parquet
     assert seen["senate"] == ({"XX": (1300.0, 1700.0), "WY": (400.0, 600.0)}, 26)
     assert nat["senate"]["states_needed"] == 26
-    # on the House share of the majority (owner, October 13, 2026), here the stand-in's 0.0
+    # on the House share of the majority, here the stand-in's 0.0
     assert seen["senate_base"] == 0.0
 
 
@@ -949,7 +949,7 @@ def test_compute_puts_the_senate_after_by_body(tmp_path, monkeypatch):
     assert list(step.compute(cfg, tmp_path)["national"])[-4:] == ["by_control", "by_body", "senate", "senate_2026"]
 
 
-# --- The Senate seats on the ballot in 2026 (owner, October 13, 2026) -------------------------------------------
+# --- The Senate seats on the ballot in 2026 -------------------------------------------
 
 
 def test_national_senate_2026_hand_example():

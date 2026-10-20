@@ -88,7 +88,7 @@ export function sliderShare(fraction: number): string {
 }
 
 /**
- * A share Democrats need, such as a majority threshold, rounded up to one decimal (owner decision, October 8, 2026):
+ * A share Democrats need, such as a majority threshold, rounded up to one decimal:
  * the share it names is always enough. 0.5230328 -> "52.4%" (52.3% falls just short); 0.523 -> "52.3%".
  */
 export function neededShare(fraction: number): string {
@@ -137,7 +137,7 @@ export function seats(n: number): string {
 
 // Effects count Democratic seats (spec chapter 5: positive is more Democratic
 // seats). The site shows the direction instead of a sign, so neither party is
-// the default (site design, update of October 7, 2026).
+// the default.
 
 function checkWhole(n: number): void {
   if (!Number.isInteger(n)) {
@@ -168,7 +168,7 @@ export function effectWords(n: number): string {
 
 /**
  * Notation and words together: -6 -> "R+6: 6 seats toward Republicans",
- * 0 -> "0: no difference". A colon, as between the rows of chapter 01 (style round, October 13, 2026).
+ * 0 -> "0: no difference". A colon, as between the rows of chapter 01.
  */
 export function effectLine(n: number): string {
   return `${effect(n)}: ${effectWords(n)}`;

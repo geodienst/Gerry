@@ -27,7 +27,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
   const stepTexts: HTMLElement[] = [];
   const rows = view.rows.map((row, i) => {
     const button = node('button', { type: 'button', class: 'choice', role: 'radio', 'aria-checked': 'false', tabindex: '-1', 'data-key': row.key });
-    // the number with a block in the Democratic color under it: these are Democratic seats (owner, October 12)
+    // the number with a block in the Democratic color under it: these are Democratic seats
     parts[row.key] = { num: node('span', { class: 'n' }), desc: node('span', { class: 'desc' }) };
     const big = node('span', { class: 'big' });
     big.append(parts[row.key].num, node('i', { class: 'sw d', 'aria-hidden': 'true' }),
@@ -57,7 +57,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
     return button;
   });
 
-  // The House of 435 (owner concept, October 8, 2026): seat i counted from the Democratic side, Democrats from
+  // The House of 435: seat i counted from the Democratic side, Democrats from
   // the left, Republicans from the right, seat 218 at the top of the middle column. The six one-seat states are
   // the outermost seats of each side, framed, with a tooltip. Wide screens get 7 rows, narrow ones 14.
   const svg = $<SVGSVGElement>('waffle');
@@ -69,7 +69,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
   const band = svgNode('g', { class: 'band', display: 'none' });
   const changed = svgNode('g', { class: 'changed', 'aria-hidden': 'true' });
   const frames = svgNode('g', { class: 'frames' });
-  // the label of the majority above the middle column, where seat 218 is (owner's mockup; no line, owner, October 13)
+  // the label of the majority above the middle column, where seat 218 is
   const majorityLine = svgNode('g', { class: 'majority', 'aria-hidden': 'true' });
   svg.append(majorityLine, seatLayer, band, changed, frames);
   $('key-fill').textContent = house.fillKey;
@@ -85,7 +85,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
     return place === 'mid' ? layout!.mid : houseCell(place.side, place.k, layout!.rows);
   };
   const seatsFrom = (lo: number, hi: number) => Array.from({ length: Math.max(0, hi - lo) }, (_, k) => lo + k);
-  // a five-pointed star in the middle of each seat that changed (owner, October 13, 2026: stars, as on the flag)
+  // a five-pointed star in the middle of each seat that changed, as on the flag
   const star = (cx: number, cy: number) => Array.from({ length: 10 }, (_, k) => {
     const r = k % 2 ? 1.5 : 3.7;
     const a = -Math.PI / 2 + (k * Math.PI) / 5;
@@ -169,8 +169,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
       parts[row.key].num.textContent = row.value;
       parts[row.key].desc.textContent = row.desc;
     }
-    // between the rows the effect with a short name, as in the owner's mockup: "R+10 drawing"
-    // between the rows only the difference, such as R+10 (owner's review, October 13, 2026)
+    // between the rows only the difference, such as R+10
     p.steps.forEach((step, i) => stepTexts[i].replaceChildren(node('b', {}, step.value)));
     $('outcomes-lead').textContent = p.lead;
     $('outcomes-beats').textContent = p.beats;
@@ -196,7 +195,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
     return tick;
   };
   $('vote-ticks').replaceChildren(...view.slider.scale.map((t) => mark('tk', t)));
-  // a marker where each count first reaches a majority, with its name and share (owner's mockup)
+  // a marker where each count first reaches a majority, with its name and share
   $('vote-marks').replaceChildren(...view.slider.marks.map((m) => {
     const marker = node('span', { class: `mk ${m.key}` });
     marker.style.setProperty('--at', String(m.index / (view.points.length - 1)));

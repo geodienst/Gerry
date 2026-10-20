@@ -492,7 +492,7 @@ def test_report_has_a_row_per_state_for_the_maps_of_2024(crosscheck, notes):
     assert "| BB | 2 | 0 | 1 | 1 |" in section
 
 
-# --- PlanScore against our own district votes (review of October 2026, finding 4) -------------------------------
+# --- PlanScore against our own district votes -------------------------------
 # AA as the enacted map on the 2020 presidential vote. PlanScore: (60, 40), (30, 70), (45, 55).
 # Ours: (60.1, 40), (30, 70.1), (45, 55): largest difference 0.1 / 60 = 0.17%.
 # Our EG on our votes: wasted D 10.05 + 30 + 45 = 85.05, wasted R 40 + 20.05 + 5 = 65.05, all 300.2 -> +6.66.
@@ -546,7 +546,7 @@ def test_planscore_votes_far_from_ours_are_open(president, notes):
 
 
 def test_planscore_votes_catch_a_composite_that_does_not_follow_from_the_districts(president, notes):
-    # the reviewer's test: our composite EG for the state set to +100 points
+    # our composite EG for the state set to +100 points
     report = v.build_report(_votes_metrics(eg=1.0), president, notes)
     assert "- AA planscore_votes: US President 2020:" in _open_items(report)
     assert "our composite +100.00 against" in _open_items(report)

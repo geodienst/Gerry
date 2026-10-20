@@ -34,7 +34,7 @@ test('roundHalfUp rejects negative and non-finite input', () => {
   }
 });
 
-test('neededShare: a threshold rounds up to the next 0.1 point, so the share it names is enough (owner, October 8)', () => {
+test('neededShare: a threshold rounds up to the next 0.1 point, so the share it names is enough', () => {
   assert.equal(neededShare(0.5230328), '52.4%'); // 52.303 is not reached at 52.3
   assert.equal(neededShare(0.5115747), '51.2%');
   assert.equal(neededShare(0.4978747), '49.8%');
@@ -107,7 +107,7 @@ test('planShare: half-up at the edges, 25/5000 and 4975/5000', () => {
   assert.equal(planShare(4975 / 5000), 'more than 99%'); // 99.5% rounds up to 100%, but it is not all plans
 });
 
-// planShare goes into sentences, so the edges are words, not the symbols < and > (owner, October 7, 2026).
+// planShare goes into sentences, so the edges are words, not the symbols < and >.
 test('planShare: only exact 0 and 1 give 0% and 100%; the edges in words', () => {
   assert.equal(planShare(0), '0%');
   assert.equal(planShare(1), '100%');

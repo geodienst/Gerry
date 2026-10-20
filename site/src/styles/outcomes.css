@@ -1,4 +1,4 @@
-/* Chapter 02: the three ways of counting, the House of 435, the explainer and the vote slider. */
+/* Chapter 01: the three ways of counting, the House of 435, the explainer and the vote slider. */
 /* Chapter 01: the three rows, the waffle and the two columns under them (Task 7.6) */
 .outcomes { display: grid; grid-template-columns: minmax(0, 23rem) minmax(0, 1fr); gap: clamp(1.2rem, 3vw, 2.8rem); align-items: start; }
 @media (max-width: 880px) { .outcomes { grid-template-columns: minmax(0, 1fr); } }
@@ -29,7 +29,7 @@
 #waffle .frames rect { fill: transparent; stroke: var(--fg); stroke-width: 1.5; cursor: help; pointer-events: all; }
 .wkey .fr { width: 0.6rem; height: 1rem; border: 1.5px solid var(--fg); }
 #waffle-tip { z-index: 2; }
-/* The explainer at the top of chapter 01 (Mark Thompson's feedback, October 12): five steps that play by themselves */
+/* The explainer at the top of chapter 01: five steps that play by themselves */
 .tour { background: var(--sheet); border: 1px solid var(--rule); padding: 0.5rem 0.9rem; display: grid; gap: 0.3rem; }
 .tour.done { background: transparent; border: 0; padding: 0; }
 .tour.done .tour-text, .tour.done .tour-bar { display: none; }
@@ -58,7 +58,7 @@
 #vote::-webkit-slider-thumb { -webkit-appearance: none; width: var(--thumb); height: var(--thumb); margin-top: calc(2px - var(--thumb) / 2); border-radius: 50%; background: var(--ink); border: 2px solid var(--sheet); }
 #vote::-moz-range-thumb { width: var(--thumb); height: var(--thumb); border-radius: 50%; background: var(--ink); border: 2px solid var(--sheet); }
 .vote-ticks { position: absolute; inset: calc(0.3rem + var(--thumb) + 2.5rem) 0 0; pointer-events: none; }
-/* where each count reaches a majority (owner's mockup, October 13, 2026) */
+/* where each count reaches a majority */
 .vote-marks { position: absolute; inset: 0.3rem 0 0; pointer-events: none; }
 .vote-marks .mk { position: absolute; top: calc(var(--thumb) / 2 - 0.55rem); left: calc(var(--thumb) / 2 + var(--at) * (100% - var(--thumb))); transform: translateX(-50%); display: grid; justify-items: center; font-size: 0.75rem; line-height: 1.25; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .vote-marks .mk::before { content: ""; width: 2px; height: 1.1rem; background: var(--muted); margin-bottom: 0.25rem; }
@@ -78,7 +78,7 @@
 .wkey > span { display: inline-flex; gap: 0.4rem; align-items: center; }
 .wkey .ol { width: 0.75rem; height: 0.75rem; border: 1.4px solid var(--fg); }
 
-/* Chapter 02 after the owner's mockup (October 13, 2026) */
+/* Chapter 01 */
 .ohead { display: grid; gap: 0.5rem; }
 .ohead .lead { margin: 0; font: 700 clamp(1.2rem, 1rem + 0.8vw, 1.55rem)/1.35 var(--font-head); max-width: 52ch; }
 .ohead .note { margin: 0; max-width: 64ch; }
