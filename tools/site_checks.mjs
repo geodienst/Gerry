@@ -693,6 +693,9 @@ async function masthead(t) {
   t.check('the bio links the Geodienst, Jantina Tammes School and Geominds.nl', await t.js(
     "[...document.querySelectorAll('#about p:first-of-type a')].map((a) => `${a.textContent} ${a.getAttribute('href')}`).join() === "
     + "'Geodienst https://rug.nl/geo,Jantina Tammes School https://www.rug.nl/jantina-tammes-school/,Geominds.nl https://geominds.nl'"));
+  t.check('the contact line links the press office of the University of Groningen', await t.js(
+    "[...document.querySelectorAll('#about p')].at(-1).querySelector('a')?.getAttribute('href') === "
+    + "'https://www.rug.nl/about-ug/latest-news/press-information/contact-persvoorlichting'"));
   await t.js("document.querySelector('.mast .byline a[href=\"#method\"]').click()");
   t.check('the Methodology link opens the method', await t.until("location.hash === '#method' && document.getElementById('method-details').open"));
   t.check('the meta description is the line under the title',
