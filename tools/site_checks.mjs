@@ -703,6 +703,9 @@ async function masthead(t) {
     return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
       && ['founder of the Geodienst', 'Mark Thompson, Vincent, JW and Elmeri', 'no client and no funding', 'press office'].every((x) => about.includes(x));
   })()`));
+  t.check('the bio links the Geodienst, Jantina Tammes School and Geominds.nl', await t.js(
+    "[...document.querySelectorAll('#about p:first-of-type a')].map((a) => `${a.textContent} ${a.getAttribute('href')}`).join() === "
+    + "'Geodienst https://rug.nl/geo,Jantina Tammes School https://www.rug.nl/jantina-tammes-school/,Geominds.nl https://geominds.nl'"));
   await t.js("document.querySelector('.mast .byline a[href=\"#method\"]').click()");
   t.check('the Methodology link opens the method', await t.until("location.hash === '#method' && document.getElementById('method-details').open"));
   t.check('the meta description is the line under the title',
