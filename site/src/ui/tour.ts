@@ -55,11 +55,22 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
       finish(true);
     }
   }
+  // While it plays the text keeps the height of its longest step, so the rows and the slider under it stay in place.
+  function holdHeight() {
+    text.style.minHeight = '';
+    let tallest = 0;
+    for (const s of tour.steps) {
+      text.textContent = s.text;
+      tallest = Math.max(tallest, text.offsetHeight);
+    }
+    text.style.minHeight = `${tallest}px`;
+  }
   function start() {
     box.classList.remove('done');
     state = 'playing';
     play.textContent = 'Pause';
     skip.hidden = false;
+    holdHeight();
     step = -1;
     next();
   }
@@ -85,6 +96,7 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
       outcomes.moveTo(tour.base);
     }
     text.textContent = tour.end;
+    text.style.minHeight = '';
     count.textContent = '';
     play.textContent = 'Replay';
     box.classList.add('done'); // a slim line: only the button stays
@@ -101,7 +113,13 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
   outcomes.onUser(() => { if (state === 'playing' || state === 'paused') finish(false); });
 
   text.textContent = tour.intro;
-  if (hold || reduceMotion() || !('IntersectionObserver' in window)) return;
+  const chapter = document.querySelector('#outcomes .outcomes');
+  if (!chapter || !('IntersectionObserver' in window)) return;
+  // Out of view it pauses, so it does not play on while the reader is further down the page.
+  new IntersectionObserver((entries) => {
+    if (state === 'playing' && entries.every((e) => !e.isIntersecting)) pause();
+  }).observe(chapter);
+  if (hold || reduceMotion()) return;
   // Play once the rows and the waffle are in view, the first time only.
   const watch = new IntersectionObserver((entries) => {
     if (state === 'idle' && entries.some((e) => e.isIntersecting)) {
@@ -109,6 +127,5 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
       start();
     }
   }, { threshold: 0.3 });
-  const chapter = document.querySelector('#outcomes .outcomes');
-  if (chapter) watch.observe(chapter);
+  watch.observe(chapter);
 }
