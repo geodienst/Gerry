@@ -69,8 +69,8 @@ export function nationalGraphic(results: Results, view: OutcomesView, index: num
     steps: point.steps.map((s) => s.value),
     foot: foot(results, point),
     caption: `${at}, the maps used on November 3, 2026 give Democrats ${seats(seatsOf('enacted'))} of the `
-      + `${seats(house.total)} House seats. The median of ${count(planCount(results))} neutral maps per state, drawn by a `
-      + `computer, gives ${seats(seatsOf('neutral'))}; seats in proportion to each state's vote give `
+      + `${seats(house.total)} House seats. Neutral maps, ${count(planCount(results))} per state drawn by a computer, `
+      + `give ${seats(seatsOf('neutral'))}; seats in proportion to each state's vote give `
       + `${seats(seatsOf('proportional'))}. ${captionCredit}`,
     file: `somevotes-national-${point.label.replace('%', '').replace('.', '-')}.png`,
     alt: `${point.lead} For each count, one block per seat between the count and the ${seats(majority)} seats `
@@ -103,7 +103,7 @@ export function statesGraphic(results: Results, view: OutcomesView) {
     zeros: `${count(list.zero.length)} ${plural(list.zero.length, 'state matches its', 'states match their')} neutral maps: `
       + `${list.zero.map((r) => r.name).join(', ')}.`,
     foot: foot(results, view.points[view.baseIndex]),
-    caption: `Compared with the median of ${count(planCount(results))} neutral maps per state, the maps used on `
+    caption: `Compared with ${count(planCount(results))} neutral maps per state, drawn by a computer, the maps used on `
       + `November 3, 2026 move ${sides.length ? sides.join(' and ') : 'no House seat toward either party'}`
       + `${list.net === 0 ? '' : `: net ${effectWords(list.net)}`}. Votes: the 2016 and 2020 presidential results. `
       + captionCredit,

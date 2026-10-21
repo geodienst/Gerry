@@ -47,6 +47,7 @@ test('nationalGraphic: the three counts of chapter 01 at a stop of the slider, w
   assert.equal(g.foot.site, 'somevotes.org');
   assert.ok(g.caption.startsWith('With the 2016 and 2020 presidential votes, the maps used on November 3, 2026 give Democrats '));
   assert.ok(g.caption.endsWith('Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).'));
+  assert.ok(g.caption.includes(' House seats. Neutral maps, ') && !g.caption.includes('median'), g.caption);
   assert.match(g.file, /^somevotes-national-\d+-\d\.png$/);
   // another stop names the shifted vote share
   const other = view.points.findIndex((p) => !p.base);
@@ -76,7 +77,8 @@ test('statesGraphic: the net and a row per state that moves seats, largest first
   assert.equal(g.note, 'Seats each enacted map moves toward one party, compared with neutral maps.');
   assert.ok(g.zeros.startsWith(`${list.zero.length} states match their neutral maps: `), g.zeros);
   assert.ok(!/median/.test(`${g.title} ${g.note} ${g.zeros}`));
-  assert.ok(g.caption.includes(' neutral maps per state, the maps used on November 3, 2026 move '));
+  assert.ok(g.caption.includes(' neutral maps per state, drawn by a computer, the maps used on November 3, 2026 move '), g.caption);
+  assert.ok(!g.caption.includes('median'));
   assert.ok(g.caption.endsWith('Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).'));
   assert.equal(g.file, 'somevotes-drawing-effect-by-state.png');
 });
