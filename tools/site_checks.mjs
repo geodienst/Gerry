@@ -751,7 +751,7 @@ async function outcomes(t) {
       && [...document.querySelectorAll('#scen .big .visually-hidden')].every((s) => s.textContent.trim() === 'Democratic seats');
   })()`));
   // the large sentence, and the 99% sentence under the House
-  t.check('the chapter opens with the seats on the 2026 maps and the neutral median', /^With these votes, Democrats would win \d+ seats on the 2026 maps, (\w+ short of a majority|a majority)\. The median result on the neutral maps is \d+\.$/
+  t.check('the chapter opens with the seats on the 2026 maps and the neutral median', /^Democrats would win \d+ seats on the 2026 maps, (\d+ short of a majority|a majority)\. The result on a neutral map is \d+\.$/
     .test(await t.text('#outcomes-lead')), await t.text('#outcomes-lead'));
   t.check('under the House the share of neutral maps that give Democrats more seats', /^(More than 99%|Less than 1%|\d+%) of the simulated neutral maps give Democrats more seats than the 2026 maps do\.$/
     .test(await t.text('#outcomes-beats')), await t.text('#outcomes-beats'));

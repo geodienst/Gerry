@@ -117,9 +117,9 @@ export function outcomesView(results: Results) {
       const part = planShare(p.more);
       return {
         ...p,
-        lead: `With these votes, Democrats would win ${seats(e)} seats on the 2026 maps, `
-          + (short > 0 ? `${COUNT_WORDS[short] ?? count(short)} short of a majority. ` : 'a majority. ')
-          + `The median result on the neutral maps is ${seats(rowOf(p, 'neutral').seats)}.`,
+        lead: `Democrats would win ${seats(e)} seats on the 2026 maps, `
+          + (short > 0 ? `${count(short)} short of a majority. ` : 'a majority. ')
+          + `The result on a neutral map is ${seats(rowOf(p, 'neutral').seats)}.`,
         beats: `${capitalize(part)} of the simulated neutral maps give Democrats more seats than the 2026 maps do.`,
       };
     });
