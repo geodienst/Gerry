@@ -24,6 +24,9 @@ async function map(t) {
   t.check('the edge of the country is drawn in the gray of the state lines', await t.js(
     "(() => { const c = document.querySelectorAll('#map path.coast'); return c.length === 1 && c[0].getAttribute('d').length > 1000"
     + " && getComputedStyle(c[0]).stroke === 'rgb(163, 170, 165)'; })()"));
+  t.check('while the tap line is empty it takes no room, so the box under the map is one row', await t.js(
+    "document.getElementById('tapline').textContent === '' && document.getElementById('tapline').getBoundingClientRect().height === 0"
+    + " && Math.abs(document.querySelector('.mapfoot').getBoundingClientRect().height - document.querySelector('.mapfoot .mapbar').getBoundingClientRect().height - 2 * 12.8 - 2) < 2"));
   t.check('the State menu lists all 50 states, the six with one seat marked', await t.js(
     "document.querySelectorAll('#pick option').length === 51 && [...document.querySelectorAll('#pick option')].filter((o) => o.textContent.endsWith(' (one seat)')).length === 6"));
 

@@ -5,7 +5,7 @@
 /* The map column: the map box with its title and legend, and under it the box with the tap line, the colors and
    Share. Both are as high as their content, so no box stretches without content. */
 .mapcol { display: grid; grid-template-rows: auto auto; align-content: start; gap: 0.7rem; min-width: 0; }
-.mapfoot { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.5rem; align-content: start; }
+.mapfoot { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; align-content: start; }
 
 
 .mapbox { position: relative; background: var(--water); border: 1px solid var(--rule); }
@@ -93,7 +93,8 @@
 }
 body.map-full { overflow: hidden; }
 .gesture { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 12, 16, 0.6); color: #fff; font-size: 1.1rem; pointer-events: none; text-align: center; padding: 1rem; }
-.tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
+.tapline { font-size: 0.87rem; margin: 0; }
+.tapline:not(:empty) { margin-bottom: 0.5rem; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
 .tip b, .tip span { display: block; }
 .maphead { display: contents; }
