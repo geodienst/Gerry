@@ -72,7 +72,10 @@ test('statesGraphic: the net and a row per state that moves seats, largest first
   for (const column of [g.toR, g.toD]) {
     assert.ok(column.every((row, i) => i === 0 || Math.abs(row.drawing) <= Math.abs(column[i - 1].drawing)));
   }
-  assert.ok(g.zeros.startsWith(`${list.zeroLabel}: `));
+  // without the median, which the site explains
+  assert.equal(g.note, 'Seats each enacted map moves toward one party, compared with neutral maps.');
+  assert.ok(g.zeros.startsWith(`${list.zero.length} states match their neutral maps: `), g.zeros);
+  assert.ok(!/median/.test(`${g.title} ${g.note} ${g.zeros}`));
   assert.ok(g.caption.includes(' neutral maps per state, the maps used on November 3, 2026 move '));
   assert.ok(g.caption.endsWith('Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).'));
   assert.equal(g.file, 'somevotes-drawing-effect-by-state.png');

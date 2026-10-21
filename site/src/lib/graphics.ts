@@ -91,7 +91,8 @@ export function statesGraphic(results: Results, view: OutcomesView) {
   const sides = [side(list.toR.length, list.seatsR, 'Republicans'), side(list.toD.length, list.seatsD, 'Democrats')].filter(Boolean);
   return {
     title: 'Drawing effect by state',
-    note: 'Seats each enacted map moves toward one party, compared with the median of its neutral maps.',
+    // simpler than the site, as the national image: neutral maps without their median, which the site explains
+    note: 'Seats each enacted map moves toward one party, compared with neutral maps.',
     net: list.bar.net,
     netValue: list.net,
     summary: list.summary,
@@ -99,7 +100,8 @@ export function statesGraphic(results: Results, view: OutcomesView) {
     headD: list.bar.right,
     toR: rows(list.toR),
     toD: rows(list.toD),
-    zeros: `${list.zeroLabel}: ${list.zero.map((r) => r.name).join(', ')}.`,
+    zeros: `${count(list.zero.length)} ${plural(list.zero.length, 'state matches its', 'states match their')} neutral maps: `
+      + `${list.zero.map((r) => r.name).join(', ')}.`,
     foot: foot(results, view.points[view.baseIndex]),
     caption: `Compared with the median of ${count(planCount(results))} neutral maps per state, the maps used on `
       + `November 3, 2026 move ${sides.length ? sides.join(' and ') : 'no House seat toward either party'}`
