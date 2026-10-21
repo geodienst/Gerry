@@ -15,6 +15,7 @@
 #map path { vector-effect: non-scaling-stroke; }
 .district { stroke: var(--sheet); stroke-width: 0.4; cursor: pointer; }
 .state { fill: none; stroke: var(--sheet); stroke-width: 1.2; pointer-events: none; }
+.coast { fill: none; stroke: var(--edge); stroke-width: 0.9; pointer-events: none; }
 /* The view "Districts: close races": the rest pale and without inner lines, thin state lines, dots on the tightest */
 .district.quiet { stroke: none; }
 .calm .state { stroke-width: 0.6; }

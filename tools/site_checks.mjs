@@ -21,6 +21,9 @@ async function map(t) {
   t.check('435 districts and 50 states on the map',
     await t.js("document.querySelectorAll('#map path.district').length === 435 && document.querySelectorAll('#map path.statefill').length === 50"));
   t.check('the zoom hint is hidden at the start', await t.js("getComputedStyle(document.getElementById('gesture')).display === 'none'"));
+  t.check('the edge of the country is drawn in the gray of the state lines', await t.js(
+    "(() => { const c = document.querySelectorAll('#map path.coast'); return c.length === 1 && c[0].getAttribute('d').length > 1000"
+    + " && getComputedStyle(c[0]).stroke === 'rgb(163, 170, 165)'; })()"));
   t.check('the State menu lists all 50 states, the six with one seat marked', await t.js(
     "document.querySelectorAll('#pick option').length === 51 && [...document.querySelectorAll('#pick option')].filter((o) => o.textContent.endsWith(' (one seat)')).length === 6"));
 

@@ -5,7 +5,7 @@ import { MAP, fitTransform } from '../lib/axes.ts';
 import { shareStops, shareTicks, effectBoxes } from '../lib/colors.ts';
 import { districtTip, stateTip, closeTip, tapLine, isClose, isSwing, closeness, LEGEND_TEXT } from '../lib/model.ts';
 import { geoAlbersUsa, geoPath, select, zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3';
-import { feature as topoFeature } from 'topojson-client';
+import { feature as topoFeature, mesh as topoMesh } from 'topojson-client';
 import type { Feature, MultiPolygon, Polygon } from 'geojson';
 import type { DistrictProps, MapTopology, MapView, Postal, StateProps } from '../types.ts';
 import type { Colors } from '../lib/colors.ts';
@@ -90,6 +90,9 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     .on('click', (_event, f) => choose(f.properties.postal, null));
   const borders = borderLayer.selectAll<SVGPathElement, StateFeature>('path').data(statesGeo.features).join('path')
     .attr('class', 'state').attr('d', path);
+  // the edge of the country, where a state borders on no other state
+  borderLayer.append('path').attr('class', 'coast')
+    .attr('d', path(topoMesh(topology as never, topology.objects.states as never, (a, b) => a === b)));
   // The view 'close': a ring on each district with a margin under 5 points, filled with the color of the party ahead;
   // thick under 2 points. The rings keep their size on screen while the map zooms.
   const DOT = { tight: 5, near: 3.6, ring: { tight: 1.8, near: 0.9 } };
