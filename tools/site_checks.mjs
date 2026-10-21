@@ -642,11 +642,11 @@ async function layout(t) {
 // --- Task 6.11: redraws since 2024 ---------------------------------------------------------------
 async function redraws(t) {
   await t.load('#TX');
-  t.check('the national redraw sentence', /^With these votes, the maps of the 2024 election give Democrats \d+ seats and the 2026 maps \d+\. Net change: (0, no difference|[RD]\+\d+, .+)\.$/.test(await t.text('#redraw-text')));
+  t.check('the national redraw sentence', /^With the 2016 and 2020 votes, the maps of the 2024 election give Democrats \d+ seats and the 2026 maps \d+\. Net change: (0, no difference|[RD]\+\d+, .+)\.$/.test(await t.text('#redraw-text')));
   const changed = await t.js(`${DATA}.then((r) => Object.values(r.states).filter((s) => s.redraw.change !== 0).length)`);
   t.check('one line per state with another seat count', await t.js(`document.querySelectorAll('#redraw-list li').length === ${changed}`));
   await t.until(`${HEADING} === 'Texas'`);
-  t.check('the Texas sheet has the redraw line', /(Map unchanged since 2024\.|2024 map: \d+ Democratic seats? with these votes\. 2026 map: \d+ \((\d+ (fewer|more)|the same number)\)\.)/.test(await t.text('#sheet')));
+  t.check('the Texas sheet has the redraw line', /(Map unchanged since 2024\.|2024 map: \d+ Democratic seats? with the 2016 and 2020 votes\. 2026 map: \d+ \((\d+ (fewer|more)|the same number)\)\.)/.test(await t.text('#sheet')));
 }
 
 // --- Task 6.12: competitive districts ------------------------------------------------------------

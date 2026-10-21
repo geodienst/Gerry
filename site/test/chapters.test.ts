@@ -252,7 +252,7 @@ test('recordView: the sheet of Phase 6 plus the headline, the strip and the extr
   assert.deepEqual(record.extras, {
     head: ['Adopted by: Legislature (Republican control).'],
     body: ['Competitive districts (45 to 55%): 0 on the enacted map, 1 on neutral maps (90% of neutral maps: 0 to 2).',
-      '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).'],
+      '2024 map: 3 Democratic seats with the 2016 and 2020 votes. 2026 map: 0 (3 fewer).'],
   });
 });
 

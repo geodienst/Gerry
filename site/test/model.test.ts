@@ -252,7 +252,7 @@ test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
   assert.deepEqual(sheet.blocked, {
     name: 'HB 1 of 2025',
     status: 'Blocked',
-    seatsText: 'With these votes it would give 1 Democratic seat.',
+    seatsText: 'With the 2016 and 2020 votes it would give 1 Democratic seat.',
     position: 'Of the 5,000 neutral maps, 0% give fewer Democratic seats than HB 1 of 2025, 13% the same number and 87% more.',
     source: { label: 'Redistricting Data Hub', url: 'https://redistrictingdatahub.org/dataset/2025-missouri-congressional-districts-plan/' },
   });
@@ -261,7 +261,7 @@ test('stateSheet: Missouri has the row for the blocked map HB 1', () => {
   r.states.MO.neutral.dist = [0, 643, 3346, 11, 0, 0, 0, 0, 0];
   r.states.MO.blocked_map!.enacted = 2;
   const other = stateSheet(r, 'MO');
-  assert.equal(other.blocked?.seatsText, 'With these votes it would give 2 Democratic seats.');
+  assert.equal(other.blocked?.seatsText, 'With the 2016 and 2020 votes it would give 2 Democratic seats.');
   assert.match(other.blocked?.position ?? '', /^Of the 4,000 neutral maps, /);
 });
 

@@ -57,7 +57,7 @@ test('extensionFills: the numbers in the method paragraph "Extensions"', () => {
 test('redrawView: the net change and the states with another seat count', () => {
   const view = redrawView(extended());
   // seats of 435: 217 and 213 of the districts + the 2 Democratic single seats
-  assert.equal(view.sentence, 'With these votes, the maps of the 2024 election give Democrats 219 seats and the 2026 maps 215. '
+  assert.equal(view.sentence, 'With the 2016 and 2020 votes, the maps of the 2024 election give Democrats 219 seats and the 2026 maps 215. '
     + 'Net change: R+4, 4 seats toward Republicans.');
   assert.deepEqual(view.rows.map((r) => [r.postal, r.text]), [
     ['TX', 'R+3: 3 seats toward Republicans'], ['CA', 'D+1: 1 seat toward Democrats'],
@@ -77,9 +77,9 @@ test('redrawView: the net change and the states with another seat count', () => 
 
 test('stateRedraw: fewer, more, the same number, and an unchanged map', () => {
   const r = extended();
-  assert.equal(stateRedraw(r.states.TX), '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).');
-  assert.equal(stateRedraw(r.states.CA), '2024 map: 0 Democratic seats with these votes. 2026 map: 1 (1 more).');
-  assert.equal(stateRedraw(r.states.FL), '2024 map: 1 Democratic seat with these votes. 2026 map: 1 (the same number).');
+  assert.equal(stateRedraw(r.states.TX), '2024 map: 3 Democratic seats with the 2016 and 2020 votes. 2026 map: 0 (3 fewer).');
+  assert.equal(stateRedraw(r.states.CA), '2024 map: 0 Democratic seats with the 2016 and 2020 votes. 2026 map: 1 (1 more).');
+  assert.equal(stateRedraw(r.states.FL), '2024 map: 1 Democratic seat with the 2016 and 2020 votes. 2026 map: 1 (the same number).');
   assert.equal(stateRedraw(r.states.MO), 'Map unchanged since 2024.');
 });
 
@@ -91,7 +91,7 @@ test('stateExtras: the adopted line under the heading, competitive districts and
     head: ['Adopted by: Legislature (Republican control).'],
     body: [
       'Competitive districts (45 to 55%): 1 on the enacted map, 2 on neutral maps (90% of neutral maps: 1 to 3).',
-      '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).',
+      '2024 map: 3 Democratic seats with the 2016 and 2020 votes. 2026 map: 0 (3 fewer).',
     ],
   });
   r.states.TX.adopted.note = 'A made-up note.';

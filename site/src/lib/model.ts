@@ -238,7 +238,7 @@ export function stateSheet(results: Results, postal: Postal) {
   const blocked = s.blocked_map && {
     name: s.blocked_map.name,
     status: STATUS_LABELS[s.blocked_map.status],
-    seatsText: `With these votes it would give ${seats(s.blocked_map.enacted)} Democratic ${plural(s.blocked_map.enacted, 'seat', 'seats')}.`,
+    seatsText: `With the 2016 and 2020 votes it would give ${seats(s.blocked_map.enacted)} Democratic ${plural(s.blocked_map.enacted, 'seat', 'seats')}.`,
     position: positionText(s.blocked_map.position, plans, s.blocked_map.name),
     source: s.blocked_map.source,
   };

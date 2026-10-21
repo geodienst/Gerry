@@ -29,18 +29,18 @@ export function redrawView(results: Results) {
     .map(([postal, s]) => ({ postal, name: s.name, change: s.redraw.change, text: effectLine(s.redraw.change) }))
     .sort((a, b) => a.change - b.change || a.name.localeCompare(b.name, 'en'));
   return {
-    sentence: `With these votes, the maps of the 2024 election give Democrats ${seats(n.seats_2024 + dSingle)} seats and the `
+    sentence: `With the 2016 and 2020 votes, the maps of the 2024 election give Democrats ${seats(n.seats_2024 + dSingle)} seats and the `
       + `2026 maps ${seats(results.national.enacted + dSingle)}. Net change: ${effect(n.change)}, ${effectWords(n.change)}.`,
     rows,
   };
 }
 
-/** In the sheet: "2024 map: 14 Democratic seats with these votes. 2026 map: 11 (3 fewer)." */
+/** In the sheet: "2024 map: 14 Democratic seats with the 2016 and 2020 votes. 2026 map: 11 (3 fewer)." */
 export function stateRedraw(state: StateResult): string {
   const r = state.redraw;
   if (!r.map_changed) return 'Map unchanged since 2024.';
   const difference = r.change === 0 ? 'the same number' : `${count(Math.abs(r.change))} ${r.change < 0 ? 'fewer' : 'more'}`;
-  return `2024 map: ${seats(r.seats_2024)} Democratic ${plural(r.seats_2024, 'seat', 'seats')} with these votes. `
+  return `2024 map: ${seats(r.seats_2024)} Democratic ${plural(r.seats_2024, 'seat', 'seats')} with the 2016 and 2020 votes. `
     + `2026 map: ${seats(state.enacted)} (${difference}).`;
 }
 
