@@ -12,6 +12,7 @@ import type { DotRowsSpec, SeatAxis } from '../lib/axes.ts';
 import type { Sorted } from '../types.ts';
 import type { Colors } from '../lib/colors.ts';
 import type { DistrictShares, EffectList } from '../lib/model.ts';
+import type { LegalView } from '../lib/extensions.ts';
 
 type Svg = Selection<SVGSVGElement, unknown, null, undefined>;
 type MarkKey = 'proportional' | 'neutral' | 'enacted' | 'base';
@@ -159,6 +160,35 @@ export function drawNetBar(el: HTMLElement, list: EffectList, colors: Colors) {
   svg.append('line').attr('x1', bar.center).attr('x2', bar.center).attr('y1', 12).attr('y2', 36).attr('stroke', 'var(--muted)');
   svg.append('text').attr('x', 4).attr('y', 12).text(list.bar.left);
   svg.append('text').attr('x', W - 4).attr('y', 12).attr('text-anchor', 'end').text(list.bar.right);
+}
+
+/**
+ * Rows of seats moved toward each party (chapter 03, maps in court): a label with a line under it, a red bar left of
+ * the middle line for the seats toward Republicans and a blue one right of it for the seats toward Democrats, on one
+ * scale for all rows, and the net on the right.
+ */
+export function drawMovedRows(el: HTMLElement, view: Pick<LegalView, 'rows' | 'heads' | 'label'>, colors: Colors) {
+  const m = { left: 150, right: 44, top: 18, row: 42, room: 22 }; // room: for the numbers at the ends of the bars
+  const H = m.top + m.row * view.rows.length;
+  const { svg, width: W } = chartSvg(el, 560, H, view.label);
+  svg.classed('moved', true);
+  const center = m.left + (W - m.left - m.right) / 2;
+  const scale = ((W - m.left - m.right) / 2 - m.room) / Math.max(1, ...view.rows.flatMap((r) => [r.seatsR, r.seatsD]));
+  svg.append('text').attr('x', center - 6).attr('y', 10).attr('text-anchor', 'end').text(view.heads.r);
+  svg.append('text').attr('x', center + 6).attr('y', 10).text(view.heads.d);
+  svg.append('line').attr('x1', center).attr('x2', center).attr('y1', m.top - 2).attr('y2', H).attr('stroke', 'var(--muted)');
+  view.rows.forEach((row, i) => {
+    const cy = m.top + m.row * i + m.row / 2;
+    svg.append('text').attr('class', 'lbl').attr('x', 0).attr('y', cy - 2).text(row.label);
+    svg.append('text').attr('x', 0).attr('y', cy + 12).text(row.sub);
+    svg.append('rect').attr('x', center - row.seatsR * scale).attr('y', cy - 7).attr('width', row.seatsR * scale).attr('height', 14)
+      .attr('fill', colors.party(false));
+    svg.append('rect').attr('x', center).attr('y', cy - 7).attr('width', row.seatsD * scale).attr('height', 14)
+      .attr('fill', colors.party(true));
+    if (row.seatsR) svg.append('text').attr('x', center - row.seatsR * scale - 4).attr('y', cy + 4).attr('text-anchor', 'end').text(seats(row.seatsR));
+    if (row.seatsD) svg.append('text').attr('x', center + row.seatsD * scale + 4).attr('y', cy + 4).text(seats(row.seatsD));
+    svg.append('text').attr('class', 'lbl').attr('x', W).attr('y', cy + 4).attr('text-anchor', 'end').text(row.net);
+  });
 }
 
 /**

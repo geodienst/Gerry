@@ -1,10 +1,11 @@
 // Chapter 03, "In detail" (redesign, chapter 5): competitive districts, redraws since 2024,
-// the tables by political control and, last, the Senate. Texts from lib/chapters.ts (decideView);
-// this module only fills the cards and draws the two axes.
+// the tables by political control, the maps in court and, last, the Senate. Texts from lib/chapters.ts
+// (decideView); this module only fills the cards and draws the charts.
 import { select } from 'd3';
-import { drawDotRows } from './charts.ts';
+import { drawDotRows, drawMovedRows } from './charts.ts';
 import { byId as $ } from './dom.ts';
 import type { DecideView, OutcomesPoint } from '../lib/chapters.ts';
+import type { Colors } from '../lib/colors.ts';
 
 /** Large figures with a short label under each. */
 function figures(el: HTMLElement, items: { value: string; label: string }[]) {
@@ -54,4 +55,11 @@ export function renderDecide(view: DecideView) {
     }
   }
   $('control-note').textContent = view.control.note;
+}
+
+/** The maps in court, in the colors chosen under the map; call this again after a resize or another palette. */
+export function drawLegal(view: DecideView['legal'], colors: Colors) {
+  figures($('legal-figures'), view.figures);
+  drawMovedRows($('legal-bars'), view, colors);
+  $('legal-note').textContent = view.note;
 }

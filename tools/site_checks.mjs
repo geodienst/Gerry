@@ -414,13 +414,14 @@ async function sweep(t) {
 // --- Task 7.9: chapter 03 ------------------------------------------------------------------------
 async function decide(t) {
   await t.load();
-  t.check('chapter 03 is "In detail", without an intro, with four cards and the Senate last', await t.js(
-    "[...document.querySelectorAll('#decide .grid3 > section')].map((s) => s.id).join() === 'competitive,redraws,control,senate'")
+  t.check('chapter 03 is "In detail", without an intro, with five cards and the Senate last', await t.js(
+    "[...document.querySelectorAll('#decide .grid3 > section')].map((s) => s.id).join() === 'competitive,redraws,control,legal,senate'")
     && (await t.text('#decide .chead h2')) === 'In detail' && await t.js("!document.getElementById('decide-intro')")
     && (await t.text('#senate .kicker')) === 'Beyond district lines');
   const figs = await t.js("[...document.querySelectorAll('#decide .figs b')].map((b) => b.textContent)");
-  // the Senate has two: the share needed and the seats of 100 at the slider
-  t.check('six large figures, each a formatted number', figs.length === 6
+  // the maps in court and the Senate have two each: the challenged maps and their drawing effect, the share needed and
+  // the seats of 100 at the slider
+  t.check('eight large figures, each a formatted number', figs.length === 8
     && figs.every((v) => /^(\d+(\.\d+)?%|\d+|\d+ to \d+|\d+ of 100|0|[RD]\+\d+)$/.test(v)), figs.join(' | '));
   const axes = await t.js(`[...document.querySelectorAll('#decide svg.dotrows')].map((s) => ({ id: s.parentElement.id, role: s.getAttribute('role'),
     label: s.getAttribute('aria-label'), rows: [...s.querySelectorAll('text.lbl')].map((x) => x.textContent), base: s.querySelectorAll('line.base').length }))`);
@@ -661,6 +662,23 @@ async function control(t) {
   await t.load('#TX');
   t.check('the table by control has four rows and the one by body three', await t.js("document.querySelectorAll('#by-control tr').length === 4 && document.querySelectorAll('#by-body tr').length === 3"));
   t.check('the seven drawing effects in the tables show their direction', await t.js("((cells) => cells.length === 7 && cells.every((td) => /^(0|[RD]\\+\\d+)$/.test(td.textContent)))([...document.querySelectorAll('#control tbody td:last-child')])"));
+  // the maps in court: the number of challenged maps and their drawing effect, a row per legal status in the party
+  // colors chosen under the map, and the note with the status date
+  const legal = `(() => { const s = document.getElementById('legal'), rects = [...s.querySelectorAll('#legal-bars svg rect')];
+    return { title: s.querySelector('h3').textContent, figs: [...s.querySelectorAll('#legal-figures b')].map((b) => b.textContent),
+      rects: rects.length, fills: [...new Set(rects.map((r) => r.getAttribute('fill')))], note: document.getElementById('legal-note').textContent }; })()`;
+  const court = await t.js(legal);
+  t.check('Maps in court: the challenged maps and their drawing effect, a row per status in two colors, and the status date',
+    court.title === 'Maps in court' && court.figs.length === 2 && /^\d+$/.test(court.figs[0]) && /^(0|[RD]\+\d+)$/.test(court.figs[1])
+    && court.rects === 4 && court.fills.length === 2 && /^All \d+ maps are the ones used on November 3, 2026\. On [A-Z][a-z]+ \d+, 2026, a court case against the map was pending in \d+ states?\. A pending case is not a ruling\./.test(court.note),
+    JSON.stringify(court));
+  await t.js("document.getElementById('palette-neutral').click()");
+  const neutral = await t.js(legal);
+  await t.js("document.getElementById('palette-party').click()");
+  t.check('Maps in court follows the colors chosen under the map', neutral.fills.length === 2 && neutral.fills.every((f) => !court.fills.includes(f)),
+    JSON.stringify([court.fills, neutral.fills]));
+  t.check('on a wide screen the last card of chapter 03, the Senate, takes the whole row', await t.js(
+    "Math.abs(document.getElementById('senate').getBoundingClientRect().width - document.querySelector('.grid3').clientWidth) < 2"));
   await t.until(`${HEADING} === 'Texas'`);
   t.check('the Texas sheet says who adopted the map', /Adopted by: (Legislature|Commission|Court) \((Republican control|Democratic control|bipartisan|nonpartisan)\)\./.test(await t.text('#sheet')));
 }

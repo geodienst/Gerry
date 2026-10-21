@@ -7,7 +7,7 @@ import {
   nationalView, stateSheet, axisLabel, bandText, planCount, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS, effectList,
   LABELS, SHORT_LABELS, EFFECT_LABELS,
 } from './model.ts';
-import { stateExtras, senateView, redrawView, competitiveText, controlTables } from './extensions.ts';
+import { stateExtras, senateView, redrawView, competitiveText, controlTables, legalView } from './extensions.ts';
 import { seatTicks, rowDomain } from './axes.ts';
 import type { DotRow } from './axes.ts';
 import { plural, seatSpan, nameList, capitalize } from './text.ts';
@@ -401,6 +401,7 @@ export function decideView(results: Results) {
       rows: redraws.rows,
     },
     control: controlTables(results),
+    legal: legalView(results),
   };
 }
 export type DecideView = ReturnType<typeof decideView>;

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { results } from './testdata.ts';
 import {
   extensionFills, redrawView, stateRedraw, stateExtras, competitiveText, adoptedLine, controlTables,
-  senateView,
+  senateView, legalView,
 } from '../src/lib/extensions.ts';
 
 /** testdata.ts with the Phase 5 fields; all numbers made up, with 7 states and 429 seats nationally. */
@@ -127,6 +127,36 @@ test('controlTables: every value in order, with states, seats and the summed dra
     ['Bipartisan', '1', '2', '0'], ['Nonpartisan', '2', '14', '0'],
   ]);
   assert.deepEqual(tables.byBody.map((r) => [r.label, r.drawing]), [['Legislature', 'R+2'], ['Commission', '0'], ['Court', '0']]);
+});
+
+// --- Maps in court ---
+
+test('legalView: the challenged maps first, with states, seats and the seats moved toward each party', () => {
+  const r = extended();
+  const view = legalView(r);
+  // Texas is the one challenged map (R+2); the other six move 4 seats each way (Florida R+4, California D+3, New Mexico D+1)
+  assert.deepEqual(view.rows.map((row) => [row.label, row.states, row.seatsR, row.seatsD, row.net, row.namesR, row.namesD]), [
+    ['Challenged in court', 1, 2, 0, 'R+2', ['Texas'], []],
+    ['In effect', 6, 4, 4, '0', ['Florida'], ['California', 'New Mexico']],
+  ]);
+  assert.equal(view.rows[0].sub, `1 state, ${r.states.TX.seats} seats`);
+  assert.equal(view.rows.reduce((n, row) => n + row.states, 0), Object.keys(r.states).length);
+  assert.equal(view.rows.reduce((n, row) => n + row.seats, 0), Object.values(r.states).reduce((n, s) => n + s.seats, 0));
+  assert.deepEqual(view.figures, [{ value: '1', label: 'map challenged in court' }, { value: 'R+2', label: 'drawing effect of these maps' }]);
+  assert.equal(view.note, 'All 7 maps are the ones used on November 3, 2026. On October 3, 2026, a court case '
+    + 'against the map was pending in 1 state. A pending case is not a ruling. Of these maps, those of Texas move 2 seats toward Republicans.');
+});
+
+test('legalView: a challenged map toward each party, and none that moves a seat', () => {
+  const r = extended();
+  r.states.CA.status = 'Challenged';
+  assert.ok(legalView(r).note.endsWith('Of these maps, those of Texas move 2 seats toward Republicans, and those of California 3 seats toward Democrats.'));
+  r.states.TX.status = 'In effect';
+  assert.ok(legalView(r).note.endsWith('Of these maps, those of California move 3 seats toward Democrats.'));
+  r.states.CA.status = 'In effect';
+  const none = legalView(r);
+  assert.deepEqual([none.rows[0].states, none.rows[0].net], [0, '0']);
+  assert.ok(none.note.endsWith('was pending in 0 states. A pending case is not a ruling.'));
 });
 
 // --- the Senate (Task 6.14) ---

@@ -1,8 +1,8 @@
 // Texts and view models for the extensions (docs/superpowers/specs/2026-10-06-extensions-design.md,
 // chapters 1 to 4 and 7), from the results.json fields of Phase 5. Pure, like model.ts.
 import { share, neededShare, seats, count, effect, effectWords, effectLine, longDate } from './format.ts';
-import { houseOf } from './model.ts';
-import { plural, nameList } from './text.ts';
+import { houseOf, STATUS_LABELS } from './model.ts';
+import { plural, nameList, sum } from './text.ts';
 import type { AdoptedBy, Competitive, Control, Postal, Results, StateResult, Tally } from '../types.ts';
 
 /** Text for the [data-fill] spans that the extensions add to the method section. */
@@ -88,6 +88,53 @@ export function controlTables(results: Results) {
   };
 }
 export type ControlTables = ReturnType<typeof controlTables>;
+
+// --- Maps in court ----------------------------------------------------------------------------------------------
+
+/**
+ * The maps of the multi-seat states by legal status on the status date, the challenged ones first: states, seats and
+ * the seats their drawing effects move toward each party, for the short chart in chapter 03.
+ */
+export function legalView(results: Results) {
+  const rows = (['Challenged', 'In effect'] as const).map((status) => {
+    const states = Object.values(results.states).filter((s) => s.status === status);
+    // the states that move seats toward one party, the largest effect first
+    const movers = (sign: number) => states.filter((s) => Math.sign(s.effects.drawing) === sign)
+      .sort((a, b) => Math.abs(b.effects.drawing) - Math.abs(a.effects.drawing) || a.name.localeCompare(b.name, 'en'));
+    const toR = movers(-1);
+    const toD = movers(1);
+    const seatsR = sum(toR.map((s) => -s.effects.drawing));
+    const seatsD = sum(toD.map((s) => s.effects.drawing));
+    const total = sum(states.map((s) => s.seats));
+    return {
+      key: status, label: STATUS_LABELS[status], states: states.length, seats: total,
+      sub: `${count(states.length)} ${plural(states.length, 'state', 'states')}, ${seats(total)} ${plural(total, 'seat', 'seats')}`,
+      seatsR, seatsD, net: effect(seatsD - seatsR),
+      namesR: toR.map((s) => s.name), namesD: toD.map((s) => s.name),
+    };
+  });
+  const [court] = rows;
+  const maps = sum(rows.map((r) => r.states));
+  const toward = (n: number, party: string) => `${seats(n)} ${plural(n, 'seat', 'seats')} toward ${party}`;
+  const moved = [
+    court.namesR.length ? `those of ${nameList(court.namesR)} move ${toward(court.seatsR, 'Republicans')}` : '',
+    court.namesD.length ? `those of ${nameList(court.namesD)} ${court.namesR.length ? '' : 'move '}${toward(court.seatsD, 'Democrats')}` : '',
+  ].filter(Boolean);
+  return {
+    rows,
+    figures: [
+      { value: count(court.states), label: plural(court.states, 'map challenged in court', 'maps challenged in court') },
+      { value: court.net, label: 'drawing effect of these maps' },
+    ],
+    heads: { r: 'Toward Republicans', d: 'Toward Democrats' },
+    label: rows.map((r) => `${r.label}: ${r.sub}; ${toward(r.seatsR, 'Republicans')} and ${toward(r.seatsD, 'Democrats')}, `
+      + `net ${r.net}.`).join(' '),
+    note: `All ${count(maps)} maps are the ones used on November 3, 2026. On ${longDate(results.meta.status_checked)}, a court `
+      + `case against the map was pending in ${count(court.states)} ${plural(court.states, 'state', 'states')}. A pending `
+      + `case is not a ruling.${moved.length ? ` Of these maps, ${moved.join(', and ')}.` : ''}`,
+  };
+}
+export type LegalView = ReturnType<typeof legalView>;
 
 // --- The Senate (Task 6.14; the seats on the ballot in 2026) -------------------------
 

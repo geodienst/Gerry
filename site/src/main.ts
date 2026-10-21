@@ -14,7 +14,7 @@ import { byId as $, node } from './ui/dom.ts';
 import { paletteColors } from './ui/palette.ts';
 import { renderOutcomes } from './ui/outcomes.ts';
 import { createTour } from './ui/tour.ts';
-import { renderDecide, showSenate } from './ui/decide.ts';
+import { renderDecide, showSenate, drawLegal } from './ui/decide.ts';
 import { drawSeatAxis } from './ui/charts.ts';
 import { share } from './ui/share.ts';
 import { mountGraphics } from './ui/graphics.ts';
@@ -75,6 +75,7 @@ async function main() {
     outcomes.paint(colors);
     atlas.repaint(colors);
     graphics.palette(palette);
+    drawLegal(decide.legal, colors);
   };
   const PALETTES: Palette[] = ['party', 'neutral'];
   for (const choice of PALETTES) {
@@ -96,6 +97,7 @@ async function main() {
 
   const decide = decideView(results);
   renderDecide(decide);
+  drawLegal(decide.legal, colors);
   // the Senate block follows the vote slider of chapter 01
   let senatePoint = outcomesData.points[outcomesData.baseIndex];
   showSenate(decide, senatePoint);
@@ -134,6 +136,7 @@ async function main() {
     const at = focusable().indexOf(document.activeElement as HTMLElement);
     atlas.renderSheet();
     renderDecide(decide);
+    drawLegal(decide.legal, colors);
     showSenate(decide, senatePoint);
     drawFigure();
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
