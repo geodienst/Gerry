@@ -229,8 +229,9 @@ export function download(canvas: HTMLCanvasElement, file: string) {
 }
 
 /**
- * The block "Graphics to reuse": draws both images, fills in their captions and wires the buttons. The national
- * image follows the stop of the slider in chapter 01 (point) and both follow the colors chosen under the map (palette).
+ * The block "Graphics to reuse": draws both images, fills in their captions and wires the buttons. Both use the 2016
+ * and 2020 votes, as the site opens, whatever the slider in chapter 01 shows; they follow the colors chosen under the
+ * map (palette).
  */
 export function mountGraphics(results: Results, view: OutcomesView, palette: Palette) {
   const card = (id: string) => {
@@ -240,8 +241,7 @@ export function mountGraphics(results: Results, view: OutcomesView, palette: Pal
   const nationalCard = card('graphic-national');
   const statesCard = card('graphic-states');
   const states = statesGraphic(results, view);
-  let index = view.baseIndex;
-  let national = nationalGraphic(results, view, index);
+  const national = nationalGraphic(results, view, view.baseIndex);
   let colors = lightColors(palette);
   const drawNationalCard = () => {
     drawNational(nationalCard.canvas, national, colors);
@@ -251,37 +251,17 @@ export function mountGraphics(results: Results, view: OutcomesView, palette: Pal
     drawStates(statesCard.canvas, states, colors);
     statesCard.caption.textContent = states.caption;
   };
-  // While the slider moves, the caption follows at once and the image a moment after the last stop: it lies far
-  // below the slider, and drawing 2400 pixels at every stop would slow the slider on a phone.
-  let pending = 0;
-  const flush = () => {
-    if (!pending) return;
-    clearTimeout(pending);
-    pending = 0;
-    drawNationalCard();
-  };
   const on = (c: ReturnType<typeof card>, action: string, run: () => void) =>
     c.root.querySelector(`[data-action="${action}"]`)!.addEventListener('click', run);
-  on(nationalCard, 'download', () => { flush(); download(nationalCard.canvas, national.file); });
+  on(nationalCard, 'download', () => download(nationalCard.canvas, national.file));
   on(nationalCard, 'copy', () => { void copyCaption(national.caption); });
   on(statesCard, 'download', () => download(statesCard.canvas, states.file));
   on(statesCard, 'copy', () => { void copyCaption(states.caption); });
   drawNationalCard();
   drawStatesCard();
   return {
-    point(at: number) {
-      if (at === index) return;
-      index = at;
-      national = nationalGraphic(results, view, index);
-      nationalCard.caption.textContent = national.caption;
-      nationalCard.canvas.setAttribute('aria-label', national.alt);
-      clearTimeout(pending);
-      pending = window.setTimeout(() => { pending = 0; drawNationalCard(); }, 150);
-    },
     palette(next: Palette) {
       colors = lightColors(next);
-      clearTimeout(pending);
-      pending = 0;
       drawNationalCard();
       drawStatesCard();
     },

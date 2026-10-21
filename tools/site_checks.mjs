@@ -1224,15 +1224,20 @@ async function graphics(t) {
   await t.js("document.querySelector('#graphic-states [data-action=copy]').click()");
   t.check('Copy caption puts the caption on the clipboard, with a short note', await t.until("document.querySelector('.share-note')?.textContent === 'Caption copied'", 2000)
     && await t.js("window.copied === document.querySelector('#graphic-states .caption').textContent"));
-  // the national image follows the slider of chapter 01: the caption and the text alternative at once, the image
-  // itself a moment after the last stop
-  const image = "document.querySelector('#graphic-national canvas').toDataURL('image/png')";
-  await t.js(`window.imageBefore = ${image}; true`);
-  await t.js("{ const s = document.getElementById('vote'); s.value = '0'; s.dispatchEvent(new Event('input')) }");
-  t.check('the national image, its caption and its text alternative follow the slider', await t.js(
-    "document.querySelector('#graphic-national .caption').textContent.startsWith('With Democrats at ' + document.getElementById('vote-out').textContent + ' of the two-party vote, ')"
-    + " && document.querySelector('#graphic-national canvas').getAttribute('aria-label').startsWith(document.getElementById('outcomes-lead').textContent)")
-    && await t.until(`${image} !== window.imageBefore`, 2000));
+  // both images keep the 2016 and 2020 votes, whatever the slider of chapter 01 shows
+  const national = "[document.querySelector('#graphic-national canvas').toDataURL('image/png'), document.querySelector('#graphic-national .caption').textContent,"
+    + " document.querySelector('#graphic-national canvas').getAttribute('aria-label')].join('|')";
+  await t.js(`window.nationalBefore = ${national}; window.leadBefore = document.getElementById('outcomes-lead').textContent; true`);
+  await t.js("{ const s = document.getElementById('vote'); s.value = '0'; s.dispatchEvent(new Event('input')); s.dispatchEvent(new Event('change')) }");
+  await t.sleep(600);
+  t.check('the slider of chapter 01 leaves the national image, its caption and its text alternative at the 2016 and 2020 votes',
+    await t.js("document.getElementById('outcomes-lead').textContent !== window.leadBefore")
+    && await t.js(`${national} === window.nationalBefore`)
+    && await t.js("document.querySelector('#graphic-national .caption').textContent.startsWith('With the 2016 and 2020 presidential votes, ')"));
+  await t.js("window.saved = []; document.querySelector('#graphic-national [data-action=download]').click()");
+  t.check('after the slider moves, Download PNG still saves the image of the 2016 and 2020 votes',
+    await t.until('window.saved.length === 1', 3000) && await t.js("window.saved[0][0] === 'somevotes-national-51-8.png'"),
+    await t.js('JSON.stringify(window.saved)'));
   await t.screenshot('graphics-1280', { viewport: false });
 }
 

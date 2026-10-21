@@ -39,9 +39,8 @@ async function main() {
   const shared = outcomesFromSearch(location.search, outcomesData.rows.map((row) => row.key), outcomesData.points.map((p) => p.share));
   createTour(outcomesData.tour, outcomes, { reduceMotion: lessMotion, hold: Boolean(shared) });
   outcomes.paint(colors);
-  // the images under "Graphics to reuse"; the national one follows the slider
+  // the images under "Graphics to reuse", at the 2016 and 2020 votes whatever the slider shows
   const graphics = mountGraphics(results, outcomesData, palette);
-  outcomes.onPoint((at) => graphics.point(at));
 
   const atlas = createAtlas({ results, topology, index, colors, reduceMotion: lessMotion });
 
@@ -101,7 +100,7 @@ async function main() {
   let senatePoint = outcomesData.points[outcomesData.baseIndex];
   showSenate(decide, senatePoint);
   outcomes.onPoint((at) => { senatePoint = outcomesData.points[at]; showSenate(decide, senatePoint); });
-  if (shared) { // after the Senate and image hooks, so both follow the shared vote share
+  if (shared) { // after the Senate hook, so the Senate block follows the shared vote share
     if (shared.key) outcomes.select(shared.key);
     outcomes.moveTo(shared.index ?? outcomesData.baseIndex); // a moved slider shows no stars for changed seats
     // once chapter 01 shows another row or vote share, by the reader or by the explainer, the address no longer

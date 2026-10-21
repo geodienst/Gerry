@@ -1,4 +1,4 @@
-// The two images to download: the national comparison at the stop of the vote slider in chapter 01, and the drawing
+// The two images to download: the national comparison at a stop of the vote slider in chapter 01, and the drawing
 // effect by state. This module gives their texts, numbers and captions; ui/graphics.ts draws them on a canvas.
 import { SITE_URL } from './hash.ts';
 import { count, effectWords, longDate, seats, sliderShare } from './format.ts';
