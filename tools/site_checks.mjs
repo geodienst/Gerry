@@ -26,7 +26,8 @@ async function map(t) {
     + " && getComputedStyle(c[0]).stroke === 'rgb(163, 170, 165)'; })()"));
   t.check('while the tap line is empty it takes no room, so the box under the map is one row', await t.js(
     "document.getElementById('tapline').textContent === '' && document.getElementById('tapline').getBoundingClientRect().height === 0"
-    + " && Math.abs(document.querySelector('.mapfoot').getBoundingClientRect().height - document.querySelector('.mapfoot .mapbar').getBoundingClientRect().height - 2 * 12.8 - 2) < 2"));
+    + " && (() => { const f = document.querySelector('.mapfoot'), s = getComputedStyle(f), edge = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((n, k) => n + parseFloat(s[k]), 0);"
+    + " return Math.abs(f.getBoundingClientRect().height - f.querySelector('.mapbar').getBoundingClientRect().height - edge) < 0.5; })()"));
   t.check('the State menu lists all 50 states, the six with one seat marked', await t.js(
     "document.querySelectorAll('#pick option').length === 51 && [...document.querySelectorAll('#pick option')].filter((o) => o.textContent.endsWith(' (one seat)')).length === 6"));
 
@@ -1042,6 +1043,17 @@ async function fullscreen(t) {
     return { below: Math.round(s.getBoundingClientRect().bottom - l.bottom), rows: Math.round(l.height), fits: s.scrollHeight <= s.clientHeight + 2 }; })()`);
   t.check('1920 x 1080: in full screen the list of close districts runs down to the foot of the record',
     list.below < 90 && list.rows > 500 && list.fits, JSON.stringify(list));
+  await t.js("document.getElementById('map-full').click()");
+  // under 900px the full-screen map and the record lie one under the other: a plain scroll is for scrolling, and the
+  // tap line keeps its line, so a tap does not shrink the map
+  await t.load('', { width: 820, height: 600 });
+  await t.js("document.getElementById('map-full').click()");
+  await t.sleep(400);
+  await t.mouse('mouseWheel', await t.center("document.getElementById('map')"), { deltaX: 0, deltaY: -300 });
+  t.check('820 x 600: in full screen a plain scroll does not zoom the map and shows the hint',
+    await t.until("!document.getElementById('gesture').hidden", 2000) && await t.js(`${ZOOM} === 1`));
+  t.check('820 x 600: in full screen the empty tap line keeps its line', await t.js(
+    "document.getElementById('tapline').textContent === '' && document.getElementById('tapline').getBoundingClientRect().height > 15"));
   await t.js("document.getElementById('map-full').click()");
   // every state record fits whole in full screen, at 1920 x 1080 and at 2560 x 1440; on the larger screen the strip
   // runs on under every record
