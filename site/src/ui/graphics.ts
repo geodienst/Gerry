@@ -93,49 +93,66 @@ function render(canvas: HTMLCanvasElement, draw: (ctx: CanvasRenderingContext2D)
   draw(begin(canvas, height));
 }
 
-/** The national comparison: a bar of the House for each count, Democrats from the left, the majority line across. */
+/** The seats the axis shows: every count, with at least 15 seats either side of the majority line. */
+function majorityDomain(g: NationalGraphic): [number, number] {
+  const values = g.rows.map((r) => r.seats);
+  return [Math.min(g.majority - 15, Math.min(...values) - 4), Math.max(g.majority + 15, Math.max(...values) + 4)];
+}
+
+/**
+ * The national comparison against the majority: for each count one block per seat between the count and the majority
+ * line, blue above 218 and red below it, so the few seats that decide the majority can be counted. A seat scale runs
+ * under the rows.
+ */
 export function drawNational(canvas: HTMLCanvasElement, g: NationalGraphic, colors: Colors) {
   const f = faces();
   render(canvas, (ctx) => {
     let y = PAD - 8;
     y = paragraph(ctx, g.title, PAD, y, W - 2 * PAD, `700 44px ${f.head}`, LIGHT.fg, 54);
-    y = paragraph(ctx, g.lead, PAD, y + 8, 960, `600 24px ${f.head}`, LIGHT.fg, 33) + 34;
-    const barX = 380;
-    const barW = W - PAD - 150 - barX;
-    const x = (seatCount: number) => barX + (barW * seatCount) / g.total;
-    // the parties at both ends and the majority line, above the first bar
-    ctx.font = `600 16px ${f.body}`;
-    ctx.fillStyle = colors.party(true);
-    ctx.fillRect(barX, y - 12, 12, 12);
-    ctx.fillStyle = LIGHT.fg;
-    ctx.fillText('Democrats', barX + 18, y);
-    ctx.textAlign = 'right';
-    ctx.fillText('Republicans', barX + barW - 18, y);
-    ctx.fillStyle = colors.party(false);
-    ctx.fillRect(barX + barW - 12, y - 12, 12, 12);
-    ctx.textAlign = 'center';
-    ctx.fillStyle = LIGHT.fg;
-    ctx.fillText(g.majorityLabel, x(g.majority - 0.5), y);
-    ctx.textAlign = 'left';
-    const rowsTop = y + 14;
+    y = paragraph(ctx, g.lead, PAD, y + 8, 960, `600 24px ${f.head}`, LIGHT.fg, 33) + 40;
+    const plotX = 360;
+    const plotW = W - PAD - 130 - plotX;
+    const [lo, hi] = majorityDomain(g);
+    const x = (seatCount: number) => plotX + (plotW * (seatCount - lo)) / (hi - lo);
+    const unit = plotW / (hi - lo);
+    const gap = unit >= 6 ? 2 : 1; // the surface between two blocks
+    const size = Math.max(1, unit - gap);
+    const tall = Math.max(size, 14);
+    const mid = x(g.majority);
+    const rowsTop = y + 22;
     const rowH = 104;
+    const rowsBottom = rowsTop + (g.rows.length - 1) * rowH + 52;
+    /** Seat `s` (counted from the Democratic side) as a block in the row whose blocks are centered on `cy`. */
+    const block = (s: number, cy: number, color: string) => {
+      ctx.fillStyle = color;
+      ctx.fillRect(x(s - 1) + gap / 2, cy - tall / 2, size, tall);
+    };
+    // the key above the rows: each side of the line names its majority
+    ctx.font = `600 16px ${f.body}`;
+    ctx.fillStyle = colors.party(false);
+    ctx.fillRect(mid - 14 - 12, y - 12, 12, 12);
+    ctx.fillStyle = LIGHT.fg;
+    ctx.textAlign = 'right';
+    ctx.fillText(g.sides.r, mid - 14 - 20, y);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = colors.party(true);
+    ctx.fillRect(mid + 14, y - 12, 12, 12);
+    ctx.fillStyle = LIGHT.fg;
+    ctx.fillText(g.sides.d, mid + 14 + 20, y);
     g.rows.forEach((row, i) => {
       const top = rowsTop + i * rowH;
-      paragraph(ctx, row.label, PAD, top, barX - PAD - 24, `600 20px ${f.body}`, LIGHT.fg, 26);
-      paragraph(ctx, row.desc, PAD, top + 28, barX - PAD - 24, `15px ${f.body}`, LIGHT.muted, 20);
-      const split = x(row.seats);
-      ctx.fillStyle = colors.party(true);
-      ctx.fillRect(barX, top + 4, split - barX - 1, 36);
-      ctx.fillStyle = colors.party(false);
-      ctx.fillRect(split + 1, top + 4, barX + barW - split - 1, 36);
-      if (row.key === 'neutral') {
-        ctx.strokeStyle = LIGHT.fg;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x(g.band.lo - 1), top - 1, x(g.band.hi) - x(g.band.lo - 1), 46);
+      paragraph(ctx, row.label, PAD, top, plotX - PAD - 30, `600 20px ${f.body}`, LIGHT.fg, 26);
+      paragraph(ctx, row.desc, PAD, top + 28, plotX - PAD - 30, `15px ${f.body}`, LIGHT.muted, 20);
+      const cy = top + 21;
+      if (row.seats > g.majority) {
+        for (let s = g.majority + 1; s <= row.seats; s += 1) block(s, cy, colors.party(true));
+      } else {
+        for (let s = row.seats + 1; s <= g.majority; s += 1) block(s, cy, colors.party(false));
       }
-      ctx.font = `700 44px ${f.head}`;
+      // the count on the right
       ctx.fillStyle = LIGHT.fg;
       ctx.textAlign = 'right';
+      ctx.font = `700 44px ${f.head}`;
       ctx.fillText(row.value, W - PAD, top + 38);
       ctx.textAlign = 'left';
       // the difference to the next row, as between the rows of chapter 01
@@ -147,17 +164,33 @@ export function drawNational(canvas: HTMLCanvasElement, g: NationalGraphic, colo
         ctx.fillText(g.steps[i], PAD + 14, top + rowH - 10);
       }
     });
-    const rowsBottom = rowsTop + (g.rows.length - 1) * rowH + 48;
-    // the majority line over the bars
+    // the majority line through all rows, and the seat scale under them
     ctx.strokeStyle = LIGHT.fg;
     ctx.lineWidth = 1.5;
     ctx.setLineDash([5, 4]);
     ctx.beginPath();
-    ctx.moveTo(x(g.majority - 0.5), rowsTop);
-    ctx.lineTo(x(g.majority - 0.5), rowsBottom);
+    ctx.moveTo(mid, rowsTop - 10);
+    ctx.lineTo(mid, rowsBottom + 6);
     ctx.stroke();
     ctx.setLineDash([]);
-    return drawFoot(ctx, f, g.foot, rowsBottom + 36);
+    ctx.fillStyle = LIGHT.rule;
+    ctx.fillRect(plotX, rowsBottom + 6, plotW, 1);
+    // tick labels leave room for the label of the majority line
+    ctx.font = `700 15px ${f.body}`;
+    const clear = ctx.measureText(g.majorityLabel).width / 2 + 24;
+    ctx.font = `14px ${f.body}`;
+    ctx.fillStyle = LIGHT.muted;
+    ctx.textAlign = 'center';
+    for (let tick = Math.ceil(lo / 10) * 10; tick <= hi; tick += 10) {
+      if (Math.abs(x(tick) - mid) < clear) continue;
+      ctx.fillRect(x(tick), rowsBottom + 6, 1, 6);
+      ctx.fillText(String(tick), x(tick), rowsBottom + 30);
+    }
+    ctx.font = `700 15px ${f.body}`;
+    ctx.fillStyle = LIGHT.fg;
+    ctx.fillText(g.majorityLabel, mid, rowsBottom + 30);
+    ctx.textAlign = 'left';
+    return drawFoot(ctx, f, g.foot, rowsBottom + 64);
   });
   canvas.setAttribute('aria-label', g.alt);
 }

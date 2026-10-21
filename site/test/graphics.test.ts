@@ -29,13 +29,17 @@ test('nationalGraphic: the three counts of chapter 01 at a stop of the slider, w
   const point = view.points[view.baseIndex];
   assert.equal(g.title, 'The same votes. Three different outcomes.');
   assert.equal(g.lead, point.lead);
-  // the House of 435 with its majority line, and the band of the neutral maps
+  // the House of 435 with its majority line
   assert.equal(g.total, 435);
   assert.equal(g.majority, 218);
   assert.equal(g.majorityLabel, '218 for a majority');
-  assert.deepEqual(g.band, { lo: point.band.lo, hi: point.band.hi });
-  assert.ok(g.band.lo <= g.band.hi);
   assert.deepEqual(g.rows.map((row) => [row.key, row.seats]), point.rows.map((row) => [row.key, row.seats]));
+  // simpler than chapter 01: the neutral row names neither the median nor the band
+  assert.deepEqual(g.rows.map((row) => row.label), ['Vote-proportional', 'Neutral maps', 'Enacted maps']);
+  assert.deepEqual(g.rows.map((row) => row.desc), [point.rows[0].desc, '', point.rows[2].desc]);
+  // each side of the majority line names its majority
+  assert.deepEqual(g.sides, { r: 'Republican majority', d: 'Democratic majority' });
+  assert.equal(g.alt, `${point.lead} For each count, one block per seat between the count and the 218 seats needed for a majority.`);
   assert.deepEqual(g.steps, point.steps.map((s) => s.value));
   assert.match(g.foot.votes, /^Votes: the 2016 and 2020 presidential results added together, \d+\.\d% Democratic\.$/);
   assert.match(g.foot.maps, /^Maps used on November 3, 2026, legal status as of [A-Z][a-z]+ \d+, \d{4}\. Neutral maps and votes: ALARM Project\. District maps: U\.S\. Census Bureau\.$/);

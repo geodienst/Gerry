@@ -60,8 +60,11 @@ export function nationalGraphic(results: Results, view: OutcomesView, index: num
     total: house.total,
     majority,
     majorityLabel: `${seats(majority)} for a majority`,
-    rows: point.rows.map((r) => ({ key: r.key, label: r.label, seats: r.seats, value: r.value, desc: r.desc })),
-    band: { lo: point.band.lo, hi: point.band.hi },
+    // simpler than chapter 01: the neutral row without its median and band, which the site explains
+    rows: point.rows.map((r) => (r.key === 'neutral'
+      ? { key: r.key, label: 'Neutral maps', seats: r.seats, value: r.value, desc: '' }
+      : { key: r.key, label: r.label, seats: r.seats, value: r.value, desc: r.desc })),
+    sides: { r: 'Republican majority', d: 'Democratic majority' },
     // the difference between the first and second row, and between the second and third
     steps: point.steps.map((s) => s.value),
     foot: foot(results, point),
@@ -70,7 +73,8 @@ export function nationalGraphic(results: Results, view: OutcomesView, index: num
       + `computer, gives ${seats(seatsOf('neutral'))}; seats in proportion to each state's vote give `
       + `${seats(seatsOf('proportional'))}. ${captionCredit}`,
     file: `somevotes-national-${point.label.replace('%', '').replace('.', '-')}.png`,
-    alt: `${point.lead} Bars of the ${seats(house.total)} House seats for the three ways of counting.`,
+    alt: `${point.lead} For each count, one block per seat between the count and the ${seats(majority)} seats `
+      + 'needed for a majority.',
   };
 }
 export type NationalGraphic = ReturnType<typeof nationalGraphic>;
