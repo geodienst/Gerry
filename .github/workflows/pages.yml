@@ -1,0 +1,53 @@
+# Builds the site and publishes dist/ on GitHub Pages, on every push to main. The address, somevotes.org, is set in
+# the repository settings under Pages (source: GitHub Actions); this workflow only builds, tests and deploys.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# one deployment at a time; a newer push waits for the running one instead of cancelling it halfway
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # pnpm comes through corepack, in the version package.json names; no prompt before the download
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # the unit tests, the size of the built page included, before anything goes online
+      - run: pnpm test
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: Publish on GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
