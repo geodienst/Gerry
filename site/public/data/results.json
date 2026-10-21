@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated": "2026-10-17",
+  "generated": "2026-10-21",
   "ensemble": {
    "name": "alarm_v15",
    "doi": "doi:10.7910/DVN/SLCD3E",
@@ -11,7 +11,7 @@
    "pre_16",
    "pre_20"
   ],
-  "status_checked": "2026-10-07"
+  "status_checked": "2026-10-20"
  },
  "national": {
   "seats": 429,
@@ -2198,7 +2198,7 @@
    ]
   },
   "senate_2026": {
-   "checked": "2026-10-17",
+   "checked": "2026-10-20",
    "base_share": 0.5179747240856283,
    "up": 35,
    "held": {
@@ -6763,7 +6763,7 @@
    "fips": "29",
    "seats": 8,
    "map_name": "HB 2909 of 2022",
-   "status": "In effect",
+   "status": "Challenged",
    "source": {
     "label": "Redistricting Data Hub",
     "url": "https://redistrictingdatahub.org/dataset/2022-missouri-congressional-districts-approved-plan/"
