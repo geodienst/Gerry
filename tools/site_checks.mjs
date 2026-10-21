@@ -700,7 +700,9 @@ async function masthead(t) {
   t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
     const about = document.getElementById('about')?.textContent ?? '';
     return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
-      && ['founder of the Geodienst', 'Mark Thompson, Vincent, JW and Elmeri', 'no client and no funding', 'press office'].every((x) => about.includes(x));
+      && ['founder of the Geodienst', 'Thanks to scholars Mark Thompson and Jelte Olthof; Vincent, JW and Elmeri for reviewing',
+        'Thanks to the ALARM team and all other open data projects.', 'no client and no funding', 'press office'].every((x) => about.includes(x))
+      && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'ALARM team' && a.getAttribute('href') === 'https://alarm-redist.org/');
   })()`));
   t.check('the bio links the Geodienst, Jantina Tammes School and Geominds.nl', await t.js(
     "[...document.querySelectorAll('#about p:first-of-type a')].map((a) => `${a.textContent} ${a.getAttribute('href')}`).join() === "
