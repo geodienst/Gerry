@@ -28,16 +28,10 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
   const count = $('tour-count');
   const play = $<HTMLButtonElement>('tour-play');
   const skip = $<HTMLButtonElement>('tour-skip');
-  const bar = $('tour-progress');
   let step = -1;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let state: 'idle' | 'playing' | 'paused' | 'done' = 'idle';
 
-  function progress(ms: number) {
-    bar.style.animation = 'none';
-    void bar.offsetWidth; // restart the animation
-    bar.style.animation = `tourbar ${ms}ms linear forwards`;
-  }
   function show(i: number) {
     step = i;
     const s = tour.steps[i];
@@ -45,7 +39,6 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
     outcomes.moveTo(s.index);
     text.textContent = s.text;
     count.textContent = `${i + 1} / ${tour.steps.length}`;
-    progress(stepTime(s.text, fixed));
   }
   function next() {
     if (step + 1 < tour.steps.length) {
@@ -78,7 +71,6 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
     state = 'paused';
     clearTimeout(timer);
     play.textContent = 'Play';
-    bar.style.animationPlayState = 'paused';
   }
   function resume() {
     state = 'playing';
@@ -101,7 +93,6 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
     play.textContent = 'Replay';
     box.classList.add('done'); // a slim line: only the button stays
     skip.hidden = true;
-    bar.style.animation = 'none';
   }
 
   play.addEventListener('click', () => {
