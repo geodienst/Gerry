@@ -1,11 +1,12 @@
 // The map: three views, zoom, tooltips and the tap line (site design, chapter 4, the update of
 // October 7, 2026, and the close races of October 8). Ctrl or Cmd plus scroll zooms, a plain scroll scrolls the
-// page; on a touch screen two fingers zoom and move, one finger scrolls the page.
+// page, and in full screen from 900px, where the map and the record fill the window side by side, zooms too; on a
+// touch screen two fingers zoom and move, one finger scrolls the page.
 import { MAP, fitTransform } from '../lib/axes.ts';
 import { shareStops, shareTicks, effectBoxes } from '../lib/colors.ts';
 import { districtTip, stateTip, closeTip, tapLine, isClose, isSwing, closeness, LEGEND_TEXT } from '../lib/model.ts';
 import { geoAlbersUsa, geoPath, select, zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3';
-import { feature as topoFeature } from 'topojson-client';
+import { feature as topoFeature, mesh as topoMesh } from 'topojson-client';
 import type { Feature, MultiPolygon, Polygon } from 'geojson';
 import type { DistrictProps, MapTopology, MapView, Postal, StateProps } from '../types.ts';
 import type { Colors } from '../lib/colors.ts';
@@ -63,8 +64,14 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   }
   const hideTip = () => { tip.hidden = true; };
 
+  // The state the tap line speaks of; another state or another view clears the line (paint).
+  let tapped: Postal | null = null;
   function choose(postal: Postal, districtId: string | null) {
     tapline.textContent = tapLine(index, districtId ?? '', postal, view);
+    tapped = postal;
+    // outline the district the line names, so it can be found again after the map zooms to its state
+    districts.classed('picked', (f) => f.properties.id === districtId);
+    districts.filter('.picked').raise();
     if (index.states[postal] || index.single[postal]) onSelect(postal);
   }
 
@@ -84,6 +91,9 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     .on('click', (_event, f) => choose(f.properties.postal, null));
   const borders = borderLayer.selectAll<SVGPathElement, StateFeature>('path').data(statesGeo.features).join('path')
     .attr('class', 'state').attr('d', path);
+  // the edge of the country, where a state borders on no other state
+  const coast = borderLayer.append('path').attr('class', 'coast')
+    .attr('d', path(topoMesh(topology as never, topology.objects.states as never, (a, b) => a === b)));
   // The view 'close': a ring on each district with a margin under 5 points, filled with the color of the party ahead;
   // thick under 2 points. The rings keep their size on screen while the map zooms.
   const DOT = { tight: 5, near: 3.6, ring: { tight: 1.8, near: 0.9 } };
@@ -99,15 +109,17 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     .attr('stroke-width', (f) => DOT.ring[closeOf(f)] / k);
   sizeDots(1);
 
-  // Zoom: wheel only with Ctrl or Cmd, touch only with two fingers, drag with the mouse.
+  // Zoom: wheel with Ctrl or Cmd, or plain in the wide full screen, touch only with two fingers, drag with the mouse.
   // The wheel delta is d3's, clamped to [-1, 1]: d3 multiplies it by 10 while Ctrl is held, which would make
   // one notch zoom 4x. A notch zooms at most 2x; a trackpad pinch (many small events) is as in d3.
+  const wide = window.matchMedia('(min-width: 900px)');
+  const full = () => wide.matches && (Boolean(document.fullscreenElement?.contains(svg)) || svg.closest('.atlas.is-full') !== null);
   const zoom = d3zoom<SVGSVGElement, unknown>()
     .scaleExtent([1, MAP.maxZoom])
     .translateExtent([[0, 0], [MAP.width, MAP.height]])
     .wheelDelta((e) => Math.max(-1, Math.min(1, -e.deltaY * (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002) * (e.ctrlKey ? 10 : 1))))
     .filter((event) => {
-      if (event.type === 'wheel') return event.ctrlKey || event.metaKey;
+      if (event.type === 'wheel') return event.ctrlKey || event.metaKey || full();
       if (event.type === 'touchstart') return event.touches.length > 1;
       return !event.button;
     })
@@ -125,7 +137,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   }
   // Ctrl or Cmd + wheel stays with the map, also at the zoom limits, where d3 lets it through to the page zoom.
   svg.addEventListener('wheel', (event) => {
-    if (event.ctrlKey || event.metaKey) event.preventDefault();
+    if (event.ctrlKey || event.metaKey || full()) event.preventDefault();
     else flash(hints.wheel);
   }, { passive: false });
   let start: number | null = null;
@@ -145,6 +157,12 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
      * swing states get a thick outline.
      */
     paint(colors: Colors, nextView: MapView, selected: Postal) {
+      if (nextView !== view) hideTip(); // a tooltip of the old view would stay until the mouse moves
+      if (nextView !== view || selected !== tapped) {
+        tapline.textContent = '';
+        tapped = null;
+        districts.classed('picked', false);
+      }
       view = nextView;
       const close = view === 'close';
       const fill = (id: string) => {
@@ -163,12 +181,14 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
       districtLayer.attr('display', view === 'states' ? 'none' : null);
       stateLayer.attr('display', view === 'states' ? null : 'none');
       borders.classed('swing', (f) => view === 'close' && isSwing(index, f.properties.postal));
+      coast.raise(); // over every plain state line, which is white and would hide it; under the marked ones
       borders.filter((f) => view === 'close' && isSwing(index, f.properties.postal)).raise();
       borders.classed('on', (f) => f.properties.postal === selected);
       borders.filter((f) => f.properties.postal === selected).raise();
     },
     /** Zoom to a state, or back to the whole map for "". */
     zoomTo(postal: Postal, animate: boolean) {
+      hideTip(); // the map moves away under the pointer
       const feature = statesGeo.features.find((f) => f.properties.postal === postal);
       if (!feature) {
         move(animate).call(zoom.transform, zoomIdentity);
@@ -218,4 +238,7 @@ export function drawLegend(el: HTMLElement, view: MapView, colors: Colors, close
       if (b.label) svg.append('text').attr('x', 10 + i * step + step / 2).attr('y', 28).attr('text-anchor', 'middle').text(b.label);
     });
   }
+  const blank = legend.append('span').attr('class', 'item');
+  blank.append('i').attr('class', 'sw pale').attr('aria-hidden', 'true').style('background', colors.blank);
+  blank.append('span').text(LEGEND_TEXT.blank);
 }

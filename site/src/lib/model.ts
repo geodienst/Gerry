@@ -151,6 +151,8 @@ export const MAP_TITLES: Record<MapView, string> = {
 export const LEGEND_TEXT = {
   low: 'More Republican',
   high: 'More Democratic',
+  // the six states with one seat, gray in the views of the districts and of the drawing effect
+  blank: 'Gray: one seat, no districts',
 };
 
 // --- "Drawing effect by state" and the state sheet (Task 6.4) -----------------------------------
@@ -236,7 +238,7 @@ export function stateSheet(results: Results, postal: Postal) {
   const blocked = s.blocked_map && {
     name: s.blocked_map.name,
     status: STATUS_LABELS[s.blocked_map.status],
-    seatsText: `With these votes it would give ${seats(s.blocked_map.enacted)} Democratic ${plural(s.blocked_map.enacted, 'seat', 'seats')}.`,
+    seatsText: `With the 2016 and 2020 votes it would give ${seats(s.blocked_map.enacted)} Democratic ${plural(s.blocked_map.enacted, 'seat', 'seats')}.`,
     position: positionText(s.blocked_map.position, plans, s.blocked_map.name),
     source: s.blocked_map.source,
   };
@@ -356,6 +358,8 @@ const districtsOf = (results: Results) => Object.entries(results.states).flatMap
 export function districtShares(results: Results) {
   const all = districtsOf(results).map((d) => d.share);
   const dem = all.filter((v) => v > 0.5).length;
+  const house = houseOf(results);
+  const singles = results.national.single_seat.length;
   const first = Math.floor(Math.min(...all) * 20);
   const last = Math.min(19, Math.floor(Math.max(...all) * 20));
   const bins = [];
@@ -365,7 +369,10 @@ export function districtShares(results: Results) {
   }
   return {
     title: 'Districts by Democratic share',
-    count: `Democrats win ${count(dem)} of ${count(all.length)} districts.`,
+    // the districts of the 44 states, then the House of 435 that chapter 01 counts in
+    count: `With the 2016 and 2020 votes, Democrats win ${count(dem)} of ${count(all.length)} districts. `
+      + `The ${COUNT_WORDS[singles] ?? count(singles)} states with one seat add ${count(house.dSingle)} Democratic `
+      + `${plural(house.dSingle, 'seat', 'seats')}, for ${count(dem + house.dSingle)} of ${count(house.total)}.`,
     bins,
     hint: 'Click a state on the map for its record.',
     label: `Bar chart: ${count(all.length)} districts by Democratic share in steps of 5 points, ${count(dem)} above 50%.`,

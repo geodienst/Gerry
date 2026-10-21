@@ -24,13 +24,13 @@ test('outcomesView: three rows, the two effects between them, the band and the s
   // 435: plus the 2 Democratic single-seat states -> 226, 225 (219 to 231), 215.
   const view = outcomesView(withExtensions());
   // 215 is 218 - 3; position.more 0.9972 -> "More than 99%", under the House
-  assert.equal(view.lead, 'With these votes, Democrats would win 215 seats on the 2026 maps, three short of a majority. '
-    + 'The median result on the neutral maps is 225.');
+  assert.equal(view.lead, 'Democrats would win 215 seats on the 2026 maps, 3 short of a majority. '
+    + 'The result on a neutral map is 225.');
   assert.equal(view.points[view.baseIndex].beats, 'More than 99% of the simulated neutral maps give Democrats more seats '
     + 'than the 2026 maps do.');
   // at 50%: 207 of the 2026 maps is 11 short; neutral median 205; 19% of neutral outcomes above the enacted maps
-  assert.equal(view.points[0].lead, 'With these votes, Democrats would win 207 seats on the 2026 maps, 11 short of a majority. '
-    + 'The median result on the neutral maps is 205.');
+  assert.equal(view.points[0].lead, 'Democrats would win 207 seats on the 2026 maps, 11 short of a majority. '
+    + 'The result on a neutral map is 205.');
   assert.equal(view.points[0].beats, '19% of the simulated neutral maps give Democrats more seats than the 2026 maps do.');
   assert.equal(view.intro, 'Choose an option to see how the seats will be divided. On top of that, move the slider to change '
     + 'the national vote share.');
@@ -252,7 +252,7 @@ test('recordView: the sheet of Phase 6 plus the headline, the strip and the extr
   assert.deepEqual(record.extras, {
     head: ['Adopted by: Legislature (Republican control).'],
     body: ['Competitive districts (45 to 55%): 0 on the enacted map, 1 on neutral maps (90% of neutral maps: 0 to 2).',
-      '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).'],
+      '2024 map: 3 Democratic seats with the 2016 and 2020 votes. 2026 map: 0 (3 fewer).'],
   });
 });
 

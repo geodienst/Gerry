@@ -34,7 +34,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
       node('span', { class: 'visually-hidden' }, ' Democratic seats'));
     button.append(node('span', { class: 'dot', 'aria-hidden': 'true' }), node('span', { class: 'lab' }, row.label),
       big, parts[row.key].desc);
-    button.addEventListener('click', () => { userHook(); select(row.key, true); });
+    button.addEventListener('click', () => { user(); select(row.key, true); });
     button.addEventListener('keydown', (event) => {
       const last = view.rows.length - 1;
       const moves: Record<string, number> = { ArrowDown: i + 1, ArrowRight: i + 1, ArrowUp: i - 1, ArrowLeft: i - 1, Home: 0, End: last };
@@ -42,7 +42,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
       if (to === undefined) return;
       event.preventDefault();
       const next = view.rows[(to + view.rows.length) % view.rows.length].key;
-      userHook();
+      user();
       select(next, true);
       group.querySelector<HTMLElement>(`[data-key="${next}"]`)?.focus();
     });
@@ -226,11 +226,13 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
     drawBand();
     draw(false, true);
   }
-  slider.addEventListener('input', () => { userHook(); moveTo(Number(slider.value)); });
-  back.addEventListener('click', () => { userHook(); moveTo(view.baseIndex); slider.focus(); });
+  slider.addEventListener('input', () => { user(); moveTo(Number(slider.value)); });
+  back.addEventListener('click', () => { user(); moveTo(view.baseIndex); slider.focus(); });
 
   let current: CountKey = 'enacted';
-  let userHook = () => {}; // set by the explainer: a click on a row or a move of the slider by the reader
+  // called when the reader clicks a row or moves the slider: the explainer stops, a shared link leaves the address
+  const userHooks: (() => void)[] = [];
+  function user() { for (const hook of userHooks) hook(); }
   let shown: number | null = null; // the Democratic count on screen, where a change starts from
   let colors: Colors | null = null;
 
@@ -306,6 +308,6 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
     /** The chosen row and the stop of the slider on screen, for the link of the share button. */
     state() { return { key: current, index: pi }; },
     /** Call `fn` when the reader chooses a row or moves the slider; changes made through select and moveTo do not. */
-    onUser(fn: () => void) { userHook = fn; },
+    onUser(fn: () => void) { userHooks.push(fn); },
   };
 }

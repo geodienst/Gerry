@@ -97,18 +97,14 @@ export function sortedDomain(sorted: Pick<Sorted, 'p5' | 'p95' | 'enacted'>): [n
   return [Math.max(0, low), Math.min(1, high)];
 }
 
-/** The net bar under the list: seats toward Republicans to the left, toward Democrats to the right. */
+/** The net bar of all states together: seats toward Republicans to the left, toward Democrats to the right. */
 export function netBar(seatsR: number, seatsD: number, width = 360) {
   const center = width / 2;
   const scale = (center - 20) / Math.max(seatsR, seatsD, 1);
-  const net = seatsD - seatsR;
-  const netX = center + net * scale;
   return {
     center,
     left: { x: center - seatsR * scale, width: seatsR * scale },
     right: { x: center, width: seatsD * scale },
-    netX,
-    anchor: (netX < 60 ? 'start' : netX > width - 60 ? 'end' : 'middle') as Anchor,
   };
 }
 

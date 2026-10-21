@@ -7,7 +7,7 @@ import {
   nationalView, stateSheet, axisLabel, bandText, planCount, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS, effectList,
   LABELS, SHORT_LABELS, EFFECT_LABELS,
 } from './model.ts';
-import { stateExtras, senateView, redrawView, competitiveText, controlTables } from './extensions.ts';
+import { stateExtras, senateView, redrawView, competitiveText, controlTables, legalView } from './extensions.ts';
 import { seatTicks, rowDomain } from './axes.ts';
 import type { DotRow } from './axes.ts';
 import { plural, seatSpan, nameList, capitalize } from './text.ts';
@@ -117,9 +117,9 @@ export function outcomesView(results: Results) {
       const part = planShare(p.more);
       return {
         ...p,
-        lead: `With these votes, Democrats would win ${seats(e)} seats on the 2026 maps, `
-          + (short > 0 ? `${COUNT_WORDS[short] ?? count(short)} short of a majority. ` : 'a majority. ')
-          + `The median result on the neutral maps is ${seats(rowOf(p, 'neutral').seats)}.`,
+        lead: `Democrats would win ${seats(e)} seats on the 2026 maps, `
+          + (short > 0 ? `${count(short)} short of a majority. ` : 'a majority. ')
+          + `The result on a neutral map is ${seats(rowOf(p, 'neutral').seats)}.`,
         beats: `${capitalize(part)} of the simulated neutral maps give Democrats more seats than the 2026 maps do.`,
       };
     });
@@ -401,6 +401,7 @@ export function decideView(results: Results) {
       rows: redraws.rows,
     },
     control: controlTables(results),
+    legal: legalView(results),
   };
 }
 export type DecideView = ReturnType<typeof decideView>;

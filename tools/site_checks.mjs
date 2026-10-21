@@ -21,6 +21,13 @@ async function map(t) {
   t.check('435 districts and 50 states on the map',
     await t.js("document.querySelectorAll('#map path.district').length === 435 && document.querySelectorAll('#map path.statefill').length === 50"));
   t.check('the zoom hint is hidden at the start', await t.js("getComputedStyle(document.getElementById('gesture')).display === 'none'"));
+  t.check('the edge of the country is drawn in the gray of the state lines', await t.js(
+    "(() => { const c = document.querySelectorAll('#map path.coast'); return c.length === 1 && c[0].getAttribute('d').length > 1000"
+    + " && getComputedStyle(c[0]).stroke === 'rgb(163, 170, 165)'; })()"));
+  t.check('while the tap line is empty it takes no room, so the box under the map is one row', await t.js(
+    "document.getElementById('tapline').textContent === '' && document.getElementById('tapline').getBoundingClientRect().height === 0"
+    + " && (() => { const f = document.querySelector('.mapfoot'), s = getComputedStyle(f), edge = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((n, k) => n + parseFloat(s[k]), 0);"
+    + " return Math.abs(f.getBoundingClientRect().height - f.querySelector('.mapbar').getBoundingClientRect().height - edge) < 0.5; })()"));
   t.check('the State menu lists all 50 states, the six with one seat marked', await t.js(
     "document.querySelectorAll('#pick option').length === 51 && [...document.querySelectorAll('#pick option')].filter((o) => o.textContent.endsWith(' (one seat)')).length === 6"));
 
@@ -89,6 +96,17 @@ async function map(t) {
   const quietStates = await t.js(quiet);
   await t.js("document.getElementById('view-districts').click()");
   t.check('no hint line under the map and no sentence under the legend', quietDistricts && quietStates);
+  // the six states with one seat are gray in both views; the legend says what the gray is
+  const grayItem = (shapes, key) => `(() => {
+    const item = [...document.querySelectorAll('#legend .item')].find((s) => s.textContent === 'Gray: one seat, no districts');
+    const wyoming = [...document.querySelectorAll('${shapes}')].find((p) => p.__data__.properties.${key} === 'WY');
+    return !!item && getComputedStyle(item.querySelector('i.sw')).backgroundColor === getComputedStyle(wyoming).fill; })()`;
+  const grayDistricts = await t.js(grayItem('#map path.district', 'state'));
+  await t.js("document.getElementById('view-states').click()");
+  const grayStates = await t.js(grayItem('#map path.statefill', 'postal'));
+  await t.js("document.getElementById('view-districts').click()");
+  t.check('the legend of the districts and of the drawing effect names the gray of the six states with one seat',
+    grayDistricts && grayStates, JSON.stringify({ grayDistricts, grayStates }));
   const fills = "[...document.querySelectorAll('#map path.district')].slice(0, 30).map((p) => p.getAttribute('fill')).join()";
   const party = await t.js(fills);
   await t.js("document.getElementById('palette-neutral').click()");
@@ -176,15 +194,16 @@ async function list(t) {
   // five points of Democratic share from the lowest district (18.3%, bin 15%) to the highest (92.0%, bin 90%).
   t.check('without a state, in the view of the districts, the column shows the districts by share',
     await t.until(`${HEADING} === 'Districts by Democratic share'`)
-    && (await t.text('#sheet .count')) === 'Democrats win 213 of 429 districts.'
+    && (await t.text('#sheet .count')) === 'With the 2016 and 2020 votes, Democrats win 213 of 429 districts. '
+      + 'The six states with one seat add 2 Democratic seats, for 215 of 435.'
     && await t.js(`(() => { const bars = [...document.querySelectorAll('#sheet .bins rect')];
       const blue = getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim();
       return bars.length === 16 && bars.reduce((n, b) => n + Number(b.querySelector('title').textContent.match(/: (\\d+) district/)[1]), 0) === 429
         && bars.map((b) => b.getAttribute('fill') === blue).join() === Array.from({ length: 16 }, (_, i) => i >= 7).join(); })()`)
     && (await t.text('#sheet > p.note')) === 'Click a state on the map for its record.');
-  // and under it "All states together", as in the list of states
-  t.check('under the districts by share the net of all states, as in the list', await t.js(
-    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h4').textContent === 'All states together' && !!net.querySelector('svg') && /Net: .+\\.$/.test(net.querySelector('p').textContent) && document.getElementById('sheet').lastElementChild === net; })()"));
+  // and above it "All states together", as in the list of states: the net large, the bar of both sides, the sums
+  t.check('above the districts by share the net of all states, large, as in the list', await t.js(
+    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h3').textContent === 'All states together' && /^Net (0|[RD]\\+\\d+)$/.test(net.querySelector('.big').textContent) && !!net.querySelector('svg') && /Net: .+\\.$/.test(net.querySelector('p.note').textContent) && document.getElementById('sheet').firstElementChild === net; })()"));
   // the box is as high as its content; title and legend in the map box
   t.check('a short column box ends after its content, above the bottom of the map column', await t.js(`(() => {
     const record = document.getElementById('sheet').getBoundingClientRect(), col = document.querySelector('.atlas > .mapcol').getBoundingClientRect();
@@ -200,8 +219,8 @@ async function list(t) {
     await t.until(`${HEADING} === 'Close districts, 45 to 55%'`) && (await t.text('#sheet .count')) === '81 on the 2026 maps.'
     && await t.js(`(() => { const v = [...document.querySelectorAll('#sheet .drow .v')].map((s) => Math.abs(parseFloat(s.textContent) - 50));
       return v.length === 81 && v.every((x, i) => i === 0 || x >= v[i - 1] - 0.051); })()`));
-  t.check('under the close districts the net of all states as well', await t.js(
-    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h4').textContent === 'All states together' && document.getElementById('sheet').lastElementChild === net; })()"));
+  t.check('above the close districts the net of all states as well', await t.js(
+    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h3').textContent === 'All states together' && document.getElementById('sheet').firstElementChild === net; })()"));
   await t.js("document.querySelector('#states .tools').scrollIntoView()");
   await t.screenshot('close-1280', { viewport: true });
   const close = await t.js("document.querySelector('#sheet .drow').dataset.postal");
@@ -230,8 +249,8 @@ async function list(t) {
   })()`));
   await t.js("document.querySelector('#sheet details.zeros summary').click()");
   t.check('the line with the arrow unfolds them', await t.js("document.querySelector('#sheet details.zeros').open"));
-  t.check('the net bar names both sides and the net', await t.js(
-    "(() => { const s = document.querySelector('#sheet .net svg'); return s !== null && s.textContent.includes('toward Republicans') && s.textContent.includes('toward Democrats') && /Net (0|[RD]\\+\\d+)/.test(s.textContent); })()"));
+  t.check('the net bar names both sides without a marker under it, and the net stands large above it, on top of the list', await t.js(
+    "(() => { const net = document.querySelector('#sheet .net'), s = net?.querySelector('svg'); return s != null && s.textContent.includes('toward Republicans') && s.textContent.includes('toward Democrats') && !s.querySelector('path') && !/Net/.test(s.textContent) && /^Net (0|[RD]\\+\\d+)$/.test(net.querySelector('.big').textContent) && document.getElementById('sheet').firstElementChild === net; })()"));
   t.check('the net bar puts Republicans left in their color and Democrats right', await t.js(`(() => {
     const s = document.querySelector('#sheet .net svg');
     const [l, r] = s.querySelectorAll('rect');
@@ -243,7 +262,7 @@ async function list(t) {
       && Number(l.getAttribute('x')) + Number(l.getAttribute('width')) <= c + 0.01 && Number(r.getAttribute('x')) >= c - 0.01
       && left.textContent.endsWith('toward Republicans') && right.textContent.endsWith('toward Democrats');
   })()`));
-  t.check('a sentence under the net bar gives the sums', /Net: .+\.$/.test(await t.text('#sheet .net p')));
+  t.check('a sentence under the net bar gives the sums', /Net: .+\.$/.test(await t.text('#sheet .net p.note')));
   await t.screenshot('list-1280');
 }
 
@@ -395,13 +414,14 @@ async function sweep(t) {
 // --- Task 7.9: chapter 03 ------------------------------------------------------------------------
 async function decide(t) {
   await t.load();
-  t.check('chapter 03 is "In detail", without an intro, with four cards and the Senate last', await t.js(
-    "[...document.querySelectorAll('#decide .grid3 > section')].map((s) => s.id).join() === 'competitive,redraws,control,senate'")
+  t.check('chapter 03 is "In detail", without an intro, with five cards and the Senate last', await t.js(
+    "[...document.querySelectorAll('#decide .grid3 > section')].map((s) => s.id).join() === 'competitive,redraws,control,legal,senate'")
     && (await t.text('#decide .chead h2')) === 'In detail' && await t.js("!document.getElementById('decide-intro')")
     && (await t.text('#senate .kicker')) === 'Beyond district lines');
   const figs = await t.js("[...document.querySelectorAll('#decide .figs b')].map((b) => b.textContent)");
-  // the Senate has two: the share needed and the seats of 100 at the slider
-  t.check('six large figures, each a formatted number', figs.length === 6
+  // the maps in court and the Senate have two each: the challenged maps and their drawing effect, the share needed and
+  // the seats of 100 at the slider
+  t.check('eight large figures, each a formatted number', figs.length === 8
     && figs.every((v) => /^(\d+(\.\d+)?%|\d+|\d+ to \d+|\d+ of 100|0|[RD]\+\d+)$/.test(v)), figs.join(' | '));
   const axes = await t.js(`[...document.querySelectorAll('#decide svg.dotrows')].map((s) => ({ id: s.parentElement.id, role: s.getAttribute('role'),
     label: s.getAttribute('aria-label'), rows: [...s.querySelectorAll('text.lbl')].map((x) => x.textContent), base: s.querySelectorAll('line.base').length }))`);
@@ -622,11 +642,11 @@ async function layout(t) {
 // --- Task 6.11: redraws since 2024 ---------------------------------------------------------------
 async function redraws(t) {
   await t.load('#TX');
-  t.check('the national redraw sentence', /^With these votes, the maps of the 2024 election give Democrats \d+ seats and the 2026 maps \d+\. Net change: (0, no difference|[RD]\+\d+, .+)\.$/.test(await t.text('#redraw-text')));
+  t.check('the national redraw sentence', /^With the 2016 and 2020 votes, the maps of the 2024 election give Democrats \d+ seats and the 2026 maps \d+\. Net change: (0, no difference|[RD]\+\d+, .+)\.$/.test(await t.text('#redraw-text')));
   const changed = await t.js(`${DATA}.then((r) => Object.values(r.states).filter((s) => s.redraw.change !== 0).length)`);
   t.check('one line per state with another seat count', await t.js(`document.querySelectorAll('#redraw-list li').length === ${changed}`));
   await t.until(`${HEADING} === 'Texas'`);
-  t.check('the Texas sheet has the redraw line', /(Map unchanged since 2024\.|2024 map: \d+ Democratic seats? with these votes\. 2026 map: \d+ \((\d+ (fewer|more)|the same number)\)\.)/.test(await t.text('#sheet')));
+  t.check('the Texas sheet has the redraw line', /(Map unchanged since 2024\.|2024 map: \d+ Democratic seats? with the 2016 and 2020 votes\. 2026 map: \d+ \((\d+ (fewer|more)|the same number)\)\.)/.test(await t.text('#sheet')));
 }
 
 // --- Task 6.12: competitive districts ------------------------------------------------------------
@@ -642,6 +662,23 @@ async function control(t) {
   await t.load('#TX');
   t.check('the table by control has four rows and the one by body three', await t.js("document.querySelectorAll('#by-control tr').length === 4 && document.querySelectorAll('#by-body tr').length === 3"));
   t.check('the seven drawing effects in the tables show their direction', await t.js("((cells) => cells.length === 7 && cells.every((td) => /^(0|[RD]\\+\\d+)$/.test(td.textContent)))([...document.querySelectorAll('#control tbody td:last-child')])"));
+  // the maps in court: the number of challenged maps and their drawing effect, a row per legal status in the party
+  // colors chosen under the map, and the note with the status date
+  const legal = `(() => { const s = document.getElementById('legal'), rects = [...s.querySelectorAll('#legal-bars svg rect')];
+    return { title: s.querySelector('h3').textContent, figs: [...s.querySelectorAll('#legal-figures b')].map((b) => b.textContent),
+      rects: rects.length, fills: [...new Set(rects.map((r) => r.getAttribute('fill')))], note: document.getElementById('legal-note').textContent }; })()`;
+  const court = await t.js(legal);
+  t.check('Maps in court: the challenged maps and their drawing effect, a row per status in two colors, and the status date',
+    court.title === 'Maps in court' && court.figs.length === 2 && /^\d+$/.test(court.figs[0]) && /^(0|[RD]\+\d+)$/.test(court.figs[1])
+    && court.rects === 4 && court.fills.length === 2 && /^All \d+ maps are the ones used on November 3, 2026\. On [A-Z][a-z]+ \d+, 2026, a court case against the map was pending in \d+ states?\. A pending case is not a ruling\./.test(court.note),
+    JSON.stringify(court));
+  await t.js("document.getElementById('palette-neutral').click()");
+  const neutral = await t.js(legal);
+  await t.js("document.getElementById('palette-party').click()");
+  t.check('Maps in court follows the colors chosen under the map', neutral.fills.length === 2 && neutral.fills.every((f) => !court.fills.includes(f)),
+    JSON.stringify([court.fills, neutral.fills]));
+  t.check('on a wide screen the last card of chapter 03, the Senate, takes the whole row', await t.js(
+    "Math.abs(document.getElementById('senate').getBoundingClientRect().width - document.querySelector('.grid3').clientWidth) < 2"));
   await t.until(`${HEADING} === 'Texas'`);
   t.check('the Texas sheet says who adopted the map', /Adopted by: (Legislature|Commission|Court) \((Republican control|Democratic control|bipartisan|nonpartisan)\)\./.test(await t.text('#sheet')));
 }
@@ -688,11 +725,16 @@ async function masthead(t) {
   t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
     const about = document.getElementById('about')?.textContent ?? '';
     return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
-      && ['founder of the Geodienst', 'Mark Thompson, Vincent, JW and Elmeri', 'no client and no funding', 'press office'].every((x) => about.includes(x));
+      && ['founder of the Geodienst', 'Thanks to scholars Mark Thompson and Jelte Olthof; Vincent, JW and Elmeri for reviewing',
+        'Thanks to the ALARM team and all other open data projects.', 'no client and no funding', 'press office'].every((x) => about.includes(x))
+      && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'ALARM team' && a.getAttribute('href') === 'https://alarm-redist.org/');
   })()`));
   t.check('the bio links the Geodienst, Jantina Tammes School and Geominds.nl', await t.js(
     "[...document.querySelectorAll('#about p:first-of-type a')].map((a) => `${a.textContent} ${a.getAttribute('href')}`).join() === "
     + "'Geodienst https://rug.nl/geo,Jantina Tammes School https://www.rug.nl/jantina-tammes-school/,Geominds.nl https://geominds.nl'"));
+  t.check('the contact line links the press office of the University of Groningen', await t.js(
+    "[...document.querySelectorAll('#about p')].at(-1).querySelector('a')?.getAttribute('href') === "
+    + "'https://www.rug.nl/about-ug/latest-news/press-information/contact-persvoorlichting'"));
   await t.js("document.querySelector('.mast .byline a[href=\"#method\"]').click()");
   t.check('the Methodology link opens the method', await t.until("location.hash === '#method' && document.getElementById('method-details').open"));
   t.check('the meta description is the line under the title',
@@ -736,7 +778,7 @@ async function outcomes(t) {
       && [...document.querySelectorAll('#scen .big .visually-hidden')].every((s) => s.textContent.trim() === 'Democratic seats');
   })()`));
   // the large sentence, and the 99% sentence under the House
-  t.check('the chapter opens with the seats on the 2026 maps and the neutral median', /^With these votes, Democrats would win \d+ seats on the 2026 maps, (\w+ short of a majority|a majority)\. The median result on the neutral maps is \d+\.$/
+  t.check('the chapter opens with the seats on the 2026 maps and the neutral median', /^Democrats would win \d+ seats on the 2026 maps, (\d+ short of a majority|a majority)\. The result on a neutral map is \d+\.$/
     .test(await t.text('#outcomes-lead')), await t.text('#outcomes-lead'));
   t.check('under the House the share of neutral maps that give Democrats more seats', /^(More than 99%|Less than 1%|\d+%) of the simulated neutral maps give Democrats more seats than the 2026 maps do\.$/
     .test(await t.text('#outcomes-beats')), await t.text('#outcomes-beats'));
@@ -965,16 +1007,17 @@ async function fullscreen(t) {
   t.check('the button puts the map, its legend and the sheet beside it over the whole window', on.full && on.pressed === 'true'
     && on.label === 'Exit full screen' && on.height > 0.6 * on.window && on.legend && on.sheet, JSON.stringify(on));
   await t.screenshot('map-full-1280');
-  // map large with title and legend inside, the record on the right in its own
-  // order ending with map, status and adoption, a strip under both with the folds under the record, Share under the
-  // map; no district line and colors in full screen
-  await t.load('#TX', { width: 1920, height: 1080 });
+  // map large with title, legend and Share inside, Share beside the zoom buttons, the record on the right in its own
+  // order ending with map, status and adoption, a strip under both with the folds under the record; no district line
+  // and colors in full screen
+  await t.load('#TX', { width: 2560, height: 1440 });
   await t.until(`${HEADING} === 'Texas'`);
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(400);
   const wide = await t.js(`(() => { const r = (el) => (typeof el === 'string' ? document.getElementById(el) : el).getBoundingClientRect();
     const map = r('mapbox'), col = r(document.querySelector('.atlas > .mapcol')), side = r('sheet'), more = r('sheet-more');
     const title = r('map-title'), legend = r('legend'), share = r('map-share'), folds = r(document.querySelector('#sheet-more .fs-folds'));
+    const zoom = r(document.querySelector('.zoombar'));
     const foot = document.querySelector('#sheet .foot');
     return { sideRight: side.left >= map.right - 1,
       stripUnderBoth: more.top >= Math.max(col.bottom, side.bottom) - 1 && more.left <= map.left + 1 && more.right >= side.right - 1,
@@ -984,18 +1027,19 @@ async function fullscreen(t) {
       foot: !!foot && foot.textContent.includes(' \u00b7 Challenged in court \u00b7 Legal status as of') && foot.textContent.includes('Adopted by'),
       kept: !!document.querySelector('#sheet .headline') && !!document.querySelector('#sheet .k'),
       noHints: !document.getElementById('tapline').checkVisibility() && !document.querySelector('.colors').checkVisibility(),
-      shareUnderMap: document.getElementById('map-share').checkVisibility() && share.top >= map.bottom - 1 && share.right <= map.right + 1
-        && share.bottom <= more.top + 1,
+      shareInMap: document.getElementById('map-share').checkVisibility() && share.top >= map.top && share.bottom <= zoom.top + 64
+        && share.right <= zoom.left && share.left >= map.left,
       sideFits: document.getElementById('sheet').scrollHeight <= document.getElementById('sheet').clientHeight + 2,
       stripFits: document.getElementById('sheet-more').scrollHeight <= document.getElementById('sheet-more').clientHeight + 2,
       inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top }; })()`);
-  t.check('1920 x 1080: full screen: the whole Texas record on the right, a strip under both with the folds under the record, title and legend in the map, Share under it',
+  t.check('2560 x 1440: full screen: the whole Texas record on the right, a strip under both with the folds under the record, title, legend and Share in the map',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
-  await t.screenshot('map-full-1920-texas', { viewport: true });
-  // a record too long for the room above the strip, such as Arizona at this size,
+  await t.screenshot('map-full-2560-texas', { viewport: true });
+  // a record too long for the room above the strip, such as Arizona at 1920 x 1080,
   // takes the whole height, and the strip stays under the map
-  await t.js("location.hash = '#AZ'");
+  await t.load('#AZ', { width: 1920, height: 1080 });
   await t.until(`${HEADING} === 'Arizona'`);
+  await t.js("document.getElementById('map-full').click()");
   await t.sleep(1500); // the zoom to the state has ended
   const long = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
     const map = r('mapbox'), side = r('sheet'), more = r('sheet-more'), s = document.getElementById('sheet');
@@ -1004,6 +1048,31 @@ async function fullscreen(t) {
   t.check('1920 x 1080: the longer Arizona record takes the whole height and the strip stays under the map',
     Object.values(long).every(Boolean), JSON.stringify(long));
   await t.screenshot('map-full-1920-arizona', { viewport: true });
+  // in full screen there is no page to scroll, so a plain scroll zooms the map, without the hint
+  const zoomed = await t.js(ZOOM);
+  await t.mouse('mouseWheel', await t.center("document.getElementById('map')"), { deltaX: 0, deltaY: -300 });
+  t.check('in full screen a plain scroll zooms the map, without the Ctrl hint',
+    await t.until(`${ZOOM} > ${zoomed} * 1.2`, 3000) && await t.js("document.getElementById('gesture').hidden"));
+  // the list of close districts runs down to the foot of the record
+  await t.load('', { width: 1920, height: 1080 });
+  await t.js("document.getElementById('view-close').click(); document.getElementById('map-full').click()");
+  await t.sleep(600);
+  const list = await t.js(`(() => { const s = document.getElementById('sheet'), l = s.querySelector('.dlist').getBoundingClientRect();
+    return { below: Math.round(s.getBoundingClientRect().bottom - l.bottom), rows: Math.round(l.height), fits: s.scrollHeight <= s.clientHeight + 2 }; })()`);
+  t.check('1920 x 1080: in full screen the list of close districts runs down to the foot of the record',
+    list.below < 90 && list.rows > 500 && list.fits, JSON.stringify(list));
+  await t.js("document.getElementById('map-full').click()");
+  // under 900px the full-screen map and the record lie one under the other: a plain scroll is for scrolling, and the
+  // tap line keeps its line, so a tap does not shrink the map
+  await t.load('', { width: 820, height: 600 });
+  await t.js("document.getElementById('map-full').click()");
+  await t.sleep(400);
+  await t.mouse('mouseWheel', await t.center("document.getElementById('map')"), { deltaX: 0, deltaY: -300 });
+  t.check('820 x 600: in full screen a plain scroll does not zoom the map and shows the hint',
+    await t.until("!document.getElementById('gesture').hidden", 2000) && await t.js(`${ZOOM} === 1`));
+  t.check('820 x 600: in full screen the empty tap line keeps its line', await t.js(
+    "document.getElementById('tapline').textContent === '' && document.getElementById('tapline').getBoundingClientRect().height > 15"));
+  await t.js("document.getElementById('map-full').click()");
   // every state record fits whole in full screen, at 1920 x 1080 and at 2560 x 1440; on the larger screen the strip
   // runs on under every record
   for (const [width, height] of [[1920, 1080], [2560, 1440]]) {
@@ -1051,7 +1120,7 @@ async function sharing(t) {
       outcomesRight: document.querySelector('#outcomes .whead').contains(out) && r(out).left >= r('readout').right && r(out).bottom <= r('waffle').top
         && r(out).right <= r('waffle').right + 1,
       dots: document.querySelectorAll('#icon-share circle').length === 3
-        && [...document.querySelectorAll('.sharebtn')].map((b) => Boolean(b.querySelector('svg use[href="#icon-share"]')) && b.textContent === 'Share').join() === 'true,true,true' };
+        && [...document.querySelectorAll('#share-site, #map-share, #outcomes-share')].map((b) => Boolean(b.querySelector('svg use[href="#icon-share"]')) && b.textContent === 'Share').join() === 'true,true,true' };
   })()`);
   t.check('Share sits at the right of the key findings, under the map and at the right above the House, each with three dots',
     Object.values(place).every(Boolean), JSON.stringify(place));
@@ -1102,6 +1171,139 @@ async function largest(t) {
   })()`));
 }
 
+// --- The tap line and the tooltip follow the state and the view ----------------------------------------------------
+async function tapline(t) {
+  await t.load('', { width: 1280, height: 800 });
+  await t.click(await t.center(districtOf('TX')));
+  const named = await t.text('#tapline');
+  t.check('a click on a district names it under the map and outlines it', /^TX-\d+: /.test(named)
+    && await t.js("(() => { const p = document.querySelectorAll('#map path.district.picked'); return p.length === 1 && p[0].__data__.properties.state === 'TX'; })()"), named);
+  await t.js("{ const p = document.getElementById('pick'); p.value = 'CA'; p.dispatchEvent(new Event('change')) }");
+  t.check('another state from the menu clears the line and the outline', await t.until(`${HEADING} === 'California'`)
+    && (await t.text('#tapline')) === '' && await t.js("!document.querySelector('#map path.district.picked')"));
+  await t.sleep(1200); // the zoom to California
+  await t.click(await t.center(districtOf('CA')));
+  const before = await t.text('#tapline');
+  await t.js("document.getElementById('view-states').click()");
+  t.check('another view clears the line', before.startsWith('CA-') && (await t.text('#tapline')) === '', before);
+  await t.js("document.getElementById('view-districts').click()");
+  await t.click(await t.center(districtOf('CA')));
+  await t.js("document.querySelector('#sheet .back').click()");
+  t.check('Back to all states clears the line', await t.until(`${HEADING} === 'Districts by Democratic share'`) && (await t.text('#tapline')) === '');
+  // the gray edge of the country lies over every state line that is not marked, also after a state was chosen or the
+  // swing states were outlined
+  const coastOnTop = "(() => { const c = document.querySelector('#map path.coast'), kids = [...c.parentNode.children], i = kids.indexOf(c);"
+    + " return kids.every((p, k) => k < i || p === c || p.matches('.on, .swing')); })()";
+  const afterBack = await t.js(coastOnTop);
+  await t.js("document.getElementById('view-close').click()");
+  await t.js("document.getElementById('view-districts').click()");
+  t.check('after Back and after the close races the edge of the country still lies over the plain state lines',
+    afterBack && await t.js(coastOnTop));
+  await t.sleep(1200);
+  await t.mouse('mouseMoved', await t.center(districtOf('TX')));
+  const shown = await t.js("!document.getElementById('tip').hidden");
+  await t.js("document.getElementById('view-close').click()");
+  t.check('a tooltip of the old view goes when the view changes under a resting mouse', shown && await t.js("document.getElementById('tip').hidden"));
+}
+
+// --- Links: a state, back to a chapter, a shared row and vote share --------------------------------------------------
+async function links(t) {
+  await t.load('#TX', { width: 1280, height: 800 });
+  t.check('a link to a state opens on chapter 02 with that state', await t.until(`${HEADING} === 'Texas'`)
+    && await t.js("scrollY > 0 && Math.abs(document.getElementById('states').getBoundingClientRect().top) < 4"));
+  await t.load('#TX', { width: 390, height: 844 });
+  t.check('on a phone a link to a state opens on its record', await t.until(`${HEADING} === 'Texas'`)
+    && await t.js("Math.abs(document.getElementById('sheet').getBoundingClientRect().top) < 4"));
+  await t.load('#method', { width: 1280, height: 800 });
+  await t.js("{ const p = document.getElementById('pick'); p.value = 'TX'; p.dispatchEvent(new Event('change')) }");
+  await t.until("location.hash === '#TX'");
+  await t.js('history.back()');
+  t.check('back from a state to #method shows the whole map again', await t.until(`location.hash === '#method' && ${HEADING} === 'Districts by Democratic share'`));
+  await t.load('#outcomes', { width: 1280, height: 800, query: 'notour&count=neutral&vote=49.2' });
+  const kept = await t.js("location.search.includes('count=neutral') && location.search.includes('vote=49.2')");
+  await t.js("document.querySelectorAll('#scen [role=radio]')[0].click()");
+  t.check('a shared row and vote share leave the address once the reader changes chapter 01', kept
+    && await t.js("!location.search.includes('count=') && !location.search.includes('vote=') && location.search.includes('notour')"));
+}
+
+// --- A phone: the map under the fingers, the slider by its thumb, the House and the slider together -----------------
+async function phone(t) {
+  await t.tab('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  await t.load('', { width: 390, height: 844 });
+  t.check('on a phone the zoom buttons form a row under the map, not over it', await t.js(`(() => {
+    const bar = document.querySelector('.zoombar'), map = document.getElementById('map').getBoundingClientRect();
+    return getComputedStyle(bar).position === 'static' && bar.getBoundingClientRect().top >= map.bottom - 1; })()`));
+  // a hit test: the thumb takes a finger, the track around it does not
+  t.check('on a touch screen the slider takes the finger on its thumb only', await t.js(`(() => {
+    const s = document.getElementById('vote');
+    s.scrollIntoView({ block: 'center' });
+    const r = s.getBoundingClientRect(), y = r.top + r.height / 2;
+    const at = (v) => r.left + r.height / 2 + ((v - Number(s.min)) / (Number(s.max) - Number(s.min))) * (r.width - r.height);
+    const far = Number(s.value) > (Number(s.min) + Number(s.max)) / 2 ? Number(s.min) : Number(s.max);
+    return matchMedia('(pointer: coarse)').matches && getComputedStyle(s).pointerEvents === 'none'
+      && document.elementFromPoint(at(Number(s.value)), y) === s && document.elementFromPoint(at(far), y) !== s;
+  })()`));
+  t.check('in one column the key of the House goes under the slider', await t.js(
+    "document.querySelector('.waffle .wkey').getBoundingClientRect().top > document.getElementById('vote').getBoundingClientRect().bottom"));
+  await t.js("{ const p = document.getElementById('pick'); p.scrollIntoView({ block: 'center' }); p.value = 'NC'; p.dispatchEvent(new Event('change')) }");
+  t.check('on a phone a state from the menu brings its record up', await t.until(`${HEADING} === 'North Carolina'`)
+    && await t.until("Math.abs(document.getElementById('sheet').getBoundingClientRect().top) < 4", 3000));
+  // arrow keys on the menu choose at each press, so they leave the menu where it is
+  await t.js("document.getElementById('pick').scrollIntoView({ block: 'center' }); document.getElementById('pick').focus()");
+  const menuTop = await t.js("Math.round(document.getElementById('pick').getBoundingClientRect().top)");
+  await t.js("{ const p = document.getElementById('pick'); p.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })); p.value = 'NE'; p.dispatchEvent(new Event('change')) }");
+  t.check('a state chosen with the keys on the menu keeps the menu in view', await t.until(`${HEADING} === 'Nebraska'`)
+    && Math.abs((await t.js("document.getElementById('pick').getBoundingClientRect().top")) - menuTop) < 4);
+  // in full screen the zoom buttons stay on the map
+  await t.js("document.getElementById('map-full').click()");
+  await t.sleep(400);
+  t.check('in full screen on a phone the zoom buttons lie on the map', await t.js(`(() => {
+    const bar = document.querySelector('.zoombar').getBoundingClientRect(), box = document.getElementById('mapbox').getBoundingClientRect();
+    return bar.bottom <= box.bottom + 1 && bar.top >= box.top - 1; })()`));
+  await t.js("document.getElementById('map-full').click()");
+  await t.tab('Emulation.setTouchEmulationEnabled', { enabled: false });
+}
+
+// --- Graphics to reuse: two images with their captions, a download and a copy each, and the terms -------------------
+async function graphics(t) {
+  await t.load('', { width: 1280, height: 800 });
+  const drawn = await t.js(`[...document.querySelectorAll('#graphics .gcard canvas')].map((c) => [c.width, c.height,
+    c.toDataURL('image/png').length, c.getAttribute('aria-label')?.length ?? 0])`);
+  t.check('two images are drawn at 2400 pixels wide, each with a text alternative', drawn.length === 2
+    && drawn.every(([w, h, size, alt]) => w === 2400 && h > 1000 && size > 50000 && alt > 40), JSON.stringify(drawn));
+  const captions = await t.js("[...document.querySelectorAll('#graphics .caption')].map((p) => p.textContent)");
+  t.check('each image has a caption that names the votes, the credit, the address and the license',
+    captions.length === 2 && captions.every((c) => c.endsWith('Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).'))
+    && captions[0].startsWith('With the 2016 and 2020 presidential votes, the maps used on November 3, 2026 give Democrats '), JSON.stringify(captions));
+  t.check('the terms name CC BY 4.0 with a link to the license and the credit', await t.js(`(() => { const p = document.querySelector('#graphics .terms');
+    return p.querySelector('a').getAttribute('href') === 'https://creativecommons.org/licenses/by/4.0/' && p.textContent.includes('Credit: Govert Schoof, Geodienst, University of Groningen, somevotes.org.'); })()`));
+  // a catcher for the file the browser would save
+  await t.js(`window.saved = []; HTMLAnchorElement.prototype.click = function () { if (this.download) window.saved.push([this.download, this.href.slice(0, 5)]); }`);
+  await t.js("document.querySelectorAll('#graphics [data-action=download]').forEach((b) => b.click())");
+  t.check('Download PNG saves each image under its own name', await t.until('window.saved.length === 2', 3000)
+    && await t.js("window.saved.map((s) => s.join(' ')).join() === 'somevotes-national-51-8.png blob:,somevotes-drawing-effect-by-state.png blob:'"),
+    await t.js('JSON.stringify(window.saved)'));
+  await t.js("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } })");
+  await t.js("document.querySelector('#graphic-states [data-action=copy]').click()");
+  t.check('Copy caption puts the caption on the clipboard, with a short note', await t.until("document.querySelector('.share-note')?.textContent === 'Caption copied'", 2000)
+    && await t.js("window.copied === document.querySelector('#graphic-states .caption').textContent"));
+  // both images keep the 2016 and 2020 votes, whatever the slider of chapter 01 shows
+  const national = "[document.querySelector('#graphic-national canvas').toDataURL('image/png'), document.querySelector('#graphic-national .caption').textContent,"
+    + " document.querySelector('#graphic-national canvas').getAttribute('aria-label')].join('|')";
+  await t.js(`window.nationalBefore = ${national}; window.leadBefore = document.getElementById('outcomes-lead').textContent; true`);
+  await t.js("{ const s = document.getElementById('vote'); s.value = '0'; s.dispatchEvent(new Event('input')); s.dispatchEvent(new Event('change')) }");
+  await t.sleep(600);
+  t.check('the slider of chapter 01 leaves the national image, its caption and its text alternative at the 2016 and 2020 votes',
+    await t.js("document.getElementById('outcomes-lead').textContent !== window.leadBefore")
+    && await t.js(`${national} === window.nationalBefore`)
+    && await t.js("document.querySelector('#graphic-national .caption').textContent.startsWith('With the 2016 and 2020 presidential votes, ')"));
+  await t.js("window.saved = []; document.querySelector('#graphic-national [data-action=download]').click()");
+  t.check('after the slider moves, Download PNG still saves the image of the 2016 and 2020 votes',
+    await t.until('window.saved.length === 1', 3000) && await t.js("window.saved[0][0] === 'somevotes-national-51-8.png'"),
+    await t.js('JSON.stringify(window.saved)'));
+  await t.screenshot('graphics-1280', { viewport: false });
+}
+
 export const GROUPS = [
   { name: 'masthead', run: masthead },
   { name: 'outcomes', run: outcomes },
@@ -1120,4 +1322,8 @@ export const GROUPS = [
   { name: 'senate', run: senate },
   { name: 'tour', run: tour },
   { name: 'share', run: sharing },
+  { name: 'tapline', run: tapline },
+  { name: 'links', run: links },
+  { name: 'phone', run: phone },
+  { name: 'graphics', run: graphics },
 ];

@@ -5,7 +5,7 @@
 /* The map column: the map box with its title and legend, and under it the box with the tap line, the colors and
    Share. Both are as high as their content, so no box stretches without content. */
 .mapcol { display: grid; grid-template-rows: auto auto; align-content: start; gap: 0.7rem; min-width: 0; }
-.mapfoot { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; gap: 0.5rem; align-content: start; }
+.mapfoot { background: var(--sheet); border: 1px solid var(--rule); padding: 0.8rem 1rem; display: grid; align-content: start; }
 
 
 .mapbox { position: relative; background: var(--water); border: 1px solid var(--rule); }
@@ -15,12 +15,15 @@
 #map path { vector-effect: non-scaling-stroke; }
 .district { stroke: var(--sheet); stroke-width: 0.4; cursor: pointer; }
 .state { fill: none; stroke: var(--sheet); stroke-width: 1.2; pointer-events: none; }
+.coast { fill: none; stroke: var(--edge); stroke-width: 0.9; pointer-events: none; }
 /* The view "Districts: close races": the rest pale and without inner lines, thin state lines, dots on the tightest */
 .district.quiet { stroke: none; }
 .calm .state { stroke-width: 0.6; }
 .dots circle { stroke: var(--fg); pointer-events: none; }
 .calm .state.swing { stroke: var(--gold); stroke-width: 2.4; }
 .state.on { stroke: var(--fg); stroke-width: 2.2; }
+/* the district the tap line under the map names */
+.district.picked { stroke: var(--fg); stroke-width: 1.6; }
 /* the view "States: drawing effect": thin gray lines, so the states with 0 stand apart from each other and from the
    water */
 .statefill { stroke: var(--edge); stroke-width: 0.7; cursor: pointer; }
@@ -28,6 +31,12 @@
 .zoombar { position: absolute; top: 0.5rem; right: 0.5rem; display: grid; gap: 0.25rem; }
 .zoombar button { font: 600 1rem/1 var(--font-body); width: 2.1rem; height: 2.1rem; border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
 .zoombar button.wide { width: auto; padding-inline: 0.5rem; font-size: 0.8rem; font-weight: 500; }
+/* On a narrow screen the map is too low for the buttons to lie over it: they covered New England, New Jersey and
+   Delaware, so a tap there hit a button. They form a row under the map instead; in full screen the map fills the
+   box and they stay on it. */
+@media (max-width: 899.98px) {
+  .atlas:not(:fullscreen, .is-full) .mapbox .zoombar { position: static; order: 2; display: flex; justify-content: flex-end; margin: 0.3rem 0.8rem 0.5rem; }
+}
 /* the full-screen button and the map in full screen */
 .zoombar #map-full { display: grid; place-items: center; }
 .zoombar #map-full svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.8; }
@@ -49,7 +58,7 @@
    record on the right in its own order, and a strip under both with the sorted districts, their notes and two folds */
 .sheet-more { display: none; }
 @media (min-width: 900px) {
-  .atlas:is(:fullscreen, .is-full) { grid-template-columns: minmax(0, 1fr) minmax(22rem, 28%); grid-template-rows: minmax(0, 1fr) auto;
+  .atlas:is(:fullscreen, .is-full) { grid-template-columns: minmax(0, 1fr) minmax(20rem, 24%); grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "map side" "map side"; gap: 1rem; }
   /* the strip runs on under the record; a record too long for the room above the strip
      takes the whole height and the strip stays under the map (.long, set in main.js) */
@@ -57,15 +66,17 @@
   .atlas.has-more.long:is(:fullscreen, .is-full) { grid-template-areas: "map side" "more side"; }
   .atlas.long:is(:fullscreen, .is-full) > .sheet-more:not([hidden]) { grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(14rem, 20rem); }
   .atlas.long .fs-folds { padding-inline: 0; }
-  /* the map with its title and legend over it in one cell, the share button in a row under it */
-  .atlas:is(:fullscreen, .is-full) > .mapcol { grid-area: map; gap: 0.5rem; min-height: 0; }
+  /* the map with its title, legend and share button over it in one cell; Share beside the zoom buttons */
+  .atlas:is(:fullscreen, .is-full) > .mapcol { grid-area: map; grid-template-rows: minmax(0, 1fr); min-height: 0; position: relative; }
   .atlas:is(:fullscreen, .is-full) .mapbox { grid-area: 1 / 1; }
-  .atlas:is(:fullscreen, .is-full) .mapbar { grid-row: 2; justify-content: flex-end; }
+  .atlas:is(:fullscreen, .is-full) .mapbar { position: absolute; top: 0.5rem; right: 3.1rem; }
   .atlas:is(:fullscreen, .is-full) > .record { grid-area: side; gap: 0.55rem; padding: 0.8rem 1rem; }
   .atlas:is(:fullscreen, .is-full) :is(#tapline, .colors) { display: none; }
+  .atlas:is(:fullscreen, .is-full) > .record:has(> .dlist) { display: flex; flex-direction: column; }
+  .atlas:is(:fullscreen, .is-full) > .record > .dlist { flex: 1 1 0; min-height: 10rem; max-height: none; }
   .atlas:is(:fullscreen, .is-full) > .sheet-more:not([hidden]) { grid-area: more; display: grid;
-    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(22rem, 28%); gap: 0.5rem 1.6rem; align-items: start;
-    border-top: 1px solid var(--rule); padding-top: 0.7rem; max-height: 40vh; overflow: auto; }
+    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(20rem, 24%); gap: 0.5rem 1.6rem; align-items: start;
+    border-top: 1px solid var(--rule); padding-top: 0.7rem; max-height: 30vh; overflow: auto; }
   .fs-chart { display: grid; gap: 0.4rem; }
   .fs-chart h4 { font: 700 1.1875rem/1.25 var(--font-head); color: var(--fg); }
   .fs-chart .card { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 0.4rem 0.5rem; }
@@ -84,7 +95,10 @@
 }
 body.map-full { overflow: hidden; }
 .gesture { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10, 12, 16, 0.6); color: #fff; font-size: 1.1rem; pointer-events: none; text-align: center; padding: 1rem; }
-.tapline { font-size: 0.87rem; margin: 0; min-height: 1.3em; }
+/* On the page the empty line takes no room; in full screen under 900px it keeps its line, so a tap does not shrink
+   the map */
+.tapline { font-size: 0.87rem; margin: 0 0 0.5rem; min-height: 1.3em; }
+.atlas:not(:fullscreen, .is-full) .tapline:empty { margin: 0; min-height: 0; }
 .tip { position: absolute; pointer-events: none; background: var(--sheet); color: var(--fg); border: 1px solid var(--rule); padding: 0.4rem 0.55rem; font-size: 0.87rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12); max-width: 18rem; }
 .tip b, .tip span { display: block; }
 .maphead { display: contents; }

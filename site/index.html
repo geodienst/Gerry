@@ -12,6 +12,7 @@
 <body>
   <svg class="sprite" aria-hidden="true">
     <symbol id="icon-share" viewBox="0 0 16 16"><g fill="currentColor"><circle cx="12" cy="3.5" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12.5" r="2"/></g><path d="M5.7 7 10.3 4.5M5.7 9l4.6 2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 16 16"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   </svg>
   <header class="mast">
     <div class="wrap">
@@ -47,7 +48,6 @@
             <button type="button" id="tour-play">Play</button><button type="button" id="tour-skip" hidden>Skip</button>
           </div>
           <p class="tour-text" id="tour-text" aria-live="polite"></p>
-          <div class="tour-bar" aria-hidden="true"><i id="tour-progress"></i></div>
         </div>
         <div class="outcomes">
           <div class="countcol">
@@ -176,6 +176,12 @@
             </div>
             <p class="note" id="control-note"></p>
           </section>
+          <section class="wide" id="legal" aria-labelledby="legal-title">
+            <h3 id="legal-title">Maps in court</h3>
+            <div class="figs" id="legal-figures"></div>
+            <div id="legal-bars"></div>
+            <p class="note" id="legal-note"></p>
+          </section>
           <section class="wide" id="senate" aria-labelledby="senate-title">
             <p class="kicker">Beyond district lines</p>
             <h3 id="senate-title">Senate in 2026</h3>
@@ -235,13 +241,44 @@
       </div>
     </section>
 
+    <section class="graphics" id="graphics" aria-labelledby="graphics-title">
+      <div class="wrap">
+        <h2 id="graphics-title">Graphics to reuse</h2>
+        <p class="intro">Two images for articles and posts. Each one names the votes, the date of the maps, the sources and this site.</p>
+        <div class="gcards">
+          <figure class="gcard" id="graphic-national">
+            <canvas role="img"></canvas>
+            <figcaption>
+              <p class="caption"></p>
+              <div class="gbar">
+                <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download PNG</button>
+                <button type="button" class="sharebtn" data-action="copy">Copy caption</button>
+              </div>
+            </figcaption>
+          </figure>
+          <figure class="gcard" id="graphic-states">
+            <canvas role="img"></canvas>
+            <figcaption>
+              <p class="caption"></p>
+              <div class="gbar">
+                <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download PNG</button>
+                <button type="button" class="sharebtn" data-action="copy">Copy caption</button>
+              </div>
+            </figcaption>
+          </figure>
+        </div>
+        <p class="terms">You may reuse the images and their captions, also commercially, under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Credit: Govert Schoof, Geodienst, University of Groningen, somevotes.org.</p>
+      </div>
+    </section>
+
     <section class="about" id="about" aria-labelledby="about-title">
       <div class="wrap">
         <h2 id="about-title">About this project</h2>
         <p>Made by Govert Schoof, founder of the <a href="https://rug.nl/geo">Geodienst</a>, the geospatial expertise centre of the University of Groningen, liaison at <a href="https://www.rug.nl/jantina-tammes-school/">Jantina Tammes School</a>, and co-founder of <a href="https://geominds.nl">Geominds.nl</a>, which builds geo-AI for real-world mapping.</p>
-        <p>Thanks to <a href="https://www.rug.nl/staff/m.l.thompson/">Mark Thompson</a>, Vincent, JW and <a href="https://elmeriniemi.com/">Elmeri</a> for reviewing the work and for their feedback.</p>
+        <p>Thanks to scholars <a href="https://www.rug.nl/staff/m.l.thompson/">Mark Thompson</a> and Jelte Olthof; Vincent, JW and <a href="https://elmeriniemi.com/">Elmeri</a> for reviewing the work and for their feedback.</p>
+        <p>Thanks to the <a href="https://alarm-redist.org/">ALARM team</a> and all other open data projects.</p>
         <p>This project has no client and no funding. I made it because I thought it was worth doing.</p>
-        <p>Questions or corrections: please contact the press office of the University of Groningen. Errors will be corrected.</p>
+        <p>Questions or corrections: please contact the <a href="https://www.rug.nl/about-ug/latest-news/press-information/contact-persvoorlichting">press office of the University of Groningen</a>. Errors will be corrected.</p>
       </div>
     </section>
   </main>

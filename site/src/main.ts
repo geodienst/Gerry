@@ -14,9 +14,10 @@ import { byId as $, node } from './ui/dom.ts';
 import { paletteColors } from './ui/palette.ts';
 import { renderOutcomes } from './ui/outcomes.ts';
 import { createTour } from './ui/tour.ts';
-import { renderDecide, showSenate } from './ui/decide.ts';
+import { renderDecide, showSenate, drawLegal } from './ui/decide.ts';
 import { drawSeatAxis } from './ui/charts.ts';
 import { share } from './ui/share.ts';
+import { mountGraphics } from './ui/graphics.ts';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const darkMode = window.matchMedia('(prefers-color-scheme: dark)');
@@ -38,6 +39,8 @@ async function main() {
   const shared = outcomesFromSearch(location.search, outcomesData.rows.map((row) => row.key), outcomesData.points.map((p) => p.share));
   createTour(outcomesData.tour, outcomes, { reduceMotion: lessMotion, hold: Boolean(shared) });
   outcomes.paint(colors);
+  // the images under "Graphics to reuse", at the 2016 and 2020 votes whatever the slider shows
+  const graphics = mountGraphics(results, outcomesData, palette);
 
   const atlas = createAtlas({ results, topology, index, colors, reduceMotion: lessMotion });
 
@@ -57,9 +60,11 @@ async function main() {
     const target = location.hash.slice(1);
     if (!postal && target && document.getElementById(target)) { // a link to a chapter, such as #method
       if (target === 'method') details.open = true;
+      atlas.select(''); // back from #TX to #method shows the whole map, as the same link does in a new tab
       return;
     }
     atlas.select(postal);
+    if (postal) atlas.reveal(); // a state typed into the address; back and forward within chapter 02 do not jump
   }
   window.addEventListener('popstate', fromLocation);
   window.addEventListener('hashchange', fromLocation);
@@ -69,6 +74,8 @@ async function main() {
     colors = paletteColors(palette);
     outcomes.paint(colors);
     atlas.repaint(colors);
+    graphics.palette(palette);
+    drawLegal(decide.legal, colors);
   };
   const PALETTES: Palette[] = ['party', 'neutral'];
   for (const choice of PALETTES) {
@@ -90,6 +97,7 @@ async function main() {
 
   const decide = decideView(results);
   renderDecide(decide);
+  drawLegal(decide.legal, colors);
   // the Senate block follows the vote slider of chapter 01
   let senatePoint = outcomesData.points[outcomesData.baseIndex];
   showSenate(decide, senatePoint);
@@ -97,6 +105,21 @@ async function main() {
   if (shared) { // after the Senate hook, so the Senate block follows the shared vote share
     if (shared.key) outcomes.select(shared.key);
     outcomes.moveTo(shared.index ?? outcomesData.baseIndex); // a moved slider shows no stars for changed seats
+    // once chapter 01 shows another row or vote share, by the reader or by the explainer, the address no longer
+    // claims the shared ones
+    const sharedKey = outcomes.state().key;
+    const sharedIndex = outcomes.state().index;
+    const leave = () => {
+      const now = outcomes.state();
+      if (now.key === sharedKey && now.index === sharedIndex) return;
+      const query = new URLSearchParams(location.search);
+      if (!query.has('count') && !query.has('vote')) return;
+      query.delete('count');
+      query.delete('vote');
+      history.replaceState(history.state, '', `${location.pathname}${query.size ? `?${query}` : ''}${location.hash}`);
+    };
+    outcomes.onUser(() => queueMicrotask(leave)); // after the click has chosen its row
+    outcomes.onPoint(leave);
   }
   const fills: Record<string, string> = { ...methodFills(results), ...extensionFills(results) };
   for (const el of document.querySelectorAll<HTMLElement>('[data-fill]')) {
@@ -113,6 +136,7 @@ async function main() {
     const at = focusable().indexOf(document.activeElement as HTMLElement);
     atlas.renderSheet();
     renderDecide(decide);
+    drawLegal(decide.legal, colors);
     showSenate(decide, senatePoint);
     drawFigure();
     if (at >= 0) focusable()[at]?.focus({ preventScroll: true });
@@ -120,12 +144,18 @@ async function main() {
 
   const start = stateFromHash(location.hash, results.states, index.single);
   atlas.select(start, { animate: false, announce: false });
+  // a link to a state (#TX) opens on that state, not at the top of the page; a reload keeps the reader's place
+  const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (start && navigation?.type !== 'reload') atlas.reveal();
   // The browser jumped to a chapter such as #method before the chapters above it were filled in;
   // now that they are, jump again (and open the method for #method).
   const anchor = !start && location.hash.length > 1 && document.getElementById(location.hash.slice(1));
   if (anchor) {
     if (anchor === $('method')) details.open = true;
-    anchor.scrollIntoView();
+    // on a phone a shared vote share shows below the chapter head; such a link starts at the House and its counts
+    const moved = anchor === $('outcomes') && shared?.index != null && shared.index !== outcomesData.baseIndex;
+    const house = moved && window.innerWidth < 768 ? document.querySelector('#outcomes .whead') : null;
+    (house ?? anchor).scrollIntoView();
   }
 }
 

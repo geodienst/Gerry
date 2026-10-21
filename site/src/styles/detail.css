@@ -16,6 +16,8 @@
 .grid3 > section { background: var(--sheet); padding: 1.1rem 1.1rem 1.25rem; display: grid; gap: 0.7rem; align-content: start; min-width: 0; }
 .grid3 > section p { margin: 0; max-width: 70ch; }
 .grid3 .wide { grid-column: span 2; }
+/* five wide cards: the last one, the Senate, takes the whole row instead of leaving half of it empty */
+.grid3 > .wide:last-child:nth-child(odd) { grid-column: 1 / -1; }
 @media (max-width: 1279.98px) { .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .grid3 { grid-template-columns: minmax(0, 1fr); } .grid3 .wide { grid-column: auto; } }
 .grid3 h3 { font: 700 1.1875rem/1.25 var(--font-head); letter-spacing: 0; text-transform: none; color: var(--fg); }
@@ -23,6 +25,7 @@
 .figs div { display: grid; }
 .figs b { font: 700 2rem/1.05 var(--font-head); font-variant-numeric: tabular-nums; }
 .figs span { font-size: 0.8125rem; color: var(--muted); }
+.moved .lbl { fill: var(--fg); font-weight: 600; }
 /* Two columns only where a column of 22rem fits, so a name such as "North Carolina" stays on one line. */
 .changes { list-style: none; margin: 0; padding: 0; columns: 2 22rem; column-gap: 1.4rem; font-size: 0.87rem; }
 .changes li { break-inside: avoid; display: flex; justify-content: space-between; gap: 0.6rem; border-bottom: 1px solid var(--rule); padding-block: 0.25rem; }

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { results } from './testdata.ts';
 import {
   extensionFills, redrawView, stateRedraw, stateExtras, competitiveText, adoptedLine, controlTables,
-  senateView,
+  senateView, legalView,
 } from '../src/lib/extensions.ts';
 
 /** testdata.ts with the Phase 5 fields; all numbers made up, with 7 states and 429 seats nationally. */
@@ -57,7 +57,7 @@ test('extensionFills: the numbers in the method paragraph "Extensions"', () => {
 test('redrawView: the net change and the states with another seat count', () => {
   const view = redrawView(extended());
   // seats of 435: 217 and 213 of the districts + the 2 Democratic single seats
-  assert.equal(view.sentence, 'With these votes, the maps of the 2024 election give Democrats 219 seats and the 2026 maps 215. '
+  assert.equal(view.sentence, 'With the 2016 and 2020 votes, the maps of the 2024 election give Democrats 219 seats and the 2026 maps 215. '
     + 'Net change: R+4, 4 seats toward Republicans.');
   assert.deepEqual(view.rows.map((r) => [r.postal, r.text]), [
     ['TX', 'R+3: 3 seats toward Republicans'], ['CA', 'D+1: 1 seat toward Democrats'],
@@ -77,9 +77,9 @@ test('redrawView: the net change and the states with another seat count', () => 
 
 test('stateRedraw: fewer, more, the same number, and an unchanged map', () => {
   const r = extended();
-  assert.equal(stateRedraw(r.states.TX), '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).');
-  assert.equal(stateRedraw(r.states.CA), '2024 map: 0 Democratic seats with these votes. 2026 map: 1 (1 more).');
-  assert.equal(stateRedraw(r.states.FL), '2024 map: 1 Democratic seat with these votes. 2026 map: 1 (the same number).');
+  assert.equal(stateRedraw(r.states.TX), '2024 map: 3 Democratic seats with the 2016 and 2020 votes. 2026 map: 0 (3 fewer).');
+  assert.equal(stateRedraw(r.states.CA), '2024 map: 0 Democratic seats with the 2016 and 2020 votes. 2026 map: 1 (1 more).');
+  assert.equal(stateRedraw(r.states.FL), '2024 map: 1 Democratic seat with the 2016 and 2020 votes. 2026 map: 1 (the same number).');
   assert.equal(stateRedraw(r.states.MO), 'Map unchanged since 2024.');
 });
 
@@ -91,7 +91,7 @@ test('stateExtras: the adopted line under the heading, competitive districts and
     head: ['Adopted by: Legislature (Republican control).'],
     body: [
       'Competitive districts (45 to 55%): 1 on the enacted map, 2 on neutral maps (90% of neutral maps: 1 to 3).',
-      '2024 map: 3 Democratic seats with these votes. 2026 map: 0 (3 fewer).',
+      '2024 map: 3 Democratic seats with the 2016 and 2020 votes. 2026 map: 0 (3 fewer).',
     ],
   });
   r.states.TX.adopted.note = 'A made-up note.';
@@ -127,6 +127,36 @@ test('controlTables: every value in order, with states, seats and the summed dra
     ['Bipartisan', '1', '2', '0'], ['Nonpartisan', '2', '14', '0'],
   ]);
   assert.deepEqual(tables.byBody.map((r) => [r.label, r.drawing]), [['Legislature', 'R+2'], ['Commission', '0'], ['Court', '0']]);
+});
+
+// --- Maps in court ---
+
+test('legalView: the challenged maps first, with states, seats and the seats moved toward each party', () => {
+  const r = extended();
+  const view = legalView(r);
+  // Texas is the one challenged map (R+2); the other six move 4 seats each way (Florida R+4, California D+3, New Mexico D+1)
+  assert.deepEqual(view.rows.map((row) => [row.label, row.states, row.seatsR, row.seatsD, row.net, row.namesR, row.namesD]), [
+    ['Challenged in court', 1, 2, 0, 'R+2', ['Texas'], []],
+    ['In effect', 6, 4, 4, '0', ['Florida'], ['California', 'New Mexico']],
+  ]);
+  assert.equal(view.rows[0].sub, `1 state, ${r.states.TX.seats} seats`);
+  assert.equal(view.rows.reduce((n, row) => n + row.states, 0), Object.keys(r.states).length);
+  assert.equal(view.rows.reduce((n, row) => n + row.seats, 0), Object.values(r.states).reduce((n, s) => n + s.seats, 0));
+  assert.deepEqual(view.figures, [{ value: '1', label: 'map challenged in court' }, { value: 'R+2', label: 'drawing effect of these maps' }]);
+  assert.equal(view.note, 'All 7 maps are the ones used on November 3, 2026. On October 3, 2026, a court case '
+    + 'against the map was pending in 1 state. A pending case is not a ruling. Of these maps, those of Texas move 2 seats toward Republicans.');
+});
+
+test('legalView: a challenged map toward each party, and none that moves a seat', () => {
+  const r = extended();
+  r.states.CA.status = 'Challenged';
+  assert.ok(legalView(r).note.endsWith('Of these maps, those of Texas move 2 seats toward Republicans, and those of California 3 seats toward Democrats.'));
+  r.states.TX.status = 'In effect';
+  assert.ok(legalView(r).note.endsWith('Of these maps, those of California move 3 seats toward Democrats.'));
+  r.states.CA.status = 'In effect';
+  const none = legalView(r);
+  assert.deepEqual([none.rows[0].states, none.rows[0].net], [0, '0']);
+  assert.ok(none.note.endsWith('was pending in 0 states. A pending case is not a ruling.'));
 });
 
 // --- the Senate (Task 6.14) ---
