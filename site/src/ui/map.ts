@@ -1,6 +1,7 @@
 // The map: three views, zoom, tooltips and the tap line (site design, chapter 4, the update of
 // October 7, 2026, and the close races of October 8). Ctrl or Cmd plus scroll zooms, a plain scroll scrolls the
-// page; on a touch screen two fingers zoom and move, one finger scrolls the page.
+// page, and in full screen, where there is no page to scroll, zooms too; on a touch screen two fingers zoom and
+// move, one finger scrolls the page.
 import { MAP, fitTransform } from '../lib/axes.ts';
 import { shareStops, shareTicks, effectBoxes } from '../lib/colors.ts';
 import { districtTip, stateTip, closeTip, tapLine, isClose, isSwing, closeness, LEGEND_TEXT } from '../lib/model.ts';
@@ -108,15 +109,16 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     .attr('stroke-width', (f) => DOT.ring[closeOf(f)] / k);
   sizeDots(1);
 
-  // Zoom: wheel only with Ctrl or Cmd, touch only with two fingers, drag with the mouse.
+  // Zoom: wheel with Ctrl or Cmd, or plain in full screen, touch only with two fingers, drag with the mouse.
   // The wheel delta is d3's, clamped to [-1, 1]: d3 multiplies it by 10 while Ctrl is held, which would make
   // one notch zoom 4x. A notch zooms at most 2x; a trackpad pinch (many small events) is as in d3.
+  const full = () => Boolean(document.fullscreenElement?.contains(svg)) || svg.closest('.atlas.is-full') !== null;
   const zoom = d3zoom<SVGSVGElement, unknown>()
     .scaleExtent([1, MAP.maxZoom])
     .translateExtent([[0, 0], [MAP.width, MAP.height]])
     .wheelDelta((e) => Math.max(-1, Math.min(1, -e.deltaY * (e.deltaMode === 1 ? 0.05 : e.deltaMode ? 1 : 0.002) * (e.ctrlKey ? 10 : 1))))
     .filter((event) => {
-      if (event.type === 'wheel') return event.ctrlKey || event.metaKey;
+      if (event.type === 'wheel') return event.ctrlKey || event.metaKey || full();
       if (event.type === 'touchstart') return event.touches.length > 1;
       return !event.button;
     })
@@ -134,7 +136,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   }
   // Ctrl or Cmd + wheel stays with the map, also at the zoom limits, where d3 lets it through to the page zoom.
   svg.addEventListener('wheel', (event) => {
-    if (event.ctrlKey || event.metaKey) event.preventDefault();
+    if (event.ctrlKey || event.metaKey || full()) event.preventDefault();
     else flash(hints.wheel);
   }, { passive: false });
   let start: number | null = null;

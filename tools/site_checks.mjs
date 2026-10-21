@@ -1027,6 +1027,11 @@ async function fullscreen(t) {
   t.check('1920 x 1080: the longer Arizona record takes the whole height and the strip stays under the map',
     Object.values(long).every(Boolean), JSON.stringify(long));
   await t.screenshot('map-full-1920-arizona', { viewport: true });
+  // in full screen there is no page to scroll, so a plain scroll zooms the map, without the hint
+  const zoomed = await t.js(ZOOM);
+  await t.mouse('mouseWheel', await t.center("document.getElementById('map')"), { deltaX: 0, deltaY: -300 });
+  t.check('in full screen a plain scroll zooms the map, without the Ctrl hint',
+    await t.until(`${ZOOM} > ${zoomed} * 1.2`, 3000) && await t.js("document.getElementById('gesture').hidden"));
   // every state record fits whole in full screen, at 1920 x 1080 and at 2560 x 1440; on the larger screen the strip
   // runs on under every record
   for (const [width, height] of [[1920, 1080], [2560, 1440]]) {
