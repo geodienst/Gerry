@@ -103,8 +103,7 @@ export function drawSeatAxis(el: HTMLElement, axis: SeatAxis, [lo, hi]: readonly
 }
 
 /** Sorted districts: enacted shares as dots against the neutral band and median per position, a dashed line at 50%. */
-export function drawSorted(el: HTMLElement, sorted: Sorted, colors: Colors, label: string) {
-  const H = 190;
+export function drawSorted(el: HTMLElement, sorted: Sorted, colors: Colors, label: string, H = 190) {
   const m = { l: 34, r: 10, t: 10, b: 24 };
   const { svg, width: W } = chartSvg(el, 560, H, label);
   const n = sorted.enacted.length;

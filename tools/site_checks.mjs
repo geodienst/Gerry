@@ -988,16 +988,17 @@ async function fullscreen(t) {
   t.check('the button puts the map, its legend and the sheet beside it over the whole window', on.full && on.pressed === 'true'
     && on.label === 'Exit full screen' && on.height > 0.6 * on.window && on.legend && on.sheet, JSON.stringify(on));
   await t.screenshot('map-full-1280');
-  // map large with title and legend inside, the record on the right in its own
-  // order ending with map, status and adoption, a strip under both with the folds under the record, Share under the
-  // map; no district line and colors in full screen
-  await t.load('#TX', { width: 1920, height: 1080 });
+  // map large with title, legend and Share inside, Share beside the zoom buttons, the record on the right in its own
+  // order ending with map, status and adoption, a strip under both with the folds under the record; no district line
+  // and colors in full screen
+  await t.load('#TX', { width: 2560, height: 1440 });
   await t.until(`${HEADING} === 'Texas'`);
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(400);
   const wide = await t.js(`(() => { const r = (el) => (typeof el === 'string' ? document.getElementById(el) : el).getBoundingClientRect();
     const map = r('mapbox'), col = r(document.querySelector('.atlas > .mapcol')), side = r('sheet'), more = r('sheet-more');
     const title = r('map-title'), legend = r('legend'), share = r('map-share'), folds = r(document.querySelector('#sheet-more .fs-folds'));
+    const zoom = r(document.querySelector('.zoombar'));
     const foot = document.querySelector('#sheet .foot');
     return { sideRight: side.left >= map.right - 1,
       stripUnderBoth: more.top >= Math.max(col.bottom, side.bottom) - 1 && more.left <= map.left + 1 && more.right >= side.right - 1,
@@ -1007,18 +1008,19 @@ async function fullscreen(t) {
       foot: !!foot && foot.textContent.includes(' \u00b7 Challenged in court \u00b7 Legal status as of') && foot.textContent.includes('Adopted by'),
       kept: !!document.querySelector('#sheet .headline') && !!document.querySelector('#sheet .k'),
       noHints: !document.getElementById('tapline').checkVisibility() && !document.querySelector('.colors').checkVisibility(),
-      shareUnderMap: document.getElementById('map-share').checkVisibility() && share.top >= map.bottom - 1 && share.right <= map.right + 1
-        && share.bottom <= more.top + 1,
+      shareInMap: document.getElementById('map-share').checkVisibility() && share.top >= map.top && share.bottom <= zoom.top + 64
+        && share.right <= zoom.left && share.left >= map.left,
       sideFits: document.getElementById('sheet').scrollHeight <= document.getElementById('sheet').clientHeight + 2,
       stripFits: document.getElementById('sheet-more').scrollHeight <= document.getElementById('sheet-more').clientHeight + 2,
       inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top }; })()`);
-  t.check('1920 x 1080: full screen: the whole Texas record on the right, a strip under both with the folds under the record, title and legend in the map, Share under it',
+  t.check('2560 x 1440: full screen: the whole Texas record on the right, a strip under both with the folds under the record, title, legend and Share in the map',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
-  await t.screenshot('map-full-1920-texas', { viewport: true });
-  // a record too long for the room above the strip, such as Arizona at this size,
+  await t.screenshot('map-full-2560-texas', { viewport: true });
+  // a record too long for the room above the strip, such as Arizona at 1920 x 1080,
   // takes the whole height, and the strip stays under the map
-  await t.js("location.hash = '#AZ'");
+  await t.load('#AZ', { width: 1920, height: 1080 });
   await t.until(`${HEADING} === 'Arizona'`);
+  await t.js("document.getElementById('map-full').click()");
   await t.sleep(1500); // the zoom to the state has ended
   const long = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
     const map = r('mapbox'), side = r('sheet'), more = r('sheet-more'), s = document.getElementById('sheet');
@@ -1032,6 +1034,15 @@ async function fullscreen(t) {
   await t.mouse('mouseWheel', await t.center("document.getElementById('map')"), { deltaX: 0, deltaY: -300 });
   t.check('in full screen a plain scroll zooms the map, without the Ctrl hint',
     await t.until(`${ZOOM} > ${zoomed} * 1.2`, 3000) && await t.js("document.getElementById('gesture').hidden"));
+  // the list of close districts runs down to the foot of the record
+  await t.load('', { width: 1920, height: 1080 });
+  await t.js("document.getElementById('view-close').click(); document.getElementById('map-full').click()");
+  await t.sleep(600);
+  const list = await t.js(`(() => { const s = document.getElementById('sheet'), l = s.querySelector('.dlist').getBoundingClientRect();
+    return { below: Math.round(s.getBoundingClientRect().bottom - l.bottom), rows: Math.round(l.height), fits: s.scrollHeight <= s.clientHeight + 2 }; })()`);
+  t.check('1920 x 1080: in full screen the list of close districts runs down to the foot of the record',
+    list.below < 90 && list.rows > 500 && list.fits, JSON.stringify(list));
+  await t.js("document.getElementById('map-full').click()");
   // every state record fits whole in full screen, at 1920 x 1080 and at 2560 x 1440; on the larger screen the strip
   // runs on under every record
   for (const [width, height] of [[1920, 1080], [2560, 1440]]) {

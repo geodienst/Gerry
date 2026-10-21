@@ -250,7 +250,8 @@ export function renderStateFull(el: HTMLElement, moreEl: HTMLElement, record: Re
   const more = clear(moreEl);
   const chart = more.append('div').attr('class', 'fs-chart');
   chart.append('h4').text('Districts, sorted');
-  drawSorted(chart.append('div').attr('class', 'card').node()!, record.sorted, colors, record.sortedLabel);
+  // lower than in the record, so the strip under the full-screen map leaves the map its room
+  drawSorted(chart.append('div').attr('class', 'card').node()!, record.sorted, colors, record.sortedLabel, 130);
   const text = more.append('div').attr('class', 'fs-text');
   text.append('p').attr('class', 'note').text(record.sortedCaption);
   for (const line of record.extras.body) text.append('p').attr('class', 'note').text(line);
