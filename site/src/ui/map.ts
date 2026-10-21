@@ -92,7 +92,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   const borders = borderLayer.selectAll<SVGPathElement, StateFeature>('path').data(statesGeo.features).join('path')
     .attr('class', 'state').attr('d', path);
   // the edge of the country, where a state borders on no other state
-  borderLayer.append('path').attr('class', 'coast')
+  const coast = borderLayer.append('path').attr('class', 'coast')
     .attr('d', path(topoMesh(topology as never, topology.objects.states as never, (a, b) => a === b)));
   // The view 'close': a ring on each district with a margin under 5 points, filled with the color of the party ahead;
   // thick under 2 points. The rings keep their size on screen while the map zooms.
@@ -180,6 +180,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
       districtLayer.attr('display', view === 'states' ? 'none' : null);
       stateLayer.attr('display', view === 'states' ? null : 'none');
       borders.classed('swing', (f) => view === 'close' && isSwing(index, f.properties.postal));
+      coast.raise(); // over every plain state line, which is white and would hide it; under the marked ones
       borders.filter((f) => view === 'close' && isSwing(index, f.properties.postal)).raise();
       borders.classed('on', (f) => f.properties.postal === selected);
       borders.filter((f) => f.properties.postal === selected).raise();

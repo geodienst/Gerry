@@ -1160,6 +1160,15 @@ async function tapline(t) {
   await t.click(await t.center(districtOf('CA')));
   await t.js("document.querySelector('#sheet .back').click()");
   t.check('Back to all states clears the line', await t.until(`${HEADING} === 'Districts by Democratic share'`) && (await t.text('#tapline')) === '');
+  // the gray edge of the country lies over every state line that is not marked, also after a state was chosen or the
+  // swing states were outlined
+  const coastOnTop = "(() => { const c = document.querySelector('#map path.coast'), kids = [...c.parentNode.children], i = kids.indexOf(c);"
+    + " return kids.every((p, k) => k < i || p === c || p.matches('.on, .swing')); })()";
+  const afterBack = await t.js(coastOnTop);
+  await t.js("document.getElementById('view-close').click()");
+  await t.js("document.getElementById('view-districts').click()");
+  t.check('after Back and after the close races the edge of the country still lies over the plain state lines',
+    afterBack && await t.js(coastOnTop));
   await t.sleep(1200);
   await t.mouse('mouseMoved', await t.center(districtOf('TX')));
   const shown = await t.js("!document.getElementById('tip').hidden");
