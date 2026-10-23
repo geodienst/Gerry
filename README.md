@@ -107,9 +107,9 @@ pnpm build      # writes the static site to dist/
 pnpm preview    # serves dist/ on http://127.0.0.1:8000
 ```
 
-`dist/` holds `index.html`, one script, one style sheet, the images, the license texts and the two data files. Copy it to any static host. Asset paths are relative, so it also works from a subfolder. With Make, `make build` and `make serve` do the same as `pnpm build` and serving `dist/`.
+`dist/` holds `index.html`, one script, one style sheet, the images, the license texts and the two data files. Copy it to any static host. On every push to main, `.github/workflows/pages.yml` builds and tests the site and publishes it on GitHub Pages, at somevotes.org. Asset paths are relative, so it also works from a subfolder. With Make, `make build` and `make serve` do the same as `pnpm build` and serving `dist/`.
 
-The page opens with three key findings under the title. Then come four numbered chapters: the national count three ways, with a short explainer that plays by itself, a waffle of the House of 435 seats and a slider for the national vote share (01), a map in three views (Democratic share, drawing effect, close races) with a column beside it that follows the view and a record per state (02), close districts, redraws since 2024, political control and the Senate in 2026 (03), and the method, with the drawing effect at every point of the slider and the details folded (04). `#TX` in the address opens a state, `?count=neutral&vote=49.2#outcomes` opens chapter 01 on a count and a vote share, and `#method` opens the method.
+The page opens with three key findings under the title. Then come four numbered chapters: the national count three ways, with a short explainer that plays by itself, a waffle of the House of 435 seats and a slider for the national vote share (01), a map in three views (Democratic share, drawing effect, close races) with a column beside it that follows the view and a record per state (02), close districts, redraws since 2024, political control, maps in court and the Senate in 2026 (03), and the method, with the drawing effect at every point of the slider and the details folded (04). `#TX` in the address opens a state, `?count=neutral&vote=49.2#outcomes` opens chapter 01 on a count and a vote share, and `#method` opens the method.
 
 ## Sources and licenses
 
