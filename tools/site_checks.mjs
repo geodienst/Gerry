@@ -732,9 +732,12 @@ async function masthead(t) {
   t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
     const about = document.getElementById('about')?.textContent ?? '';
     return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
-      && ['founder of the Geodienst', 'Thanks to scholars Mark Thompson and Jelte Olthof; Vincent, JW and Elmeri for reviewing',
+      && ['founder of the Geodienst', 'Thanks to scholars Mark Thompson and Jelte Olthof from American Studies in Groningen.',
+        'Thanks to Vincent, JW, Elmeri and Bart Campman for reviewing the work and for their feedback.',
         'Thanks to the ALARM team and all other open data projects.', 'no client and no funding', 'press office'].every((x) => about.includes(x))
-      && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'ALARM team' && a.getAttribute('href') === 'https://alarm-redist.org/');
+      && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'ALARM team' && a.getAttribute('href') === 'https://alarm-redist.org/')
+      && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'American Studies'
+        && a.getAttribute('href') === 'https://www.rug.nl/let/onze-faculteit/organisatie/vakgebieden/american-studies/');
   })()`));
   t.check('the bio links the Geodienst, Jantina Tammes School and Geominds.nl', await t.js(
     "[...document.querySelectorAll('#about p:first-of-type a')].map((a) => `${a.textContent} ${a.getAttribute('href')}`).join() === "

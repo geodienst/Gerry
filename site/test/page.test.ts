@@ -31,10 +31,27 @@ const TYPE_PACKAGES = ['topojson-specification', 'geojson'];
 test('index.html loads only its own entry module and images', () => {
   const html = read('index.html');
   const refs = [...html.matchAll(/<(?:script|link)\b[^>]*\b(?:src|href)="([^"]+)"/g)].map((m) => m[1]);
-  // data:, is an empty icon, so the browser does not ask for favicon.ico; the style sheet comes in through main.ts
-  assert.deepEqual(refs, ['data:,', './src/main.ts']);
+  // the icons come from the site's own folder; the style sheet comes in through main.ts
+  assert.deepEqual(refs, ['favicon-32.png', 'icon.svg', 'apple-touch-icon.png', './src/main.ts']);
+  for (const file of ['favicon-32.png', 'icon.svg', 'apple-touch-icon.png', 'img/preview.png']) {
+    assert.ok(existsSync(fileURLToPath(new URL(`../public/${file}`, import.meta.url))), file);
+  }
   const images = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)].map((m) => m[1]);
   assert.deepEqual(images, ['img/justice.webp', 'img/geodienst.svg']); // Justitia in the masthead, the logo in the footer
+});
+
+test('the preview for a shared link: title and description as on the page, and an image of 1200 by 630', () => {
+  const html = read('index.html');
+  const meta = (name: string) => new RegExp(`<meta (?:property|name)="${name}" content="([^"]*)">`).exec(html)?.[1];
+  assert.equal(meta('og:title'), /<title>([^<]*)<\/title>/.exec(html)![1]);
+  assert.equal(meta('og:description'), meta('description'));
+  assert.match(meta('og:image')!, /^https:\/\/[^/]+\/(Gerry\/)?img\/preview\.png$/);
+  assert.equal(new URL('img/preview.png', meta('og:url')).href, meta('og:image'));
+  assert.equal(meta('twitter:card'), 'summary_large_image');
+  // width and height from the PNG header
+  const png = readFileSync(fileURLToPath(new URL('../public/img/preview.png', import.meta.url)));
+  assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [1200, 630]);
+  assert.deepEqual([meta('og:image:width'), meta('og:image:height')], ['1200', '630']);
 });
 
 test('modules import only each other, the style sheet and the bundled libraries', () => {
@@ -86,8 +103,10 @@ test('the built page and everything it loads stay under 1.5 MB', (t) => {
     t.skip('run pnpm build first');
     return;
   }
-  // the license texts are linked from the footer, not loaded with the page
-  const files = filesUnder(DIST, DIST).filter((file) => !file.startsWith('licenses/'));
+  // the license texts are linked from the footer, the preview image is for shared links and the touch icon for a
+  // phone's home screen: none is loaded with the page
+  const apart = (file: string) => file.startsWith('licenses/') || file === 'img/preview.png' || file === 'apple-touch-icon.png';
+  const files = filesUnder(DIST, DIST).filter((file) => !apart(file));
   const bytes = files.reduce((total, file) => total + statSync(join(DIST, file)).size, 0);
   assert.ok(bytes < 1_500_000, `${bytes} bytes in dist/`);
 });
