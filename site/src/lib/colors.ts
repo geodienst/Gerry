@@ -10,6 +10,8 @@ export interface Poles {
   r: string;
   mid: string;
   blank: string;
+  /** a tie in the view "Districts: close races" */
+  tie: string;
 }
 export type Interpolate = (a: string, b: string) => (t: number) => string;
 
@@ -19,6 +21,8 @@ export const SHARE_TICKS = [0.2, 0.35, 0.5, 0.65, 0.8];
 export const EFFECT_MAX = 6; // drawing effect scale in whole seats; beyond 6 the full pole color
 // effects start 45% of the way to a pole and each seat adds 55%/6, so R+1 and D+1 already show color
 export const EFFECT_START = 0.45;
+export const FAINT = 0.18; // the view "Districts: close races": a district that is not close, this far toward its party
+export const CLOSE_EDGE = 0.8; // the same view: at 45% and 55% a close district is this far from the tie toward its party
 
 /**
  * The scales for one set of poles.
@@ -41,6 +45,16 @@ export function makeColors(interpolateLab: Interpolate, poles: Poles) {
       if (seats === 0) return towardD(0);
       const t = EFFECT_START + ((1 - EFFECT_START) * Math.min(Math.abs(seats), EFFECT_MAX)) / EFFECT_MAX;
       return (seats > 0 ? towardD : towardR)(t);
+    },
+    /** Fill for a close district (45% to 55%) in the view "Districts: close races": the purple of a tie at 50%, the more
+     *  red or blue the further the party ahead leads. */
+    close(value: number): string {
+      const t = Math.max(-1, Math.min(1, (value - 0.5) / 0.05));
+      return interpolateLab(poles.tie, t >= 0 ? poles.d : poles.r)(Math.abs(t) * CLOSE_EDGE);
+    },
+    /** Fill for a district that is not close in the view "Districts: close races": a pale tint of the party ahead. */
+    faint(towardDemocrats: boolean): string {
+      return (towardDemocrats ? towardD : towardR)(FAINT);
     },
     /** Fill for a seat count that goes to one party: the full pole. */
     party(towardDemocrats: boolean): string {

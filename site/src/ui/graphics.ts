@@ -19,6 +19,7 @@ export function lightColors(palette: Palette): Colors {
     r: palette === 'party' ? LIGHT['party-r'] : LIGHT['neutral-r'],
     mid: LIGHT.mid,
     blank: LIGHT.blank,
+    tie: palette === 'party' ? LIGHT['party-tie'] : LIGHT['neutral-tie'],
   });
 }
 

@@ -90,7 +90,8 @@ export function renderClose(el: HTMLElement, view: CloseDistricts, effects: Effe
   for (const row of view.rows) {
     const button = list.append('button').attr('type', 'button').attr('class', 'row drow').attr('data-postal', row.postal)
       .on('click', () => onSelect(row.postal));
-    button.append('i').attr('class', 'sw').attr('aria-hidden', 'true').style('background', colors.party(row.dem));
+    // the same color as on the map: purple where it is closest
+    button.append('i').attr('class', 'sw').attr('aria-hidden', 'true').style('background', colors.close(row.share));
     button.append('span').text(row.label);
     button.append('span').attr('class', 'v').text(row.text);
   }

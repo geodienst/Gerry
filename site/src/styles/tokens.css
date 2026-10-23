@@ -17,8 +17,9 @@
   --party-r: #e34948;
   --neutral-d: #01665e;
   --neutral-r: #8c510a;
+  --party-tie: #904ec9; /* a tie in the close races: purple between red and blue */
+  --neutral-tie: #a87800; /* the same for teal and brown: gold */
   --mid: #ecebe7;
-  --gold: #a87800;
   --blank: #c9ccd1;
   --water: #e5eae6;
   --edge: #a3aaa5;
@@ -43,8 +44,9 @@
     --party-r: #e66767;
     --neutral-d: #5ab4ac;
     --neutral-r: #d8b365;
+    --party-tie: #bd78f7;
+    --neutral-tie: #e3b23c;
     --mid: #3a3a37;
-    --gold: #e3b23c;
     --blank: #4a4f56;
     --water: #1b2421;
     --edge: #66706b;

@@ -16,11 +16,11 @@
 .district { stroke: var(--sheet); stroke-width: 0.4; cursor: pointer; }
 .state { fill: none; stroke: var(--sheet); stroke-width: 1.2; pointer-events: none; }
 .coast { fill: none; stroke: var(--edge); stroke-width: 0.9; pointer-events: none; }
-/* The view "Districts: close races": the rest pale and without inner lines, thin state lines, dots on the tightest */
+/* The view "Districts: close races": the rest pale and without inner lines, gray state lines, the district under the
+   mouse outlined */
 .district.quiet { stroke: none; }
-.calm .state { stroke-width: 0.6; }
-.dots circle { stroke: var(--fg); pointer-events: none; }
-.calm .state.swing { stroke: var(--gold); stroke-width: 2.4; }
+.calm .state { stroke: var(--edge); stroke-width: 0.8; }
+.hoverline { fill: none; stroke: var(--fg); stroke-width: 1.6; pointer-events: none; }
 .state.on { stroke: var(--fg); stroke-width: 2.2; }
 /* the district the tap line under the map names */
 .district.picked { stroke: var(--fg); stroke-width: 1.6; }
@@ -58,7 +58,7 @@
    record on the right in its own order, and a strip under both with the sorted districts, their notes and two folds */
 .sheet-more { display: none; }
 @media (min-width: 900px) {
-  .atlas:is(:fullscreen, .is-full) { grid-template-columns: minmax(0, 1fr) minmax(20rem, 24%); grid-template-rows: minmax(0, 1fr) auto;
+  .atlas:is(:fullscreen, .is-full) { grid-template-columns: minmax(0, 1fr) minmax(18rem, 22%); grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas: "map side" "map side"; gap: 1rem; }
   /* the strip runs on under the record; a record too long for the room above the strip
      takes the whole height and the strip stays under the map (.long, set in main.js) */
@@ -70,12 +70,12 @@
   .atlas:is(:fullscreen, .is-full) > .mapcol { grid-area: map; grid-template-rows: minmax(0, 1fr); min-height: 0; position: relative; }
   .atlas:is(:fullscreen, .is-full) .mapbox { grid-area: 1 / 1; }
   .atlas:is(:fullscreen, .is-full) .mapbar { position: absolute; top: 0.5rem; right: 3.1rem; }
-  .atlas:is(:fullscreen, .is-full) > .record { grid-area: side; gap: 0.55rem; padding: 0.8rem 1rem; }
+  .atlas:is(:fullscreen, .is-full) > .record { grid-area: side; gap: 0.5rem; padding: 0.8rem 1rem; }
   .atlas:is(:fullscreen, .is-full) :is(#tapline, .colors) { display: none; }
   .atlas:is(:fullscreen, .is-full) > .record:has(> .dlist) { display: flex; flex-direction: column; }
   .atlas:is(:fullscreen, .is-full) > .record > .dlist { flex: 1 1 0; min-height: 10rem; max-height: none; }
   .atlas:is(:fullscreen, .is-full) > .sheet-more:not([hidden]) { grid-area: more; display: grid;
-    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(20rem, 24%); gap: 0.5rem 1.6rem; align-items: start;
+    grid-template-columns: minmax(0, 24rem) minmax(0, 1fr) minmax(18rem, 22%); gap: 0.5rem 1.6rem; align-items: start;
     border-top: 1px solid var(--rule); padding-top: 0.7rem; max-height: 30vh; overflow: auto; }
   .fs-chart { display: grid; gap: 0.4rem; }
   .fs-chart h4 { font: 700 1.1875rem/1.25 var(--font-head); color: var(--fg); }
@@ -124,10 +124,6 @@ body.map-full { overflow: hidden; }
 .legend .sw { width: 0.75rem; height: 0.75rem; }
 .legend .sw.outline { width: 0.9rem; border: 2px solid var(--fg); }
 .legend .sw.pale { border: 1px solid var(--rule); }
-.legend .sw.gold { width: 0.9rem; border: 2.5px solid var(--gold); background: var(--mid); }
-.legend .sw.ring { border-radius: 50%; background: var(--mid); border: 1px solid var(--fg); }
-.legend .sw.ring.tight { width: 0.75rem; height: 0.75rem; border-width: 2px; }
-.legend .sw.ring.near { width: 0.55rem; height: 0.55rem; }
 .legend .note { flex-basis: 100%; }
 /* Chapter 02: tools, the largest effects and the record (Task 7.7) */
 .tools { display: flex; flex-wrap: wrap; gap: 0.7rem 1.2rem; align-items: center; }

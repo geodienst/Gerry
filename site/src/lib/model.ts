@@ -2,7 +2,7 @@
 // and no d3, so node --test covers every sentence the site shows. Every number
 // goes through format.ts; nothing here computes a new statistic.
 import {
-  share, planShare, advantage, seats, count, effect, effectWords, effectLine, longDate, margin,
+  share, planShare, advantage, seats, count, effect, effectWords, effectLine, longDate, margin, percentLabel,
 } from './format.ts';
 import { sum, plural, seatSpan, capitalize } from './text.ts';
 import type {
@@ -70,19 +70,6 @@ export function stateTip(index: Index, postal: Postal): Tip {
 /** A Democratic share from 45% to 55%, both included: the competitive range of chapter 03. */
 export const isClose = (fraction: number): boolean => fraction >= 0.45 && fraction <= 0.55;
 
-/**
- * A swing state: 48.5% to 51.5% Democratic statewide on the 2016 and 2020 votes (the seven battleground states
- * of 2024 plus Florida). The six single-seat states are left out.
- */
-export const isSwing = (index: Pick<Index, 'states'>, postal: Postal): boolean => Boolean(index.states[postal]) && Math.abs(index.states[postal].d_share - 0.5) <= 0.015;
-
-/** How close a district is, by the margin between the parties: 'tight' under 2 points, 'near' 2 to 5, else null. */
-export type Closeness = 'tight' | 'near';
-export function closeness(fraction: number): Closeness | null {
-  const gap = Math.abs(2 * fraction - 1);
-  return gap < 0.02 ? 'tight' : gap < 0.05 ? 'near' : null;
-}
-
 /** Tooltip in the view "Districts: close races": the district, and for its state the close districts on both kinds of map. */
 export function closeTip(index: Index, id: string, postal: Postal): Tip {
   if (index.single[postal]) return districtTip(index, id, postal);
@@ -96,21 +83,16 @@ export function closeTip(index: Index, id: string, postal: Postal): Tip {
   return { title: `${districtLabel(id, postal)}, ${s.name}`, lines };
 }
 
-/** The key of the view "Districts: close races": two fills, two dots, the pale rest, the swing states and the counts. */
+/** The key of the view "Districts: close races": a bar of the close districts from 45% to 55%, the pale rest and the
+ *  counts. */
 export function closeLegend(results: Results) {
   const c = results.national.competitive;
-  const index = { states: results.states };
-  const swing = Object.keys(results.states).filter((postal) => isSwing(index, postal)).length;
   return {
-    // two layers, each with one job: gold outlines for swing states, rings for close calls
-    items: [
-      { key: 'swing', text: 'Gold outline: swing state, 48.5% to 51.5% Democratic statewide' },
-      { key: 'tight', text: 'Thick ring: close call, under 2 points apart' }, { key: 'near', text: 'Thin ring: 2 to 5 points apart' },
-      { key: 'd', text: 'Close district, Democrats ahead' }, { key: 'r', text: 'Close district, Republicans ahead' },
-      { key: 'other', text: 'Gray: not close, more than 10 points apart' },
-    ],
-    note: `${count(c.enacted)} close districts (45% to 55% Democratic) on the enacted maps; neutral maps give a median `
-      + `of ${count(c.median)}. ${count(swing)} swing ${plural(swing, 'state', 'states')}, counted on the 2016 and 2020 votes.`,
+    bar: { from: 0.45, to: 0.55, ticks: [0.45, 0.5, 0.55].map((value) => ({ value, label: percentLabel(value) })),
+      low: 'Republicans ahead', high: 'Democrats ahead' },
+    items: [{ key: 'other', text: 'Pale: not close, more than 10 points apart' }],
+    note: `${count(c.enacted)} close districts (45% to 55% Democratic) on the enacted maps, counted on the 2016 and 2020 `
+      + `votes; neutral maps give a median of ${count(c.median)}.`,
   };
 }
 export type CloseLegend = ReturnType<typeof closeLegend>;
@@ -144,7 +126,7 @@ export type MapHints = ReturnType<typeof mapHints>;
 
 /** The title above the map for each view. */
 export const MAP_TITLES: Record<MapView, string> = {
-  districts: 'Democratic vote share by district', states: 'Drawing effect by state', close: 'Close districts and swing states',
+  districts: 'Democratic vote share by district', states: 'Drawing effect by state', close: 'Close districts',
 };
 
 // the two ends of the district scale

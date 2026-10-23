@@ -5,7 +5,7 @@ import { results, withExtensions } from './testdata.ts';
 import type { Results } from '../src/types.ts';
 import {
   AT_LARGE_TEXT, indexResults, districtLabel, districtTip, stateTip, tapLine, stateOptions, mapHints,
-  isClose, isSwing, closeness, closeTip, closeLegend, MAP_TITLES,
+  isClose, closeTip, closeLegend, MAP_TITLES,
   effectList, positionText, stateSheet, nationalView, methodFills, houseOf, districtShares, closeDistricts,
 } from '../src/lib/model.ts';
 
@@ -36,15 +36,10 @@ test('tooltips: a district, a state, and a single-seat state', () => {
   assert.equal(AT_LARGE_TEXT, 'One at-large seat. No districts, so nothing to compare.');
 });
 
-test('close races: 45% to 55% Democratic, both ends included, for districts and for whole states', () => {
+test('close races: 45% to 55% Democratic, both ends included', () => {
   assert.deepEqual([0.4499, 0.45, 0.5, 0.55, 0.5501].map(isClose), [false, true, true, true, false]);
-  const index = indexResults(results());
-  // swing states: 48.5% to 51.5% statewide. CA keeps the testdata default 0.5: a swing
-  // state; TX at 46.35% and HI at 66.03% are not; WY has one seat
-  assert.deepEqual(['CA', 'TX', 'HI', 'WY'].map((p) => isSwing(index, p)), [true, false, false, false]);
   // dots by the margin between the parties, |2 * share - 1|: under 2 points 'tight', 2 to 5 points 'near'
-  assert.deepEqual([0.5, 0.509, 0.51, 0.476, 0.524, 0.525, 0.6].map(closeness), ['tight', 'tight', 'near', 'near', 'near', null, null]);
-  assert.equal(MAP_TITLES.close, 'Close districts and swing states');
+  assert.equal(MAP_TITLES.close, 'Close districts');
 });
 
 test('closeTip: the district share, marked when close, and the close districts of its state', () => {
@@ -58,17 +53,13 @@ test('closeTip: the district share, marked when close, and the close districts o
   assert.deepEqual(closeTip(index, '5600', 'WY'), { title: 'Wyoming', lines: [AT_LARGE_TEXT] });
 });
 
-test('closeLegend: the three fills, the outline and the national counts', () => {
+test('closeLegend: a bar of the close districts from 45% to 55%, the pale rest and the national counts', () => {
   const legend = closeLegend(withExtensions());
-  // two layers, each with one job: gold outlines for swing states, rings for close calls
-  assert.deepEqual(legend.items, [
-    { key: 'swing', text: 'Gold outline: swing state, 48.5% to 51.5% Democratic statewide' },
-    { key: 'tight', text: 'Thick ring: close call, under 2 points apart' }, { key: 'near', text: 'Thin ring: 2 to 5 points apart' },
-    { key: 'd', text: 'Close district, Democrats ahead' }, { key: 'r', text: 'Close district, Republicans ahead' },
-    { key: 'other', text: 'Gray: not close, more than 10 points apart' }]);
-  // testdata: HI at 66.03% and TX at 46.35% set their share, the five other states keep the default 0.5 -> 5 swing states
-  assert.equal(legend.note, '81 close districts (45% to 55% Democratic) on the enacted maps; neutral maps give a median of 96. '
-    + '5 swing states, counted on the 2016 and 2020 votes.');
+  assert.deepEqual(legend.bar, { from: 0.45, to: 0.55, low: 'Republicans ahead', high: 'Democrats ahead',
+    ticks: [{ value: 0.45, label: '45%' }, { value: 0.5, label: '50%' }, { value: 0.55, label: '55%' }] });
+  assert.deepEqual(legend.items, [{ key: 'other', text: 'Pale: not close, more than 10 points apart' }]);
+  assert.equal(legend.note, '81 close districts (45% to 55% Democratic) on the enacted maps, counted on the 2016 and 2020 votes; '
+    + 'neutral maps give a median of 96.');
 });
 
 test('tapLine: the tapped district, nothing in the states view, the at-large text', () => {
