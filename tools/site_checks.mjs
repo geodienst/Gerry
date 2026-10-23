@@ -734,8 +734,9 @@ async function masthead(t) {
     return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
       && ['founder of the Geodienst', 'Thanks to scholars Mark Thompson and Jelte Olthof from American Studies in Groningen.',
         'Thanks to Vincent, JW, Elmeri and Bart Campman for reviewing the work and for their feedback.',
-        'Thanks to the ALARM team and all other open data projects.', 'no client and no funding', 'press office'].every((x) => about.includes(x))
+        'Thanks to the ALARM team, PlanScore and all other open data projects.', 'no client and no funding', 'press office'].every((x) => about.includes(x))
       && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'ALARM team' && a.getAttribute('href') === 'https://alarm-redist.org/')
+      && [...document.querySelectorAll('#about a, #method a')].filter((a) => a.textContent === 'PlanScore' && a.getAttribute('href') === 'https://planscore.org/').length === 2
       && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'American Studies'
         && a.getAttribute('href') === 'https://www.rug.nl/let/onze-faculteit/organisatie/vakgebieden/american-studies/');
   })()`));
