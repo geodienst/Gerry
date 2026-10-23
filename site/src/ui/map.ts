@@ -4,7 +4,7 @@
 // touch screen two fingers zoom and move, one finger scrolls the page.
 import { MAP, fitTransform } from '../lib/axes.ts';
 import { shareStops, shareTicks, effectBoxes } from '../lib/colors.ts';
-import { districtTip, stateTip, closeTip, tapLine, isClose, isSwing, closeness, LEGEND_TEXT } from '../lib/model.ts';
+import { districtTip, stateTip, closeTip, tapLine, isClose, LEGEND_TEXT, SINGLE_SEAT_PARTY } from '../lib/model.ts';
 import { geoAlbersUsa, geoPath, select, zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3';
 import { feature as topoFeature, mesh as topoMesh } from 'topojson-client';
 import type { Feature, MultiPolygon, Polygon } from 'geojson';
@@ -50,6 +50,8 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   const districtLayer = layer.append('g');
   const stateLayer = layer.append('g');
   const borderLayer = layer.append('g');
+  // the outline of the district under the mouse in the view 'close', over the state lines and the coast
+  const hoverLine = layer.append('path').attr('class', 'hoverline').attr('display', 'none');
   let view: MapView = 'districts';
 
   function showTip(event: PointerEvent, content: TipContent) {
@@ -75,14 +77,21 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     if (index.states[postal] || index.single[postal]) onSelect(postal);
   }
 
-  // Tooltips only for a mouse; a tap gets the tap line instead (choose).
+  // Tooltips only for a mouse; a tap gets the tap line instead (choose). In the view 'close' the district under the
+  // mouse is outlined, so a close one stands out from its neighbors.
+  let hovered: string | null = null;
+  const unhover = () => { hovered = null; hoverLine.attr('display', 'none'); };
   const districts = districtLayer.selectAll<SVGPathElement, DistrictFeature>('path').data(districtsGeo.features).join('path')
     .attr('class', 'district').attr('d', path)
     .on('pointermove', (event: PointerEvent, f) => {
       if (event.pointerType !== 'mouse') return;
       showTip(event, (view === 'close' ? closeTip : districtTip)(index, f.properties.id, f.properties.state));
+      if (view === 'close' && f.properties.id !== hovered) {
+        hovered = f.properties.id;
+        hoverLine.attr('d', path(f)).attr('display', null);
+      }
     })
-    .on('pointerleave', hideTip)
+    .on('pointerleave', () => { hideTip(); unhover(); })
     .on('click', (_event, f) => choose(f.properties.state, f.properties.id));
   const states = stateLayer.selectAll<SVGPathElement, StateFeature>('path').data(statesGeo.features).join('path')
     .attr('class', 'statefill').attr('d', path)
@@ -94,21 +103,6 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   // the edge of the country, where a state borders on no other state
   const coast = borderLayer.append('path').attr('class', 'coast')
     .attr('d', path(topoMesh(topology as never, topology.objects.states as never, (a, b) => a === b)));
-  // The view 'close': a ring on each district with a margin under 5 points, filled with the color of the party ahead;
-  // thick under 2 points. The rings keep their size on screen while the map zooms.
-  const DOT = { tight: 5, near: 3.6, ring: { tight: 1.8, near: 0.9 } };
-  const dotLayer = layer.append('g').attr('class', 'dots').attr('display', 'none');
-  // every district on this layer is close, so closeOf never gives null here
-  const closeOf = (f: DistrictFeature) => closeness(index.shareOf[f.properties.id]) as 'tight' | 'near';
-  const dots = dotLayer.selectAll<SVGCircleElement, DistrictFeature>('circle')
-    .data(districtsGeo.features.filter((f) => !index.single[f.properties.state] && closeness(index.shareOf[f.properties.id])))
-    .join('circle')
-    .attr('class', closeOf)
-    .attr('cx', (f) => path.centroid(f)[0]).attr('cy', (f) => path.centroid(f)[1]);
-  const sizeDots = (k: number) => dots.attr('r', (f) => DOT[closeOf(f)] / k)
-    .attr('stroke-width', (f) => DOT.ring[closeOf(f)] / k);
-  sizeDots(1);
-
   // Zoom: wheel with Ctrl or Cmd, or plain in the wide full screen, touch only with two fingers, drag with the mouse.
   // The wheel delta is d3's, clamped to [-1, 1]: d3 multiplies it by 10 while Ctrl is held, which would make
   // one notch zoom 4x. A notch zooms at most 2x; a trackpad pinch (many small events) is as in d3.
@@ -125,7 +119,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
     })
     .on('start', (event) => { if (event.sourceEvent && event.sourceEvent.type === 'mousedown') svg.classList.add('dragging'); })
     .on('end', () => svg.classList.remove('dragging'))
-    .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => { layer.attr('transform', event.transform.toString()); sizeDots(event.transform.k); });
+    .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => { layer.attr('transform', event.transform.toString()); });
   root.call(zoom).on('dblclick.zoom', null);
 
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -153,11 +147,11 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   return {
     /**
      * Fill the districts or the states with the current colors and outline the chosen state. In the view 'close' a
-     * close district takes the full color of the party it leans to, every other district the pale midpoint, and the
-     * swing states get a thick outline.
+     * close district goes from the purple of a tie toward the party ahead, and every other district takes a pale tint
+     * of its party.
      */
     paint(colors: Colors, nextView: MapView, selected: Postal) {
-      if (nextView !== view) hideTip(); // a tooltip of the old view would stay until the mouse moves
+      if (nextView !== view) { hideTip(); unhover(); } // a tooltip of the old view would stay until the mouse moves
       if (nextView !== view || selected !== tapped) {
         tapline.textContent = '';
         tapped = null;
@@ -168,21 +162,18 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
       const fill = (id: string) => {
         const share = index.shareOf[id];
         if (!close) return colors.share(share);
-        return isClose(share) ? colors.party(share > 0.5) : colors.poles.mid;
+        return isClose(share) ? colors.close(share) : colors.faint(share > 0.5);
       };
-      // in the view 'close' everything that is not close, the single-seat states too, is the same pale gray
-      districts.attr('fill', (f) => (index.single[f.properties.state] ? (close ? colors.poles.mid : colors.blank) : fill(f.properties.id)))
+      // in the view 'close' the six single-seat states take a pale tint of their party: each lies more than 10 points apart
+      const single = (postal: Postal) => (close ? colors.faint(SINGLE_SEAT_PARTY[postal] === 'D') : colors.blank);
+      districts.attr('fill', (f) => (index.single[f.properties.state] ? single(f.properties.state) : fill(f.properties.id)))
         .classed('quiet', (f) => close && (Boolean(index.single[f.properties.state]) || !isClose(index.shareOf[f.properties.id])));
       root.classed('calm', close);
       root.classed('drawing', view === 'states'); // gray state lines in the view of the drawing effect (styles/map.css)
-      dotLayer.attr('display', close ? null : 'none');
-      dots.attr('fill', (f) => colors.party(index.shareOf[f.properties.id] > 0.5));
       states.attr('fill', (f) => (index.single[f.properties.postal] ? colors.blank : colors.effect(index.states[f.properties.postal].effects.drawing)));
       districtLayer.attr('display', view === 'states' ? 'none' : null);
       stateLayer.attr('display', view === 'states' ? null : 'none');
-      borders.classed('swing', (f) => view === 'close' && isSwing(index, f.properties.postal));
-      coast.raise(); // over every plain state line, which is white and would hide it; under the marked ones
-      borders.filter((f) => view === 'close' && isSwing(index, f.properties.postal)).raise();
+      coast.raise(); // over every plain state line, which would hide it; under the outline of the chosen state
       borders.classed('on', (f) => f.properties.postal === selected);
       borders.filter((f) => f.properties.postal === selected).raise();
     },
@@ -206,20 +197,32 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
 /** The legend under the map for the current view (site design, chapter 3). */
 export function drawLegend(el: HTMLElement, view: MapView, colors: Colors, close: CloseLegend) {
   const legend = select(el).html('');
+  const width = 260;
   if (view === 'close') {
-    // close: { items: [{ key, text }], note } from closeLegend(results)
-    const swatch: Record<string, string> = { d: colors.party(true), r: colors.party(false), other: colors.poles.mid };
-    const kind: Record<string, string> = { swing: 'sw gold', tight: 'sw ring tight', near: 'sw ring near', other: 'sw pale' };
+    // the close districts on a bar from 45% to 55%, purple in the middle; then the pale rest in both tints, half and
+    // half, and the counts
+    const { bar } = close;
+    const svg = legend.append('svg').attr('viewBox', `0 0 ${width} 44`).attr('aria-hidden', 'true');
+    const gradient = svg.append('defs').append('linearGradient').attr('id', 'legend-close');
+    for (let i = 0; i <= 20; i += 1) {
+      gradient.append('stop').attr('offset', i / 20).attr('stop-color', colors.close(bar.from + ((bar.to - bar.from) * i) / 20));
+    }
+    svg.append('rect').attr('x', 10).attr('y', 4).attr('width', width - 20).attr('height', 12).attr('fill', 'url(#legend-close)');
+    for (const tick of bar.ticks) {
+      const x = 10 + ((tick.value - bar.from) / (bar.to - bar.from)) * (width - 20);
+      svg.append('text').attr('x', x).attr('y', 28).attr('text-anchor', 'middle').text(tick.label);
+    }
+    svg.append('text').attr('x', 10).attr('y', 41).text(bar.low);
+    svg.append('text').attr('x', width - 10).attr('y', 41).attr('text-anchor', 'end').text(bar.high);
     for (const item of close.items) {
       const span = legend.append('span').attr('class', 'item');
-      span.append('i').attr('class', kind[item.key] ?? 'sw').attr('aria-hidden', 'true')
-        .style('background', swatch[item.key] ?? null);
+      span.append('i').attr('class', 'sw pale').attr('aria-hidden', 'true')
+        .style('background', `linear-gradient(90deg, ${colors.faint(false)} 50%, ${colors.faint(true)} 50%)`);
       span.append('span').text(item.text);
     }
     legend.append('span').attr('class', 'note').text(close.note);
     return;
   }
-  const width = 260;
   const svg = legend.append('svg').attr('viewBox', `0 0 ${width} 44`).attr('aria-hidden', 'true');
   if (view === 'districts') {
     const gradient = svg.append('defs').append('linearGradient').attr('id', 'legend-share');

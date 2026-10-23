@@ -5,11 +5,11 @@ import * as d3 from 'd3';
 import { makeColors, shareStops, shareTicks, effectBoxes } from '../src/lib/colors.ts';
 
 // The poles of the site design's token table, light and dark (chapter 3).
-const POLES: Record<string, { d: string; r: string; mid: string; blank: string }> = {
-  'party, light': { d: '#2a78d6', r: '#e34948', mid: '#ecebe7', blank: '#c9ccd1' },
-  'neutral, light': { d: '#01665e', r: '#8c510a', mid: '#ecebe7', blank: '#c9ccd1' },
-  'party, dark': { d: '#3987e5', r: '#e66767', mid: '#3a3a37', blank: '#4a4f56' },
-  'neutral, dark': { d: '#5ab4ac', r: '#d8b365', mid: '#3a3a37', blank: '#4a4f56' },
+const POLES: Record<string, { d: string; r: string; mid: string; blank: string; tie: string }> = {
+  'party, light': { d: '#2a78d6', r: '#e34948', mid: '#ecebe7', blank: '#c9ccd1', tie: '#904ec9' },
+  'neutral, light': { d: '#01665e', r: '#8c510a', mid: '#ecebe7', blank: '#c9ccd1', tie: '#a87800' },
+  'party, dark': { d: '#3987e5', r: '#e66767', mid: '#3a3a37', blank: '#4a4f56', tie: '#bd78f7' },
+  'neutral, dark': { d: '#5ab4ac', r: '#d8b365', mid: '#3a3a37', blank: '#4a4f56', tie: '#e3b23c' },
 };
 const rgb = (color: string): string => d3.rgb(color).toString();
 const lightness = (color: string): number => d3.lab(color).l;
@@ -28,6 +28,21 @@ test('share: Lab interpolation with exponent 0.85 between the midpoint and a pol
   // 65% is halfway to the Democratic pole: t = 0.5 ** 0.85 = 0.5548
   assert.equal(c.share(0.65), d3.interpolateLab('#ecebe7', '#2a78d6')(0.5 ** 0.85));
   assert.equal(c.share(0.35), d3.interpolateLab('#ecebe7', '#e34948')(0.5 ** 0.85));
+});
+
+test('faint: a district that is not close, 0.18 of the way from the midpoint to the party ahead', () => {
+  const c = makeColors(d3.interpolateLab, POLES['party, light']);
+  assert.equal(c.faint(true), d3.interpolateLab('#ecebe7', '#2a78d6')(0.18));
+  assert.equal(c.faint(false), d3.interpolateLab('#ecebe7', '#e34948')(0.18));
+});
+
+test('close: the purple of a tie at 50%, 0.8 of the way to the party ahead at 45% and 55%, no further beyond', () => {
+  const c = makeColors(d3.interpolateLab, POLES['party, light']);
+  assert.equal(rgb(c.close(0.5)), rgb('#904ec9'));
+  assert.equal(c.close(0.55), d3.interpolateLab('#904ec9', '#2a78d6')(0.8));
+  assert.equal(c.close(0.45), d3.interpolateLab('#904ec9', '#e34948')(0.8));
+  assert.equal(c.close(0.525), d3.interpolateLab('#904ec9', '#2a78d6')(0.4));
+  assert.equal(c.close(0.6), c.close(0.55));
 });
 
 test('effect: 0 is the midpoint, one seat starts at 0.45 + 0.55/6, six seats and more are the full poles', () => {

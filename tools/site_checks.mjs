@@ -115,45 +115,52 @@ async function map(t) {
   t.check('"Red and blue" brings the party colors back', (await t.js(fills)) === party);
   await t.screenshot('map-1280');
 
-  // "Districts: close races": close districts in the color of the party they lean to, the
-  // rest pale, swing states outlined; the numbers come from results.json.
+  // "Districts: close races": the close districts from the purple of a tie toward the party ahead, the rest, the six
+  // one-seat states too, in a pale tint of its party, gray state lines, no rings; the numbers come from results.json.
   await t.js("document.getElementById('view-close').click()");
   const closeWant = await t.js(`${DATA}.then((r) => {
-    const all = Object.values(r.states).flatMap((s) => s.districts);
-    const close = all.filter((d) => d.share >= 0.45 && d.share <= 0.55);
-    return { d: close.filter((d) => d.share > 0.5).length, r: close.filter((d) => d.share <= 0.5).length, enacted: r.national.competitive.enacted,
-      swing: Object.values(r.states).filter((s) => Math.abs(s.d_share - 0.5) <= 0.015).length,
-      dots: all.filter((d) => Math.abs(2 * d.share - 1) < 0.05).length, tight: all.filter((d) => Math.abs(2 * d.share - 1) < 0.02).length };
+    const close = Object.values(r.states).flatMap((s) => s.districts).filter((d) => d.share >= 0.45 && d.share <= 0.55)
+      .sort((a, b) => Math.abs(a.share - 0.5) - Math.abs(b.share - 0.5));
+    return { close: close.length, enacted: r.national.competitive.enacted, closest: close[0].id, label: close[0].label ?? null };
   })`);
   const closeSeen = await t.js(`(() => {
     const css = getComputedStyle(document.documentElement);
-    const fill = [...document.querySelectorAll('#map path.district')].map((p) => p.getAttribute('fill'));
-    return { d: fill.filter((f) => f === css.getPropertyValue('--party-d').trim()).length, r: fill.filter((f) => f === css.getPropertyValue('--party-r').trim()).length,
-      swing: document.querySelectorAll('#map path.state.swing').length, title: document.getElementById('map-title').textContent,
-      dots: document.querySelectorAll('#map .dots circle').length, tight: document.querySelectorAll('#map .dots circle.tight').length,
-      shown: document.querySelector('#map .dots').getAttribute('display') !== 'none',
+    const rgb = (color) => { const i = document.createElement('i'); i.style.color = color; document.body.append(i); const v = getComputedStyle(i).color; i.remove(); return v; };
+    const near = (a, b) => { const x = rgb(a).match(/\\d+/g).map(Number), y = rgb(b).match(/\\d+/g).map(Number); return x.slice(0, 3).every((v, k) => Math.abs(v - y[k]) <= 6); };
+    const party = ['--party-d', '--party-r'].map((n) => rgb(css.getPropertyValue(n).trim()));
+    const tie = css.getPropertyValue('--party-tie').trim();
+    const paths = [...document.querySelectorAll('#map path.district')];
+    const loud = paths.filter((p) => !p.classList.contains('quiet'));
+    const quiet = new Set(paths.filter((p) => p.classList.contains('quiet')).map((p) => rgb(p.getAttribute('fill'))));
+    const closest = paths.find((p) => p.__data__.properties.id === ${JSON.stringify('__CLOSEST__')});
+    return { loud: loud.length, loudParty: loud.some((p) => party.includes(rgb(p.getAttribute('fill')))),
+      quiet: quiet.size, quietParty: party.some((c) => quiet.has(c)), closestTie: !!closest && near(closest.getAttribute('fill'), tie),
+      listTie: near(document.querySelector('#sheet .dlist .sw').style.background, tie), rings: !!document.querySelector('#map .dots'),
+      lines: getComputedStyle(document.querySelector('#map path.state')).stroke, title: document.getElementById('map-title').textContent,
       pressed: ['districts', 'states', 'close'].map((v) => document.getElementById('view-' + v).getAttribute('aria-pressed')).join() };
-  })()`);
-  t.check('"Districts: close races" colors the close districts by lean and outlines the swing states',
-    closeSeen.d === closeWant.d && closeSeen.r === closeWant.r && closeWant.d + closeWant.r === closeWant.enacted
-    && closeSeen.swing === closeWant.swing && closeSeen.swing === 8 && closeSeen.title === 'Close districts and swing states' && closeSeen.pressed === 'false,false,true'
-    && closeSeen.shown && closeSeen.dots === closeWant.dots && closeSeen.tight === closeWant.tight,
+  })()`.replace('"__CLOSEST__"', JSON.stringify(closeWant.closest)));
+  t.check('"Districts: close races" colors the close districts from the purple of a tie, the rest pale, gray state lines, no rings',
+    closeSeen.loud === closeWant.close && closeWant.close === closeWant.enacted && !closeSeen.loudParty
+    && closeSeen.quiet === 2 && !closeSeen.quietParty && closeSeen.closestTie && closeSeen.listTie && !closeSeen.rings
+    && closeSeen.lines === 'rgb(163, 170, 165)' && closeSeen.title === 'Close districts' && closeSeen.pressed === 'false,false,true',
     JSON.stringify({ closeSeen, closeWant }));
-  t.check('the close-races legend names the fills, the outline and the counts', await t.js(
-    "['Gold outline: swing state', 'Thick ring: close call, under 2 points apart', 'Thin ring: 2 to 5 points apart', 'Close district, Democrats ahead', 'Close district, Republicans ahead', 'Gray: not close, more than 10 points apart'].every((x) => document.getElementById('legend').textContent.includes(x))"));
-  t.check('each ring takes the color of the party ahead and the swing states a gold outline', await t.js(`(() => {
-    const css = getComputedStyle(document.documentElement);
-    const rings = [...document.querySelectorAll('#map .dots circle')];
-    const party = new Set([css.getPropertyValue('--party-d').trim(), css.getPropertyValue('--party-r').trim()]);
-    const swing = document.querySelector('#map path.state.swing');
-    return rings.length > 0 && rings.every((c) => party.has(c.getAttribute('fill')))
-      && getComputedStyle(swing).stroke === getComputedStyle(document.querySelector('.legend .sw.gold')).borderTopColor;
-  })()`));
+  t.check('the close-races legend shows the bar from 45% to 55%, the pale rest and the counts, without rings or swing states', await t.js(
+    "((el) => ['45%', '50%', '55%', 'Republicans ahead', 'Democrats ahead'].every((x) => [...el.querySelectorAll('svg text')].some((s) => s.textContent === x))"
+    + " && el.querySelector('svg rect').getAttribute('fill') === 'url(#legend-close)' && el.textContent.includes('Pale: not close, more than 10 points apart')"
+    + " && !/ring|swing/i.test(el.textContent))(document.getElementById('legend'))"));
   await t.mouse('mouseMoved', await t.center(districtOf('TX')));
   t.check('pointing at a district in this view adds the close districts of its state',
     /^Close districts in Texas: \d+ on the enacted map, a median of \d+ on neutral maps$/.test(await t.js("[...document.querySelectorAll('#tip span')].at(-1)?.textContent ?? ''")));
+  t.check('the district under the mouse is outlined in this view, over the state lines', await t.js(`(() => {
+    const line = document.querySelector('#map path.hoverline'), d = line.getAttribute('d');
+    const under = [...document.querySelectorAll('#map path.district')].filter((p) => p.getAttribute('d') === d);
+    return line.getAttribute('display') !== 'none' && under.length === 1 && under[0].__data__.properties.state === 'TX'
+      && getComputedStyle(line).strokeWidth === '1.6px'
+      && !!(line.compareDocumentPosition(document.querySelector('#map path.coast')) & Node.DOCUMENT_POSITION_PRECEDING); })()`));
   await t.js("document.getElementById('view-districts').click()");
-  t.check('back to "Districts: Democratic share" drops the outlines and the dots', await t.js("document.querySelectorAll('#map path.state.swing').length === 0 && document.querySelector('#map .dots').getAttribute('display') === 'none'"));
+  t.check('back to "Districts: Democratic share" drops the outline under the mouse and the purple', await t.js(
+    "document.querySelector('#map path.hoverline').getAttribute('display') === 'none' && !document.querySelector('#map path.district.quiet')"
+    + " && document.getElementById('legend').querySelector('svg rect').getAttribute('fill') === 'url(#legend-share)'"));
 
   // A phone: a tap writes the tap line without a tooltip, one finger is left to the page, two fingers zoom.
   await t.tab('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
@@ -1190,10 +1197,10 @@ async function tapline(t) {
   await t.click(await t.center(districtOf('CA')));
   await t.js("document.querySelector('#sheet .back').click()");
   t.check('Back to all states clears the line', await t.until(`${HEADING} === 'Districts by Democratic share'`) && (await t.text('#tapline')) === '');
-  // the gray edge of the country lies over every state line that is not marked, also after a state was chosen or the
-  // swing states were outlined
+  // the gray edge of the country lies over every state line that is not marked, also after a state was chosen and
+  // after the close races
   const coastOnTop = "(() => { const c = document.querySelector('#map path.coast'), kids = [...c.parentNode.children], i = kids.indexOf(c);"
-    + " return kids.every((p, k) => k < i || p === c || p.matches('.on, .swing')); })()";
+    + " return kids.every((p, k) => k < i || p === c || p.matches('.on')); })()";
   const afterBack = await t.js(coastOnTop);
   await t.js("document.getElementById('view-close').click()");
   await t.js("document.getElementById('view-districts').click()");

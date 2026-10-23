@@ -14,6 +14,7 @@ function readPoles(palette: Palette) {
     r: token(palette === 'party' ? '--party-r' : '--neutral-r'),
     mid: token('--mid'),
     blank: token('--blank'),
+    tie: token(palette === 'party' ? '--party-tie' : '--neutral-tie'),
   };
 }
 
