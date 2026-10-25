@@ -117,6 +117,6 @@ The page opens with three key findings under the title. Then come four numbered 
 - ALARM census-2020 files, with election data from the Voting and Election Science Team. The election data is CC BY 4.0, the census-2020 files are CC BY-SA 4.0.
 - US Census Bureau block equivalency files for the 118th, 119th and 120th Congress, P.L. 94-171 redistricting data, TIGER/Line files and cartographic boundary files. Public domain.
 - MIT Election Data and Science Lab, U.S. President 1976-2024, Harvard Dataverse, doi:10.7910/DVN/42MVDX, version 10.1. CC0 1.0. The Senate block takes the 2016 and 2020 votes of the six states with one seat from it, and the site the national two-party shares of 2016, 2020 and 2024.
-- U.S. Senate, lists of Class II and Class III senators and the party division, as of October 17, 2026: the seats on the ballot in 2026 and who holds the others (`data/sources.md`, Senate section).
+- U.S. Senate, lists of Class II and Class III senators and the party division, as of October 20, 2026: the seats on the ballot in 2026 and who holds the others (`data/sources.md`, Senate section).
 - D3 and topojson-client, ISC license. Vite bundles them from npm; their license texts are in `site/public/licenses/`.
 - The site footer credits the Geodienst of the University of Groningen, with its logo from `site/public/img/geodienst.svg` and a link to https://rug.nl/geo.
