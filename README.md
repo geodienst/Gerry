@@ -113,7 +113,7 @@ The page opens with three key findings under the title. Then come four numbered 
 
 ## Sources and licenses
 
-- ALARM Project, 50-State Redistricting Simulations, Harvard Dataverse, doi:10.7910/DVN/SLCD3E, version 15. CC0 1.0.
+- ALARM Project, 50-State Redistricting Simulations, Harvard Dataverse, doi:10.7910/DVN/SLCD3E, version 15. CC0 1.0. Described in McCartan, Kenny, Simko, Garcia, Wang, Wu, Kuriwaki and Imai, "Simulated redistricting plans for the analysis and evaluation of redistricting in the United States", Scientific Data 9, 689 (2022), doi:10.1038/s41597-022-01808-2.
 - ALARM census-2020 files, with election data from the Voting and Election Science Team. The election data is CC BY 4.0, the census-2020 files are CC BY-SA 4.0.
 - US Census Bureau block equivalency files for the 118th, 119th and 120th Congress, P.L. 94-171 redistricting data, TIGER/Line files and cartographic boundary files. Public domain.
 - MIT Election Data and Science Lab, U.S. President 1976-2024, Harvard Dataverse, doi:10.7910/DVN/42MVDX, version 10.1. CC0 1.0. The Senate block takes the 2016 and 2020 votes of the six states with one seat from it, and the site the national two-party shares of 2016, 2020 and 2024.
