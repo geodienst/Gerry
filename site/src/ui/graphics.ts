@@ -253,32 +253,68 @@ export function drawStates(canvas: HTMLCanvasElement, g: StatesGraphic, colors: 
   canvas.setAttribute('aria-label', g.alt);
 }
 
-/** Fill `shapes` and outline `outline`, with `fit` fitted into the box, in the projection of the map on the page. */
-function drawShapes(ctx: CanvasRenderingContext2D, fit: Feature[], shapes: { shape: Feature; fill: string }[],
-  box: { x: number; y: number; w: number; h: number }, outline: Feature[]) {
-  const projection = geoAlbersUsa().fitExtent([[box.x, box.y], [box.x + box.w, box.y + box.h]], { type: 'FeatureCollection', features: fit });
-  const path = geoPath(projection, ctx);
-  ctx.lineJoin = 'round';
-  for (const { shape, fill } of shapes) {
-    ctx.beginPath();
-    path(shape);
-    ctx.fillStyle = fill;
-    ctx.fill();
-    ctx.strokeStyle = LIGHT.sheet;
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
-  }
-  ctx.strokeStyle = LIGHT.fg;
-  ctx.lineWidth = 1.2;
-  for (const shape of outline) {
-    ctx.beginPath();
-    path(shape);
-    ctx.stroke();
-  }
+/** The height of the two map cards: 16:9 at the width of the images, so they fill a screen or a post. */
+const WIDE_H = Math.round((W * 9) / 16);
+/** Room for the foot under a card: the rule, the votes, the maps and sources, the credit and the margin. */
+const FOOT_ROOM = 150;
+/** The column of text beside the map. */
+const COL_W = 360;
+
+interface MapBox { x: number; y: number; w: number; h: number }
+/** What a map card draws: the shapes that set the scale, the land around them, and the shapes with their colors. */
+interface MapLayers {
+  fit: Feature[];
+  /** pale land around the colored shapes, under them */
+  around: Feature[];
+  shapes: { shape: Feature; fill: string }[];
+  /** drawn on top in the ink of the text */
+  outline: Feature[];
 }
 
-/** The legend of the district colors: a bar from 20% to 80% with its numbers, and both ends named. */
-function shareLegend(ctx: CanvasRenderingContext2D, f: Faces, colors: Colors, x: number, y: number, w: number): number {
+/**
+ * The map of a card: water to the right and top edges of the image, `fit` fitted into it inside `inset`, in the
+ * projection of the map on the page; the land around first, then the colored shapes, then the outline.
+ * @param inset room inside the box: top, right, bottom, left
+ */
+function drawMap(ctx: CanvasRenderingContext2D, box: MapBox, layers: MapLayers, inset: [number, number, number, number]) {
+  const [top, right, bottom, left] = inset;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(box.x, box.y, box.w, box.h);
+  ctx.clip();
+  ctx.fillStyle = LIGHT.water;
+  ctx.fillRect(box.x, box.y, box.w, box.h);
+  const projection = geoAlbersUsa().fitExtent([[box.x + left, box.y + top], [box.x + box.w - right, box.y + box.h - bottom]],
+    { type: 'FeatureCollection', features: layers.fit });
+  const path = geoPath(projection, ctx);
+  ctx.lineJoin = 'round';
+  const fillAll = (shapes: { shape: Feature; fill: string }[], line: string, width: number) => {
+    for (const { shape, fill } of shapes) {
+      ctx.beginPath();
+      path(shape);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      ctx.strokeStyle = line;
+      ctx.lineWidth = width;
+      ctx.stroke();
+    }
+  };
+  fillAll(layers.around.map((shape) => ({ shape, fill: LIGHT.mid })), LIGHT.sheet, 1);
+  fillAll(layers.shapes, LIGHT.sheet, 0.8);
+  ctx.strokeStyle = LIGHT.fg;
+  ctx.lineWidth = 1.4;
+  for (const shape of layers.outline) {
+    ctx.beginPath();
+    path(shape);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** The legend of the district colors on a pale card: a bar from 20% to 80% with its numbers, both ends named. */
+function shareLegend(ctx: CanvasRenderingContext2D, f: Faces, colors: Colors, x: number, y: number, w: number) {
+  ctx.fillStyle = LIGHT.sheet;
+  ctx.fillRect(x - 14, y - 14, w + 28, 80);
   const gradient = ctx.createLinearGradient(x, 0, x + w, 0);
   for (const stop of shareStops()) gradient.addColorStop(stop.offset, colors.share(stop.value));
   ctx.fillStyle = gradient;
@@ -292,64 +328,70 @@ function shareLegend(ctx: CanvasRenderingContext2D, f: Faces, colors: Colors, x:
   ctx.textAlign = 'right';
   ctx.fillText(LEGEND_TEXT.high, x + w, y + 52);
   ctx.textAlign = 'left';
-  return y + 60;
+}
+
+/** The big number of a card with the bar of its color before it; returns the y under it. */
+function bigNumber(ctx: CanvasRenderingContext2D, f: Faces, text: string, color: string, y: number): number {
+  ctx.fillStyle = color;
+  ctx.fillRect(PAD, y + 4, 12, 48);
+  ctx.font = `700 56px ${f.head}`;
+  ctx.fillStyle = LIGHT.fg;
+  ctx.fillText(text, PAD + 24, y + 48);
+  return y + 62;
 }
 
 /**
- * One state: its name, the drawing effect large and the three counts on the left, its districts by Democratic share
- * on the right with the legend under them. A state with one seat gets its two lines and its outline in gray.
+ * One state as a 16:9 card: on the left its name, the drawing effect large and the three counts; on the right, to the
+ * edges of the image, its districts by Democratic share among the pale states around it, with the legend on the water.
+ * A state with one seat gets its two lines and its outline in gray.
  * @param state the outline of the state
  * @param districts its districts
+ * @param around the states around it, drawn pale
  * @param shareOf the Democratic share of each district
  */
 export function drawState(canvas: HTMLCanvasElement, g: StateGraphic, colors: Colors,
-  { state, districts, shareOf }: { state: StateShape; districts: DistrictShape[]; shareOf: Record<string, number> }) {
+  { state, districts, around, shareOf }: { state: StateShape; districts: DistrictShape[]; around: StateShape[]; shareOf: Record<string, number> }) {
   const f = faces();
   render(canvas, (ctx) => {
     let y = PAD - 8;
-    const leftW = 500;
-    y = paragraph(ctx, g.title, PAD, y, leftW, `700 48px ${f.head}`, LIGHT.fg, 58);
-    y = paragraph(ctx, g.meta, PAD, y + 4, leftW, `17px ${f.body}`, LIGHT.muted, 24) + 26;
-    const top = y;
+    y = paragraph(ctx, g.title, PAD, y, COL_W, `700 46px ${f.head}`, LIGHT.fg, 54);
+    y = paragraph(ctx, g.meta, PAD, y + 2, COL_W, `16px ${f.body}`, LIGHT.muted, 22) + 22;
     if (g.headline) {
-      ctx.fillStyle = colors.effect(g.headline.drawing);
-      ctx.fillRect(PAD, y + 6, 14, 52);
-      ctx.font = `700 60px ${f.head}`;
-      ctx.fillStyle = LIGHT.fg;
-      ctx.fillText(g.headline.value, PAD + 28, y + 54);
-      y = paragraph(ctx, g.headline.sentence, PAD, y + 74, leftW, `19px ${f.body}`, LIGHT.fg, 27) + 22;
+      y = bigNumber(ctx, f, g.headline.value, colors.effect(g.headline.drawing), y);
+      y = paragraph(ctx, g.headline.sentence, PAD, y, COL_W, `17px ${f.body}`, LIGHT.fg, 24) + 16;
       ctx.fillStyle = LIGHT.rule;
-      ctx.fillRect(PAD, y, leftW, 1);
+      ctx.fillRect(PAD, y, COL_W, 1);
       for (const row of g.rows) {
-        ctx.font = `600 20px ${f.body}`;
+        ctx.font = `600 18px ${f.body}`;
         ctx.fillStyle = LIGHT.fg;
-        ctx.fillText(row.label, PAD, y + 40);
-        ctx.font = `700 40px ${f.head}`;
+        ctx.fillText(row.label, PAD, y + 32);
+        ctx.font = `700 34px ${f.head}`;
         ctx.textAlign = 'right';
-        ctx.fillText(row.value, PAD + leftW, y + 44);
+        ctx.fillText(row.value, PAD + COL_W, y + 36);
         ctx.textAlign = 'left';
-        y += 60;
+        y += 50;
         ctx.fillStyle = LIGHT.rule;
-        ctx.fillRect(PAD, y, leftW, 1);
+        ctx.fillRect(PAD, y, COL_W, 1);
       }
-      y = paragraph(ctx, g.seatsOf, PAD, y + 10, leftW, `15px ${f.body}`, LIGHT.muted, 22);
+      y = paragraph(ctx, g.seatsOf, PAD, y + 8, COL_W, `14px ${f.body}`, LIGHT.muted, 20);
     } else {
-      for (const line of g.lines) y = paragraph(ctx, line, PAD, y, leftW, `19px ${f.body}`, LIGHT.fg, 27) + 10;
+      for (const line of g.lines) y = paragraph(ctx, line, PAD, y, COL_W, `18px ${f.body}`, LIGHT.fg, 26) + 10;
     }
-    // the districts on the right, as tall as the column beside them, the legend under them
-    const mapX = PAD + leftW + 48;
-    const box = { x: mapX, y: top, w: W - PAD - mapX, h: Math.max(y - top - 70, 300) };
+    // the map from the column to the right and top edges, down to the foot
+    const x = PAD + COL_W + 36;
+    const box = { x, y: 0, w: W - x, h: Math.max(y, WIDE_H - FOOT_ROOM) };
     const fill = (d: DistrictShape) => (g.single ? colors.blank : colors.share(shareOf[d.properties.id]));
-    drawShapes(ctx, [state], districts.map((d) => ({ shape: d, fill: fill(d) })), box, [state]);
-    const legendBottom = g.single ? box.y + box.h : shareLegend(ctx, f, colors, box.x + (box.w - 300) / 2, box.y + box.h + 12, 300);
-    return drawFoot(ctx, f, g.foot, Math.max(y, legendBottom) + 30);
+    drawMap(ctx, box, { fit: [state], around, shapes: districts.map((d) => ({ shape: d, fill: fill(d) })), outline: [state] },
+      [28, 28, g.single ? 28 : 112, 28]);
+    if (!g.single) shareLegend(ctx, f, colors, box.x + 30, box.y + box.h - 78, 300);
+    return drawFoot(ctx, f, g.foot, box.h + 26);
   });
   canvas.setAttribute('aria-label', g.alt);
 }
 
 /**
- * All states on one map in the color of their drawing effect, the six states with one seat gray, with the net large
- * above and the key under it.
+ * All states as a 16:9 card: the net large and the sums on the left with the key under them, the map of the states in
+ * the color of their drawing effect to the right and top edges, the six states with one seat gray.
  * @param drawingOf the drawing effect of a state, null for a state with one seat
  */
 export function drawStatesMap(canvas: HTMLCanvasElement, g: StatesMapGraphic, colors: Colors,
@@ -357,36 +399,31 @@ export function drawStatesMap(canvas: HTMLCanvasElement, g: StatesMapGraphic, co
   const f = faces();
   render(canvas, (ctx) => {
     let y = PAD - 8;
-    y = paragraph(ctx, g.title, PAD, y, W - 2 * PAD, `700 44px ${f.head}`, LIGHT.fg, 54);
-    y = paragraph(ctx, g.note, PAD, y + 4, 960, `19px ${f.body}`, LIGHT.muted, 27) + 24;
-    ctx.fillStyle = colors.effect(g.netValue);
-    ctx.fillRect(PAD, y + 4, 14, 44);
-    ctx.font = `700 44px ${f.head}`;
-    ctx.fillStyle = LIGHT.fg;
-    ctx.fillText(g.net, PAD + 28, y + 42);
-    const netEnd = PAD + 28 + ctx.measureText(g.net).width + 28;
-    const sumBottom = paragraph(ctx, g.summary, netEnd, y + 2, W - PAD - netEnd, `18px ${f.body}`, LIGHT.fg, 25);
-    y = Math.max(y + 56, sumBottom) + 20;
-    const box = { x: PAD, y, w: W - 2 * PAD, h: ((W - 2 * PAD) * 610) / 975 };
-    const fill = (postal: Postal) => { const d = drawingOf(postal); return d === null ? colors.blank : colors.effect(d); };
-    drawShapes(ctx, states, states.map((s) => ({ shape: s, fill: fill(s.properties.postal) })), box, []);
+    y = paragraph(ctx, g.title, PAD, y, COL_W, `700 40px ${f.head}`, LIGHT.fg, 48);
+    y = paragraph(ctx, g.note, PAD, y + 4, COL_W, `16px ${f.body}`, LIGHT.muted, 22) + 22;
+    y = bigNumber(ctx, f, g.net, colors.effect(g.netValue), y);
+    y = paragraph(ctx, g.summary, PAD, y, COL_W, `17px ${f.body}`, LIGHT.fg, 24) + 24;
     // the key: thirteen boxes from R+6 to D+6, every second one named
-    y = box.y + box.h + 16;
     const boxes = effectBoxes();
-    const size = 30;
-    const keyX = (W - boxes.length * size) / 2;
-    ctx.font = `14px ${f.body}`;
+    const size = COL_W / boxes.length;
+    ctx.font = `13px ${f.body}`;
     ctx.textAlign = 'center';
     boxes.forEach((b, i) => {
       ctx.fillStyle = colors.effect(b.value);
-      ctx.fillRect(keyX + i * size + 1, y, size - 2, 14);
+      ctx.fillRect(PAD + i * size + 1, y, size - 2, 14);
       if (b.label) {
         ctx.fillStyle = LIGHT.muted;
-        ctx.fillText(b.label, keyX + i * size + size / 2, y + 34);
+        ctx.fillText(b.label, PAD + i * size + size / 2, y + 32);
       }
     });
     ctx.textAlign = 'left';
-    return drawFoot(ctx, f, g.foot, y + 64);
+    y += 40;
+    const x = PAD + COL_W + 36;
+    const box = { x, y: 0, w: W - x, h: Math.max(y, WIDE_H - FOOT_ROOM) };
+    const fill = (postal: Postal) => { const d = drawingOf(postal); return d === null ? colors.blank : colors.effect(d); };
+    drawMap(ctx, box, { fit: states, around: [], shapes: states.map((s) => ({ shape: s, fill: fill(s.properties.postal) })), outline: [] },
+      [24, 24, 24, 24]);
+    return drawFoot(ctx, f, g.foot, box.h + 26);
   });
   canvas.setAttribute('aria-label', g.alt);
 }

@@ -95,7 +95,7 @@ async function main() {
   $('share-site').addEventListener('click', () => share(SITE_URL));
   createShareBox({
     button: $<HTMLButtonElement>('outcomes-share'),
-    box: $('outcomes-sharebox'),
+    box: $<HTMLDialogElement>('outcomes-sharebox'),
     draw: (canvas) => {
       const g = nationalGraphic(results, outcomesData, outcomes.state().index);
       drawNational(canvas, g, lightColors(palette));

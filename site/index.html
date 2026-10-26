@@ -70,15 +70,18 @@
               <div class="readout" id="readout" aria-live="polite"></div>
               <div class="sharewrap">
                 <button type="button" class="sharebtn" id="outcomes-share" aria-expanded="false" aria-controls="outcomes-sharebox"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
-                <div class="sharebox" id="outcomes-sharebox" role="dialog" aria-label="Share this comparison" tabindex="-1" hidden>
-                  <canvas class="sharebox-img" aria-hidden="true"></canvas>
-                  <div class="sharebox-actions">
-                    <button type="button" class="sharebtn" data-action="link">Copy link</button>
-                    <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download image</button>
-                    <button type="button" class="sharebtn" data-action="share" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share image</button>
-                    <button type="button" class="sharebtn" data-action="text">Copy text</button>
+                <dialog class="sharebox" id="outcomes-sharebox" aria-label="Share this comparison">
+                  <div class="sharebox-in">
+                    <div class="sharebox-head"><button type="button" class="sharebtn" data-action="close">Close</button></div>
+                    <canvas class="sharebox-img" aria-hidden="true"></canvas>
+                    <div class="sharebox-actions">
+                      <button type="button" class="sharebtn" data-action="link">Copy link</button>
+                      <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download image</button>
+                      <button type="button" class="sharebtn" data-action="share" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share image</button>
+                      <button type="button" class="sharebtn" data-action="text">Copy text</button>
+                    </div>
                   </div>
-                </div>
+                </dialog>
               </div>
             </div>
             <svg id="waffle" class="chart" role="img" aria-labelledby="waffle-label"><title id="waffle-label"></title></svg>
@@ -158,16 +161,19 @@
           <div class="sharewrap sheetshare" id="map-sharewrap">
             <button type="button" class="sharebtn" id="map-share" aria-label="Share this view" aria-expanded="false" aria-controls="map-sharebox"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
           </div>
-          <div class="sharebox" id="map-sharebox" role="dialog" aria-label="Share this view" tabindex="-1" hidden>
-            <canvas class="sharebox-img" aria-hidden="true"></canvas>
-            <div class="sharebox-actions">
-              <button type="button" class="sharebtn" data-action="link">Copy link</button>
-              <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download image</button>
-              <button type="button" class="sharebtn" data-action="share" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share image</button>
-              <button type="button" class="sharebtn" data-action="text">Copy text</button>
-              <button type="button" class="sharebtn" data-action="data"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download data</button>
+          <dialog class="sharebox" id="map-sharebox" aria-label="Share this view">
+            <div class="sharebox-in">
+              <div class="sharebox-head"><button type="button" class="sharebtn" data-action="close">Close</button></div>
+              <canvas class="sharebox-img" aria-hidden="true"></canvas>
+              <div class="sharebox-actions">
+                <button type="button" class="sharebtn" data-action="link">Copy link</button>
+                <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download image</button>
+                <button type="button" class="sharebtn" data-action="share" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share image</button>
+                <button type="button" class="sharebtn" data-action="text">Copy text</button>
+                <button type="button" class="sharebtn" data-action="data"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download data</button>
+              </div>
             </div>
-          </div>
+          </dialog>
         </div>
         <p class="visually-hidden" id="sheet-status" aria-live="polite"></p>
       </div>

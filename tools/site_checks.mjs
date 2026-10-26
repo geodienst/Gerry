@@ -1154,16 +1154,16 @@ async function sharing(t) {
   };
   const page = 'https://somevotes.org/'; // the site's address, also when the page runs elsewhere
   t.check('Share by the key findings gives the address of the site', (await link('share-site')) === page);
-  // Share beside the map opens a panel: with no state the map of all states and their data, with a state its image
+  // Share beside the map opens a dialog: with no state the map of all states and their data, with a state its image
   await t.js("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } }); "
     + "window.saved = []; HTMLAnchorElement.prototype.click = function () { if (this.download) window.saved.push(this.download); }");
   const mapPanel = async () => {
     await t.js("window.shared = ''; window.saved = []; document.getElementById('map-share').click()");
     await t.sleep(300);
-    return t.js(`(() => { const box = document.getElementById('map-sharebox'), b = box.getBoundingClientRect(), s = document.getElementById('map-share').getBoundingClientRect();
-      return { open: !box.hidden, shared: window.shared, under: Math.abs(b.top - s.bottom - 6) < 2 && Math.abs(b.right - s.right) < 2,
-        image: box.querySelector('canvas').width === 2400, buttons: [...box.querySelectorAll('button')].filter((x) => !x.hidden).map((x) => x.textContent)
-          .filter((x) => x !== 'Share image').join() }; })()`);
+    return t.js(`(() => { const box = document.getElementById('map-sharebox'), c = box.querySelector('canvas'), shown = c.getBoundingClientRect();
+      return { open: box.open && box.matches(':modal'), shared: window.shared, wide: c.width === 2400 && c.height / c.width > 0.55 && c.height / c.width < 0.6,
+        large: shown.width >= 0.6 * innerWidth || shown.height >= 0.6 * innerHeight,
+        buttons: [...box.querySelectorAll('.sharebox-actions button')].filter((x) => !x.hidden).map((x) => x.textContent).filter((x) => x !== 'Share image').join() }; })()`);
   };
   const mapPress = async (action) => {
     await t.js(`window.copied = ''; document.querySelector('#map-sharebox [data-action="${action}"]').click()`);
@@ -1171,12 +1171,13 @@ async function sharing(t) {
     return t.js("({ copied: window.copied, saved: window.saved.join() })");
   };
   const all = await mapPanel();
-  t.check('Share beside the map opens a panel under the button with the image and five ways to share, and shares nothing yet',
-    all.open && all.shared === '' && all.under && all.image && all.buttons === 'Copy link,Download image,Copy text,Download data', JSON.stringify(all));
+  t.check('Share beside the map opens a dialog with the image 16:9 and large, and five ways to share, and shares nothing yet',
+    all.open && all.shared === '' && all.wide && all.large && all.buttons === 'Copy link,Download image,Copy text,Download data', JSON.stringify(all));
   t.check('with no state: the map of all states and the data of every state',
     (await mapPress('download')).saved === 'somevotes-drawing-effect-map.png' && (await mapPress('data')).saved.endsWith('somevotes-states.csv')
     && (await mapPress('link')).copied === page, JSON.stringify(await mapPress('link')));
-  await t.js("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
+  await t.js("document.querySelector('#map-sharebox [data-action=close]').click()");
+  t.check('Close closes the Share dialog', await t.js("!document.getElementById('map-sharebox').open && document.getElementById('map-share').getAttribute('aria-expanded') === 'false'"));
   await t.js("location.hash = '#TX'");
   await t.until(`${HEADING} === 'Texas'`);
   const tx = await mapPanel();
@@ -1184,27 +1185,28 @@ async function sharing(t) {
   const txText = await mapPress('text');
   const txFiles = [await mapPress('download'), await mapPress('data')].at(-1).saved;
   t.check('with Texas: its link, its caption with the link, its image and its districts',
-    tx.open && txLink.copied === `${page}#TX` && txText.copied.startsWith('With the 2016 and 2020 presidential votes, the map Texas uses on November 3, 2026 gives Democrats ')
+    tx.open && tx.wide && txLink.copied === `${page}#TX` && txText.copied.startsWith('With the 2016 and 2020 presidential votes, the map Texas uses on November 3, 2026 gives Democrats ')
     && txText.copied.endsWith(` ${page}#TX`) && txFiles === 'somevotes-texas.png,somevotes-texas-districts.csv', JSON.stringify({ tx, txLink, txText, txFiles }));
-  // Escape closes the panel and leaves Texas on screen; a second Escape goes back to all states
-  await t.js("document.getElementById('map-sharebox').focus(); document.getElementById('map-sharebox').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
+  // Escape closes the dialog and leaves Texas on screen; a second Escape goes back to all states
+  await t.js("document.querySelector('#map-sharebox [data-action=link]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
   await t.sleep(100);
-  t.check('Escape closes the Share panel and keeps the state', await t.js(`document.getElementById('map-sharebox').hidden && ${HEADING} === 'Texas'`));
+  t.check('Escape closes the Share dialog and keeps the state', await t.js(`!document.getElementById('map-sharebox').open && ${HEADING} === 'Texas'`));
   // chapter 01 on the neutral maps at 49.2% of the vote
   await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
   await t.js(`(() => { const s = document.getElementById('vote');
     s.value = String([...Array(Number(s.max) + 1).keys()].find((i) => { s.value = String(i); s.dispatchEvent(new Event('input')); return document.getElementById('vote-out').textContent === '49.2%'; }));
   })()`);
-  // Share above the House opens a panel with the image at this vote share, the link, the image file and the text
+  // Share above the House opens a dialog with the image at this vote share, the link, the image file and the text
   await t.js("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } }); "
     + "window.saved = []; HTMLAnchorElement.prototype.click = function () { if (this.download) window.saved.push(this.download); }");
   await t.js("window.shared = ''; document.getElementById('outcomes-share').click()");
   await t.sleep(200);
   const panel = await t.js(`(() => { const box = document.getElementById('outcomes-sharebox'), canvas = box.querySelector('canvas');
-    return { open: !box.hidden && document.getElementById('outcomes-share').getAttribute('aria-expanded') === 'true', shared: window.shared,
-      image: canvas.width === 2400 && canvas.height > 600 && canvas.getBoundingClientRect().width > 200,
-      buttons: [...box.querySelectorAll('button')].filter((b) => !b.hidden).map((b) => b.textContent).filter((x) => x !== 'Share image').join() }; })()`);
-  t.check('Share above the House opens a panel with the image and Copy link, Download image and Copy text, and shares nothing yet',
+    const shown = canvas.getBoundingClientRect();
+    return { open: box.open && box.matches(':modal') && document.getElementById('outcomes-share').getAttribute('aria-expanded') === 'true', shared: window.shared,
+      image: canvas.width === 2400 && canvas.height > 600 && (shown.width >= 0.6 * innerWidth || shown.height >= 0.6 * innerHeight),
+      buttons: [...box.querySelectorAll('.sharebox-actions button')].filter((b) => !b.hidden).map((b) => b.textContent).filter((x) => x !== 'Share image').join() }; })()`);
+  t.check('Share above the House opens a dialog with the image large and Copy link, Download image and Copy text, and shares nothing yet',
     panel.open && panel.shared === '' && panel.image && panel.buttons === 'Copy link,Download image,Copy text', JSON.stringify(panel));
   const press = async (action) => {
     await t.js(`window.copied = ''; document.querySelector('#outcomes-sharebox [data-action="${action}"]').click()`);
@@ -1220,13 +1222,15 @@ async function sharing(t) {
   t.check('Copy text gives the caption of the image with the link', texted.copied.startsWith('With Democrats at 49.2% of the two-party vote, ')
     && texted.copied.endsWith(` ${chosen}`) && texted.note === 'Text copied', JSON.stringify(texted));
   await t.js("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))");
-  t.check('Escape closes the panel', await t.js("document.getElementById('outcomes-sharebox').hidden && document.getElementById('outcomes-share').getAttribute('aria-expanded') === 'false'"));
-  // on a phone the panel stays within the screen
+  t.check('Escape closes the dialog, and the focus goes back to Share', await t.js("!document.getElementById('outcomes-sharebox').open && document.getElementById('outcomes-share').getAttribute('aria-expanded') === 'false' && document.activeElement === document.getElementById('outcomes-share')"));
+  // on a phone the dialog fills the screen, the image its width
   await t.load('', { width: 375, height: 812 });
   await t.js("document.getElementById('outcomes-share').click()");
   await t.sleep(200);
-  const narrow = await t.js("(() => { const b = document.getElementById('outcomes-sharebox').getBoundingClientRect(); return { left: b.left, right: b.right, width: innerWidth }; })()");
-  t.check('on a phone the Share panel stays within the screen', narrow.left >= 0 && narrow.right <= narrow.width, JSON.stringify(narrow));
+  const narrow = await t.js(`(() => { const b = document.getElementById('outcomes-sharebox').getBoundingClientRect(), c = document.querySelector('#outcomes-sharebox canvas').getBoundingClientRect();
+    return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, image: c.width, width: innerWidth, height: innerHeight }; })()`);
+  t.check('on a phone the Share dialog fills the screen and the image its width', narrow.left === 0 && narrow.right === narrow.width && narrow.top === 0
+    && Math.abs(narrow.bottom - narrow.height) < 2 && narrow.image >= narrow.width - 40, JSON.stringify(narrow));
   await t.load('', { width: 1280, height: 800 });
   await t.js("Object.defineProperty(navigator, 'share', { configurable: true, value: async (data) => { window.shared = data.url; } })");
   // without a share sheet the link goes to the clipboard, with a short note

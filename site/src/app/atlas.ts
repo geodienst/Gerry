@@ -23,6 +23,7 @@ import type { OutcomesView } from '../lib/chapters.ts';
 import type { Index } from '../lib/model.ts';
 
 const VIEWS: MapView[] = ['districts', 'states', 'close'];
+const OUTSET: Postal[] = ['AK', 'HI']; // the two states in an inset of the map
 
 export interface SelectOptions {
   /** add the state to the browser history (#TX) */
@@ -150,8 +151,7 @@ export function createAtlas({ results, topology, index, colors: initialColors, v
   };
   createShareBox({
     button: $<HTMLButtonElement>('map-share'),
-    box: $('map-sharebox'),
-    place: true,
+    box: $<HTMLDialogElement>('map-sharebox'),
     draw: (canvas) => {
       const colors = lightColors(palette());
       const postal = ui.selected;
@@ -167,6 +167,8 @@ export function createAtlas({ results, topology, index, colors: initialColors, v
       drawState(canvas, g, colors, {
         state: shapes.states.find((s) => s.properties.postal === postal)!,
         districts: shapes.districts.filter((d) => d.properties.state === postal),
+        // the states around it, pale; Alaska and Hawaii sit in their own insets, so they are never around another state
+        around: OUTSET.includes(postal) ? [] : shapes.states.filter((s) => s.properties.postal !== postal && !OUTSET.includes(s.properties.postal)),
         shareOf: index.shareOf,
       });
       return g;

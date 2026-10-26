@@ -7,7 +7,8 @@ export function notify(text: string) {
   note.className = 'share-note';
   note.setAttribute('role', 'status');
   note.textContent = text;
-  (document.fullscreenElement || document.body).append(note);
+  // in an open Share dialog, which lies over the page, else over the map in full screen or the page
+  (document.querySelector('dialog[open]') ?? document.fullscreenElement ?? document.body).append(note);
   setTimeout(() => note.remove(), 2000);
 }
 

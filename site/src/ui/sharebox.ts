@@ -1,22 +1,20 @@
-// The Share panels of chapter 01 and of the map in chapter 02. The button opens one with the image of what is on
-// screen, as it will be shared, and the ways to share: the link, the image as a file, the image through the device's
-// share sheet (only where that takes files, as on a phone), the caption with the link and, under the map, the data as
-// CSV. Escape, a click outside or the button again closes it. No outside services.
+// The Share dialogs of chapter 01 and of the map in chapter 02. The button opens one over the page with the image of
+// what is on screen, as large as the screen allows, and the ways to share it: the link, the image as a file, the image
+// through the device's share sheet (only where that takes files, as on a phone), the caption with the link and, by the
+// map, the data as CSV. Close, Escape or a click beside the dialog closes it. No outside services.
 import { download } from './graphics.ts';
 import { copy } from './share.ts';
 import type { CsvFile } from '../lib/csv.ts';
 
 interface ShareBoxOptions {
   button: HTMLButtonElement;
-  box: HTMLElement;
-  /** draw the image on the panel's canvas; returns its file name and caption */
+  box: HTMLDialogElement;
+  /** draw the image on the dialog's canvas; returns its file name and caption */
   draw: (canvas: HTMLCanvasElement) => { file: string; caption: string };
   /** the link to what is on screen */
   link: () => string;
   /** the file behind Download data, null where there is none */
   data?: () => CsvFile | null;
-  /** set the panel's place under the button from a script, for a panel that does not sit in the button's own box */
-  place?: boolean;
 }
 
 /** Whether the share sheet of this device takes an image file. */
@@ -40,59 +38,40 @@ function save(file: string, text: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
-export function createShareBox({ button, box, draw, link, data, place = false }: ShareBoxOptions) {
+export function createShareBox({ button, box, draw, link, data }: ShareBoxOptions) {
   const canvas = box.querySelector('canvas')!;
   const action = (name: string) => box.querySelector<HTMLButtonElement>(`[data-action="${name}"]`);
   let shown = { file: '', caption: '' };
-  // made when the panel opens, so the share sheet opens at once on the click (a phone allows it only then)
+  // made when the dialog opens, so the share sheet opens at once on the click (a phone allows it only then)
   let file: File | null = null;
   const text = () => `${shown.caption} ${link()}`;
   action('share')!.hidden = !sharesFiles();
 
-  /** Under the button, its right edge on the button's right edge, in the box the panel is placed in. */
-  function setPlace() {
-    const host = box.offsetParent as HTMLElement | null;
-    if (!host) return;
-    const b = button.getBoundingClientRect();
-    const h = host.getBoundingClientRect();
-    box.style.top = `${b.bottom - h.top + host.scrollTop + 6}px`;
-    box.style.right = `${Math.max(0, h.right - b.right - (host.offsetWidth - host.clientWidth))}px`;
-  }
   function open() {
     shown = draw(canvas);
     file = null;
     canvas.toBlob((blob) => { if (blob) file = new File([blob], shown.file, { type: 'image/png' }); }, 'image/png');
-    const csv = data?.();
     const dataButton = action('data');
-    if (dataButton) dataButton.hidden = !csv;
-    box.hidden = false;
-    if (place) setPlace();
+    if (dataButton) dataButton.hidden = !data?.();
+    box.showModal();
     button.setAttribute('aria-expanded', 'true');
-    box.focus(); // the panel itself, so a click shows no focus ring; Tab goes on to its buttons
   }
-  function close(refocus: boolean) {
-    if (box.hidden) return;
-    box.hidden = true;
+  const close = () => { if (box.open) box.close(); };
+  box.addEventListener('close', () => {
     button.setAttribute('aria-expanded', 'false');
-    if (refocus) button.focus();
-  }
+    button.focus({ preventScroll: true });
+  });
 
-  button.addEventListener('click', () => { if (box.hidden) open(); else close(false); });
-  // Escape closes the panel and nothing else: the map's own Escape (back to all states) sees defaultPrevented
+  button.addEventListener('click', open);
+  action('close')!.addEventListener('click', close);
+  // a click on the backdrop lands on the dialog itself, outside its inner box
+  box.addEventListener('click', (e) => { if (e.target === box) close(); });
+  // Escape closes the dialog and nothing else: the map's own Escape (back to all states) sees defaultPrevented
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || box.hidden) return;
+    if (e.key !== 'Escape' || !box.open) return;
     e.preventDefault();
-    close(box.contains(document.activeElement));
+    close();
   });
-  document.addEventListener('pointerdown', (e) => {
-    const target = e.target as Node;
-    if (!box.contains(target) && !button.contains(target)) close(false);
-  });
-  if (place) {
-    window.addEventListener('resize', () => { if (!box.hidden) setPlace(); });
-    // a scroll of the column beside the map moves the button away from the panel
-    document.addEventListener('scroll', (e) => { if (e.target !== document && (e.target as Node).contains(button)) close(false); }, true);
-  }
   action('link')!.addEventListener('click', () => { void copy(link(), 'Link copied'); });
   action('download')!.addEventListener('click', () => download(canvas, shown.file));
   action('share')!.addEventListener('click', () => {

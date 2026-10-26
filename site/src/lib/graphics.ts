@@ -21,7 +21,7 @@ export const SITE_NAME = SITE_URL.replace(/^https?:\/\//, '').replace(/\/$/, '')
 export const LIGHT = {
   sheet: '#fbfcfa', fg: '#18201c', muted: '#56615b', rule: '#d3d9d4', ink: '#1d5c48',
   'party-d': '#2a78d6', 'party-r': '#e34948', 'neutral-d': '#01665e', 'neutral-r': '#8c510a', mid: '#ecebe7', blank: '#c9ccd1',
-  'party-tie': '#904ec9', 'neutral-tie': '#a87800',
+  'party-tie': '#904ec9', 'neutral-tie': '#a87800', water: '#e5eae6',
 } as const;
 
 type Point = OutcomesView['points'][number];
