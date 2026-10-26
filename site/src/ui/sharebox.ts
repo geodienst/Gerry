@@ -41,18 +41,21 @@ function save(file: string, text: string, type: string) {
 export function createShareBox({ button, box, draw, link, data }: ShareBoxOptions) {
   const canvas = box.querySelector('canvas')!;
   const action = (name: string) => box.querySelector<HTMLButtonElement>(`[data-action="${name}"]`);
-  let shown = { file: '', caption: '' };
-  // made when the dialog opens, so the share sheet opens at once on the click (a phone allows it only then)
-  let file: File | null = null;
-  const text = () => `${shown.caption} ${link()}`;
+  // Everything the dialog shares is fixed when it opens, so the link, the text and the data always go with the image,
+  // also when the page changes under the dialog (the explainer of chapter 01 plays on; Back in the browser).
+  interface Shown { file: string; caption: string; link: string; csv: CsvFile | null; png: Promise<File | null> }
+  let shown: Shown | null = null;
+  const text = (s: Shown) => `${s.caption} ${s.link}`;
   action('share')!.hidden = !sharesFiles();
 
   function open() {
-    shown = draw(canvas);
-    file = null;
-    canvas.toBlob((blob) => { if (blob) file = new File([blob], shown.file, { type: 'image/png' }); }, 'image/png');
+    const image = draw(canvas);
+    const png = new Promise<File | null>((done) => {
+      canvas.toBlob((blob) => done(blob && new File([blob], image.file, { type: 'image/png' })), 'image/png');
+    });
+    shown = { ...image, link: link(), csv: data?.() ?? null, png };
     const dataButton = action('data');
-    if (dataButton) dataButton.hidden = !data?.();
+    if (dataButton) dataButton.hidden = !shown.csv;
     box.showModal();
     button.setAttribute('aria-expanded', 'true');
   }
@@ -72,15 +75,18 @@ export function createShareBox({ button, box, draw, link, data }: ShareBoxOption
     e.preventDefault();
     close();
   });
-  action('link')!.addEventListener('click', () => { void copy(link(), 'Link copied'); });
-  action('download')!.addEventListener('click', () => download(canvas, shown.file));
+  action('link')!.addEventListener('click', () => { if (shown) void copy(shown.link, 'Link copied'); });
+  action('download')!.addEventListener('click', () => { if (shown) download(canvas, shown.file); });
+  // The file of this opening, as soon as it is made (well within the time a click allows a share sheet); a file of an
+  // earlier opening is never sent, since each opening has its own.
   action('share')!.addEventListener('click', () => {
-    if (!file) return;
-    navigator.share({ files: [file], text: text() }).catch(() => { /* the reader closed the share sheet */ });
+    const s = shown;
+    if (!s) return;
+    void s.png.then((file) => {
+      if (!file || s !== shown || !box.open) return;
+      navigator.share({ files: [file], text: text(s) }).catch(() => { /* the reader closed the share sheet */ });
+    });
   });
-  action('text')!.addEventListener('click', () => { void copy(text(), 'Text copied'); });
-  action('data')?.addEventListener('click', () => {
-    const csv = data?.();
-    if (csv) save(csv.file, csv.text, 'text/csv');
-  });
+  action('text')!.addEventListener('click', () => { if (shown) void copy(text(shown), 'Text copied'); });
+  action('data')?.addEventListener('click', () => { if (shown?.csv) save(shown.csv.file, shown.csv.text, 'text/csv'); });
 }
