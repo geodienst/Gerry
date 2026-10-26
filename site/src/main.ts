@@ -17,7 +17,9 @@ import { createTour } from './ui/tour.ts';
 import { renderDecide, showSenate, drawLegal } from './ui/decide.ts';
 import { drawSeatAxis } from './ui/charts.ts';
 import { share } from './ui/share.ts';
-import { mountGraphics } from './ui/graphics.ts';
+import { mountGraphics, lightColors } from './ui/graphics.ts';
+import { createShareBox } from './ui/sharebox.ts';
+import { nationalGraphic } from './lib/graphics.ts';
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const darkMode = window.matchMedia('(prefers-color-scheme: dark)');
@@ -86,13 +88,20 @@ async function main() {
   }
   darkMode.addEventListener('change', () => setPalette(palette));
 
-  // Share: the button by the key findings shares the site, the one by the seat counts of
-  // chapter 01 the chosen row and vote share (?count=neutral&vote=49.2#outcomes); the one under the map is in
-  // app/atlas.ts. The links name the site's own address, also when the page runs elsewhere (SITE_URL in lib/hash.ts).
+  // Share: the button by the key findings shares the site; the one by the seat counts of chapter 01 opens a panel
+  // with the image, the link and the text of the chosen row and vote share (?count=neutral&vote=49.2#outcomes); the
+  // one under the map is in app/atlas.ts. The links name the site's own address, also when the page runs elsewhere
+  // (SITE_URL in lib/hash.ts).
   $('share-site').addEventListener('click', () => share(SITE_URL));
-  $('outcomes-share').addEventListener('click', () => {
-    const { key, index: at } = outcomes.state();
-    share(`${SITE_URL}${outcomesLink(key, outcomesData.points[at].share)}`);
+  createShareBox({
+    button: $<HTMLButtonElement>('outcomes-share'),
+    box: $('outcomes-sharebox'),
+    graphic: () => nationalGraphic(results, outcomesData, outcomes.state().index),
+    link: () => {
+      const { key, index: at } = outcomes.state();
+      return `${SITE_URL}${outcomesLink(key, outcomesData.points[at].share)}`;
+    },
+    colors: () => lightColors(palette),
   });
 
   const decide = decideView(results);

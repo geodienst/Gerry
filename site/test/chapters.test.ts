@@ -102,9 +102,7 @@ test('outcomesView: one view per point of the vote slider, the base point as the
   assert.deepEqual(view.slider.scale, [{ index: 0, label: '50%' }, { index: 2, label: '53%' }]);
   assert.deepEqual(view.slider.base, { index: 1, label: '2016 and 2020 votes' });
   assert.equal(view.slider.label, 'Democratic share of the national two-party vote');
-  // under the slider: 52.4% against 51.2%, 1.2 points
-  assert.equal(view.slider.caption, 'Each marker shows where a count reaches 218 seats. On the enacted maps, Democrats need '
-    + '1.2 points more than on neutral maps. The slider moves every district by the same amount; it is not a forecast.');
+  assert.equal(view.slider.caption, 'The slider moves every district by the same amount; it is not a forecast.');
   // why presidential votes of 2016 and 2020; plans 5,000 per state; 2024 at 49.2499% -> 49.2%
   assert.deepEqual(view.why, { summary: 'Why these votes?', text: 'House results depend on the maps themselves: in safe '
     + 'districts one party often has no candidate, and incumbents run ahead of their party. Presidential votes are cast '
@@ -112,15 +110,6 @@ test('outcomesView: one view per point of the vote slider, the base point as the
     + 'state. The ALARM Project provides them by voting district for 2016 and 2020; adding both evens out the candidates '
     + 'of a single year. In 2024 Democrats won 49.2% of the two-party presidential vote. Move the slider there to see a '
     + 'year like it.' });
-  // the sentence names the first stop where each count reaches 218 of 435:
-  // proportional 219 at 50.0%; neutral 205 at 50.0%, 225 at the base; enacted 207, 215, then 223 at 53.0%
-  // a marker on the slider at the first stop where each count reaches 218 of 435, with the threshold of the pipeline
-  assert.deepEqual(view.slider.reach, { proportional: 0, neutral: 1, enacted: 2 });
-  assert.deepEqual(view.slider.marks, [
-    { key: 'proportional', index: 0, label: 'Proportional', value: '49.8%' },
-    { key: 'neutral', index: 1, label: 'Neutral', value: '51.2%' },
-    { key: 'enacted', index: 2, label: 'Enacted', value: '52.4%' },
-  ]);
 });
 
 test('outcomesView: the drawing effect at every stop of the slider, with a few examples', () => {
@@ -153,7 +142,7 @@ test('outcomesView: the explainer in five steps, each with a row and a stop of t
   assert.equal(tour.base, view.baseIndex);
   // the first four steps stay at the 2016 and 2020 votes; the fifth goes to the stop nearest 2024 (49.25%): in testdata
   // the stops are 50%, the base and 53%, so 50.0%, where the enacted maps give 205 + 2 and neutral maps 203 + 2
-  assert.deepEqual(tour.steps.map((s) => [s.key, s.index]), [['enacted', 1], ['proportional', 1], ['neutral', 1], ['enacted', 1], ['enacted', 0]]);
+  assert.deepEqual(tour.steps.map((s) => [s.key, s.index]), [['proportional', 1], ['proportional', 1], ['neutral', 1], ['enacted', 1], ['enacted', 0]]);
   assert.deepEqual(tour.steps.map((s) => s.text), [
     'Each square is one seat in the U.S. House, 435 in all. The party with 218 seats has the majority.',
     "Vote-proportional: if each state's seats followed its two-party vote, Democrats would win 226 seats.",
@@ -175,17 +164,13 @@ test('outcomesView: the explainer in five steps, each with a row and a stop of t
   assert.ok(!four.why.text.includes('2024'));
 });
 
-test('outcomesView: no second stop with the label of the base, and a count that never reaches a majority', () => {
+test('outcomesView: no second stop with the label of the base', () => {
   const r = withExtensions();
   // a grid point at 51.8% next to the base share 0.5179747 would read 51.8% twice
   r.national.swing.points.splice(2, 0, { ...r.national.swing.points[1], share: 0.518, base: false });
-  for (const point of r.national.swing.points) point.enacted = Math.min(point.enacted, 215);
   const view = outcomesView(r);
   assert.deepEqual(view.points.map((p) => p.label), ['50.0%', '51.8%', '53.0%']);
   assert.equal(view.baseIndex, 1);
-  // enacted never reaches 218 of 435 (at most 215 + 2): no line for it, and the sentence says so
-  assert.equal(view.slider.reach.enacted, -1);
-  assert.deepEqual(view.slider.marks.map((m) => m.key), ['proportional', 'neutral']);
   // the scale leaves out the base; the dropped stop at 51.8% does not count
   assert.deepEqual(view.slider.scale, [{ index: 0, label: '50%' }, { index: 2, label: '53%' }]);
 });

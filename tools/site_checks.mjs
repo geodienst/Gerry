@@ -737,7 +737,8 @@ async function masthead(t) {
     return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
       && ['founder of the Geodienst', 'Thanks to scholars Mark Thompson and Jelte Olthof from American Studies in Groningen.',
         'Thanks to Vincent, JW, Elmeri and Bart Campman for reviewing the work and for their feedback.',
-        'Thanks to the ALARM team, PlanScore and all other open data projects.', 'no client and no funding', 'press office'].every((x) => about.includes(x))
+        'Thanks to the ALARM team (McCartan and others, Scientific Data, 2022), PlanScore and all other open data projects.',
+        'no client and no funding', 'press office'].every((x) => about.includes(x))
       && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'ALARM team' && a.getAttribute('href') === 'https://alarm-redist.org/')
       && [...document.querySelectorAll('#about a, #method a')].filter((a) => a.textContent === 'PlanScore' && a.getAttribute('href') === 'https://planscore.org/').length === 2
       && [...document.querySelectorAll('#about a')].some((a) => a.textContent === 'American Studies'
@@ -873,9 +874,8 @@ async function outcomes(t) {
     text: s.getAttribute('aria-valuetext'), back: document.getElementById('vote-back').hidden,
     ticks: [...document.querySelectorAll('#vote-ticks .tk')].map((x) => ({ text: x.textContent, base: x.classList.contains('base'),
       at: Number(x.style.getPropertyValue('--at')) })), base: document.getElementById('vote-base').textContent,
-    caption: document.getElementById('vote-how').textContent,
-    marks: [...document.querySelectorAll('#vote-marks .mk')].map((m) => ({ key: m.classList[1], text: m.textContent,
-      at: Math.round(Number(m.style.getPropertyValue('--at')) * Number(s.max)) })) }; })()`);
+    caption: document.getElementById('vote-how').textContent, fill: Number(s.style.getPropertyValue('--at')),
+    marks: document.querySelectorAll('.vote .mk').length }; })()`);
   t.check('the vote slider starts at the 2016 and 2020 votes, one step per point',
     slider.value === baseAt && slider.max === stops.length - 1 && slider.back
     && slider.label === 'Democratic share of the national two-party vote' && /^\d+\.\d%$/.test(slider.out) && slider.base === '2016 and 2020 votes'
@@ -886,23 +886,18 @@ async function outcomes(t) {
     scale.map((x) => x.text).join() === Array.from({ length: 10 }, (_, k) => `${47 + k}%`).join()
     && scale.every((x) => Math.abs(stops[Math.round(x.at * (stops.length - 1))].share * 100 - Number.parseInt(x.text, 10)) < 1e-6),
     JSON.stringify(slider.ticks));
-  // a marker where each count first reaches a majority
-  const reaches = (p, key) => (key === 'neutral' ? p.neutral.median : p[key]) >= swing.needed;
-  t.check('three markers on the slider, each with its name and share, under a caption that explains them',
-    slider.marks.map((m) => m.key).join() === 'proportional,neutral,enacted'
-    && slider.marks.every((m) => /^(Proportional|Neutral|Enacted)\d+\.\d%$/.test(m.text))
-    && slider.caption.startsWith('Each marker shows where a count reaches 218 seats.') && slider.caption.endsWith('it is not a forecast.'),
-    JSON.stringify({ marks: slider.marks, caption: slider.caption }));
-  t.check('each marker sits at the first stop where its count reaches a majority',
-    slider.marks.every((m) => reaches(stops[m.at], m.key) && (m.at === 0 || !reaches(stops[m.at - 1], m.key))), JSON.stringify(slider.marks));
-  // at the marker of the enacted maps (the row shown) they reach 218 of 435; one stop lower they do not
-  const enactedStop = slider.marks.find((m) => m.key === 'enacted')?.at ?? -1;
+  t.check('no markers on the slider, the track filled up to the thumb, and only the note that it is not a forecast',
+    slider.marks === 0 && Math.abs(slider.fill - baseAt / (stops.length - 1)) < 1e-9
+    && slider.caption === 'The slider moves every district by the same amount; it is not a forecast.',
+    JSON.stringify({ marks: slider.marks, fill: slider.fill, caption: slider.caption }));
+  // at the first stop where the enacted maps (the row shown) reach 218 of 435 the middle square turns; one stop lower not
+  const enactedStop = stops.findIndex((p) => p.enacted >= swing.needed);
   const middleBlue = "document.querySelector('#waffle rect.middle').getAttribute('fill') === getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
   await setSlider(enactedStop);
   const atStop = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
   await setSlider(enactedStop - 1);
   const below = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
-  t.check('at the marker of the enacted maps they reach seat 218, one stop lower they do not',
+  t.check('at the first stop where the enacted maps reach seat 218 the middle square turns blue, one stop lower not',
     enactedStop > 0 && atStop.blue && atStop.democratic >= swing.needed + 2 && !below.blue && below.democratic < swing.needed + 2,
     JSON.stringify({ enactedStop, atStop, below }));
   // the drawing effect at every stop of the slider: a bar per stop, up for Democrats and down for Republicans
@@ -964,9 +959,14 @@ async function tour(t) {
   const state = `(() => ({ count: document.getElementById('tour-count').textContent, play: document.getElementById('tour-play').textContent,
     text: document.getElementById('tour-text').textContent, row: document.querySelector('#scen [aria-checked=true] .lab').textContent,
     out: document.getElementById('vote-out').textContent, base: document.getElementById('vote-base').textContent,
-    skip: document.getElementById('tour-skip').hidden, done: document.getElementById('tour').classList.contains('done') }))()`;
-  t.check('the explainer starts by itself in view, with Pause and Skip', await t.until(
-    "document.getElementById('tour-count').textContent === '1 / 5' && document.getElementById('tour-play').textContent === 'Pause' && !document.getElementById('tour-skip').hidden", 4000));
+    skip: document.getElementById('tour-skip').hidden, next: document.getElementById('tour-next').hidden,
+    done: document.getElementById('tour').classList.contains('done') }))()`;
+  // the step number of a state: '3 / 5' gives 3
+  const at = (s) => Number(s.count.split(' / ')[0]);
+  t.check('the explainer starts by itself in view, with Pause, Next and Skip', await t.until(
+    "document.getElementById('tour-count').textContent === '1 / 5' && document.getElementById('tour-play').textContent === 'Pause' && !document.getElementById('tour-next').hidden && !document.getElementById('tour-skip').hidden", 4000));
+  const first = await t.js(state);
+  t.check('the explainer starts on the vote-proportional row', first.row === 'Vote-proportional', JSON.stringify(first));
   await t.until("document.getElementById('tour-count').textContent === '3 / 5'", 4000);
   const third = await t.js(state);
   t.check('step 3 explains the neutral maps and chooses their row', third.row === 'Neutral-map median' && third.text.startsWith('Neutral-map median: a computer drew'), JSON.stringify(third));
@@ -976,7 +976,7 @@ async function tour(t) {
   await t.until("document.getElementById('tour-play').textContent === 'Replay'", 4000);
   const end = await t.js(state);
   t.check('at the end the chapter returns to the enacted maps at the 2016 and 2020 votes, with Replay',
-    end.row === 'Enacted maps' && end.base === '2016 and 2020 votes' && end.count === '' && end.skip && end.done
+    end.row === 'Enacted maps' && end.base === '2016 and 2020 votes' && end.count === '' && end.skip && end.next && end.done
     && end.text === 'That is the comparison. Choose a row or move the slider to explore it yourself.', JSON.stringify(end));
   // Replay, Pause holds the step, Skip ends it
   await t.js("document.getElementById('tour-play').click()");
@@ -986,12 +986,22 @@ async function tour(t) {
   await t.sleep(900);
   const later = await t.js(state);
   t.check('Pause holds the step', paused.play === 'Play' && later.count === paused.count, JSON.stringify({ paused, later }));
+  await t.js("document.getElementById('tour-next').click()");
+  const ahead = await t.js(state);
+  await t.sleep(900);
+  const held = await t.js(state);
+  t.check('Next while paused shows the next step and stays paused', at(ahead) === at(paused) + 1 && held.count === ahead.count
+    && held.play === 'Play', JSON.stringify({ ahead, held }));
   await t.js("document.getElementById('tour-skip').click()");
   const skipped = await t.js(state);
   t.check('Skip ends the explainer at the enacted maps', skipped.play === 'Replay' && skipped.row === 'Enacted maps', JSON.stringify(skipped));
   // a reader who chooses a row takes over: the explainer stops and the choice stays
   await t.js("document.getElementById('tour-play').click()");
   await t.until("document.getElementById('tour-count').textContent === '1 / 5'", 4000);
+  const before = await t.js(state);
+  await t.js("document.getElementById('tour-next').click()");
+  const moved = await t.js(state);
+  t.check('Next while playing goes one step ahead and plays on', at(moved) === at(before) + 1 && moved.play === 'Pause', JSON.stringify({ before, moved }));
   await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
   await t.sleep(900);
   const taken = await t.js(state);
@@ -1153,8 +1163,40 @@ async function sharing(t) {
   await t.js(`(() => { const s = document.getElementById('vote');
     s.value = String([...Array(Number(s.max) + 1).keys()].find((i) => { s.value = String(i); s.dispatchEvent(new Event('input')); return document.getElementById('vote-out').textContent === '49.2%'; }));
   })()`);
-  const chosen = await link('outcomes-share');
-  t.check('Share above the House gives the chosen row and vote share', chosen === `${page}?count=neutral&vote=49.2#outcomes`, chosen);
+  // Share above the House opens a panel with the image at this vote share, the link, the image file and the text
+  await t.js("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } }); "
+    + "window.saved = []; HTMLAnchorElement.prototype.click = function () { if (this.download) window.saved.push(this.download); }");
+  await t.js("window.shared = ''; document.getElementById('outcomes-share').click()");
+  await t.sleep(200);
+  const panel = await t.js(`(() => { const box = document.getElementById('outcomes-sharebox'), canvas = box.querySelector('canvas');
+    return { open: !box.hidden && document.getElementById('outcomes-share').getAttribute('aria-expanded') === 'true', shared: window.shared,
+      image: canvas.width === 2400 && canvas.height > 600 && canvas.getBoundingClientRect().width > 200,
+      buttons: [...box.querySelectorAll('button')].filter((b) => !b.hidden).map((b) => b.textContent).filter((x) => x !== 'Share image').join() }; })()`);
+  t.check('Share above the House opens a panel with the image and Copy link, Download image and Copy text, and shares nothing yet',
+    panel.open && panel.shared === '' && panel.image && panel.buttons === 'Copy link,Download image,Copy text', JSON.stringify(panel));
+  const press = async (action) => {
+    await t.js(`window.copied = ''; document.querySelector('#outcomes-sharebox [data-action="${action}"]').click()`);
+    await t.sleep(150);
+    return t.js("({ copied: window.copied, note: document.querySelector('.share-note:last-of-type')?.textContent, saved: window.saved.join() })");
+  };
+  const chosen = `${page}?count=neutral&vote=49.2#outcomes`;
+  const linked = await press('link');
+  t.check('Copy link gives the chosen row and vote share, with a short note', linked.copied === chosen && linked.note === 'Link copied', JSON.stringify(linked));
+  const saved = await press('download');
+  t.check('Download image saves the image at that vote share', saved.saved === 'somevotes-national-49-2.png', JSON.stringify(saved));
+  const texted = await press('text');
+  t.check('Copy text gives the caption of the image with the link', texted.copied.startsWith('With Democrats at 49.2% of the two-party vote, ')
+    && texted.copied.endsWith(` ${chosen}`) && texted.note === 'Text copied', JSON.stringify(texted));
+  await t.js("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))");
+  t.check('Escape closes the panel', await t.js("document.getElementById('outcomes-sharebox').hidden && document.getElementById('outcomes-share').getAttribute('aria-expanded') === 'false'"));
+  // on a phone the panel stays within the screen
+  await t.load('', { width: 375, height: 812 });
+  await t.js("document.getElementById('outcomes-share').click()");
+  await t.sleep(200);
+  const narrow = await t.js("(() => { const b = document.getElementById('outcomes-sharebox').getBoundingClientRect(); return { left: b.left, right: b.right, width: innerWidth }; })()");
+  t.check('on a phone the Share panel stays within the screen', narrow.left >= 0 && narrow.right <= narrow.width, JSON.stringify(narrow));
+  await t.load('', { width: 1280, height: 800 });
+  await t.js("Object.defineProperty(navigator, 'share', { configurable: true, value: async (data) => { window.shared = data.url; } })");
   // without a share sheet the link goes to the clipboard, with a short note
   await t.js("Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); "
     + "Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } })");

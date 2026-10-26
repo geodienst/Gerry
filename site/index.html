@@ -13,8 +13,8 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Some votes are more equal than others">
   <meta property="og:description" content="What if we used the same votes to divide the 435 House seats in three different ways: using each party&#39;s share of the vote, neutral maps drawn by a computer, or the maps the states drew for 2026? Would the outcome change?">
-  <meta property="og:url" content="https://geodienst.github.io/Gerry/">
-  <meta property="og:image" content="https://geodienst.github.io/Gerry/img/preview.png">
+  <meta property="og:url" content="https://somevotes.org/">
+  <meta property="og:image" content="https://somevotes.org/img/preview.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -56,7 +56,7 @@
         <div class="tour" id="tour">
           <div class="tour-head">
             <span class="tour-count" id="tour-count"></span>
-            <button type="button" id="tour-play">Play</button><button type="button" id="tour-skip" hidden>Skip</button>
+            <button type="button" id="tour-play">Play</button><button type="button" id="tour-next" hidden>Next</button><button type="button" id="tour-skip" hidden>Skip</button>
           </div>
           <p class="tour-text" id="tour-text" aria-live="polite"></p>
         </div>
@@ -68,7 +68,18 @@
           <div class="waffle">
             <div class="whead">
               <div class="readout" id="readout" aria-live="polite"></div>
-              <button type="button" class="sharebtn" id="outcomes-share"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
+              <div class="sharewrap">
+                <button type="button" class="sharebtn" id="outcomes-share" aria-expanded="false" aria-controls="outcomes-sharebox"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
+                <div class="sharebox" id="outcomes-sharebox" role="dialog" aria-label="Share this comparison" tabindex="-1" hidden>
+                  <canvas class="sharebox-img" aria-hidden="true"></canvas>
+                  <div class="sharebox-actions">
+                    <button type="button" class="sharebtn" data-action="link">Copy link</button>
+                    <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download image</button>
+                    <button type="button" class="sharebtn" data-action="share" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share image</button>
+                    <button type="button" class="sharebtn" data-action="text">Copy text</button>
+                  </div>
+                </div>
+              </div>
             </div>
             <svg id="waffle" class="chart" role="img" aria-labelledby="waffle-label"><title id="waffle-label"></title></svg>
             <div class="tip" id="waffle-tip" hidden></div>
@@ -84,7 +95,6 @@
                 <span class="vote-base" id="vote-base"></span>
                 <button type="button" class="vote-back" id="vote-back" hidden>Back to the 2016 and 2020 votes</button></div>
               <div class="vote-track">
-                <div class="vote-marks" id="vote-marks" aria-hidden="true"></div>
                 <input type="range" id="vote">
                 <div class="vote-ticks" id="vote-ticks" aria-hidden="true"></div>
               </div>
@@ -288,7 +298,7 @@
         <p>Made by Govert Schoof, founder of the <a href="https://rug.nl/geo">Geodienst</a>, the geospatial expertise centre of the University of Groningen, liaison at <a href="https://www.rug.nl/jantina-tammes-school/">Jantina Tammes School</a>, and co-founder of <a href="https://geominds.nl">Geominds.nl</a>, which builds geo-AI for real-world mapping.</p>
         <p>Thanks to scholars <a href="https://www.rug.nl/staff/m.l.thompson/">Mark Thompson</a> and Jelte Olthof from <a href="https://www.rug.nl/let/onze-faculteit/organisatie/vakgebieden/american-studies/">American Studies</a> in Groningen.</p>
         <p>Thanks to Vincent, JW, <a href="https://elmeriniemi.com/">Elmeri</a> and Bart Campman for reviewing the work and for their feedback.</p>
-        <p>Thanks to the <a href="https://alarm-redist.org/">ALARM team</a>, <a href="https://planscore.org/">PlanScore</a> and all other open data projects.</p>
+        <p>Thanks to the <a href="https://alarm-redist.org/">ALARM team</a> (McCartan and others, <i>Scientific Data</i>, 2022), <a href="https://planscore.org/">PlanScore</a> and all other open data projects.</p>
         <p>This project has no client and no funding. I made it because I thought it was worth doing.</p>
         <p>Questions or corrections: please contact the <a href="https://www.rug.nl/about-ug/latest-news/press-information/contact-persvoorlichting">press office of the University of Groningen</a>. Errors will be corrected.</p>
       </div>

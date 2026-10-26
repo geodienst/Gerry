@@ -42,6 +42,11 @@
 .chead .no { font: 700 0.8125rem/1 var(--font-body); color: var(--ink); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; border: 1px solid currentColor; padding: 0.3rem 0.4rem; }
 .chead h2 { font: 700 clamp(1.625rem, 1.1rem + 1.7vw, 2.25rem)/1.15 var(--font-head); }
 .chead p { grid-column: 2; color: var(--muted); max-width: 64ch; margin: 0.4rem 0 0; }
+/* With room beside the page the number hangs in the margin, so the title lines up with the chapter under it. */
+@media (min-width: 86rem) {
+  .chead { grid-template-columns: 2rem minmax(0, 1fr); margin-left: -2.9rem; }
+  .chead .no { justify-self: end; }
+}
 /* the key sentence of chapter 01: the threshold */
 .chead p.lead { color: var(--fg); font: 600 1.1875rem/1.4 var(--font-head); margin-top: 0.7rem; }
 /* The footer: sources and licenses left, the Geodienst right (Task 7.10) */

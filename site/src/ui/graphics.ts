@@ -4,6 +4,7 @@ import { interpolateLab } from 'd3';
 import { makeColors, EFFECT_MAX } from '../lib/colors.ts';
 import { LIGHT, nationalGraphic, statesGraphic } from '../lib/graphics.ts';
 import type { GraphicFoot, NationalGraphic, StatesGraphic } from '../lib/graphics.ts';
+import { copy } from './share.ts';
 import type { OutcomesView } from '../lib/chapters.ts';
 import type { Colors } from '../lib/colors.ts';
 import type { Palette, Results } from '../types.ts';
@@ -302,15 +303,5 @@ export function mountGraphics(results: Results, view: OutcomesView, palette: Pal
   };
 }
 
-/** Copy a caption, with a short note as after copying a link. */
-export async function copyCaption(text: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(text);
-    const note = document.createElement('p');
-    note.className = 'share-note';
-    note.setAttribute('role', 'status');
-    note.textContent = 'Caption copied';
-    document.body.append(note);
-    setTimeout(() => note.remove(), 2000);
-  } catch { /* no clipboard: the caption stays on the page to select */ }
-}
+/** Copy a caption, with a short note as after copying a link; without a clipboard the caption stays on the page to select. */
+export const copyCaption = (text: string): Promise<void> => copy(text, 'Caption copied');

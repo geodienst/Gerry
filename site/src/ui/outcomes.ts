@@ -195,13 +195,6 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
     return tick;
   };
   $('vote-ticks').replaceChildren(...view.slider.scale.map((t) => mark('tk', t)));
-  // a marker where each count first reaches a majority, with its name and share
-  $('vote-marks').replaceChildren(...view.slider.marks.map((m) => {
-    const marker = node('span', { class: `mk ${m.key}` });
-    marker.style.setProperty('--at', String(m.index / (view.points.length - 1)));
-    marker.append(node('span', {}, m.label), node('span', {}, m.value));
-    return marker;
-  }));
   // The drawing effect at every stop of the slider, at the bottom of the chapter, with a line at the stop on screen.
   $('byvote-title').textContent = view.byVote.title;
   $('byvote-text').textContent = view.byVote.text;
@@ -214,6 +207,7 @@ export function renderOutcomes(view: OutcomesView, { reduceMotion }: { reduceMot
     byVote.show(pi);
     for (const hook of pointHooks) hook(pi);
     slider.value = String(pi);
+    slider.style.setProperty('--at', String(pi / (view.points.length - 1))); // the track is filled up to the thumb
     slider.setAttribute('aria-valuetext', p.valueText);
     $('vote-out').textContent = p.label;
     $('vote-base').textContent = p.base ? view.slider.base.label : '';
