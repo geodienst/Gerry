@@ -466,9 +466,9 @@ async function method(t) {
   }
   // eleven since the point on ALARM's separate runs
   t.check('"Known limits" has eleven points', await t.js("document.querySelectorAll('#method ul > li').length === 11"));
-  // ALARM asks to cite its paper in Scientific Data as well as the dataset
+  // ALARM asks to cite its paper in Scientific Data as well as the dataset, and points to its overview page
   t.check('the sources cite the ALARM dataset and its paper in Scientific Data', text.includes('ALARM describes the data in McCartan, Kenny, Simko, Garcia, Wang, Wu, Kuriwaki and Imai')
-    && await t.js("['https://doi.org/10.7910/DVN/SLCD3E', 'https://doi.org/10.1038/s41597-022-01808-2'].every((href) => !!document.querySelector(`#method a[href=\"${href}\"]`))"));
+    && await t.js("['https://doi.org/10.7910/DVN/SLCD3E', 'https://doi.org/10.1038/s41597-022-01808-2', 'https://imai.fas.harvard.edu/research/50states/'].every((href) => !!document.querySelector(`#method a[href=\"${href}\"]`))"));
   t.check('the method says both ends of the competitive range count', text.includes('Competitive districts have a Democratic share from 45% to 55%, both included.'));
   t.check('the Louisiana limit gives the plan share in words or as a plain percent',
     /Of the [\d,]+ neutral maps, (more than 99%|less than 1%|\d+%) give \d+ Democratic seats?\./.test(text));
