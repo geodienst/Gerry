@@ -145,7 +145,7 @@ export function outcomesView(results: Results) {
   };
   const seatsOf = (point: { rows: CountRow[] }, key: CountKey): string => rowOf(point, key).value;
   const steps: { key: CountKey; index: number; text: string }[] = [
-    { key: 'enacted', index: baseIndex, text: `Each square is one seat in the U.S. House, ${seats(house.total)} in all. `
+    { key: 'proportional', index: baseIndex, text: `Each square is one seat in the U.S. House, ${seats(house.total)} in all. `
       + `The party with ${seats(majority)} seats has the majority.` },
     { key: 'proportional', index: baseIndex, text: "Vote-proportional: if each state's seats followed its two-party vote, "
       + `Democrats would win ${seatsOf(main, 'proportional')} seats.` },

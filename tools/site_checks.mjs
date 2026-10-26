@@ -964,9 +964,14 @@ async function tour(t) {
   const state = `(() => ({ count: document.getElementById('tour-count').textContent, play: document.getElementById('tour-play').textContent,
     text: document.getElementById('tour-text').textContent, row: document.querySelector('#scen [aria-checked=true] .lab').textContent,
     out: document.getElementById('vote-out').textContent, base: document.getElementById('vote-base').textContent,
-    skip: document.getElementById('tour-skip').hidden, done: document.getElementById('tour').classList.contains('done') }))()`;
-  t.check('the explainer starts by itself in view, with Pause and Skip', await t.until(
-    "document.getElementById('tour-count').textContent === '1 / 5' && document.getElementById('tour-play').textContent === 'Pause' && !document.getElementById('tour-skip').hidden", 4000));
+    skip: document.getElementById('tour-skip').hidden, next: document.getElementById('tour-next').hidden,
+    done: document.getElementById('tour').classList.contains('done') }))()`;
+  // the step number of a state: '3 / 5' gives 3
+  const at = (s) => Number(s.count.split(' / ')[0]);
+  t.check('the explainer starts by itself in view, with Pause, Next and Skip', await t.until(
+    "document.getElementById('tour-count').textContent === '1 / 5' && document.getElementById('tour-play').textContent === 'Pause' && !document.getElementById('tour-next').hidden && !document.getElementById('tour-skip').hidden", 4000));
+  const first = await t.js(state);
+  t.check('the explainer starts on the vote-proportional row', first.row === 'Vote-proportional', JSON.stringify(first));
   await t.until("document.getElementById('tour-count').textContent === '3 / 5'", 4000);
   const third = await t.js(state);
   t.check('step 3 explains the neutral maps and chooses their row', third.row === 'Neutral-map median' && third.text.startsWith('Neutral-map median: a computer drew'), JSON.stringify(third));
@@ -976,7 +981,7 @@ async function tour(t) {
   await t.until("document.getElementById('tour-play').textContent === 'Replay'", 4000);
   const end = await t.js(state);
   t.check('at the end the chapter returns to the enacted maps at the 2016 and 2020 votes, with Replay',
-    end.row === 'Enacted maps' && end.base === '2016 and 2020 votes' && end.count === '' && end.skip && end.done
+    end.row === 'Enacted maps' && end.base === '2016 and 2020 votes' && end.count === '' && end.skip && end.next && end.done
     && end.text === 'That is the comparison. Choose a row or move the slider to explore it yourself.', JSON.stringify(end));
   // Replay, Pause holds the step, Skip ends it
   await t.js("document.getElementById('tour-play').click()");
@@ -986,12 +991,22 @@ async function tour(t) {
   await t.sleep(900);
   const later = await t.js(state);
   t.check('Pause holds the step', paused.play === 'Play' && later.count === paused.count, JSON.stringify({ paused, later }));
+  await t.js("document.getElementById('tour-next').click()");
+  const ahead = await t.js(state);
+  await t.sleep(900);
+  const held = await t.js(state);
+  t.check('Next while paused shows the next step and stays paused', at(ahead) === at(paused) + 1 && held.count === ahead.count
+    && held.play === 'Play', JSON.stringify({ ahead, held }));
   await t.js("document.getElementById('tour-skip').click()");
   const skipped = await t.js(state);
   t.check('Skip ends the explainer at the enacted maps', skipped.play === 'Replay' && skipped.row === 'Enacted maps', JSON.stringify(skipped));
   // a reader who chooses a row takes over: the explainer stops and the choice stays
   await t.js("document.getElementById('tour-play').click()");
   await t.until("document.getElementById('tour-count').textContent === '1 / 5'", 4000);
+  const before = await t.js(state);
+  await t.js("document.getElementById('tour-next').click()");
+  const moved = await t.js(state);
+  t.check('Next while playing goes one step ahead and plays on', at(moved) === at(before) + 1 && moved.play === 'Pause', JSON.stringify({ before, moved }));
   await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
   await t.sleep(900);
   const taken = await t.js(state);

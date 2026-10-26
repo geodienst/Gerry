@@ -1,5 +1,5 @@
 // The explainer at the top of chapter 01: a few steps that play by
-// themselves once the chapter is in view and drive the rows, the waffle and the slider. Pause and Skip while it plays,
+// themselves once the chapter is in view and drive the rows, the waffle and the slider. Pause, Next and Skip while it plays,
 // Replay afterwards. A click on a row or a move of the slider hands the controls to the reader. With reduced motion it
 // waits for Play. Texts come from lib/chapters.ts (outcomesView().tour); this module only plays them.
 // ?notour leaves the explainer out (the site checks use it); ?tourms=N sets the time per step in milliseconds.
@@ -27,6 +27,7 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
   const text = $('tour-text');
   const count = $('tour-count');
   const play = $<HTMLButtonElement>('tour-play');
+  const ahead = $<HTMLButtonElement>('tour-next');
   const skip = $<HTMLButtonElement>('tour-skip');
   let step = -1;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -62,6 +63,7 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
     box.classList.remove('done');
     state = 'playing';
     play.textContent = 'Pause';
+    ahead.hidden = false;
     skip.hidden = false;
     holdHeight();
     step = -1;
@@ -92,6 +94,7 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
     count.textContent = '';
     play.textContent = 'Replay';
     box.classList.add('done'); // a slim line: only the button stays
+    ahead.hidden = true;
     skip.hidden = true;
   }
 
@@ -99,6 +102,13 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
     if (state === 'playing') pause();
     else if (state === 'paused') resume();
     else start();
+  });
+  // Next shows the following step at once; while paused it stays paused there.
+  ahead.addEventListener('click', () => {
+    clearTimeout(timer);
+    if (state === 'playing') next();
+    else if (step + 1 < tour.steps.length) show(step + 1);
+    else finish(true);
   });
   skip.addEventListener('click', () => finish(true));
   outcomes.onUser(() => { if (state === 'playing' || state === 'paused') finish(false); });

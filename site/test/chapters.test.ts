@@ -153,7 +153,7 @@ test('outcomesView: the explainer in five steps, each with a row and a stop of t
   assert.equal(tour.base, view.baseIndex);
   // the first four steps stay at the 2016 and 2020 votes; the fifth goes to the stop nearest 2024 (49.25%): in testdata
   // the stops are 50%, the base and 53%, so 50.0%, where the enacted maps give 205 + 2 and neutral maps 203 + 2
-  assert.deepEqual(tour.steps.map((s) => [s.key, s.index]), [['enacted', 1], ['proportional', 1], ['neutral', 1], ['enacted', 1], ['enacted', 0]]);
+  assert.deepEqual(tour.steps.map((s) => [s.key, s.index]), [['proportional', 1], ['proportional', 1], ['neutral', 1], ['enacted', 1], ['enacted', 0]]);
   assert.deepEqual(tour.steps.map((s) => s.text), [
     'Each square is one seat in the U.S. House, 435 in all. The party with 218 seats has the majority.',
     "Vote-proportional: if each state's seats followed its two-party vote, Democrats would win 226 seats.",
