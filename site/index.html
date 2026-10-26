@@ -68,7 +68,18 @@
           <div class="waffle">
             <div class="whead">
               <div class="readout" id="readout" aria-live="polite"></div>
-              <button type="button" class="sharebtn" id="outcomes-share"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
+              <div class="sharewrap">
+                <button type="button" class="sharebtn" id="outcomes-share" aria-expanded="false" aria-controls="outcomes-sharebox"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
+                <div class="sharebox" id="outcomes-sharebox" role="dialog" aria-label="Share this comparison" tabindex="-1" hidden>
+                  <canvas class="sharebox-img" aria-hidden="true"></canvas>
+                  <div class="sharebox-actions">
+                    <button type="button" class="sharebtn" data-action="link">Copy link</button>
+                    <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download image</button>
+                    <button type="button" class="sharebtn" data-action="share" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share image</button>
+                    <button type="button" class="sharebtn" data-action="text">Copy text</button>
+                  </div>
+                </div>
+              </div>
             </div>
             <svg id="waffle" class="chart" role="img" aria-labelledby="waffle-label"><title id="waffle-label"></title></svg>
             <div class="tip" id="waffle-tip" hidden></div>

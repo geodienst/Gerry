@@ -12,5 +12,15 @@ select { font: inherit; font-size: 0.87rem; padding: 0.3rem 0.4rem; background: 
 .sharebtn:hover { border-color: var(--ink); }
 .sharebtn svg { width: 0.95rem; height: 0.95rem; }
 .mapbar, .whead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
+/* The Share panel of chapter 01: the image as it will be shared, with the ways to share it under it */
+.sharewrap { position: relative; margin-left: auto; }
+.sharebox { box-sizing: border-box; position: absolute; right: 0; top: calc(100% + 0.4rem); z-index: 40; width: min(24rem, calc(100vw - 32px)); display: grid; gap: 0.7rem;
+  padding: 0.8rem; background: var(--sheet); border: 1px solid var(--rule); box-shadow: 0 8px 28px rgb(0 0 0 / 0.14); }
+.sharebox[hidden] { display: none; }
+.sharebox:focus { outline: none; }
+.sharebox-img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); }
+.sharebox-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
+.sharebox-actions .sharebtn { justify-content: center; }
+.sharebox-actions .sharebtn[hidden] { display: none; }
 .share-note { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: 200; margin: 0; padding: 0.45rem 0.9rem;
   background: var(--fg); color: var(--sheet); border-radius: 4px; font-size: 0.875rem; }

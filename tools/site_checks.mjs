@@ -1162,8 +1162,40 @@ async function sharing(t) {
   await t.js(`(() => { const s = document.getElementById('vote');
     s.value = String([...Array(Number(s.max) + 1).keys()].find((i) => { s.value = String(i); s.dispatchEvent(new Event('input')); return document.getElementById('vote-out').textContent === '49.2%'; }));
   })()`);
-  const chosen = await link('outcomes-share');
-  t.check('Share above the House gives the chosen row and vote share', chosen === `${page}?count=neutral&vote=49.2#outcomes`, chosen);
+  // Share above the House opens a panel with the image at this vote share, the link, the image file and the text
+  await t.js("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } }); "
+    + "window.saved = []; HTMLAnchorElement.prototype.click = function () { if (this.download) window.saved.push(this.download); }");
+  await t.js("window.shared = ''; document.getElementById('outcomes-share').click()");
+  await t.sleep(200);
+  const panel = await t.js(`(() => { const box = document.getElementById('outcomes-sharebox'), canvas = box.querySelector('canvas');
+    return { open: !box.hidden && document.getElementById('outcomes-share').getAttribute('aria-expanded') === 'true', shared: window.shared,
+      image: canvas.width === 2400 && canvas.height > 600 && canvas.getBoundingClientRect().width > 200,
+      buttons: [...box.querySelectorAll('button')].filter((b) => !b.hidden).map((b) => b.textContent).filter((x) => x !== 'Share image').join() }; })()`);
+  t.check('Share above the House opens a panel with the image and Copy link, Download image and Copy text, and shares nothing yet',
+    panel.open && panel.shared === '' && panel.image && panel.buttons === 'Copy link,Download image,Copy text', JSON.stringify(panel));
+  const press = async (action) => {
+    await t.js(`window.copied = ''; document.querySelector('#outcomes-sharebox [data-action="${action}"]').click()`);
+    await t.sleep(150);
+    return t.js("({ copied: window.copied, note: document.querySelector('.share-note:last-of-type')?.textContent, saved: window.saved.join() })");
+  };
+  const chosen = `${page}?count=neutral&vote=49.2#outcomes`;
+  const linked = await press('link');
+  t.check('Copy link gives the chosen row and vote share, with a short note', linked.copied === chosen && linked.note === 'Link copied', JSON.stringify(linked));
+  const saved = await press('download');
+  t.check('Download image saves the image at that vote share', saved.saved === 'somevotes-national-49-2.png', JSON.stringify(saved));
+  const texted = await press('text');
+  t.check('Copy text gives the caption of the image with the link', texted.copied.startsWith('With Democrats at 49.2% of the two-party vote, ')
+    && texted.copied.endsWith(` ${chosen}`) && texted.note === 'Text copied', JSON.stringify(texted));
+  await t.js("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))");
+  t.check('Escape closes the panel', await t.js("document.getElementById('outcomes-sharebox').hidden && document.getElementById('outcomes-share').getAttribute('aria-expanded') === 'false'"));
+  // on a phone the panel stays within the screen
+  await t.load('', { width: 375, height: 812 });
+  await t.js("document.getElementById('outcomes-share').click()");
+  await t.sleep(200);
+  const narrow = await t.js("(() => { const b = document.getElementById('outcomes-sharebox').getBoundingClientRect(); return { left: b.left, right: b.right, width: innerWidth }; })()");
+  t.check('on a phone the Share panel stays within the screen', narrow.left >= 0 && narrow.right <= narrow.width, JSON.stringify(narrow));
+  await t.load('', { width: 1280, height: 800 });
+  await t.js("Object.defineProperty(navigator, 'share', { configurable: true, value: async (data) => { window.shared = data.url; } })");
   // without a share sheet the link goes to the clipboard, with a short note
   await t.js("Object.defineProperty(navigator, 'share', { configurable: true, value: undefined }); "
     + "Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } })");
