@@ -1,7 +1,7 @@
 // Texts and view models for the four chapters of the redesign (docs/superpowers/specs/2026-10-08-redesign-design.md).
 // Pure, like model.ts and extensions.ts: no DOM and no d3, every number through format.ts, nothing new computed.
 import {
-  share, sliderShare, neededShare, neededGap, roundHalfUp, planShare, seats, count, effect, effectWords, percentLabel,
+  share, sliderShare, neededShare, planShare, seats, count, effect, effectWords, percentLabel,
 } from './format.ts';
 import {
   nationalView, stateSheet, axisLabel, bandText, planCount, AT_LARGE_TEXT, houseOf, SINGLE_SEAT_PARTY, COUNT_WORDS, effectList,
@@ -14,8 +14,6 @@ import { plural, seatSpan, nameList, capitalize } from './text.ts';
 import type { Band, CountKey, Party, Postal, Results } from '../types.ts';
 
 export { LABELS, SHORT_LABELS, EFFECT_LABELS };
-
-const COUNT_KEYS: readonly CountKey[] = ['proportional', 'neutral', 'enacted'];
 
 /** One row of chapter 01: a count, its Democratic seats and the line under it. */
 export interface CountRow {
@@ -125,10 +123,6 @@ export function outcomesView(results: Results) {
     });
   const baseIndex = points.findIndex((p) => p.base);
   const main = points[baseIndex];
-  // The first stop where each count reaches a majority: a short line on the slider for the chosen row, and the sentence
-  // under the slider, so the line, the sentence and the waffle at that stop agree. -1: not within the slider.
-  const reach = Object.fromEntries(COUNT_KEYS.map((key) => [key,
-    points.findIndex((p) => rowOf(p, key).seats >= majority)])) as Record<CountKey, number>;
   // Why presidential votes of 2016 and 2020, and the explainer at the top of the chapter. The fifth step goes to
   // the stop nearest the Democratic share of the 2024 presidential vote.
   const p2024 = n.president?.['2024'];
@@ -162,7 +156,6 @@ export function outcomesView(results: Results) {
       + `give Democrats ${seatsOf(q, 'enacted')} seats and neutral maps ${seatsOf(q, 'neutral')}.` });
   }
   const lead = main.lead;
-  const gap = neededGap(m.enacted.share, m.neutral.share);
   // The drawing effect at every stop of the slider, with a few examples: the effect is not one number.
   const seatsAt = (point: { rows: CountRow[] }, key: CountKey): number => rowOf(point, key).seats;
   const bars = points.map((p, index) => {
@@ -235,19 +228,9 @@ export function outcomesView(results: Results) {
     },
     slider: {
       label: 'Democratic share of the national two-party vote',
-      caption: `Each marker shows where a count reaches ${seats(majority)} seats. `
-        + (gap > 0 ? `On the enacted maps, Democrats need ${roundHalfUp(gap, 1)} points more than on neutral maps. `
-          : gap === 0 ? 'On the enacted maps, Democrats need the same share as on neutral maps. '
-            : `On the enacted maps, Democrats need ${roundHalfUp(-gap, 1)} points less than on neutral maps. `)
-        + 'The slider moves every district by the same amount; it is not a forecast.',
+      caption: 'The slider moves every district by the same amount; it is not a forecast.',
       scale,
       base: { index: baseIndex, label: '2016 and 2020 votes' },
-      reach,
-      // a marker on the slider where each count first reaches a majority (none for a count that never does)
-      marks: COUNT_KEYS.filter((key) => reach[key] >= 0).map((key) => ({
-        key, index: reach[key], label: { proportional: 'Proportional', neutral: 'Neutral', enacted: 'Enacted' }[key],
-        value: neededShare(m[key].share),
-      })),
     },
   };
 }

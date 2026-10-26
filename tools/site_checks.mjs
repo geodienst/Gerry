@@ -873,9 +873,8 @@ async function outcomes(t) {
     text: s.getAttribute('aria-valuetext'), back: document.getElementById('vote-back').hidden,
     ticks: [...document.querySelectorAll('#vote-ticks .tk')].map((x) => ({ text: x.textContent, base: x.classList.contains('base'),
       at: Number(x.style.getPropertyValue('--at')) })), base: document.getElementById('vote-base').textContent,
-    caption: document.getElementById('vote-how').textContent,
-    marks: [...document.querySelectorAll('#vote-marks .mk')].map((m) => ({ key: m.classList[1], text: m.textContent,
-      at: Math.round(Number(m.style.getPropertyValue('--at')) * Number(s.max)) })) }; })()`);
+    caption: document.getElementById('vote-how').textContent, fill: Number(s.style.getPropertyValue('--at')),
+    marks: document.querySelectorAll('.vote .mk').length }; })()`);
   t.check('the vote slider starts at the 2016 and 2020 votes, one step per point',
     slider.value === baseAt && slider.max === stops.length - 1 && slider.back
     && slider.label === 'Democratic share of the national two-party vote' && /^\d+\.\d%$/.test(slider.out) && slider.base === '2016 and 2020 votes'
@@ -886,23 +885,18 @@ async function outcomes(t) {
     scale.map((x) => x.text).join() === Array.from({ length: 10 }, (_, k) => `${47 + k}%`).join()
     && scale.every((x) => Math.abs(stops[Math.round(x.at * (stops.length - 1))].share * 100 - Number.parseInt(x.text, 10)) < 1e-6),
     JSON.stringify(slider.ticks));
-  // a marker where each count first reaches a majority
-  const reaches = (p, key) => (key === 'neutral' ? p.neutral.median : p[key]) >= swing.needed;
-  t.check('three markers on the slider, each with its name and share, under a caption that explains them',
-    slider.marks.map((m) => m.key).join() === 'proportional,neutral,enacted'
-    && slider.marks.every((m) => /^(Proportional|Neutral|Enacted)\d+\.\d%$/.test(m.text))
-    && slider.caption.startsWith('Each marker shows where a count reaches 218 seats.') && slider.caption.endsWith('it is not a forecast.'),
-    JSON.stringify({ marks: slider.marks, caption: slider.caption }));
-  t.check('each marker sits at the first stop where its count reaches a majority',
-    slider.marks.every((m) => reaches(stops[m.at], m.key) && (m.at === 0 || !reaches(stops[m.at - 1], m.key))), JSON.stringify(slider.marks));
-  // at the marker of the enacted maps (the row shown) they reach 218 of 435; one stop lower they do not
-  const enactedStop = slider.marks.find((m) => m.key === 'enacted')?.at ?? -1;
+  t.check('no markers on the slider, the track filled up to the thumb, and only the note that it is not a forecast',
+    slider.marks === 0 && Math.abs(slider.fill - baseAt / (stops.length - 1)) < 1e-9
+    && slider.caption === 'The slider moves every district by the same amount; it is not a forecast.',
+    JSON.stringify({ marks: slider.marks, fill: slider.fill, caption: slider.caption }));
+  // at the first stop where the enacted maps (the row shown) reach 218 of 435 the middle square turns; one stop lower not
+  const enactedStop = stops.findIndex((p) => p.enacted >= swing.needed);
   const middleBlue = "document.querySelector('#waffle rect.middle').getAttribute('fill') === getComputedStyle(document.documentElement).getPropertyValue('--party-d').trim()";
   await setSlider(enactedStop);
   const atStop = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
   await setSlider(enactedStop - 1);
   const below = await t.js(`({ blue: ${middleBlue}, democratic: ${democratic} })`);
-  t.check('at the marker of the enacted maps they reach seat 218, one stop lower they do not',
+  t.check('at the first stop where the enacted maps reach seat 218 the middle square turns blue, one stop lower not',
     enactedStop > 0 && atStop.blue && atStop.democratic >= swing.needed + 2 && !below.blue && below.democratic < swing.needed + 2,
     JSON.stringify({ enactedStop, atStop, below }));
   // the drawing effect at every stop of the slider: a bar per stop, up for Democrats and down for Republicans
