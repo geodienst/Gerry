@@ -99,7 +99,15 @@ test('stateGraphic: a state as its record, the neutral maps without their median
     + "House seats. Neutral maps, 5,000 drawn by a computer, give 2; seats in proportion to the state's vote give 2. "
     + 'Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).');
   assert.equal(g.file, 'somevotes-texas.png');
-  assert.equal(g.foot.votes, 'Votes: the 2016 and 2020 presidential results added together, 51.8% Democratic.');
+  // the state's own share, not the national 51.8%
+  assert.equal(g.foot.votes, 'Votes: the 2016 and 2020 presidential results added together, 46.4% Democratic in Texas.');
+  // a state whose votes are 2020 alone (West Virginia in the real data) says so in the caption, the foot and the CSV
+  const alone = results();
+  alone.states.TX.notes = [...alone.states.TX.notes, { key: 'composite_2020_only', text: '' }];
+  const g20 = stateGraphic(alone, outcomesView(alone), 'TX');
+  assert.ok(g20.caption.startsWith('With the 2020 presidential votes, the map Texas uses on November 3, 2026 gives Democrats 0 of its 4 '));
+  assert.equal(g20.foot.votes, 'Votes: the 2020 presidential results alone, 46.4% Democratic in Texas.');
+  assert.ok(stateCsv(alone, 'TX')!.text.startsWith('district,democratic_votes_2020,republican_votes_2020,democratic_share\r\n'));
   // a state with one seat: its name and the two lines of its short record
   const ak = stateGraphic(r, view, 'AK');
   assert.equal(ak.single, true);
@@ -107,6 +115,7 @@ test('stateGraphic: a state as its record, the neutral maps without their median
   assert.deepEqual(ak.lines, ['One at-large seat. No districts, so nothing to compare.',
     'In all three counts this seat goes to Republicans, who won Alaska in 2016 and 2020.']);
   assert.ok(ak.caption.startsWith('Alaska. One at-large seat.'));
+  assert.equal(ak.foot.votes, 'Votes: the 2016 and 2020 presidential results.');
   assert.equal(ak.file, 'somevotes-alaska.png');
   assert.equal(slug('New Mexico'), 'new-mexico');
 });
@@ -122,6 +131,8 @@ test('statesMapGraphic: the texts of the drawing effect by state, under its own 
 
 test('stateCsv and statesCsv: a header row, one line per district in order of number or per state by name', () => {
   const r = results();
+  // the districts come in out of order, the states too (testdata lists TX, CA, FL, ...)
+  r.states.TX.districts = [...r.states.TX.districts].reverse();
   const tx = stateCsv(r, 'TX')!;
   assert.equal(tx.file, 'somevotes-texas-districts.csv');
   const lines = tx.text.split('\r\n');
@@ -137,4 +148,5 @@ test('stateCsv and statesCsv: a header row, one line per district in order of nu
     + 'geographic_effect,drawing_effect');
   assert.equal(rows.find((l) => l.startsWith('Texas,')), 'Texas,TX,4,Challenged in court,0.4635,2,2,1,3,0,0,R+2');
   assert.equal(rows.length, Object.keys(r.states).length + 2);
+  assert.deepEqual(rows.slice(1, -1).map((l) => l.split(',')[0]), Object.values(r.states).map((s) => s.name).sort((a, b) => a.localeCompare(b, 'en')));
 });

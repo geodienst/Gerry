@@ -2,7 +2,7 @@
 // state, and for the Share panel of chapter 02 one state or the map of all states. This module gives their texts,
 // numbers and captions; ui/graphics.ts draws them on a canvas.
 import { SITE_URL } from './hash.ts';
-import { count, effectWords, longDate, seats, sliderShare } from './format.ts';
+import { count, effectWords, longDate, seats, share, sliderShare } from './format.ts';
 import { effectList, houseOf, planCount } from './model.ts';
 import { recordView, singleSeatView } from './chapters.ts';
 import { plural } from './text.ts';
@@ -117,6 +117,10 @@ export function statesGraphic(results: Results, view: OutcomesView) {
 export type StatesGraphic = ReturnType<typeof statesGraphic>;
 
 /** "New Mexico" -> "new-mexico", for file names. */
+/** Whether ALARM's votes for a state are 2020 alone (West Virginia), not 2016 and 2020 together. */
+export const only2020 = (results: Results, postal: Postal): boolean =>
+  results.states[postal]?.notes.some((n) => n.key === 'composite_2020_only') ?? false;
+
 export const slug = (name: string): string => name.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '');
 
 /**
@@ -130,7 +134,8 @@ export function stateGraphic(results: Results, view: OutcomesView, postal: Posta
     const record = singleSeatView(results, postal);
     return {
       postal, single: true, title: record.name, meta: record.headline, headline: null, rows: [], seatsOf: '', lines: record.lines,
-      foot: base,
+      // the national share would read as this state's
+      foot: { ...base, votes: 'Votes: the 2016 and 2020 presidential results.' },
       caption: `${record.name}. ${record.lines.join(' ')} ${captionCredit}`,
       file: `somevotes-${slug(record.name)}.png`,
       alt: `${record.name}. ${record.lines.join(' ')}`,
@@ -139,6 +144,7 @@ export function stateGraphic(results: Results, view: OutcomesView, postal: Posta
   const record = recordView(results, postal);
   const s = results.states[postal];
   const [proportional, neutral, enacted] = record.trio;
+  const alone = only2020(results, postal);
   return {
     postal,
     single: false,
@@ -153,8 +159,10 @@ export function stateGraphic(results: Results, view: OutcomesView, postal: Posta
     ],
     seatsOf: record.seatsOf,
     lines: [],
-    foot: base,
-    caption: `With the 2016 and 2020 presidential votes, the map ${s.name} uses on November 3, 2026 gives Democrats `
+    // the state's own share, not the national one
+    foot: { ...base, votes: alone ? `Votes: the 2020 presidential results alone, ${share(s.d_share)} Democratic in ${s.name}.`
+      : `Votes: the 2016 and 2020 presidential results added together, ${share(s.d_share)} Democratic in ${s.name}.` },
+    caption: `With the ${alone ? '2020' : '2016 and 2020'} presidential votes, the map ${s.name} uses on November 3, 2026 gives Democrats `
       + `${seats(s.enacted)} of its ${seats(s.seats)} House seats. Neutral maps, ${count(planCount(results))} drawn by a `
       + `computer, give ${seats(s.neutral.median)}; seats in proportion to the state's vote give ${seats(s.proportional)}. `
       + captionCredit,

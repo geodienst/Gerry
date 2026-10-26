@@ -9,7 +9,7 @@ import {
 import { recordView, singleSeatView } from '../lib/chapters.ts';
 import { stateCsv, statesCsv } from '../lib/csv.ts';
 import { stateGraphic, statesMapGraphic } from '../lib/graphics.ts';
-import type { MapTopology, MapView, Palette, Postal, Results } from '../types.ts';
+import type { MapTopology, MapView, Palette, Postal, Results, StateProps } from '../types.ts';
 import { byId as $ } from '../ui/dom.ts';
 import { createFullScreen } from '../ui/fullscreen.ts';
 import { drawState, drawStatesMap, lightColors } from '../ui/graphics.ts';
@@ -17,7 +17,8 @@ import type { DistrictShape, StateShape } from '../ui/graphics.ts';
 import { createMap, drawLegend } from '../ui/map.ts';
 import { createShareBox } from '../ui/sharebox.ts';
 import { renderClose, renderDistricts, renderList, renderSingle, renderState, renderStateFull } from '../ui/sheet.ts';
-import { feature as topoFeature } from 'topojson-client';
+import { feature as topoFeature, merge as topoMerge } from 'topojson-client';
+import type { Feature } from 'geojson';
 import type { Colors } from '../lib/colors.ts';
 import type { OutcomesView } from '../lib/chapters.ts';
 import type { Index } from '../lib/model.ts';
@@ -149,6 +150,10 @@ export function createAtlas({ results, topology, index, colors: initialColors, v
     states: (topoFeature(topology, topology.objects.states) as unknown as { features: StateShape[] }).features,
     districts: (topoFeature(topology, topology.objects.districts) as unknown as { features: DistrictShape[] }).features,
   };
+  // the lower 48 as one shape with only the outer ring of each part, so Washington, DC is land on the cards
+  const lower48 = topology.objects.states.geometries.filter((g) => !OUTSET.includes((g.properties as StateProps).postal));
+  const merged = topoMerge(topology, lower48 as unknown as Parameters<typeof topoMerge>[1]);
+  const land: Feature = { type: 'Feature', properties: {}, geometry: { type: 'MultiPolygon', coordinates: merged.coordinates.map((part) => [part[0]]) } };
   createShareBox({
     button: $<HTMLButtonElement>('map-share'),
     box: $<HTMLDialogElement>('map-sharebox'),
@@ -169,6 +174,7 @@ export function createAtlas({ results, topology, index, colors: initialColors, v
         districts: shapes.districts.filter((d) => d.properties.state === postal),
         // the states around it, pale; Alaska and Hawaii sit in their own insets, so they are never around another state
         around: OUTSET.includes(postal) ? [] : shapes.states.filter((s) => s.properties.postal !== postal && !OUTSET.includes(s.properties.postal)),
+        land: OUTSET.includes(postal) ? undefined : land,
         shareOf: index.shareOf,
       });
       return g;

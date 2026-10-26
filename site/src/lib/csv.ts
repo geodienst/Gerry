@@ -1,7 +1,7 @@
 // The data behind the Share panel of chapter 02 as CSV files: the districts of one state on the 2016 and 2020 votes,
 // or the three counts of every state. A header row, then one line per district or state.
 import { effect } from './format.ts';
-import { slug } from './graphics.ts';
+import { only2020, slug } from './graphics.ts';
 import { districtLabel, STATUS_LABELS } from './model.ts';
 import type { Postal, Results } from '../types.ts';
 
@@ -18,10 +18,11 @@ export function stateCsv(results: Results, postal: Postal): CsvFile | null {
   const s = results.states[postal];
   if (!s) return null;
   const districts = [...s.districts].sort((a, b) => Number.parseInt(a.id.slice(2), 10) - Number.parseInt(b.id.slice(2), 10));
+  const years = only2020(results, postal) ? '2020' : '2016_2020'; // West Virginia: 2020 alone
   return {
     file: `somevotes-${slug(s.name)}-districts.csv`,
     text: table([
-      ['district', 'democratic_votes_2016_2020', 'republican_votes_2016_2020', 'democratic_share'],
+      ['district', `democratic_votes_${years}`, `republican_votes_${years}`, 'democratic_share'],
       ...districts.map((d) => [districtLabel(d.id, postal), d.d, d.r, d.share.toFixed(4)]),
     ]),
   };

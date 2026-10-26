@@ -264,7 +264,9 @@ interface MapBox { x: number; y: number; w: number; h: number }
 /** What a map card draws: the shapes that set the scale, the land around them, and the shapes with their colors. */
 interface MapLayers {
   fit: Feature[];
-  /** pale land around the colored shapes, under them */
+  /** land under everything, so a gap in the states (Washington, DC) does not show as water */
+  base?: Feature;
+  /** the land around the colored shapes, under them, in a gray the district colors never take */
   around: Feature[];
   shapes: { shape: Feature; fill: string }[];
   /** drawn on top in the ink of the text */
@@ -292,12 +294,14 @@ function drawMap(ctx: CanvasRenderingContext2D, box: MapBox, layers: MapLayers, 
       path(shape);
       ctx.fillStyle = fill;
       ctx.fill();
+      if (width === 0) continue; // a canvas keeps its last line width for 0
       ctx.strokeStyle = LIGHT.sheet;
       ctx.lineWidth = width;
       ctx.stroke();
     }
   };
-  fillAll(layers.around.map((shape) => ({ shape, fill: LIGHT.mid })), 1);
+  if (layers.base) fillAll([{ shape: layers.base, fill: LIGHT.rule }], 0);
+  fillAll(layers.around.map((shape) => ({ shape, fill: LIGHT.rule })), 1);
   fillAll(layers.shapes, 1);
   ctx.strokeStyle = LIGHT.fg;
   ctx.lineWidth = 1.6;
@@ -371,14 +375,16 @@ function columnFoot(ctx: CanvasRenderingContext2D, f: Faces, foot: GraphicFoot, 
 /**
  * One state as a 16:9 card: on the left its name, the drawing effect large, the three counts, the legend and the
  * foot; on the right, over the whole height of the image, its districts by Democratic share as large as they fit,
- * among the pale states around it. A state with one seat gets its two lines and its outline in gray.
+ * among the gray states around it. A state with one seat gets its two lines and its outline in gray.
  * @param state the outline of the state
  * @param districts its districts
- * @param around the states around it, drawn pale
+ * @param around the states around it, drawn gray
+ * @param land the outline of the lower 48 states without holes, under them
  * @param shareOf the Democratic share of each district
  */
 export function drawState(canvas: HTMLCanvasElement, g: StateGraphic, colors: Colors,
-  { state, districts, around, shareOf }: { state: StateShape; districts: DistrictShape[]; around: StateShape[]; shareOf: Record<string, number> }) {
+  { state, districts, around, land, shareOf }: { state: StateShape; districts: DistrictShape[]; around: StateShape[]; land?: Feature;
+    shareOf: Record<string, number> }) {
   const f = faces();
   render(canvas, (ctx) => {
     let y = PAD - 12;
@@ -409,7 +415,7 @@ export function drawState(canvas: HTMLCanvasElement, g: StateGraphic, colors: Co
     const bottom = columnFoot(ctx, f, g.foot, y);
     const fill = (d: DistrictShape) => (g.single ? colors.blank : colors.share(shareOf[d.properties.id]));
     drawMap(ctx, { x: MAP_X, y: 0, w: W - MAP_X, h: bottom },
-      { fit: [state], around, shapes: districts.map((d) => ({ shape: d, fill: fill(d) })), outline: [state] }, 18);
+      { fit: [state], base: land, around, shapes: districts.map((d) => ({ shape: d, fill: fill(d) })), outline: [state] }, 18);
     return bottom;
   });
   canvas.setAttribute('aria-label', g.alt);
