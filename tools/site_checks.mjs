@@ -1187,6 +1187,18 @@ async function sharing(t) {
   t.check('with Texas: its link, its caption with the link, its image and its districts',
     tx.open && tx.wide && txLink.copied === `${page}#TX` && txText.copied.startsWith('With the 2016 and 2020 presidential votes, the map Texas uses on November 3, 2026 gives Democrats ')
     && txText.copied.endsWith(` ${page}#TX`) && txFiles === 'somevotes-texas.png,somevotes-texas-districts.csv', JSON.stringify({ tx, txLink, txText, txFiles }));
+  // every state, and all states together, as a 16:9 card of 1200 by 675, drawn at twice that
+  const sizes = await t.js(`(async () => { const pick = document.getElementById('pick'), box = document.getElementById('map-sharebox'), out = [];
+    for (const o of [...pick.options]) {
+      pick.value = o.value; pick.dispatchEvent(new Event('change')); box.close();
+      document.getElementById('map-share').click();
+      const c = box.querySelector('canvas'); out.push([o.value || 'all', c.width, c.height]); box.close();
+    }
+    pick.value = 'TX'; pick.dispatchEvent(new Event('change'));
+    document.getElementById('map-share').click();
+    return out; })()`);
+  const odd = sizes.filter(([, w, h]) => w !== 2400 || h !== 1350);
+  t.check('every state card and the card of all states is 16:9, 2400 by 1350 pixels', sizes.length === 51 && odd.length === 0, JSON.stringify(odd));
   // Escape closes the dialog and leaves Texas on screen; a second Escape goes back to all states
   await t.js("document.querySelector('#map-sharebox [data-action=link]').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
   await t.sleep(100);
