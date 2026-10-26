@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 import { withExtensions as results } from './testdata.ts';
 import { outcomesView } from '../src/lib/chapters.ts';
 import { effectList } from '../src/lib/model.ts';
-import { CREDIT, LICENSE, LIGHT, SITE_NAME, nationalGraphic, statesGraphic } from '../src/lib/graphics.ts';
+import { CREDIT, LICENSE, LIGHT, SITE_NAME, nationalGraphic, slug, stateGraphic, statesGraphic, statesMapGraphic } from '../src/lib/graphics.ts';
+import { stateCsv, statesCsv } from '../src/lib/csv.ts';
 
 const tokens = readFileSync(new URL('../src/styles/tokens.css', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const light = tokens.match(/:root \{([\s\S]*?)\n\}/)![1];
@@ -81,4 +82,59 @@ test('statesGraphic: the net and a row per state that moves seats, largest first
   assert.ok(!g.caption.includes('median'));
   assert.ok(g.caption.endsWith('Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).'));
   assert.equal(g.file, 'somevotes-drawing-effect-by-state.png');
+});
+
+test('stateGraphic: a state as its record, the neutral maps without their median, and a caption in the words of the national one', () => {
+  const r = results();
+  const view = outcomesView(r);
+  // testdata Texas: 4 seats, proportional 2, neutral median 2, enacted 0, drawing effect R+2
+  const g = stateGraphic(r, view, 'TX');
+  assert.equal(g.single, false);
+  assert.equal(g.title, 'Texas');
+  assert.equal(g.meta, '4 seats. PLANC2333 (HB 4). Challenged in court.');
+  assert.deepEqual(g.headline, { value: 'R+2', drawing: -2, sentence: "2 seats toward Republicans compared with the state's neutral-map median." });
+  assert.deepEqual(g.rows, [{ label: 'Vote-proportional', value: '2' }, { label: 'Neutral maps', value: '2' }, { label: 'Enacted maps', value: '0' }]);
+  assert.equal(g.seatsOf, 'Democratic seats of 4.');
+  assert.equal(g.caption, 'With the 2016 and 2020 presidential votes, the map Texas uses on November 3, 2026 gives Democrats 0 of its 4 '
+    + "House seats. Neutral maps, 5,000 drawn by a computer, give 2; seats in proportion to the state's vote give 2. "
+    + 'Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).');
+  assert.equal(g.file, 'somevotes-texas.png');
+  assert.equal(g.foot.votes, 'Votes: the 2016 and 2020 presidential results added together, 51.8% Democratic.');
+  // a state with one seat: its name and the two lines of its short record
+  const ak = stateGraphic(r, view, 'AK');
+  assert.equal(ak.single, true);
+  assert.equal(ak.headline, null);
+  assert.deepEqual(ak.lines, ['One at-large seat. No districts, so nothing to compare.',
+    'In all three counts this seat goes to Republicans, who won Alaska in 2016 and 2020.']);
+  assert.ok(ak.caption.startsWith('Alaska. One at-large seat.'));
+  assert.equal(ak.file, 'somevotes-alaska.png');
+  assert.equal(slug('New Mexico'), 'new-mexico');
+});
+
+test('statesMapGraphic: the texts of the drawing effect by state, under its own file name', () => {
+  const r = results();
+  const view = outcomesView(r);
+  const map = statesMapGraphic(r, view);
+  const list = statesGraphic(r, view);
+  assert.deepEqual([map.title, map.net, map.summary, map.caption], [list.title, list.net, list.summary, list.caption]);
+  assert.equal(map.file, 'somevotes-drawing-effect-map.png');
+});
+
+test('stateCsv and statesCsv: a header row, one line per district in order of number or per state by name', () => {
+  const r = results();
+  const tx = stateCsv(r, 'TX')!;
+  assert.equal(tx.file, 'somevotes-texas-districts.csv');
+  const lines = tx.text.split('\r\n');
+  assert.equal(lines[0], 'district,democratic_votes_2016_2020,republican_votes_2016_2020,democratic_share');
+  assert.deepEqual(lines.slice(1, -1).map((l) => l.split(',')[0]), ['TX-1', 'TX-9', 'TX-15', 'TX-28']);
+  assert.equal(lines[1], 'TX-1,160635,433426,0.2704');
+  assert.equal(lines.at(-1), '');
+  assert.equal(stateCsv(r, 'AK'), null);
+  const all = statesCsv(r);
+  assert.equal(all.file, 'somevotes-states.csv');
+  const rows = all.text.split('\r\n');
+  assert.equal(rows[0], 'state,postal,seats,status,democratic_share,vote_proportional,neutral_median,neutral_p5,neutral_p95,enacted,'
+    + 'geographic_effect,drawing_effect');
+  assert.equal(rows.find((l) => l.startsWith('Texas,')), 'Texas,TX,4,Challenged in court,0.4635,2,2,1,3,0,0,R+2');
+  assert.equal(rows.length, Object.keys(r.states).length + 2);
 });

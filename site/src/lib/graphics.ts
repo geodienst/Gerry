@@ -1,12 +1,14 @@
-// The two images to download: the national comparison at a stop of the vote slider in chapter 01, and the drawing
-// effect by state. This module gives their texts, numbers and captions; ui/graphics.ts draws them on a canvas.
+// The images to download: the national comparison at a stop of the vote slider in chapter 01, the drawing effect by
+// state, and for the Share panel of chapter 02 one state or the map of all states. This module gives their texts,
+// numbers and captions; ui/graphics.ts draws them on a canvas.
 import { SITE_URL } from './hash.ts';
 import { count, effectWords, longDate, seats, sliderShare } from './format.ts';
 import { effectList, houseOf, planCount } from './model.ts';
+import { recordView, singleSeatView } from './chapters.ts';
 import { plural } from './text.ts';
 import type { EffectRow } from './model.ts';
 import type { OutcomesView } from './chapters.ts';
-import type { Results } from '../types.ts';
+import type { Postal, Results } from '../types.ts';
 
 /** Who made the images, and the license they may be reused under. */
 export const CREDIT = 'Govert Schoof, Geodienst, University of Groningen';
@@ -113,3 +115,70 @@ export function statesGraphic(results: Results, view: OutcomesView) {
   };
 }
 export type StatesGraphic = ReturnType<typeof statesGraphic>;
+
+/** "New Mexico" -> "new-mexico", for file names. */
+export const slug = (name: string): string => name.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '');
+
+/**
+ * One state on the 2016 and 2020 votes, as its record beside the map: the drawing effect, the three counts and its
+ * districts by Democratic share. A state with one seat gets its name and the two lines of its short record.
+ */
+export function stateGraphic(results: Results, view: OutcomesView, postal: Postal) {
+  const base = foot(results, view.points[view.baseIndex]);
+  const single = results.national.single_seat.find((s) => s.postal === postal);
+  if (single) {
+    const record = singleSeatView(results, postal);
+    return {
+      postal, single: true, title: record.name, meta: record.headline, headline: null, rows: [], seatsOf: '', lines: record.lines,
+      foot: base,
+      caption: `${record.name}. ${record.lines.join(' ')} ${captionCredit}`,
+      file: `somevotes-${slug(record.name)}.png`,
+      alt: `${record.name}. ${record.lines.join(' ')}`,
+    };
+  }
+  const record = recordView(results, postal);
+  const s = results.states[postal];
+  const [proportional, neutral, enacted] = record.trio;
+  return {
+    postal,
+    single: false,
+    title: record.name,
+    meta: `${record.seatCount}. ${record.mapName}. ${record.status}.`,
+    headline: record.headline,
+    // simpler than the record, as the national image: neutral maps without their median, which the site explains
+    rows: [
+      { label: proportional.label, value: proportional.value },
+      { label: 'Neutral maps', value: neutral.value },
+      { label: enacted.label, value: enacted.value },
+    ],
+    seatsOf: record.seatsOf,
+    lines: [],
+    foot: base,
+    caption: `With the 2016 and 2020 presidential votes, the map ${s.name} uses on November 3, 2026 gives Democrats `
+      + `${seats(s.enacted)} of its ${seats(s.seats)} House seats. Neutral maps, ${count(planCount(results))} drawn by a `
+      + `computer, give ${seats(s.neutral.median)}; seats in proportion to the state's vote give ${seats(s.proportional)}. `
+      + captionCredit,
+    file: `somevotes-${slug(s.name)}.png`,
+    alt: `${s.name}: ${record.headline.value}, ${record.headline.sentence} Democratic seats: vote-proportional `
+      + `${proportional.value}, neutral maps ${neutral.value}, enacted maps ${enacted.value}. Map of the districts by Democratic share.`,
+  };
+}
+export type StateGraphic = ReturnType<typeof stateGraphic>;
+
+/** All states on one map, each in the color of its drawing effect, with the net of all states. */
+export function statesMapGraphic(results: Results, view: OutcomesView) {
+  const list = effectList(results);
+  const states = statesGraphic(results, view);
+  return {
+    title: states.title,
+    note: states.note,
+    net: states.net,
+    netValue: states.netValue,
+    summary: states.summary,
+    foot: states.foot,
+    caption: states.caption,
+    file: 'somevotes-drawing-effect-map.png',
+    alt: `${list.summary} Map of the states in the color of their drawing effect.`,
+  };
+}
+export type StatesMapGraphic = ReturnType<typeof statesMapGraphic>;
