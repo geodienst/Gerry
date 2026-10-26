@@ -150,12 +150,24 @@
                   <button type="button" id="palette-party" aria-pressed="true">Red and blue</button>
                   <button type="button" id="palette-neutral" aria-pressed="false">Teal and brown</button>
                 </div>
-                <button type="button" class="sharebtn" id="map-share" aria-label="Share this view"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
               </div>
             </div>
           </div>
           <aside class="record" id="sheet" aria-labelledby="sheet-title"></aside>
           <div class="sheet-more" id="sheet-more" hidden></div>
+          <div class="sharewrap sheetshare" id="map-sharewrap">
+            <button type="button" class="sharebtn" id="map-share" aria-label="Share this view" aria-expanded="false" aria-controls="map-sharebox"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share</button>
+          </div>
+          <div class="sharebox" id="map-sharebox" role="dialog" aria-label="Share this view" tabindex="-1" hidden>
+            <canvas class="sharebox-img" aria-hidden="true"></canvas>
+            <div class="sharebox-actions">
+              <button type="button" class="sharebtn" data-action="link">Copy link</button>
+              <button type="button" class="sharebtn" data-action="download"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download image</button>
+              <button type="button" class="sharebtn" data-action="share" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-share"/></svg>Share image</button>
+              <button type="button" class="sharebtn" data-action="text">Copy text</button>
+              <button type="button" class="sharebtn" data-action="data"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-download"/></svg>Download data</button>
+            </div>
+          </div>
         </div>
         <p class="visually-hidden" id="sheet-status" aria-live="polite"></p>
       </div>

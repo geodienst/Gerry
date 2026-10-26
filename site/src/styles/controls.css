@@ -22,5 +22,10 @@ select { font: inherit; font-size: 0.87rem; padding: 0.3rem 0.4rem; background: 
 .sharebox-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; }
 .sharebox-actions .sharebtn { justify-content: center; }
 .sharebox-actions .sharebtn[hidden] { display: none; }
+/* Under the map the button sits at the top right of the column beside the map (app/atlas.ts puts it there after each
+   record), and the panel in the box of the map and the column, placed under the button from a script */
+.atlas { position: relative; }
+.record > .sheetshare { position: absolute; top: 0.8rem; right: 0.8rem; margin: 0; z-index: 2; }
+.record:has(> .sheetshare) { position: relative; }
 .share-note { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%); z-index: 200; margin: 0; padding: 0.45rem 0.9rem;
   background: var(--fg); color: var(--sheet); border-radius: 4px; font-size: 0.875rem; }

@@ -210,7 +210,7 @@ async function list(t) {
     && (await t.text('#sheet > p.note')) === 'Click a state on the map for its record.');
   // and above it "All states together", as in the list of states: the net large, the bar of both sides, the sums
   t.check('above the districts by share the net of all states, large, as in the list', await t.js(
-    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h3').textContent === 'All states together' && /^Net (0|[RD]\\+\\d+)$/.test(net.querySelector('.big').textContent) && !!net.querySelector('svg') && /Net: .+\\.$/.test(net.querySelector('p.note').textContent) && document.getElementById('sheet').firstElementChild === net; })()"));
+    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h3').textContent === 'All states together' && /^Net (0|[RD]\\+\\d+)$/.test(net.querySelector('.big').textContent) && !!net.querySelector('svg') && /Net: .+\\.$/.test(net.querySelector('p.note').textContent) && document.querySelector('#sheet > :not(.sheetshare)') === net; })()"));
   // the box is as high as its content; title and legend in the map box
   t.check('a short column box ends after its content, above the bottom of the map column', await t.js(`(() => {
     const record = document.getElementById('sheet').getBoundingClientRect(), col = document.querySelector('.atlas > .mapcol').getBoundingClientRect();
@@ -227,7 +227,7 @@ async function list(t) {
     && await t.js(`(() => { const v = [...document.querySelectorAll('#sheet .drow .v')].map((s) => Math.abs(parseFloat(s.textContent) - 50));
       return v.length === 81 && v.every((x, i) => i === 0 || x >= v[i - 1] - 0.051); })()`));
   t.check('above the close districts the net of all states as well', await t.js(
-    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h3').textContent === 'All states together' && document.getElementById('sheet').firstElementChild === net; })()"));
+    "(() => { const net = document.querySelector('#sheet .net'); return !!net && net.querySelector('h3').textContent === 'All states together' && document.querySelector('#sheet > :not(.sheetshare)') === net; })()"));
   await t.js("document.querySelector('#states .tools').scrollIntoView()");
   await t.screenshot('close-1280', { viewport: true });
   const close = await t.js("document.querySelector('#sheet .drow').dataset.postal");
@@ -257,7 +257,7 @@ async function list(t) {
   await t.js("document.querySelector('#sheet details.zeros summary').click()");
   t.check('the line with the arrow unfolds them', await t.js("document.querySelector('#sheet details.zeros').open"));
   t.check('the net bar names both sides without a marker under it, and the net stands large above it, on top of the list', await t.js(
-    "(() => { const net = document.querySelector('#sheet .net'), s = net?.querySelector('svg'); return s != null && s.textContent.includes('toward Republicans') && s.textContent.includes('toward Democrats') && !s.querySelector('path') && !/Net/.test(s.textContent) && /^Net (0|[RD]\\+\\d+)$/.test(net.querySelector('.big').textContent) && document.getElementById('sheet').firstElementChild === net; })()"));
+    "(() => { const net = document.querySelector('#sheet .net'), s = net?.querySelector('svg'); return s != null && s.textContent.includes('toward Republicans') && s.textContent.includes('toward Democrats') && !s.querySelector('path') && !/Net/.test(s.textContent) && /^Net (0|[RD]\\+\\d+)$/.test(net.querySelector('.big').textContent) && document.querySelector('#sheet > :not(.sheetshare)') === net; })()"));
   t.check('the net bar puts Republicans left in their color and Democrats right', await t.js(`(() => {
     const s = document.querySelector('#sheet .net svg');
     const [l, r] = s.querySelectorAll('rect');
@@ -1041,7 +1041,6 @@ async function fullscreen(t) {
   const wide = await t.js(`(() => { const r = (el) => (typeof el === 'string' ? document.getElementById(el) : el).getBoundingClientRect();
     const map = r('mapbox'), col = r(document.querySelector('.atlas > .mapcol')), side = r('sheet'), more = r('sheet-more');
     const title = r('map-title'), legend = r('legend'), share = r('map-share'), folds = r(document.querySelector('#sheet-more .fs-folds'));
-    const zoom = r(document.querySelector('.zoombar'));
     const foot = document.querySelector('#sheet .foot');
     return { sideRight: side.left >= map.right - 1,
       stripUnderBoth: more.top >= Math.max(col.bottom, side.bottom) - 1 && more.left <= map.left + 1 && more.right >= side.right - 1,
@@ -1051,12 +1050,12 @@ async function fullscreen(t) {
       foot: !!foot && foot.textContent.includes(' \u00b7 Challenged in court \u00b7 Legal status as of') && foot.textContent.includes('Adopted by'),
       kept: !!document.querySelector('#sheet .headline') && !!document.querySelector('#sheet .k'),
       noHints: !document.getElementById('tapline').checkVisibility() && !document.querySelector('.colors').checkVisibility(),
-      shareInMap: document.getElementById('map-share').checkVisibility() && share.top >= map.top && share.bottom <= zoom.top + 64
-        && share.right <= zoom.left && share.left >= map.left,
+      shareInRecord: document.getElementById('map-share').checkVisibility() && share.top >= side.top && share.top - side.top < 30
+        && share.right <= side.right && share.left > side.left + side.width / 2,
       sideFits: document.getElementById('sheet').scrollHeight <= document.getElementById('sheet').clientHeight + 2,
       stripFits: document.getElementById('sheet-more').scrollHeight <= document.getElementById('sheet-more').clientHeight + 2,
       inMap: title.top >= map.top && title.left >= map.left && legend.bottom <= map.bottom + 1 && legend.top >= map.top }; })()`);
-  t.check('2560 x 1440: full screen: the whole Texas record on the right, a strip under both with the folds under the record, title, legend and Share in the map',
+  t.check('2560 x 1440: full screen: the whole Texas record on the right with Share at its top right, a strip under both with the folds under the record, title and legend in the map',
     Object.values(wide).every(Boolean), JSON.stringify(wide));
   await t.screenshot('map-full-2560-texas', { viewport: true });
   // a record too long for the room above the strip, such as Arizona at 1920 x 1080,
@@ -1119,8 +1118,8 @@ async function fullscreen(t) {
   await t.js("location.hash = '#TX'");
   await t.until(`${HEADING} === 'Texas'`);
   await t.key('Escape', 27);
-  t.check('back from full screen the record is whole again, with the tap line, the colors and Share under the map', await t.js(
-    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.getElementById('tapline').checkVisibility() && document.querySelector('.colors').checkVisibility() && document.querySelector('.mapfoot .mapbar').contains(document.getElementById('map-share')) && document.getElementById('map-share').checkVisibility()"));
+  t.check('back from full screen the record is whole again, with the tap line and the colors, and Share at the top right of the record', await t.js(
+    "!!document.querySelector('#sheet .stack.sorted') && document.getElementById('sheet-more').hidden && document.getElementById('tapline').checkVisibility() && document.querySelector('.colors').checkVisibility() && document.getElementById('sheet').contains(document.getElementById('map-share')) && document.getElementById('map-share').checkVisibility()"));
   await t.load('', { width: 1280, height: 800 });
   await t.js("document.getElementById('map-full').click()");
   await t.sleep(300);
@@ -1139,14 +1138,14 @@ async function sharing(t) {
     const band = r(document.querySelector('.keyfacts')), list = r('keyfacts'), site = r('share-site');
     const map = document.getElementById('map-share'), out = document.getElementById('outcomes-share');
     return { siteRight: site.left >= list.right - 1 && site.top >= band.top && site.bottom <= band.bottom && !document.querySelector('.mast button'),
-      mapUnder: document.querySelector('.mapfoot').contains(map) && r(map).top >= r('mapbox').bottom && r(map).right > r('palette-neutral').right
-        && map.checkVisibility() && !document.querySelector('.zoombar #map-share'),
+      mapTopRight: document.getElementById('sheet').contains(map) && r(map).top - r('sheet').top < 30 && r('sheet').right - r(map).right < 30
+        && r(map).left > r('sheet').left + r('sheet').width / 2 && map.checkVisibility() && !document.querySelector('.mapfoot #map-share'),
       outcomesRight: document.querySelector('#outcomes .whead').contains(out) && r(out).left >= r('readout').right && r(out).bottom <= r('waffle').top
         && r(out).right <= r('waffle').right + 1,
       dots: document.querySelectorAll('#icon-share circle').length === 3
         && [...document.querySelectorAll('#share-site, #map-share, #outcomes-share')].map((b) => Boolean(b.querySelector('svg use[href="#icon-share"]')) && b.textContent === 'Share').join() === 'true,true,true' };
   })()`);
-  t.check('Share sits at the right of the key findings, under the map and at the right above the House, each with three dots',
+  t.check('Share sits at the right of the key findings, at the top right of the column beside the map and at the right above the House, each with three dots',
     Object.values(place).every(Boolean), JSON.stringify(place));
   const link = async (id) => {
     await t.js(`window.shared = ''; document.getElementById('${id}').click()`);
@@ -1155,9 +1154,42 @@ async function sharing(t) {
   };
   const page = 'https://somevotes.org/'; // the site's address, also when the page runs elsewhere
   t.check('Share by the key findings gives the address of the site', (await link('share-site')) === page);
+  // Share beside the map opens a panel: with no state the map of all states and their data, with a state its image
+  await t.js("Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (text) => { window.copied = text; } } }); "
+    + "window.saved = []; HTMLAnchorElement.prototype.click = function () { if (this.download) window.saved.push(this.download); }");
+  const mapPanel = async () => {
+    await t.js("window.shared = ''; window.saved = []; document.getElementById('map-share').click()");
+    await t.sleep(300);
+    return t.js(`(() => { const box = document.getElementById('map-sharebox'), b = box.getBoundingClientRect(), s = document.getElementById('map-share').getBoundingClientRect();
+      return { open: !box.hidden, shared: window.shared, under: Math.abs(b.top - s.bottom - 6) < 2 && Math.abs(b.right - s.right) < 2,
+        image: box.querySelector('canvas').width === 2400, buttons: [...box.querySelectorAll('button')].filter((x) => !x.hidden).map((x) => x.textContent)
+          .filter((x) => x !== 'Share image').join() }; })()`);
+  };
+  const mapPress = async (action) => {
+    await t.js(`window.copied = ''; document.querySelector('#map-sharebox [data-action="${action}"]').click()`);
+    await t.sleep(150);
+    return t.js("({ copied: window.copied, saved: window.saved.join() })");
+  };
+  const all = await mapPanel();
+  t.check('Share beside the map opens a panel under the button with the image and five ways to share, and shares nothing yet',
+    all.open && all.shared === '' && all.under && all.image && all.buttons === 'Copy link,Download image,Copy text,Download data', JSON.stringify(all));
+  t.check('with no state: the map of all states and the data of every state',
+    (await mapPress('download')).saved === 'somevotes-drawing-effect-map.png' && (await mapPress('data')).saved.endsWith('somevotes-states.csv')
+    && (await mapPress('link')).copied === page, JSON.stringify(await mapPress('link')));
+  await t.js("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
   await t.js("location.hash = '#TX'");
   await t.until(`${HEADING} === 'Texas'`);
-  t.check('Share under the map gives the map with its state', (await link('map-share')) === `${page}#TX`);
+  const tx = await mapPanel();
+  const txLink = await mapPress('link');
+  const txText = await mapPress('text');
+  const txFiles = [await mapPress('download'), await mapPress('data')].at(-1).saved;
+  t.check('with Texas: its link, its caption with the link, its image and its districts',
+    tx.open && txLink.copied === `${page}#TX` && txText.copied.startsWith('With the 2016 and 2020 presidential votes, the map Texas uses on November 3, 2026 gives Democrats ')
+    && txText.copied.endsWith(` ${page}#TX`) && txFiles === 'somevotes-texas.png,somevotes-texas-districts.csv', JSON.stringify({ tx, txLink, txText, txFiles }));
+  // Escape closes the panel and leaves Texas on screen; a second Escape goes back to all states
+  await t.js("document.getElementById('map-sharebox').focus(); document.getElementById('map-sharebox').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
+  await t.sleep(100);
+  t.check('Escape closes the Share panel and keeps the state', await t.js(`document.getElementById('map-sharebox').hidden && ${HEADING} === 'Texas'`));
   // chapter 01 on the neutral maps at 49.2% of the vote
   await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
   await t.js(`(() => { const s = document.getElementById('vote');

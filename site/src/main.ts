@@ -17,7 +17,7 @@ import { createTour } from './ui/tour.ts';
 import { renderDecide, showSenate, drawLegal } from './ui/decide.ts';
 import { drawSeatAxis } from './ui/charts.ts';
 import { share } from './ui/share.ts';
-import { mountGraphics, lightColors } from './ui/graphics.ts';
+import { mountGraphics, lightColors, drawNational } from './ui/graphics.ts';
 import { createShareBox } from './ui/sharebox.ts';
 import { nationalGraphic } from './lib/graphics.ts';
 
@@ -44,7 +44,7 @@ async function main() {
   // the images under "Graphics to reuse", at the 2016 and 2020 votes whatever the slider shows
   const graphics = mountGraphics(results, outcomesData, palette);
 
-  const atlas = createAtlas({ results, topology, index, colors, reduceMotion: lessMotion });
+  const atlas = createAtlas({ results, topology, index, colors, view: outcomesData, palette: () => palette, reduceMotion: lessMotion });
 
   // Chapter 04: the national seat axis as a figure in the method, drawn once the method is open
   // (a closed <details> has no width to draw in), and again at a new width.
@@ -96,12 +96,15 @@ async function main() {
   createShareBox({
     button: $<HTMLButtonElement>('outcomes-share'),
     box: $('outcomes-sharebox'),
-    graphic: () => nationalGraphic(results, outcomesData, outcomes.state().index),
+    draw: (canvas) => {
+      const g = nationalGraphic(results, outcomesData, outcomes.state().index);
+      drawNational(canvas, g, lightColors(palette));
+      return g;
+    },
     link: () => {
       const { key, index: at } = outcomes.state();
       return `${SITE_URL}${outcomesLink(key, outcomesData.points[at].share)}`;
     },
-    colors: () => lightColors(palette),
   });
 
   const decide = decideView(results);
