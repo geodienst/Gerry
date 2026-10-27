@@ -158,3 +158,12 @@ test('each video has the text in the video under its buttons', () => {
 test('every file in site/public/video is used by the page', () => {
   for (const file of files) assert.ok(html.includes(`video/${file}`), `${file} is not on the page`);
 });
+
+test('the videos have their own terms, and those of Graphics to reuse are about the images', () => {
+  const videos = html.slice(html.indexOf('id="videos"'), html.indexOf('id="graphics"'));
+  assert.ok(videos.includes('<p class="terms">You may reuse the videos, also commercially, under '
+    + '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Credit: Govert Schoof, Geodienst, '
+    + 'University of Groningen, somevotes.org.</p>'), 'no terms in Videos');
+  const graphics = html.slice(html.indexOf('id="graphics"'));
+  assert.match(graphics, /<p class="terms">You may reuse the images and their captions, also commercially, under /);
+});

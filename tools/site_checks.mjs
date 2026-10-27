@@ -1396,7 +1396,11 @@ async function videos(t) {
   t.check('Videos has the wrap, heading and intro of Graphics to reuse', style[0] === style[1], style.join(' || '));
   t.check('Graphics to reuse keeps its two images and has no videos of its own', await t.js(
     "document.querySelectorAll('#graphics .gcard').length === 2 && !document.querySelector('#graphics video, #graphics .vcard, #graphics a[href$=\".mp4\"]')"));
-  t.check('the terms cover the videos', (await t.text('#graphics .terms')).startsWith('You may reuse the images, their captions and the videos, also commercially, under CC BY 4.0.'));
+  t.check('the videos have their own terms, CC BY 4.0 with a link to the license and the credit', await t.js(`(() => {
+    const p = document.querySelector('#videos .terms'), a = p && p.querySelector('a');
+    return !!p && p.textContent === 'You may reuse the videos, also commercially, under CC BY 4.0. Credit: Govert Schoof, Geodienst, University of Groningen, somevotes.org.'
+      && !!a && a.href === 'https://creativecommons.org/licenses/by/4.0/' && a.textContent === 'CC BY 4.0'; })()`));
+  t.check('the terms of Graphics to reuse are about the images, as before', (await t.text('#graphics .terms')).startsWith('You may reuse the images and their captions, also commercially, under CC BY 4.0.'));
 
   const wide = await t.js(players);
   t.check('three players, all in Videos: The Line Moved, How House elections work and How to rig a map, with their lengths',
