@@ -426,9 +426,10 @@ async function decide(t) {
     && (await t.text('#decide .chead h2')) === 'In detail' && await t.js("!document.getElementById('decide-intro')")
     && (await t.text('#senate .kicker')) === 'Beyond district lines');
   const figs = await t.js("[...document.querySelectorAll('#decide .figs b')].map((b) => b.textContent)");
-  // the maps in court and the Senate have two each: the challenged maps and their drawing effect, the share needed and
-  // the seats of 100 at the slider
-  t.check('eight large figures, each a formatted number', figs.length === 8
+  // competitive districts have three: the enacted maps, the neutral median and the vote-proportional count, which has
+  // no districts; the maps in court and the Senate have two each: the challenged maps and their drawing effect, the
+  // share needed and the seats of 100 at the slider
+  t.check('nine large figures, each a formatted number', figs.length === 9
     && figs.every((v) => /^(\d+(\.\d+)?%|\d+|\d+ to \d+|\d+ of 100|0|[RD]\+\d+)$/.test(v)), figs.join(' | '));
   const axes = await t.js(`[...document.querySelectorAll('#decide svg.dotrows')].map((s) => ({ id: s.parentElement.id, role: s.getAttribute('role'),
     label: s.getAttribute('aria-label'), rows: [...s.querySelectorAll('text.lbl')].map((x) => x.textContent), base: s.querySelectorAll('line.base').length }))`);
