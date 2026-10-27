@@ -481,8 +481,16 @@ async function method(t) {
     /Data generated .+\. Legal status as of .+\. ALARM dataset version \d+\./.test(await t.text('footer')));
   t.check('the footer links to the Geodienst with its logo',
     await t.js("(() => { const a = document.querySelector('footer a[href=\"https://rug.nl/geo\"]'); const img = a && a.querySelector('img'); return !!a && a.textContent.trim() === 'Geodienst, University of Groningen' && !!img && img.complete && img.naturalWidth > 0; })()"));
-  t.check('the footer links to the University of Groningen with its shield',
+  t.check('the footer links to the University of Groningen with its logo',
     await t.js("(() => { const img = document.querySelector('footer a[href=\"https://www.rug.nl/\"] img'); return !!img && img.alt === 'University of Groningen' && img.complete && img.naturalWidth > 0; })()"));
+  t.check('on a wide screen the University of Groningen logo stands in the middle of the space between the text and the Geodienst',
+    await t.js(`(() => {
+      const text = document.querySelector('footer .wrap > div').getBoundingClientRect();
+      const logo = document.querySelector('footer .rug img').getBoundingClientRect();
+      const geo = document.querySelector('footer .credit').getBoundingClientRect();
+      const mid = (text.right + geo.left) / 2;
+      return Math.abs((logo.left + logo.right) / 2 - mid) <= 2 && logo.left > text.right && logo.right < geo.left && geo.height < logo.height;
+    })()`));
   await t.js("location.hash = '#method'");
   t.check('a link to #method unfolds the method', await t.until("document.getElementById('method-details').open"));
   t.check('the open method shows the national seat axis as a figure', await t.until(
