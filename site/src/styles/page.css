@@ -21,7 +21,7 @@
    video.css); here the two images side by side, each with its caption and buttons */
 .videos, .graphics { border-top: 1px solid var(--rule); padding-block: 2rem 2.4rem; }
 .videos h2, .graphics h2 { font: 700 1.25rem/1.2 var(--font-head); margin: 0 0 0.6rem; }
-.videos .intro, .graphics .intro, .videos .terms, .graphics .terms { max-width: 64ch; margin: 0.45rem 0 0; }
+.graphics .intro, .videos .terms, .graphics .terms { max-width: 64ch; margin: 0.45rem 0 0; }
 .videos .terms, .graphics .terms { margin-top: 1.4rem; font-size: 0.87rem; }
 .gcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 1.6rem; margin-top: 1.2rem; align-items: start; }
 .gcard { margin: 0; display: grid; gap: 0.7rem; min-width: 0; }

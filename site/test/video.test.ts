@@ -98,13 +98,13 @@ test('each poster is a JPEG of 540 by 960 pixels under 60 KB', () => {
 
 test('the section Videos stands right above Graphics to reuse, and the byline links to it after Methodology', () => {
   assert.match(html, /<\/section>\s*<section class="videos" id="videos" aria-labelledby="videos-title">[\s\S]*?<\/section>\s*<section class="graphics" id="graphics"/);
-  assert.match(section, /<h2 id="videos-title">Videos<\/h2>\s*<p class="intro">Three short videos to watch and share\.<\/p>/);
+  assert.match(section, /<h2 id="videos-title">Videos<\/h2>\s*<div class="vcards">/);
   assert.match(html, /<p class="byline"><span>[\s\S]*?<\/span><a href="#method">Methodology<\/a><a href="#videos">Videos<\/a><\/p>/);
 });
 
 test('three videos in the order teaser, explainer, How to rig a map, each with its title and length', () => {
   assert.deepEqual(cards.map((c) => [c.id, c.title?.[2], ...(c.time ?? [])]), [
-    ['video-teaser', 'The Line Moved', 'PT57S', '0:57'],
+    ['video-teaser', 'Teaser', 'PT57S', '0:57'],
     ['video-house', 'How House elections work', 'PT1M40S', '1:40'],
     ['video-rig', 'How to rig a map', 'PT1M7S', '1:07'],
   ]);

@@ -1383,17 +1383,17 @@ async function videos(t) {
   const fetched = "performance.getEntriesByType('resource').map((e) => e.name).filter((u) => u.endsWith('.mp4'))";
 
   await t.load('', { width: 1280, height: 800 });
-  t.check('Videos stands between the method and Graphics to reuse, with its heading and its intro', await t.js(`(() => {
+  t.check('Videos stands between the method and Graphics to reuse, with its heading and no intro line', await t.js(`(() => {
     const s = document.getElementById('videos');
     return s.tagName === 'SECTION' && s.previousElementSibling?.id === 'method' && s.nextElementSibling?.id === 'graphics'
-      && s.querySelector('h2')?.textContent === 'Videos' && s.querySelector('.intro')?.textContent === 'Three short videos to watch and share.'; })()`));
+      && s.querySelector('h2')?.textContent === 'Videos' && !s.querySelector('.intro'); })()`));
   const style = await t.js(`(() => {
     const look = (el, props) => props.map((p) => getComputedStyle(el)[p]).join(' ');
     return ['videos', 'graphics'].map((id) => { const s = document.getElementById(id), w = s.querySelector('.wrap');
       return [look(s, ['borderTopWidth', 'borderTopStyle', 'paddingTop', 'paddingBottom']), look(w, ['maxWidth', 'paddingLeft']),
         look(s.querySelector('h2'), ['fontFamily', 'fontSize', 'fontWeight', 'marginBottom']),
-        look(s.querySelector('.intro'), ['fontSize', 'maxWidth', 'marginTop'])].join(' | '); }); })()`);
-  t.check('Videos has the wrap, heading and intro of Graphics to reuse', style[0] === style[1], style.join(' || '));
+        look(s.querySelector('.terms'), ['fontSize', 'maxWidth', 'marginTop'])].join(' | '); }); })()`);
+  t.check('Videos has the wrap, heading and terms of Graphics to reuse', style[0] === style[1], style.join(' || '));
   t.check('Graphics to reuse keeps its two images and has no videos of its own', await t.js(
     "document.querySelectorAll('#graphics .gcard').length === 2 && !document.querySelector('#graphics video, #graphics .vcard, #graphics a[href$=\".mp4\"]')"));
   t.check('the videos have their own terms, CC BY 4.0 with a link to the license and the credit', await t.js(`(() => {
@@ -1403,9 +1403,9 @@ async function videos(t) {
   t.check('the terms of Graphics to reuse are about the images, as before', (await t.text('#graphics .terms')).startsWith('You may reuse the images and their captions, also commercially, under CC BY 4.0.'));
 
   const wide = await t.js(players);
-  t.check('three players, all in Videos: The Line Moved, How House elections work and How to rig a map, with their lengths',
+  t.check('three players, all in Videos: Teaser, How House elections work and How to rig a map, with their lengths',
     wide.length === 3 && wide.every((p) => p.inVideos) && wide.map((p) => `${p.name} ${p.time}`).join()
-      === 'The Line Moved 0:57,How House elections work 1:40,How to rig a map 1:07', JSON.stringify(wide.map((p) => [p.name, p.time])));
+      === 'Teaser 0:57,How House elections work 1:40,How to rig a map 1:07', JSON.stringify(wide.map((p) => [p.name, p.time])));
   t.check('each has Download MP4 from the release, the teaser also Download MP4 for TV, and the text in the video',
     JSON.stringify(wide.map((p) => p.links)) === JSON.stringify([
       ['Download MP4 videos-2026-10-27/1-somevotes-teaser-9x16-v6.2.mp4', 'Download MP4 for TV videos-2026-10-27/1-somevotes-teaser-9x16-v6.2-tv.mp4'],
