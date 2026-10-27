@@ -133,9 +133,9 @@ test('the videos come from the site itself: no frames, embeds or players of othe
   }
 });
 
-test('under each player Download MP4 from the release videos-2026-10-27, for the teaser also Download MP4 for TV', () => {
+test('under each player Download MP4 from the release videos-2026-10-27, and no other download', () => {
   assert.deepEqual(cards.map((c) => c.links), [
-    [['Download MP4', `${RELEASE}1-somevotes-teaser-9x16-v6.2.mp4`], ['Download MP4 for TV', `${RELEASE}1-somevotes-teaser-9x16-v6.2-tv.mp4`]],
+    [['Download MP4', `${RELEASE}1-somevotes-teaser-9x16-v6.2.mp4`]],
     [['Download MP4', `${RELEASE}2-somevotes-house-elections-explainer-9x16-v2.8.mp4`]],
     [['Download MP4', `${RELEASE}3-somevotes-how-to-rig-a-map-9x16-v2.1.mp4`]],
   ]);

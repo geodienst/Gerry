@@ -1414,9 +1414,9 @@ async function videos(t) {
   t.check('three players, all in Videos: Teaser, How House elections work and How to rig a map, with their lengths',
     wide.length === 3 && wide.every((p) => p.inVideos) && wide.map((p) => `${p.name} ${p.time}`).join()
       === 'Teaser 0:57,How House elections work 1:40,How to rig a map 1:07', JSON.stringify(wide.map((p) => [p.name, p.time])));
-  t.check('each has Download MP4 from the release, the teaser also Download MP4 for TV, and the text in the video',
+  t.check('each has Download MP4 from the release, and the text in the video',
     JSON.stringify(wide.map((p) => p.links)) === JSON.stringify([
-      ['Download MP4 videos-2026-10-27/1-somevotes-teaser-9x16-v6.2.mp4', 'Download MP4 for TV videos-2026-10-27/1-somevotes-teaser-9x16-v6.2-tv.mp4'],
+      ['Download MP4 videos-2026-10-27/1-somevotes-teaser-9x16-v6.2.mp4'],
       ['Download MP4 videos-2026-10-27/2-somevotes-house-elections-explainer-9x16-v2.8.mp4'],
       ['Download MP4 videos-2026-10-27/3-somevotes-how-to-rig-a-map-9x16-v2.1.mp4'],
     ]) && wide.every((p) => p.text === 'Text in the video'), JSON.stringify(wide.map((p) => p.links)));
@@ -1432,13 +1432,13 @@ async function videos(t) {
     JSON.stringify(await t.js(fetched)));
   await t.screenshot('videos-1280', { viewport: true });
 
-  // on a tablet the two teaser buttons take two lines; the other buttons keep their height
+  // on a tablet every download button keeps one line and the same height
   await t.load('', { width: 768, height: 1024 });
   const tablet = await t.js(players);
   const buttons = await t.js("[...document.querySelectorAll('#videos .gbar a')].map((a) => Math.round(a.getBoundingClientRect().height))");
   t.check('on a tablet the three stand side by side and every download button has the same height',
     tablet.length === 3 && tablet.every((p, i) => p.box.y === tablet[0].box.y && (i === 0 || p.box.x > tablet[i - 1].box.right))
-      && buttons.length === 4 && buttons.every((h) => h === buttons[0]), JSON.stringify({ boxes: tablet.map((p) => p.box), buttons }));
+      && buttons.length === 3 && buttons.every((h) => h === buttons[0]), JSON.stringify({ boxes: tablet.map((p) => p.box), buttons }));
 
   await t.load('', { width: 375, height: 812 });
   const phone = await t.js(players);
