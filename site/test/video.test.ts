@@ -92,8 +92,11 @@ test('each poster is a WebP of 540 by 960 pixels under 30 KB', () => {
   }
 });
 
-test('the section Videos stands right above Graphics to reuse, and the byline links to it after Methodology', () => {
+test('Videos stands right above Graphics to reuse, the method below both, and the byline links to Videos after Methodology', () => {
   assert.match(html, /<\/section>\s*<section class="videos" id="videos" aria-labelledby="videos-title">[\s\S]*?<\/section>\s*<section class="graphics" id="graphics"/);
+  // chapter 03, Videos, Graphics to reuse, then the method (chapter 04) and About
+  const sections = [...html.matchAll(/^ {4}<section class="[\w ]+" id="([\w-]+)"/gm)].map(([, id]) => id);
+  assert.deepEqual(sections, ['outcomes', 'states', 'decide', 'videos', 'graphics', 'method', 'about']);
   assert.match(section, /<h2 id="videos-title">Videos<\/h2>\s*<div class="vcards">/);
   assert.match(html, /<p class="byline"><span>[\s\S]*?<\/span><a href="#method">Methodology<\/a><a href="#videos">Videos<\/a><\/p>/);
 });

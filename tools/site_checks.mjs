@@ -580,6 +580,12 @@ async function layout(t) {
   }
   t.check('the chapters run 01 the national count, 02 State by state, 03 In detail, 04 Methodology', await t.js(
     "[...document.querySelectorAll('main > .chapter')].map((c) => `${c.id} ${c.querySelector('.chead .no').textContent}`).join() === 'outcomes 01,states 02,decide 03,method 04'"));
+  t.check('the page runs 01, 02, 03, Videos, Graphics to reuse, 04 Methodology and About', await t.js(
+    "[...document.querySelectorAll('main > section')].map((s) => s.id).join() === 'outcomes,states,decide,videos,graphics,method,about'"));
+  const rules = await t.js(`(() => { const s = [...document.querySelectorAll('main > section')];
+    return s.slice(1).filter((next, i) => parseFloat(getComputedStyle(s[i]).borderBottomWidth) + parseFloat(getComputedStyle(next).borderTopWidth) === 0)
+      .map((next) => next.id); })()`);
+  t.check('a rule sets every section of the page apart from the one above it', rules.length === 0, rules.join());
   const heads = await t.js(`(() => {
     const size = (el) => parseFloat(getComputedStyle(el).fontSize);
     return { titles: [...document.querySelectorAll('.chapter .chead h2')].map(size), lead: size(document.getElementById('outcomes-lead')) };
@@ -781,6 +787,14 @@ async function masthead(t) {
     && /^With the maps the states drew for 2026, Democrats need \d+\.\d% of the two-party vote for a House majority\.$/.test(facts[0])
     && /^The enacted maps move \d+ seats? toward Republicans and \d+ toward Democrats\. Net effect: (0|[RD]\+\d+)\.$/.test(facts[1])
     && await t.js("document.querySelector('header.mast').nextElementSibling?.classList.contains('keyfacts') === true"), facts.join(' | '));
+  // the method stands near the end of the page, below Graphics to reuse; once open it still comes to the top
+  const methodTop = "Math.round(document.getElementById('method').getBoundingClientRect().top) || 0"; // -0 does not come back as a value
+  for (const [width, height] of [[375, 812], [1280, 800], [2560, 1440]]) {
+    await t.load('', { width, height });
+    await t.js("document.querySelector('.mast .byline a[href=\"#method\"]').click()");
+    t.check(`${width}px: the Methodology link brings the method to the top of the window`, await t.until(
+      `document.getElementById('method-details').open && Math.abs(${methodTop}) < 4`, 3000), `top ${await t.js(methodTop)}px`);
+  }
 }
 
 async function outcomes(t) {
@@ -1391,9 +1405,9 @@ async function videos(t) {
   const fetched = "performance.getEntriesByType('resource').map((e) => e.name).filter((u) => u.endsWith('.mp4'))";
 
   await t.load('', { width: 1280, height: 800 });
-  t.check('Videos stands between the method and Graphics to reuse, with its heading and no intro line', await t.js(`(() => {
+  t.check('Videos stands between chapter 03 and Graphics to reuse, with its heading and no intro line', await t.js(`(() => {
     const s = document.getElementById('videos');
-    return s.tagName === 'SECTION' && s.previousElementSibling?.id === 'method' && s.nextElementSibling?.id === 'graphics'
+    return s.tagName === 'SECTION' && s.previousElementSibling?.id === 'decide' && s.nextElementSibling?.id === 'graphics'
       && s.querySelector('h2')?.textContent === 'Videos' && !s.querySelector('.intro'); })()`));
   const style = await t.js(`(() => {
     const look = (el, props) => props.map((p) => getComputedStyle(el)[p]).join(' ');
