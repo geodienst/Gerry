@@ -37,9 +37,8 @@ test('index.html loads only its own entry module and images', () => {
     assert.ok(existsSync(fileURLToPath(new URL(`../public/${file}`, import.meta.url))), file);
   }
   const images = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)].map((m) => m[1]);
-  // Justitia in the masthead, the posters of the three videos under Graphics to reuse, the logo in the footer
-  assert.deepEqual(images, ['img/justice.webp', 'video/how-house-elections-work-poster.jpg', 'video/how-to-rig-a-map-poster.jpg',
-    'video/the-line-moved-poster.jpg', 'img/geodienst.svg']);
+  // Justitia in the masthead, the Geodienst logo and the University of Groningen shield in the footer
+  assert.deepEqual(images, ['img/justice.webp', 'img/geodienst.svg', 'img/rug-shield.png']);
 });
 
 test('the preview for a shared link: title and description as on the page, and an image of 1200 by 630', () => {

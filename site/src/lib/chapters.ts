@@ -366,7 +366,9 @@ export function decideView(results: Results) {
   return {
     senate,
     competitive: {
-      figures: [{ value: count(c.enacted), label: 'enacted maps' }, { value: count(c.median), label: 'neutral median' }],
+      // the vote-proportional count has no districts, so it has a figure but no row of dots
+      figures: [{ value: count(c.enacted), label: 'enacted maps' }, { value: count(c.median), label: 'neutral median' },
+        { value: count(0), label: 'vote-proportional, no districts' }],
       dots: dots([c.enacted, c.median, c.p5, c.p95], 5, count, [
         { key: 'neutral', label: SHORT_LABELS.neutral, value: c.median, band: [c.p5, c.p95] },
         { key: 'enacted', label: SHORT_LABELS.enacted, value: c.enacted, filled: true },
