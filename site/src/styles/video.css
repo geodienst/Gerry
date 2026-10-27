@@ -1,0 +1,28 @@
+/* Videos, above Graphics to reuse: the three videos, each with its title and length, the player, its downloads and the
+   text in the video. A player loads only its poster until the reader presses play (preload="none"). */
+
+/* Each column is as wide as its player, so the title, the buttons and the text line up with it. A player stays within
+   80% of the screen height, so it fits whole, and at most 24rem wide. On a phone the videos stand one under the other. */
+.vcards { display: grid; gap: 2.4rem 1.6rem; margin-top: 1.2rem; align-items: start;
+  grid-template-columns: minmax(0, min(24rem, 80vh * 9 / 16 + 2px));
+  grid-template-columns: minmax(0, min(24rem, 80svh * 9 / 16 + 2px)); }
+.vcard { display: grid; gap: 0.7rem; min-width: 0; align-content: start; }
+.vcard-head { display: grid; gap: 0.15rem; }
+.vcard-head h3 { font: 700 1.0625rem/1.25 var(--font-head); }
+.vcard-head time { font-variant-numeric: tabular-nums; }
+/* a button may wrap rather than run past a narrow column, as with the phone on its side */
+.vcard .sharebtn { flex: 0 1 auto; }
+/* the border sits outside the 9:16 box (content-box), so the poster fills it exactly */
+.vcard video { display: block; aspect-ratio: 9 / 16; height: auto; border: 1px solid var(--rule); background: var(--mid);
+  width: min(100% - 2px, 80vh * 9 / 16); width: min(100% - 2px, 80svh * 9 / 16); }
+
+/* From 720px the three side by side. Each video spans four rows of the grid (subgrid), so the titles, the players, the
+   buttons and the text stand level across the three, also when a title or the two teaser buttons wrap. */
+@media (min-width: 720px) {
+  .vcards { row-gap: 0.7rem;
+    grid-template-columns: repeat(3, minmax(0, min(24rem, 80vh * 9 / 16 + 2px)));
+    grid-template-columns: repeat(3, minmax(0, min(24rem, 80svh * 9 / 16 + 2px))); }
+  .vcard { grid-row: span 4; grid-template-rows: subgrid; }
+  /* a single button keeps its height when the two teaser buttons take two lines */
+  .vcard .gbar { align-self: start; }
+}

@@ -10,6 +10,7 @@ select { font: inherit; font-size: 0.87rem; padding: 0.3rem 0.4rem; background: 
 .sharebtn { display: inline-flex; align-items: center; gap: 0.45rem; flex: none; font: 500 0.87rem/1 var(--font-body); padding: 0.4rem 0.65rem;
   border: 1px solid var(--rule); background: var(--sheet); color: var(--fg); cursor: pointer; }
 .sharebtn:hover { border-color: var(--ink); }
+a.sharebtn { text-decoration: none; } /* a download link in the look of the buttons */
 .sharebtn svg { width: 0.95rem; height: 0.95rem; }
 .mapbar, .whead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
 /* The Share panel of chapter 01: the image as it will be shared, with the ways to share it under it */

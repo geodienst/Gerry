@@ -600,10 +600,12 @@ async function layout(t) {
   await t.key('Tab', 9);
   t.check('the second Tab lands on the Methodology link', await t.js("document.activeElement === document.querySelector('.mast .byline a[href=\"#method\"]')"));
   await t.key('Tab', 9);
-  t.check('the third Tab lands on Share by the key findings', await t.js("document.activeElement === document.getElementById('share-site')"));
+  t.check('the third Tab lands on the Videos link', await t.js("document.activeElement === document.querySelector('.mast .byline a[href=\"#videos\"]')"));
+  await t.key('Tab', 9);
+  t.check('the fourth Tab lands on Share by the key findings', await t.js("document.activeElement === document.getElementById('share-site')"));
   await t.key('Tab', 9);
   // chapter 01 is the national count: the chosen row of its radio group is the one tab stop of the rows
-  t.check('the fourth Tab lands on the chosen count of chapter 01', await t.js(
+  t.check('the fifth Tab lands on the chosen count of chapter 01', await t.js(
     "document.activeElement === document.querySelector('#scen [aria-checked=true]') && !!document.activeElement.closest('#outcomes')"));
   await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
   const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
@@ -740,9 +742,12 @@ async function masthead(t) {
   // no labels in capitals and no middle dots
   t.check('no text is set in capitals', await t.js(
     "![...document.querySelectorAll('body *')].some((el) => getComputedStyle(el).textTransform === 'uppercase' && el.textContent.trim())"));
-  t.check('the byline gives the author, the date and a link to the method, apart by space',
-    (await t.js("[...document.querySelectorAll('.mast .byline > *')].map((e) => e.textContent).join('|')")) === 'By Govert Schoof, October 8, 2026|Methodology'
-    && await t.js("!!document.querySelector('.mast .byline a[href=\"#method\"]') && document.querySelector('meta[name=author]').content === 'Govert Schoof'"));
+  t.check('the byline gives the author, the date and links to the method and the videos, apart by space',
+    (await t.js("[...document.querySelectorAll('.mast .byline > *')].map((e) => e.textContent).join('|')")) === 'By Govert Schoof, October 8, 2026|Methodology|Videos'
+    && await t.js("!!document.querySelector('.mast .byline a[href=\"#method\"]') && document.querySelector('meta[name=author]').content === 'Govert Schoof'")
+    && await t.js(`(() => { const [method, videos] = ['#method', '#videos'].map((h) => document.querySelector('.mast .byline a[href="' + h + '"]'));
+      const a = getComputedStyle(method), b = getComputedStyle(videos);
+      return method.nextElementSibling === videos && ['color', 'fontSize', 'fontWeight', 'textDecorationLine'].every((p) => a[p] === b[p]); })()`));
   t.check('the name links to About this project, with the bio, the thanks, independence and contact', await t.js(`(() => {
     const about = document.getElementById('about')?.textContent ?? '';
     return document.querySelector('.mast .byline a.author')?.getAttribute('href') === '#about'
@@ -1371,6 +1376,86 @@ async function graphics(t) {
   await t.screenshot('graphics-1280', { viewport: false });
 }
 
+// --- Videos, above Graphics to reuse: three players that load only their posters, side by side on a wide screen -----
+async function videos(t) {
+  // each player: its box, the box of its title, its name, length, downloads and the text under it
+  const players = `[...document.querySelectorAll('main video')].map((v) => {
+    const r = (el) => { const b = el.getBoundingClientRect(); return { x: Math.round(b.left), y: Math.round(b.top), w: Math.round(b.width),
+      h: Math.round(b.height), right: Math.round(b.right), bottom: Math.round(b.bottom) }; };
+    const card = v.closest('.vcard'), head = card.querySelector('.vcard-head');
+    return { box: r(v), head: r(head), col: Math.round(card.getBoundingClientRect().width),
+      name: document.getElementById(v.getAttribute('aria-labelledby'))?.textContent, time: head.querySelector('time')?.textContent,
+      links: [...card.querySelectorAll('.gbar a')].map((a) => a.textContent + ' ' + a.getAttribute('href').split('/').slice(-2).join('/')),
+      text: card.querySelector('details.why summary')?.textContent, preload: v.preload, autoplay: v.autoplay, inVideos: !!v.closest('#videos') };
+  })`;
+  const fetched = "performance.getEntriesByType('resource').map((e) => e.name).filter((u) => u.endsWith('.mp4'))";
+
+  await t.load('', { width: 1280, height: 800 });
+  t.check('Videos stands between the method and Graphics to reuse, with its heading and no intro line', await t.js(`(() => {
+    const s = document.getElementById('videos');
+    return s.tagName === 'SECTION' && s.previousElementSibling?.id === 'method' && s.nextElementSibling?.id === 'graphics'
+      && s.querySelector('h2')?.textContent === 'Videos' && !s.querySelector('.intro'); })()`));
+  const style = await t.js(`(() => {
+    const look = (el, props) => props.map((p) => getComputedStyle(el)[p]).join(' ');
+    return ['videos', 'graphics'].map((id) => { const s = document.getElementById(id), w = s.querySelector('.wrap');
+      return [look(s, ['borderTopWidth', 'borderTopStyle', 'paddingTop', 'paddingBottom']), look(w, ['maxWidth', 'paddingLeft']),
+        look(s.querySelector('h2'), ['fontFamily', 'fontSize', 'fontWeight', 'marginBottom']),
+        look(s.querySelector('.terms'), ['fontSize', 'maxWidth', 'marginTop'])].join(' | '); }); })()`);
+  t.check('Videos has the wrap, heading and terms of Graphics to reuse', style[0] === style[1], style.join(' || '));
+  t.check('Graphics to reuse keeps its two images and has no videos of its own', await t.js(
+    "document.querySelectorAll('#graphics .gcard').length === 2 && !document.querySelector('#graphics video, #graphics .vcard, #graphics a[href$=\".mp4\"]')"));
+  t.check('the videos have their own terms, CC BY 4.0 with a link to the license and the credit', await t.js(`(() => {
+    const p = document.querySelector('#videos .terms'), a = p && p.querySelector('a');
+    return !!p && p.textContent === 'You may reuse the videos, also commercially, under CC BY 4.0. Credit: Govert Schoof, Geodienst, University of Groningen, somevotes.org.'
+      && !!a && a.href === 'https://creativecommons.org/licenses/by/4.0/' && a.textContent === 'CC BY 4.0'; })()`));
+  t.check('the terms of Graphics to reuse are about the images, as before', (await t.text('#graphics .terms')).startsWith('You may reuse the images and their captions, also commercially, under CC BY 4.0.'));
+
+  const wide = await t.js(players);
+  t.check('three players, all in Videos: Teaser, How House elections work and How to rig a map, with their lengths',
+    wide.length === 3 && wide.every((p) => p.inVideos) && wide.map((p) => `${p.name} ${p.time}`).join()
+      === 'Teaser 0:57,How House elections work 1:40,How to rig a map 1:07', JSON.stringify(wide.map((p) => [p.name, p.time])));
+  t.check('each has Download MP4 from the release, and the text in the video',
+    JSON.stringify(wide.map((p) => p.links)) === JSON.stringify([
+      ['Download MP4 videos-2026-10-27/1-somevotes-teaser-9x16-v6.2.mp4'],
+      ['Download MP4 videos-2026-10-27/2-somevotes-house-elections-explainer-9x16-v2.8.mp4'],
+      ['Download MP4 videos-2026-10-27/3-somevotes-how-to-rig-a-map-9x16-v2.1.mp4'],
+    ]) && wide.every((p) => p.text === 'Text in the video'), JSON.stringify(wide.map((p) => p.links)));
+  t.check('on a wide screen the three stand side by side, level, each 300 to 420 px wide with its title above it and within 80% of the screen height',
+    wide.length === 3 && wide.every((p, i) => p.box.y === wide[0].box.y && (i === 0 || p.box.x > wide[i - 1].box.right)
+      && p.box.w >= 300 && p.box.w <= 420 && p.box.h <= 0.8 * 800 + 2 && p.head.bottom <= p.box.y && p.box.w >= p.col - 2),
+    JSON.stringify(wide.map((p) => p.box)));
+  await t.js("document.getElementById('videos').scrollIntoView()");
+  await t.sleep(500);
+  t.check('in view, a player loads its poster and none of its video', wide.every((p) => p.preload === 'none' && !p.autoplay)
+    && (await t.js(fetched)).length === 0 && await t.js("[...document.querySelectorAll('main video')].every((v) => v.readyState === 0)")
+    && await t.js("performance.getEntriesByType('resource').filter((e) => e.name.includes('/video/') && e.name.endsWith('-poster.webp')).length === 3"),
+    JSON.stringify(await t.js(fetched)));
+  await t.screenshot('videos-1280', { viewport: true });
+
+  // on a tablet every download button keeps one line and the same height
+  await t.load('', { width: 768, height: 1024 });
+  const tablet = await t.js(players);
+  const buttons = await t.js("[...document.querySelectorAll('#videos .gbar a')].map((a) => Math.round(a.getBoundingClientRect().height))");
+  t.check('on a tablet the three stand side by side and every download button has the same height',
+    tablet.length === 3 && tablet.every((p, i) => p.box.y === tablet[0].box.y && (i === 0 || p.box.x > tablet[i - 1].box.right))
+      && buttons.length === 3 && buttons.every((h) => h === buttons[0]), JSON.stringify({ boxes: tablet.map((p) => p.box), buttons }));
+
+  await t.load('', { width: 375, height: 812 });
+  const phone = await t.js(players);
+  t.check('on a phone the three stand one under the other, each with its title above it, as wide as the column and within 80% of the screen height',
+    phone.length === 3 && phone.every((p, i) => p.box.x === phone[0].box.x && (i === 0 || p.head.y > phone[i - 1].box.bottom)
+      && p.head.bottom <= p.box.y && p.box.w >= p.col - 2 && p.box.h <= 0.8 * 812 + 2), JSON.stringify(phone.map((p) => p.box)));
+  await t.js("document.getElementById('videos').scrollIntoView()");
+  await t.sleep(300);
+  await t.screenshot('videos-375', { viewport: true });
+
+  // the Videos link of the byline goes to the section
+  await t.load('', { width: 1280, height: 800 });
+  await t.js("document.querySelector('.mast .byline a[href=\"#videos\"]').click()");
+  t.check('the Videos link in the byline goes to Videos', await t.until(
+    "location.hash === '#videos' && Math.abs(document.getElementById('videos').getBoundingClientRect().top) < 4", 3000));
+}
+
 export const GROUPS = [
   { name: 'masthead', run: masthead },
   { name: 'outcomes', run: outcomes },
@@ -1393,4 +1478,5 @@ export const GROUPS = [
   { name: 'links', run: links },
   { name: 'phone', run: phone },
   { name: 'graphics', run: graphics },
+  { name: 'videos', run: videos },
 ];
