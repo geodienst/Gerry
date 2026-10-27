@@ -35,6 +35,15 @@
 .gcard figcaption { display: grid; gap: 0.6rem; }
 .gcard .caption { margin: 0; font-size: 0.87rem; color: var(--muted); max-width: 64ch; }
 .gbar { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+/* More, under the two images: a fold-out with the district map as a static image, one card wide */
+.gmore { margin-top: 1.4rem; }
+.gmore summary { cursor: pointer; font-size: 0.87rem; font-weight: 600; color: var(--fg); }
+@media (pointer: coarse) { .gmore summary { padding-block: 0.35rem; } } /* a larger target for a finger */
+.gmore .gcards { grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr)); margin-top: 0.8rem; }
+.gfig { margin: 0; display: grid; gap: 0.7rem; min-width: 0; }
+.gfig img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); }
+.gfig figcaption { display: grid; gap: 0.6rem; }
+.gfig .gcaption { margin: 0; font-size: 0.87rem; color: var(--muted); max-width: 64ch; }
 .mast .byline a { color: var(--mast-fg); text-underline-offset: 0.2em; }
 .mast a:focus-visible { outline-color: var(--mast-fg); }
 /* The key findings under the masthead: the answer to its question */

@@ -37,8 +37,9 @@ test('index.html loads only its own entry module and images', () => {
     assert.ok(existsSync(fileURLToPath(new URL(`../public/${file}`, import.meta.url))), file);
   }
   const images = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)].map((m) => m[1]);
-  // Justitia in the masthead, the University of Groningen logo and the Geodienst logo in the footer
-  assert.deepEqual(images, ['img/justice.webp', 'img/rug-logo.svg', 'img/geodienst.svg']);
+  // Justitia in the masthead, the district map under More in Graphics to reuse, the University of Groningen logo and
+  // the Geodienst logo in the footer
+  assert.deepEqual(images, ['img/justice.webp', 'img/somevotes-map-all-states.webp', 'img/rug-logo.svg', 'img/geodienst.svg']);
 });
 
 test('the preview for a shared link: title and description as on the page, and an image of 1200 by 630', () => {
@@ -106,9 +107,10 @@ test('the built page and everything it loads stay under 1.5 MB', (t) => {
   }
   // the license texts are linked from the footer, the preview image is for shared links and the touch icon for a
   // phone's home screen: none is loaded with the page. A video loads only when the reader presses play (video.test.ts),
-  // so the MP4 files are left out; their posters load with the page and count.
+  // so the MP4 files are left out; their posters load with the page and count. The district map under More loads only
+  // when the reader opens More (its preview) or downloads it (the full-size PNG), as the site checks show.
   const apart = (file: string) => file.startsWith('licenses/') || file === 'img/preview.png' || file === 'apple-touch-icon.png'
-    || (file.startsWith('video/') && file.endsWith('.mp4'));
+    || (file.startsWith('video/') && file.endsWith('.mp4')) || file.startsWith('img/somevotes-map-all-states.');
   const files = filesUnder(DIST, DIST).filter((file) => !apart(file));
   const bytes = files.reduce((total, file) => total + statSync(join(DIST, file)).size, 0);
   assert.ok(bytes < 1_500_000, `${bytes} bytes in dist/`);

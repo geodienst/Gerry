@@ -266,7 +266,7 @@ export function download(canvas: HTMLCanvasElement, file: string) {
 /**
  * The block "Graphics to reuse": draws both images, fills in their captions and wires the buttons. Both use the 2016
  * and 2020 votes, as the site opens, whatever the slider in chapter 01 shows; they follow the colors chosen under the
- * map (palette).
+ * map (palette). The district map under More is a static image with its caption in the page; only its copy is wired.
  */
 export function mountGraphics(results: Results, view: OutcomesView, palette: Palette) {
   const card = (id: string) => {
@@ -292,6 +292,10 @@ export function mountGraphics(results: Results, view: OutcomesView, palette: Pal
   on(nationalCard, 'copy', () => { void copyCaption(national.caption); });
   on(statesCard, 'download', () => download(statesCard.canvas, states.file));
   on(statesCard, 'copy', () => { void copyCaption(states.caption); });
+  const mapCard = document.getElementById('graphic-map')!;
+  mapCard.querySelector('[data-action="copy"]')!.addEventListener('click', () => {
+    void copyCaption(mapCard.querySelector('.gcaption')!.textContent!);
+  });
   drawNationalCard();
   drawStatesCard();
   return {
