@@ -140,7 +140,7 @@ test('under each player Download MP4 from the release videos-2026-10-27, and no 
     [['Download MP4', `${RELEASE}3-somevotes-how-to-rig-a-map-9x16-v2.1.mp4`]],
   ]);
   // these are all the links to video files on the page: Graphics to reuse has none of its own
-  assert.equal([...html.matchAll(/<a\b[^>]*\bhref="[^"]+\.mp4"/g)].length, 4);
+  assert.equal([...html.matchAll(/<a\b[^>]*\bhref="[^"]+\.mp4"/g)].length, 3);
 });
 
 test('each video has the text in the video under its buttons', () => {
