@@ -580,6 +580,12 @@ async function layout(t) {
   }
   t.check('the chapters run 01 the national count, 02 State by state, 03 In detail, 04 Methodology', await t.js(
     "[...document.querySelectorAll('main > .chapter')].map((c) => `${c.id} ${c.querySelector('.chead .no').textContent}`).join() === 'outcomes 01,states 02,decide 03,method 04'"));
+  t.check('the page runs 01, 02, 03, Videos, Graphics to reuse, 04 Methodology and About', await t.js(
+    "[...document.querySelectorAll('main > section')].map((s) => s.id).join() === 'outcomes,states,decide,videos,graphics,method,about'"));
+  const rules = await t.js(`(() => { const s = [...document.querySelectorAll('main > section')];
+    return s.slice(1).filter((next, i) => parseFloat(getComputedStyle(s[i]).borderBottomWidth) + parseFloat(getComputedStyle(next).borderTopWidth) === 0)
+      .map((next) => next.id); })()`);
+  t.check('a rule sets every section of the page apart from the one above it', rules.length === 0, rules.join());
   const heads = await t.js(`(() => {
     const size = (el) => parseFloat(getComputedStyle(el).fontSize);
     return { titles: [...document.querySelectorAll('.chapter .chead h2')].map(size), lead: size(document.getElementById('outcomes-lead')) };
@@ -781,6 +787,14 @@ async function masthead(t) {
     && /^With the maps the states drew for 2026, Democrats need \d+\.\d% of the two-party vote for a House majority\.$/.test(facts[0])
     && /^The enacted maps move \d+ seats? toward Republicans and \d+ toward Democrats\. Net effect: (0|[RD]\+\d+)\.$/.test(facts[1])
     && await t.js("document.querySelector('header.mast').nextElementSibling?.classList.contains('keyfacts') === true"), facts.join(' | '));
+  // the method stands near the end of the page, below Graphics to reuse; once open it still comes to the top
+  const methodTop = "Math.round(document.getElementById('method').getBoundingClientRect().top) || 0"; // -0 does not come back as a value
+  for (const [width, height] of [[375, 812], [1280, 800], [2560, 1440]]) {
+    await t.load('', { width, height });
+    await t.js("document.querySelector('.mast .byline a[href=\"#method\"]').click()");
+    t.check(`${width}px: the Methodology link brings the method to the top of the window`, await t.until(
+      `document.getElementById('method-details').open && Math.abs(${methodTop}) < 4`, 3000), `top ${await t.js(methodTop)}px`);
+  }
 }
 
 async function outcomes(t) {
@@ -979,7 +993,12 @@ async function tour(t) {
     done: document.getElementById('tour').classList.contains('done') }))()`;
   // the step number of a state: '3 / 5' gives 3
   const at = (s) => Number(s.count.split(' / ')[0]);
-  t.check('the explainer starts by itself in view, with Pause, Next and Skip', await t.until(
+  await t.sleep(1200);
+  const waiting = await t.js(state);
+  t.check('in view the explainer does not start by itself: How this works waits', waiting.count === '' && waiting.play === 'How this works'
+    && waiting.done, JSON.stringify(waiting));
+  await t.js("document.getElementById('tour-play').click()");
+  t.check('How this works starts the explainer, with Pause, Next and Skip', await t.until(
     "document.getElementById('tour-count').textContent === '1 / 5' && document.getElementById('tour-play').textContent === 'Pause' && !document.getElementById('tour-next').hidden && !document.getElementById('tour-skip').hidden", 4000));
   const first = await t.js(state);
   t.check('the explainer starts on the vote-proportional row', first.row === 'Vote-proportional', JSON.stringify(first));
@@ -989,7 +1008,7 @@ async function tour(t) {
   await t.until("document.getElementById('tour-count').textContent === '5 / 5'", 4000);
   const fifth = await t.js(state);
   t.check('step 5 moves the slider to the 2024 share and says so', fifth.out === '49.2%' && fifth.text.includes('the Democratic share of the 2024 presidential vote'), JSON.stringify(fifth));
-  await t.until("document.getElementById('tour-play').textContent === 'Replay'", 4000);
+  await t.until("document.getElementById('tour-play').textContent === 'How this works'", 4000);
   const end = await t.js(state);
   t.check('at the end the chapter returns to the enacted maps at the 2016 and 2020 votes, with Replay',
     end.row === 'Enacted maps' && end.base === '2016 and 2020 votes' && end.count === '' && end.skip && end.next && end.done
@@ -1010,7 +1029,7 @@ async function tour(t) {
     && held.play === 'Play', JSON.stringify({ ahead, held }));
   await t.js("document.getElementById('tour-skip').click()");
   const skipped = await t.js(state);
-  t.check('Skip ends the explainer at the enacted maps', skipped.play === 'Replay' && skipped.row === 'Enacted maps', JSON.stringify(skipped));
+  t.check('Skip ends the explainer at the enacted maps', skipped.play === 'How this works' && skipped.row === 'Enacted maps', JSON.stringify(skipped));
   // a reader who chooses a row takes over: the explainer stops and the choice stays
   await t.js("document.getElementById('tour-play').click()");
   await t.until("document.getElementById('tour-count').textContent === '1 / 5'", 4000);
@@ -1021,14 +1040,64 @@ async function tour(t) {
   await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
   await t.sleep(900);
   const taken = await t.js(state);
-  t.check('a click on a row stops the explainer and keeps the row', taken.play === 'Replay' && taken.row === 'Neutral-map median', JSON.stringify(taken));
+  t.check('a click on a row stops the explainer and keeps the row', taken.play === 'How this works' && taken.row === 'Neutral-map median', JSON.stringify(taken));
   // with reduced motion it waits for Play
   await t.load('', { query: 'tourms=400', reduce: true });
   await t.js("document.querySelector('#outcomes .outcomes').scrollIntoView({ block: 'center' })");
   await t.sleep(1200);
   const still = await t.js(state);
-  t.check('with reduced motion the explainer waits for Play', still.count === '' && still.play === 'Play'
-    && still.text === 'A short tour of this chapter in five steps.', JSON.stringify(still));
+  t.check('with reduced motion it waits as well, at rest', still.count === '' && still.play === 'How this works' && still.done,
+    JSON.stringify(still));
+
+  // at rest two buttons: the tour and the video; Next and Skip only while it plays
+  const rest = await t.js(`(() => { const shown = (id) => !document.getElementById(id).hidden;
+    return { play: shown('tour-play'), video: shown('tour-video'), label: document.getElementById('tour-video').textContent,
+      next: shown('tour-next'), skip: shown('tour-skip') }; })()`);
+  t.check('at rest the bar has two buttons, How this works and Video', rest.play && rest.video && rest.label === 'Video'
+    && !rest.next && !rest.skip, JSON.stringify(rest));
+
+  // Video opens the explainer in a dialog; nothing of the video loads before
+  const mp4s = "performance.getEntriesByType('resource').filter((e) => e.name.endsWith('.mp4')).length";
+  const loaded = await t.js(mp4s);
+  await t.js("document.getElementById('tour-video').click()");
+  await t.sleep(300);
+  const open = await t.js(`(() => { const d = document.getElementById('explainer'), v = d.querySelector('video'), r = v.getBoundingClientRect();
+    return { open: d.open, modal: d.matches(':modal'), focus: document.activeElement?.id, name: v.getAttribute('aria-labelledby'),
+      inView: r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 }; })()`);
+  t.check('Video opens the explainer video in a modal dialog that fits the screen, with nothing loaded before',
+    loaded === 0 && open.open && open.modal && open.focus === 'explainer-close' && open.name === 'explainer-title' && open.inView,
+    JSON.stringify({ loaded, open }));
+  await t.key('Escape', 27);
+  await t.sleep(200);
+  const closed = await t.js(`(() => ({ open: document.getElementById('explainer').open, focus: document.activeElement?.id,
+    paused: document.querySelector('#explainer video').paused }))()`);
+  t.check('Escape closes it, the video stops and the focus is back on Video', !closed.open && closed.paused
+    && closed.focus === 'tour-video', JSON.stringify(closed));
+  await t.js("document.getElementById('tour-video').click()");
+  await t.sleep(200);
+  await t.js("document.getElementById('explainer').dispatchEvent(new MouseEvent('click', { bubbles: true }))");
+  await t.sleep(200);
+  t.check('a click beside the video closes it', !(await t.js("document.getElementById('explainer').open")));
+  await t.js("document.getElementById('tour-video').click()");
+  await t.sleep(200);
+  await t.js("document.getElementById('explainer-close').click()");
+  await t.sleep(200);
+  t.check('the close cross closes it', !(await t.js("document.getElementById('explainer').open")));
+
+  // while it plays: one line on a wide screen, the count and the text side by side, symbols with their names
+  await t.load('', { query: 'tourms=4000', width: 1280, height: 900 });
+  await t.js("document.querySelector('#outcomes .outcomes').scrollIntoView({ block: 'center' })");
+  await t.js("document.getElementById('tour-play').click()");
+  await t.until("document.getElementById('tour-count').textContent === '1 / 5'", 4000);
+  const line = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
+    const count = r('tour-count'), text = r('tour-text'), play = document.getElementById('tour-play');
+    return { beside: text.left > count.right && Math.abs(text.top - count.top) < 14, height: Math.round(r('tour').height),
+      video: document.getElementById('tour-video').hidden, icon: play.classList.contains('icon'), title: play.title, word: play.textContent,
+      next: document.getElementById('tour-next').title, skip: document.getElementById('tour-skip').title }; })()`);
+  t.check('while it plays the text follows the count on one line, under the video button, with Pause, Next and Skip as symbols',
+    line.beside && line.height < 64 && line.video && line.icon && line.title === 'Pause' && line.word === 'Pause'
+    && line.next === 'Next' && line.skip === 'Skip', JSON.stringify(line));
+  await t.screenshot('tour-1280', { viewport: true });
 }
 
 // --- The map in full screen -------------------------------------------------------------------
@@ -1220,11 +1289,11 @@ async function sharing(t) {
   await t.sleep(100);
   t.check('without a share sheet the link goes to the clipboard and a short note says so', await t.js(
     "window.copied === 'https://somevotes.org/' && document.querySelector('.share-note')?.textContent === 'Link copied'"));
-  // the shared link opens chapter 01 as it was shared; the explainer waits for Play and the Senate block follows
+  // the shared link opens chapter 01 as it was shared; the explainer waits and the Senate block follows
   await t.load('#outcomes', { query: 'count=neutral&vote=49.2' });
   await t.sleep(1500);
   const opened = await t.js(`({ row: document.querySelector('#scen [aria-checked=true] .lab')?.textContent, vote: document.getElementById('vote-out').textContent,
-    tour: document.getElementById('tour-count').textContent === '' && document.getElementById('tour-play').textContent === 'Play',
+    tour: document.getElementById('tour-count').textContent === '' && document.getElementById('tour-play').textContent === 'How this works',
     senate: document.getElementById('senate-figures').textContent.includes('49.2%'),
     inView: Math.abs(document.getElementById('outcomes').getBoundingClientRect().top) < 4 })`);
   t.check('a shared link opens chapter 01 on its row and vote share, with the explainer waiting', opened.row === 'Neutral-map median'
@@ -1403,9 +1472,9 @@ async function videos(t) {
   const fetched = "performance.getEntriesByType('resource').map((e) => e.name).filter((u) => u.endsWith('.mp4'))";
 
   await t.load('', { width: 1280, height: 800 });
-  t.check('Videos stands between the method and Graphics to reuse, with its heading and no intro line', await t.js(`(() => {
+  t.check('Videos stands between chapter 03 and Graphics to reuse, with its heading and no intro line', await t.js(`(() => {
     const s = document.getElementById('videos');
-    return s.tagName === 'SECTION' && s.previousElementSibling?.id === 'method' && s.nextElementSibling?.id === 'graphics'
+    return s.tagName === 'SECTION' && s.previousElementSibling?.id === 'decide' && s.nextElementSibling?.id === 'graphics'
       && s.querySelector('h2')?.textContent === 'Videos' && !s.querySelector('.intro'); })()`));
   const style = await t.js(`(() => {
     const look = (el, props) => props.map((p) => getComputedStyle(el)[p]).join(' ');

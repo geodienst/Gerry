@@ -51,7 +51,7 @@ async function main() {
   const outcomes = renderOutcomes(outcomesData, { reduceMotion: lessMotion });
   // a link from the share button of chapter 01 sets its row and vote share; the explainer then waits for Play
   const shared = outcomesFromSearch(location.search, outcomesData.rows.map((row) => row.key), outcomesData.points.map((p) => p.share));
-  createTour(outcomesData.tour, outcomes, { reduceMotion: lessMotion, hold: Boolean(shared) });
+  createTour(outcomesData.tour, outcomes);
   outcomes.paint(colors);
   // the images under "Graphics to reuse", at the 2016 and 2020 votes whatever the slider shows
   const graphics = mountGraphics(results, outcomesData, palette);

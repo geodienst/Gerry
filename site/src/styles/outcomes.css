@@ -30,15 +30,38 @@
 .wkey .fr { width: 0.6rem; height: 1rem; border: 1.5px solid var(--fg); }
 #waffle-tip { z-index: 2; }
 /* The explainer at the top of chapter 01: five steps that play by themselves */
-.tour { background: var(--sheet); border: 1px solid var(--rule); padding: 0.5rem 0.9rem; display: grid; gap: 0.3rem; }
+/* One line while it plays: the count, the text right after it, the buttons at the right; it wraps only where it must.
+   At rest (before and after) the text and the count give way to the two buttons, the tour and the video. */
+.tour { background: var(--sheet); border: 1px solid var(--rule); padding: 0.35rem 0.5rem 0.35rem 0.8rem; display: flex; flex-wrap: wrap;
+  align-items: baseline; gap: 0.3rem 0.8rem; }
 .tour.done { background: transparent; border: 0; padding: 0; }
-.tour.done .tour-text { display: none; }
-.tour.done .tour-head button:first-of-type { margin-left: 0; }
-.tour-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.8rem; font-size: 0.8125rem; color: var(--muted); }
-.tour-count { font-variant-numeric: tabular-nums; }
-.tour-head button { font: inherit; font-weight: 600; padding: 0.2rem 0.6rem; border: 1px solid var(--rule); background: var(--bg); color: var(--fg); cursor: pointer; }
-.tour-head button:first-of-type { margin-left: auto; }
-.tour-text { margin: 0; font-size: 0.97rem; line-height: 1.45; color: var(--fg); max-width: 70ch; }
+.tour.done .tour-text, .tour.done .tour-count { display: none; }
+.tour-count { font-size: 0.8125rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tour-count:empty { display: none; }
+.tour-text { flex: 1 1 22rem; margin: 0; font-size: 0.97rem; line-height: 1.45; color: var(--fg); }
+.tour-buttons { display: flex; gap: 0.4rem; margin-left: auto; }
+.tour.done .tour-buttons { margin-left: 0; }
+.tour-buttons button, .explainer-head button { font: 600 0.8125rem/1.2 var(--font-body); padding: 0.2rem 0.6rem; border: 1px solid var(--rule);
+  background: var(--bg); color: var(--fg); cursor: pointer; }
+.tour-buttons button[hidden] { display: none; }
+/* on a narrow screen the count and the buttons share the first line and the text takes the full width under them */
+@media (max-width: 600px) {
+  .tour-buttons { order: 2; }
+  .tour-text { order: 3; flex-basis: 100%; }
+}
+.tour-buttons button.icon, .explainer-head button.icon { display: inline-grid; place-items: center; padding: 0.3rem; }
+.tour-buttons button.icon svg, .explainer-head button.icon svg { width: 0.95rem; height: 0.95rem; }
+
+/* The explainer video in a dialog over the page: the 9:16 video as high as the screen allows, the close cross at its
+   top right. */
+.explainer { padding: 0; border: 1px solid var(--rule); background: var(--bg); color: var(--fg); max-width: calc(100vw - 1rem);
+  max-height: calc(100svh - 1rem); }
+.explainer::backdrop { background: rgb(0 0 0 / 0.62); }
+.explainer-box { display: grid; gap: 0.6rem; padding: 0.7rem; }
+.explainer-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.explainer-head h2 { margin: 0; font: 700 1.125rem/1.2 var(--font-head); }
+.explainer video { display: block; aspect-ratio: 9 / 16; height: auto; background: var(--mid);
+  width: min(calc(100vw - 2.4rem), calc((85vh - 3.6rem) * 9 / 16)); width: min(calc(100vw - 2.4rem), calc((85svh - 3.6rem) * 9 / 16)); }
 #vote-how { margin: 0; max-width: 64ch; }
 /* The vote slider: the share on the right, a track filled up to the thumb and a plain scale under it. --thumb keeps
    the numbers and the fill under the centre of the thumb, which travels from thumb/2 to 100% - thumb/2. */
