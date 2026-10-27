@@ -41,7 +41,9 @@ async function main() {
     const label = node('span', { class: 'kf-label' }, 'Net effect');
     label.append(node('span', { class: 'kf-punct' }, ':'));
     const figure = node('span', { class: 'kf-fig' });
-    figure.append(label, ' ', node('span', { class: 'kf-value' }, net), node('span', { class: 'kf-punct' }, '.'));
+    // in the colour of the party the maps favour: 'R+10' red, 'D+3' blue, '0' neither
+    const side = net.startsWith('R') ? ' r' : net.startsWith('D') ? ' d' : '';
+    figure.append(label, ' ', node('span', { class: `kf-value${side}` }, net), node('span', { class: 'kf-punct' }, '.'));
     const li = node('li', { class: 'kf-net' });
     li.append(node('span', { class: 'kf-text' }, text), ' ', figure);
     return li;

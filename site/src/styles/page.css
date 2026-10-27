@@ -49,6 +49,8 @@
   .keyfacts li.kf-net::before { display: none; }
   .kf-fig { grid-column: 1; grid-row: 1; display: grid; justify-items: center; padding-right: 1rem; border-right: 1px solid var(--rule); }
   .kf-value { grid-row: 1; font: 700 2.75rem/1 var(--font-head); color: var(--ink); font-variant-numeric: lining-nums; }
+  .kf-value.r { color: var(--party-r); }
+  .kf-value.d { color: var(--party-d); }
   .kf-label { grid-row: 2; margin-top: 0.3rem; font-size: 0.8125rem; color: var(--muted); }
   .kf-punct { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .kf-text { grid-column: 2; }
