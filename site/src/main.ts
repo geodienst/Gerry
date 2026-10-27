@@ -34,8 +34,20 @@ async function main() {
   let palette: Palette = 'party';
   let colors = paletteColors(palette);
   const outcomesData = outcomesView(results);
-  // the answer under the question in the masthead
-  $('keyfacts').replaceChildren(...keyFindings(results).map((text) => node('li', {}, text)));
+  // the answer under the question in the masthead; the net effect reads on in the sentence, and on a phone page.css sets
+  // it apart as a large figure, so the colon and the full stop are kept for screen readers only
+  $('keyfacts').replaceChildren(...keyFindings(results).map(({ text, net }) => {
+    if (net === undefined) return node('li', {}, text);
+    const label = node('span', { class: 'kf-label' }, 'Net effect');
+    label.append(node('span', { class: 'kf-punct' }, ':'));
+    const figure = node('span', { class: 'kf-fig' });
+    // in the colour of the party the maps favour: 'R+10' red, 'D+3' blue, '0' neither
+    const side = net.startsWith('R') ? ' r' : net.startsWith('D') ? ' d' : '';
+    figure.append(label, ' ', node('span', { class: `kf-value${side}` }, net), node('span', { class: 'kf-punct' }, '.'));
+    const li = node('li', { class: 'kf-net' });
+    li.append(node('span', { class: 'kf-text' }, text), ' ', figure);
+    return li;
+  }));
   const outcomes = renderOutcomes(outcomesData, { reduceMotion: lessMotion });
   // a link from the share button of chapter 01 sets its row and vote share; the explainer then waits for Play
   const shared = outcomesFromSearch(location.search, outcomesData.rows.map((row) => row.key), outcomesData.points.map((p) => p.share));

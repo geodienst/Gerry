@@ -6,10 +6,16 @@
 .mast .sub { margin: 0; font-size: 1.0625rem; line-height: 1.5; max-width: 80ch; }
 /* The byline as a news story has it: author, date, and a link to the method. */
 /* Justitia at the top right of the masthead: a black line drawing on white, turned into
-   light lines on the dark green; left out on narrow screens, where the title needs the width */
+   light lines on the dark green */
 .mast .wrap { position: relative; }
 .mast-art { position: absolute; right: 0; top: 50%; transform: translateY(-50%); height: 118%; max-height: 19rem; filter: invert(1); mix-blend-mode: screen; opacity: 0.85; pointer-events: none; }
-@media (max-width: 900px) { .mast-art { display: none; } }
+/* on narrow screens she stands beside the title, which wraps in the column left of her */
+@media (max-width: 900px) {
+  .mast .wrap { grid-template-columns: minmax(0, 1fr) auto; column-gap: 0.6rem; }
+  .mast .wrap > * { grid-column: 1 / -1; }
+  .mast .wrap > h1 { grid-column: 1; grid-row: 1; align-self: center; }
+  .mast .wrap > .mast-art { position: static; transform: none; grid-column: 2; grid-row: 1; align-self: center; width: clamp(6rem, 30vw, 10rem); height: auto; max-height: none; margin-block: -0.5rem; }
+}
 .mast .byline { margin: 0; font-size: 0.9375rem; color: var(--mast-muted); display: flex; flex-wrap: wrap; gap: 0.2rem 1.5rem; }
 .mast .byline .author { color: var(--mast-fg); font-weight: 700; text-decoration: none; }
 .mast .byline .author:hover { text-decoration: underline; }
@@ -36,6 +42,19 @@
 .keyfacts ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.45rem; flex: 1 1 30rem; min-width: 0; }
 .keyfacts li { position: relative; padding-left: 1.1rem; max-width: 78ch; }
 .keyfacts li::before { content: ""; position: absolute; left: 0; top: 0.62em; width: 0.4rem; height: 0.4rem; background: var(--ink); }
+/* On a phone the net effect of the enacted maps becomes a large figure on a tinted block, the sentence beside it;
+   on wider screens it stays part of the sentence */
+@media (max-width: 640px) {
+  .keyfacts li.kf-net { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 1rem; align-items: center; margin-block: 0.35rem; padding: 0.85rem 1rem; background: var(--tint); }
+  .keyfacts li.kf-net::before { display: none; }
+  .kf-fig { grid-column: 1; grid-row: 1; display: grid; justify-items: center; padding-right: 1rem; border-right: 1px solid var(--rule); }
+  .kf-value { grid-row: 1; font: 700 2.75rem/1 var(--font-head); color: var(--ink); font-variant-numeric: lining-nums; }
+  .kf-value.r { color: var(--party-r); }
+  .kf-value.d { color: var(--party-d); }
+  .kf-label { grid-row: 2; margin-top: 0.3rem; font-size: 0.8125rem; color: var(--muted); }
+  .kf-punct { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .kf-text { grid-column: 2; }
+}
 .chapter { padding-block: clamp(2rem, 5vw, 3.6rem); border-bottom: 1px solid var(--rule); }
 .chapter > .wrap { display: grid; gap: 1.4rem; }
 .chead { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.9rem; align-items: baseline; }
