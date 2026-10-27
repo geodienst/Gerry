@@ -993,7 +993,12 @@ async function tour(t) {
     done: document.getElementById('tour').classList.contains('done') }))()`;
   // the step number of a state: '3 / 5' gives 3
   const at = (s) => Number(s.count.split(' / ')[0]);
-  t.check('the explainer starts by itself in view, with Pause, Next and Skip', await t.until(
+  await t.sleep(1200);
+  const waiting = await t.js(state);
+  t.check('in view the explainer does not start by itself: How this works waits', waiting.count === '' && waiting.play === 'How this works'
+    && waiting.done, JSON.stringify(waiting));
+  await t.js("document.getElementById('tour-play').click()");
+  t.check('How this works starts the explainer, with Pause, Next and Skip', await t.until(
     "document.getElementById('tour-count').textContent === '1 / 5' && document.getElementById('tour-play').textContent === 'Pause' && !document.getElementById('tour-next').hidden && !document.getElementById('tour-skip').hidden", 4000));
   const first = await t.js(state);
   t.check('the explainer starts on the vote-proportional row', first.row === 'Vote-proportional', JSON.stringify(first));
@@ -1003,7 +1008,7 @@ async function tour(t) {
   await t.until("document.getElementById('tour-count').textContent === '5 / 5'", 4000);
   const fifth = await t.js(state);
   t.check('step 5 moves the slider to the 2024 share and says so', fifth.out === '49.2%' && fifth.text.includes('the Democratic share of the 2024 presidential vote'), JSON.stringify(fifth));
-  await t.until("document.getElementById('tour-play').textContent === 'Replay'", 4000);
+  await t.until("document.getElementById('tour-play').textContent === 'How this works'", 4000);
   const end = await t.js(state);
   t.check('at the end the chapter returns to the enacted maps at the 2016 and 2020 votes, with Replay',
     end.row === 'Enacted maps' && end.base === '2016 and 2020 votes' && end.count === '' && end.skip && end.next && end.done
@@ -1024,7 +1029,7 @@ async function tour(t) {
     && held.play === 'Play', JSON.stringify({ ahead, held }));
   await t.js("document.getElementById('tour-skip').click()");
   const skipped = await t.js(state);
-  t.check('Skip ends the explainer at the enacted maps', skipped.play === 'Replay' && skipped.row === 'Enacted maps', JSON.stringify(skipped));
+  t.check('Skip ends the explainer at the enacted maps', skipped.play === 'How this works' && skipped.row === 'Enacted maps', JSON.stringify(skipped));
   // a reader who chooses a row takes over: the explainer stops and the choice stays
   await t.js("document.getElementById('tour-play').click()");
   await t.until("document.getElementById('tour-count').textContent === '1 / 5'", 4000);
@@ -1035,23 +1040,23 @@ async function tour(t) {
   await t.js("document.querySelectorAll('#scen [role=radio]')[1].click()");
   await t.sleep(900);
   const taken = await t.js(state);
-  t.check('a click on a row stops the explainer and keeps the row', taken.play === 'Replay' && taken.row === 'Neutral-map median', JSON.stringify(taken));
+  t.check('a click on a row stops the explainer and keeps the row', taken.play === 'How this works' && taken.row === 'Neutral-map median', JSON.stringify(taken));
   // with reduced motion it waits for Play
   await t.load('', { query: 'tourms=400', reduce: true });
   await t.js("document.querySelector('#outcomes .outcomes').scrollIntoView({ block: 'center' })");
   await t.sleep(1200);
   const still = await t.js(state);
-  t.check('with reduced motion the explainer waits for Play', still.count === '' && still.play === 'Play'
-    && still.text === 'A short tour of this chapter in five steps.', JSON.stringify(still));
+  t.check('with reduced motion it waits as well, at rest', still.count === '' && still.play === 'How this works' && still.done,
+    JSON.stringify(still));
 
   // at rest two buttons: the tour and the video; Next and Skip only while it plays
   const rest = await t.js(`(() => { const shown = (id) => !document.getElementById(id).hidden;
     return { play: shown('tour-play'), video: shown('tour-video'), label: document.getElementById('tour-video').textContent,
       next: shown('tour-next'), skip: shown('tour-skip') }; })()`);
-  t.check('at rest the bar has two buttons, Play and Watch the video', rest.play && rest.video && rest.label === 'Watch the video'
+  t.check('at rest the bar has two buttons, How this works and Video', rest.play && rest.video && rest.label === 'Video'
     && !rest.next && !rest.skip, JSON.stringify(rest));
 
-  // Watch the video opens the explainer in a dialog; nothing of the video loads before
+  // Video opens the explainer in a dialog; nothing of the video loads before
   const mp4s = "performance.getEntriesByType('resource').filter((e) => e.name.endsWith('.mp4')).length";
   const loaded = await t.js(mp4s);
   await t.js("document.getElementById('tour-video').click()");
@@ -1059,14 +1064,14 @@ async function tour(t) {
   const open = await t.js(`(() => { const d = document.getElementById('explainer'), v = d.querySelector('video'), r = v.getBoundingClientRect();
     return { open: d.open, modal: d.matches(':modal'), focus: document.activeElement?.id, name: v.getAttribute('aria-labelledby'),
       inView: r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 }; })()`);
-  t.check('Watch the video opens the explainer video in a modal dialog that fits the screen, with nothing loaded before',
+  t.check('Video opens the explainer video in a modal dialog that fits the screen, with nothing loaded before',
     loaded === 0 && open.open && open.modal && open.focus === 'explainer-close' && open.name === 'explainer-title' && open.inView,
     JSON.stringify({ loaded, open }));
   await t.key('Escape', 27);
   await t.sleep(200);
   const closed = await t.js(`(() => ({ open: document.getElementById('explainer').open, focus: document.activeElement?.id,
     paused: document.querySelector('#explainer video').paused }))()`);
-  t.check('Escape closes it, the video stops and the focus is back on Watch the video', !closed.open && closed.paused
+  t.check('Escape closes it, the video stops and the focus is back on Video', !closed.open && closed.paused
     && closed.focus === 'tour-video', JSON.stringify(closed));
   await t.js("document.getElementById('tour-video').click()");
   await t.sleep(200);
@@ -1082,6 +1087,7 @@ async function tour(t) {
   // while it plays: one line on a wide screen, the count and the text side by side, symbols with their names
   await t.load('', { query: 'tourms=4000', width: 1280, height: 900 });
   await t.js("document.querySelector('#outcomes .outcomes').scrollIntoView({ block: 'center' })");
+  await t.js("document.getElementById('tour-play').click()");
   await t.until("document.getElementById('tour-count').textContent === '1 / 5'", 4000);
   const line = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
     const count = r('tour-count'), text = r('tour-text'), play = document.getElementById('tour-play');
@@ -1283,11 +1289,11 @@ async function sharing(t) {
   await t.sleep(100);
   t.check('without a share sheet the link goes to the clipboard and a short note says so', await t.js(
     "window.copied === 'https://somevotes.org/' && document.querySelector('.share-note')?.textContent === 'Link copied'"));
-  // the shared link opens chapter 01 as it was shared; the explainer waits for Play and the Senate block follows
+  // the shared link opens chapter 01 as it was shared; the explainer waits and the Senate block follows
   await t.load('#outcomes', { query: 'count=neutral&vote=49.2' });
   await t.sleep(1500);
   const opened = await t.js(`({ row: document.querySelector('#scen [aria-checked=true] .lab')?.textContent, vote: document.getElementById('vote-out').textContent,
-    tour: document.getElementById('tour-count').textContent === '' && document.getElementById('tour-play').textContent === 'Play',
+    tour: document.getElementById('tour-count').textContent === '' && document.getElementById('tour-play').textContent === 'How this works',
     senate: document.getElementById('senate-figures').textContent.includes('49.2%'),
     inView: Math.abs(document.getElementById('outcomes').getBoundingClientRect().top) < 4 })`);
   t.check('a shared link opens chapter 01 on its row and vote share, with the explainer waiting', opened.row === 'Neutral-map median'

@@ -111,9 +111,10 @@ test('three videos in the order teaser, explainer, How to rig a map, each with i
   assert.equal((html.match(/<video\b/g) ?? []).length, cards.length + 1);
 });
 
-test('Watch the video in chapter 01 opens a dialog with the explainer, which loads nothing before it opens', () => {
-  const tour = /<div class="tour" id="tour">[\s\S]*?\n {8}<\/div>/.exec(html)?.[0] ?? '';
-  assert.match(tour, /<button type="button" id="tour-play">Play<\/button><button type="button" id="tour-video">Watch the video<\/button>/);
+test('How this works and Video at rest in chapter 01; Video opens a dialog with the explainer, which loads nothing before', () => {
+  const tour = /<div class="tour done" id="tour">[\s\S]*?\n {8}<\/div>/.exec(html)?.[0] ?? '';
+  assert.match(tour, /^<div class="tour done" id="tour">/);
+  assert.match(tour, /<button type="button" id="tour-play">How this works<\/button><button type="button" id="tour-video">Video<\/button>/);
   for (const [id, name, icon] of [['tour-next', 'Next', 'next'], ['tour-skip', 'Skip', 'close']]) {
     assert.ok(tour.includes(`id="${id}" title="${name}" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-${icon}"/></svg>`
       + `<span class="visually-hidden">${name}</span>`), id);
