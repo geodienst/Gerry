@@ -337,22 +337,28 @@ function dots(values: number[], step: number, tickText: (value: number) => strin
   return { domain, ticks: ticks.map((value) => ({ value, text: tickText(value) })), rows, ...(base ? { base } : {}) };
 }
 
+/** One key finding. `net`, when present, follows the text as "Net effect: R+10."; on a phone it stands out as a large figure. */
+export interface KeyFinding {
+  text: string;
+  net?: string;
+}
+
 /** The answer under the question in the masthead: two findings on the 2016 and 2020 votes, and the vote basis.
  *  The drawing effect by vote share and the competitive districts are further down. */
-export function keyFindings(results: Results): string[] {
+export function keyFindings(results: Results): KeyFinding[] {
   const n = results.national;
   const m = n.majority;
   const list = effectList(results);
   return [
     // without the neutral-map threshold next to it
-    `With the maps the states drew for 2026, Democrats need ${neededShare(m.enacted.share)} of the two-party vote for a House `
-      + 'majority.',
+    { text: `With the maps the states drew for 2026, Democrats need ${neededShare(m.enacted.share)} of the two-party vote `
+      + 'for a House majority.' },
     // the seats the enacted maps move each way, added up over the states, and the net
-    `The enacted maps move ${seats(list.seatsR)} ${plural(list.seatsR, 'seat', 'seats')} toward Republicans and `
-      + `${seats(list.seatsD)} toward Democrats. Net effect: ${effect(list.net)}.`,
+    { text: `The enacted maps move ${seats(list.seatsR)} ${plural(list.seatsR, 'seat', 'seats')} toward Republicans and `
+      + `${seats(list.seatsD)} toward Democrats.`, net: effect(list.net) },
     // the vote basis: the share of the votes of both years added together
-    `All numbers use the 2016 and 2020 presidential votes together, ${sliderShare(m.base_share)} Democratic. `
-      + 'They are not a prediction for November 3.',
+    { text: `All numbers use the 2016 and 2020 presidential votes together, ${sliderShare(m.base_share)} Democratic. `
+      + 'They are not a prediction for November 3.' },
   ];
 }
 

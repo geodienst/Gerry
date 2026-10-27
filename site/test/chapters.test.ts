@@ -265,11 +265,11 @@ test('keyFindings: the answer under the question in the masthead', () => {
   const r = withExtensions();
   // threshold 52.4%; the states move 4 + 2 = 6 seats toward Republicans and 1 + 3 = 4 toward Democrats, net R+2
   assert.deepEqual(keyFindings(r), [
-    'With the maps the states drew for 2026, Democrats need 52.4% of the two-party vote for a House majority.',
-    'The enacted maps move 6 seats toward Republicans and 4 toward Democrats. Net effect: R+2.',
+    { text: 'With the maps the states drew for 2026, Democrats need 52.4% of the two-party vote for a House majority.' },
+    { text: 'The enacted maps move 6 seats toward Republicans and 4 toward Democrats.', net: 'R+2' },
     // the vote basis
-    'All numbers use the 2016 and 2020 presidential votes together, 51.8% Democratic. They are not a prediction for '
-      + 'November 3.',
+    { text: 'All numbers use the 2016 and 2020 presidential votes together, 51.8% Democratic. They are not a prediction '
+      + 'for November 3.' },
   ]);
 });
 
