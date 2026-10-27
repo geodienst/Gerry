@@ -481,8 +481,8 @@ async function method(t) {
     /Data generated .+\. Legal status as of .+\. ALARM dataset version \d+\./.test(await t.text('footer')));
   t.check('the footer links to the Geodienst with its logo',
     await t.js("(() => { const a = document.querySelector('footer a[href=\"https://rug.nl/geo\"]'); const img = a && a.querySelector('img'); return !!a && a.textContent.trim() === 'Geodienst, University of Groningen' && !!img && img.complete && img.naturalWidth > 0; })()"));
-  t.check('the footer links to the Jantina Tammes School with its logo',
-    await t.js("(() => { const img = document.querySelector('footer a[href=\"https://rug.nl/jts\"] img'); return !!img && img.alt === 'Jantina Tammes School, University of Groningen' && img.complete && img.naturalWidth > 0; })()"));
+  t.check('the footer links to the University of Groningen with its shield',
+    await t.js("(() => { const img = document.querySelector('footer a[href=\"https://www.rug.nl/\"] img'); return !!img && img.alt === 'University of Groningen' && img.complete && img.naturalWidth > 0; })()"));
   await t.js("location.hash = '#method'");
   t.check('a link to #method unfolds the method', await t.until("document.getElementById('method-details').open"));
   t.check('the open method shows the national seat axis as a figure', await t.until(
