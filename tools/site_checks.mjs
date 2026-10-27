@@ -590,9 +590,19 @@ async function layout(t) {
   t.check('the second Tab lands on the Methodology link', await t.js("document.activeElement === document.querySelector('.mast .byline a[href=\"#method\"]')"));
   await t.key('Tab', 9);
   t.check('the third Tab lands on Share by the key findings', await t.js("document.activeElement === document.getElementById('share-site')"));
-  await t.key('Tab', 9);
+  // then each player and the text under it; a player's own controls can take more than one press
+  const stops = [];
+  for (let i = 0; i < 24 && stops.at(-1) !== 'rows'; i += 1) {
+    await t.key('Tab', 9);
+    const at = await t.js(`(() => { const el = document.activeElement, clip = el.closest('.clip');
+      const name = clip ? clip.querySelector('video').getAttribute('aria-labelledby') : '';
+      return el.tagName === 'VIDEO' ? 'player ' + name : el.tagName === 'SUMMARY' && clip ? 'text ' + name : el.closest('#scen') ? 'rows' : el.id || el.tagName; })()`);
+    if (stops.at(-1) !== at) stops.push(at);
+  }
+  t.check('Tab then reaches the first player and the text under it, before the rows of chapter 01', stops.join()
+    === 'player video-house-title,text video-house-title,rows', stops.join());
   // chapter 01 is the national count: the chosen row of its radio group is the one tab stop of the rows
-  t.check('the fourth Tab lands on the chosen count of chapter 01', await t.js(
+  t.check('the next Tab lands on the chosen count of chapter 01', await t.js(
     "document.activeElement === document.querySelector('#scen [aria-checked=true]') && !!document.activeElement.closest('#outcomes')"));
   await t.js("document.querySelector('#scen [aria-checked=true]').focus()");
   const radio = await t.js(`(() => { const el = document.activeElement; return { cls: el.className, checked: el.getAttribute('aria-checked'),
@@ -1360,6 +1370,50 @@ async function graphics(t) {
   await t.screenshot('graphics-1280', { viewport: false });
 }
 
+// --- The videos: two players that load only their posters, beside their titles on a wide screen, and three downloads ---
+async function videos(t) {
+  // each player: its size, the width of its column, where its title sits, its name and the text under it
+  const players = `[...document.querySelectorAll('main video')].map((v) => {
+    const r = (el) => el.getBoundingClientRect(), clip = v.closest('.clip'), head = clip.querySelector('.clip-head');
+    return { w: Math.round(r(v).width), h: Math.round(r(v).height), col: Math.round(r(clip).width),
+      beside: r(head).left >= r(v).right, above: r(head).bottom <= r(v).top,
+      name: document.getElementById(v.getAttribute('aria-labelledby'))?.textContent,
+      text: clip.querySelector('.clip-text summary')?.textContent, preload: v.preload, autoplay: v.autoplay };
+  })`;
+  const fetched = "performance.getEntriesByType('resource').map((e) => e.name).filter((u) => u.endsWith('.mp4'))";
+  await t.load('', { width: 375, height: 812 });
+  const phone = await t.js(players);
+  t.check('on a phone each player has its title above it and is as wide as the column, its height within the screen',
+    phone.length === 2 && phone.every((p) => p.above && p.w >= p.col - 1 && p.h <= 0.8 * 812 + 2), JSON.stringify(phone));
+  await t.screenshot('videos-375', { viewport: false });
+  await t.load('', { width: 1280, height: 800 });
+  const wide = await t.js(players);
+  t.check('on a wide screen each player is 300 to 400 px wide with its title beside it',
+    wide.length === 2 && wide.every((p) => p.beside && p.w >= 300 && p.w <= 400 && p.h <= 0.8 * 800 + 2), JSON.stringify(wide));
+  t.check('the players are named How House elections work and How to rig a map, each with the text of the video',
+    wide.map((p) => p.name).join() === 'How House elections work,How to rig a map' && wide.every((p) => p.text === 'Text in the video'),
+    JSON.stringify(wide));
+  t.check('the first player follows the key findings, the second the chart of chapter 01, before how the neutral maps are made', await t.js(`(() => {
+    const clips = document.querySelectorAll('.clip');
+    return document.querySelector('main').firstElementChild.contains(clips[0])
+      && clips[1].closest('#outcomes') && clips[1].nextElementSibling.matches('details.neutral-more'); })()`));
+  for (const clip of [0, 1]) await t.js(`document.querySelectorAll('main video')[${clip}].scrollIntoView({ block: 'center' })`);
+  await t.sleep(500);
+  t.check('in view, a player loads its poster and none of its video', wide.every((p) => p.preload === 'none' && !p.autoplay)
+    && (await t.js(fetched)).length === 0 && await t.js("[...document.querySelectorAll('main video')].every((v) => v.readyState === 0)"),
+    JSON.stringify(await t.js(fetched)));
+  const cards = await t.js(`[...document.querySelectorAll('#graphics .vcard')].map((c) => ({ title: c.querySelector('h3').textContent,
+    links: [...c.querySelectorAll('a')].map((a) => a.textContent + ' ' + a.getAttribute('href').split('/').slice(-2).join('/')) }))`);
+  t.check('Graphics to reuse lists the three videos, each with Download MP4 from the release, the teaser also for TV',
+    JSON.stringify(cards) === JSON.stringify([
+      { title: 'How House elections work', links: ['Download MP4 videos-2026-10-27/how-house-elections-work-9x16.mp4'] },
+      { title: 'How to rig a map', links: ['Download MP4 videos-2026-10-27/how-to-rig-a-map-9x16.mp4'] },
+      { title: 'The Line Moved', links: ['Download MP4 videos-2026-10-27/the-line-moved-9x16.mp4', 'Download MP4 for TV videos-2026-10-27/the-line-moved-9x16-tv.mp4'] },
+    ]), JSON.stringify(cards));
+  t.check('the terms cover the videos', (await t.text('#graphics .terms')).startsWith('You may reuse the images, their captions and the videos, also commercially, under CC BY 4.0.'));
+  await t.screenshot('videos-1280', { viewport: false });
+}
+
 export const GROUPS = [
   { name: 'masthead', run: masthead },
   { name: 'outcomes', run: outcomes },
@@ -1382,4 +1436,5 @@ export const GROUPS = [
   { name: 'links', run: links },
   { name: 'phone', run: phone },
   { name: 'graphics', run: graphics },
+  { name: 'videos', run: videos },
 ];

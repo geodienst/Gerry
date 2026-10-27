@@ -1,6 +1,6 @@
 // The page as files (site design, chapter 7): index.html loads only its own entry module, the modules import each other
 // and the two bundled libraries, one module fetches the two data files, no em dashes in visible text, and the built
-// page stays under 1.5 MB. Run with: pnpm test
+// page stays under 1.5 MB without its videos (video.test.ts). Run with: pnpm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -37,7 +37,9 @@ test('index.html loads only its own entry module and images', () => {
     assert.ok(existsSync(fileURLToPath(new URL(`../public/${file}`, import.meta.url))), file);
   }
   const images = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(images, ['img/justice.webp', 'img/geodienst.svg']); // Justitia in the masthead, the logo in the footer
+  // Justitia in the masthead, the posters of the three videos under Graphics to reuse, the logo in the footer
+  assert.deepEqual(images, ['img/justice.webp', 'video/how-house-elections-work-poster.jpg', 'video/how-to-rig-a-map-poster.jpg',
+    'video/the-line-moved-poster.jpg', 'img/geodienst.svg']);
 });
 
 test('the preview for a shared link: title and description as on the page, and an image of 1200 by 630', () => {
@@ -104,8 +106,10 @@ test('the built page and everything it loads stay under 1.5 MB', (t) => {
     return;
   }
   // the license texts are linked from the footer, the preview image is for shared links and the touch icon for a
-  // phone's home screen: none is loaded with the page
-  const apart = (file: string) => file.startsWith('licenses/') || file === 'img/preview.png' || file === 'apple-touch-icon.png';
+  // phone's home screen: none is loaded with the page. A video loads only when the reader presses play (video.test.ts),
+  // so the MP4 files are left out; their posters load with the page and count.
+  const apart = (file: string) => file.startsWith('licenses/') || file === 'img/preview.png' || file === 'apple-touch-icon.png'
+    || (file.startsWith('video/') && file.endsWith('.mp4'));
   const files = filesUnder(DIST, DIST).filter((file) => !apart(file));
   const bytes = files.reduce((total, file) => total + statSync(join(DIST, file)).size, 0);
   assert.ok(bytes < 1_500_000, `${bytes} bytes in dist/`);

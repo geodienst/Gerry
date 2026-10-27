@@ -1,0 +1,36 @@
+/* The videos: two players on the page and the three videos to download under Graphics to reuse. A player loads
+   only its poster until the reader presses play (preload="none"). */
+
+/* How House elections work, between the key findings and chapter 01 */
+.primer { padding-block: clamp(1.6rem, 4vw, 2.8rem); border-bottom: 1px solid var(--rule); }
+
+/* A player with its title, length and text. On a phone the title, then the video as wide as the column and the text
+   under it; from 640px the video in a column of 22rem with the title and the text beside it. Either way the video
+   stays within 80% of the screen height, so it fits whole. The border sits outside the 9:16 box (content-box), so the
+   poster fills it exactly. */
+.clip { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "media" "text"; gap: 0.7rem; align-items: start; }
+.clip-head { grid-area: head; display: grid; gap: 0.2rem; }
+.clip-head h2, .clip-head h3 { font: 700 1.25rem/1.2 var(--font-head); }
+.clip video { grid-area: media; display: block; aspect-ratio: 9 / 16; height: auto; border: 1px solid var(--rule); background: var(--mid);
+  width: min(100% - 2px, 80vh * 9 / 16); width: min(100% - 2px, 80svh * 9 / 16); }
+.clip-text { grid-area: text; }
+/* How to rig a map, in chapter 01 after the chart and before how the neutral maps are made */
+.chapter .clip { margin-block: clamp(1.6rem, 4vw, 2.4rem) 1.2rem; }
+@media (min-width: 640px) {
+  .clip { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; grid-template-areas: "media head" "media text"; column-gap: 1.6rem; }
+  .clip video { width: min(22rem, 80vh * 9 / 16); width: min(22rem, 80svh * 9 / 16); }
+}
+
+/* The three videos to download, after the two images: a poster, the title and length, and the download links, as the
+   image cards have them. On a phone the poster stands at the left of its text. */
+.vcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 16rem)); justify-content: start; gap: 1.6rem; margin-top: 1.6rem; align-items: start; }
+.vcard { margin: 0; display: grid; gap: 0.7rem; min-width: 0; align-items: start; }
+.vcard img { display: block; box-sizing: border-box; width: 100%; height: auto; border: 1px solid var(--rule); background: var(--mid); }
+.vcard figcaption { display: grid; gap: 0.6rem; min-width: 0; }
+.vcard h3 { font: 700 1.0625rem/1.25 var(--font-head); }
+@media (max-width: 520px) {
+  .vcards { grid-template-columns: minmax(0, 1fr); }
+  .vcard { grid-template-columns: 7rem minmax(0, 1fr); column-gap: 0.9rem; }
+  /* on the narrowest phones the TV link may wrap rather than run past the column */
+  .vcard .sharebtn { flex: 0 1 auto; }
+}
