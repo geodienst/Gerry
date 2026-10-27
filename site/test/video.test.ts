@@ -15,7 +15,7 @@ const RELEASE = 'https://github.com/geodienst/Gerry/releases/download/videos-202
 
 const files = readdirSync(VIDEO).sort();
 const webVideos = files.filter((file) => file.endsWith('.mp4'));
-const posters = files.filter((file) => file.endsWith('.jpg'));
+const posters = files.filter((file) => file.endsWith('.webp'));
 
 /** The types of the top-level boxes of an MP4 file, in their order in the file: ftyp, moov, mdat and so on. */
 function boxes(path: string): string[] {
@@ -39,18 +39,14 @@ function boxes(path: string): string[] {
   }
 }
 
-/** Width and height of a JPEG, from its first start-of-frame segment. */
-function jpegSize(path: string): [number, number] {
+/** Width and height of a WebP image, from its VP8 frame header or, in the extended format, its canvas. */
+function webpSize(path: string): [number, number] {
   const data = readFileSync(path);
-  assert.equal(data.readUInt16BE(0), 0xffd8, `${path} is not a JPEG`);
-  for (let at = 2; at + 9 < data.length;) {
-    const marker = data.readUInt16BE(at);
-    if (marker >= 0xffc0 && marker <= 0xffcf && ![0xffc4, 0xffc8, 0xffcc].includes(marker)) {
-      return [data.readUInt16BE(at + 7), data.readUInt16BE(at + 5)];
-    }
-    at += 2 + data.readUInt16BE(at + 2);
-  }
-  throw new Error(`${path} has no start-of-frame segment`);
+  assert.ok(data.toString('ascii', 0, 4) === 'RIFF' && data.toString('ascii', 8, 12) === 'WEBP', `${path} is not a WebP`);
+  const chunk = data.toString('ascii', 12, 16);
+  if (chunk === 'VP8 ') return [data.readUInt16LE(26) & 0x3fff, data.readUInt16LE(28) & 0x3fff];
+  if (chunk === 'VP8X') return [data.readUIntLE(24, 3) + 1, data.readUIntLE(27, 3) + 1];
+  throw new Error(`${path}: a ${chunk.trim()} WebP, expected a lossy one`);
 }
 
 /** The section Videos, from its opening tag to its end. */
@@ -87,12 +83,12 @@ test('each web video is under 6 MB and has its index (moov) before its media dat
   }
 });
 
-test('each poster is a JPEG of 540 by 960 pixels under 60 KB', () => {
+test('each poster is a WebP of 540 by 960 pixels under 30 KB', () => {
   assert.ok(posters.length > 0, 'no posters in site/public/video');
   for (const file of posters) {
     const path = join(VIDEO, file);
-    assert.ok(statSync(path).size < 60_000, `${file}: ${statSync(path).size} bytes`);
-    assert.deepEqual(jpegSize(path), [540, 960], file);
+    assert.ok(statSync(path).size < 30_000, `${file}: ${statSync(path).size} bytes`);
+    assert.deepEqual(webpSize(path), [540, 960], file);
   }
 });
 
@@ -115,8 +111,8 @@ test('three videos in the order teaser, explainer, How to rig a map, each with i
 test('each player has controls, preload="none", playsinline, no autoplay, a poster, an MP4 of the site and its title as name', () => {
   assert.deepEqual(cards.map((c) => c.source), ['video/1-somevotes-teaser-720.mp4', 'video/2-somevotes-house-elections-explainer-720.mp4',
     'video/3-somevotes-how-to-rig-a-map-720.mp4']);
-  assert.deepEqual(cards.map((c) => c.poster), ['video/1-somevotes-teaser-poster.jpg', 'video/2-somevotes-house-elections-explainer-poster.jpg',
-    'video/3-somevotes-how-to-rig-a-map-poster.jpg']);
+  assert.deepEqual(cards.map((c) => c.poster), ['video/1-somevotes-teaser-poster.webp', 'video/2-somevotes-house-elections-explainer-poster.webp',
+    'video/3-somevotes-how-to-rig-a-map-poster.webp']);
   for (const { attrs, poster = '', source = '', name, title } of cards) {
     assert.match(attrs, /\bcontrols\b/, source);
     assert.match(attrs, /\bpreload="none"/, source);
@@ -133,7 +129,7 @@ test('the videos come from the site itself: no frames, embeds or players of othe
   assert.doesNotMatch(html, /youtube|youtu\.be|vimeo/i);
   // every <source> and poster is a file of the site
   for (const [, url] of html.matchAll(/<(?:source|video)\b[^>]*\b(?:src|poster)="([^"]+)"/g)) {
-    assert.match(url, /^video\/[\w-]+\.(mp4|jpg)$/, url);
+    assert.match(url, /^video\/[\w-]+\.(mp4|webp)$/, url);
   }
 });
 

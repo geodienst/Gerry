@@ -1428,7 +1428,7 @@ async function videos(t) {
   await t.sleep(500);
   t.check('in view, a player loads its poster and none of its video', wide.every((p) => p.preload === 'none' && !p.autoplay)
     && (await t.js(fetched)).length === 0 && await t.js("[...document.querySelectorAll('main video')].every((v) => v.readyState === 0)")
-    && await t.js("performance.getEntriesByType('resource').filter((e) => e.name.includes('/video/') && e.name.endsWith('-poster.jpg')).length === 3"),
+    && await t.js("performance.getEntriesByType('resource').filter((e) => e.name.includes('/video/') && e.name.endsWith('-poster.webp')).length === 3"),
     JSON.stringify(await t.js(fetched)));
   await t.screenshot('videos-1280', { viewport: true });
 
