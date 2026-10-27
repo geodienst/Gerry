@@ -1043,6 +1043,55 @@ async function tour(t) {
   const still = await t.js(state);
   t.check('with reduced motion the explainer waits for Play', still.count === '' && still.play === 'Play'
     && still.text === 'A short tour of this chapter in five steps.', JSON.stringify(still));
+
+  // at rest two buttons: the tour and the video; Next and Skip only while it plays
+  const rest = await t.js(`(() => { const shown = (id) => !document.getElementById(id).hidden;
+    return { play: shown('tour-play'), video: shown('tour-video'), label: document.getElementById('tour-video').textContent,
+      next: shown('tour-next'), skip: shown('tour-skip') }; })()`);
+  t.check('at rest the bar has two buttons, Play and Watch the video', rest.play && rest.video && rest.label === 'Watch the video'
+    && !rest.next && !rest.skip, JSON.stringify(rest));
+
+  // Watch the video opens the explainer in a dialog; nothing of the video loads before
+  const mp4s = "performance.getEntriesByType('resource').filter((e) => e.name.endsWith('.mp4')).length";
+  const loaded = await t.js(mp4s);
+  await t.js("document.getElementById('tour-video').click()");
+  await t.sleep(300);
+  const open = await t.js(`(() => { const d = document.getElementById('explainer'), v = d.querySelector('video'), r = v.getBoundingClientRect();
+    return { open: d.open, modal: d.matches(':modal'), focus: document.activeElement?.id, name: v.getAttribute('aria-labelledby'),
+      inView: r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 }; })()`);
+  t.check('Watch the video opens the explainer video in a modal dialog that fits the screen, with nothing loaded before',
+    loaded === 0 && open.open && open.modal && open.focus === 'explainer-close' && open.name === 'explainer-title' && open.inView,
+    JSON.stringify({ loaded, open }));
+  await t.key('Escape', 27);
+  await t.sleep(200);
+  const closed = await t.js(`(() => ({ open: document.getElementById('explainer').open, focus: document.activeElement?.id,
+    paused: document.querySelector('#explainer video').paused }))()`);
+  t.check('Escape closes it, the video stops and the focus is back on Watch the video', !closed.open && closed.paused
+    && closed.focus === 'tour-video', JSON.stringify(closed));
+  await t.js("document.getElementById('tour-video').click()");
+  await t.sleep(200);
+  await t.js("document.getElementById('explainer').dispatchEvent(new MouseEvent('click', { bubbles: true }))");
+  await t.sleep(200);
+  t.check('a click beside the video closes it', !(await t.js("document.getElementById('explainer').open")));
+  await t.js("document.getElementById('tour-video').click()");
+  await t.sleep(200);
+  await t.js("document.getElementById('explainer-close').click()");
+  await t.sleep(200);
+  t.check('the close cross closes it', !(await t.js("document.getElementById('explainer').open")));
+
+  // while it plays: one line on a wide screen, the count and the text side by side, symbols with their names
+  await t.load('', { query: 'tourms=4000', width: 1280, height: 900 });
+  await t.js("document.querySelector('#outcomes .outcomes').scrollIntoView({ block: 'center' })");
+  await t.until("document.getElementById('tour-count').textContent === '1 / 5'", 4000);
+  const line = await t.js(`(() => { const r = (id) => document.getElementById(id).getBoundingClientRect();
+    const count = r('tour-count'), text = r('tour-text'), play = document.getElementById('tour-play');
+    return { beside: text.left > count.right && Math.abs(text.top - count.top) < 14, height: Math.round(r('tour').height),
+      video: document.getElementById('tour-video').hidden, icon: play.classList.contains('icon'), title: play.title, word: play.textContent,
+      next: document.getElementById('tour-next').title, skip: document.getElementById('tour-skip').title }; })()`);
+  t.check('while it plays the text follows the count on one line, under the video button, with Pause, Next and Skip as symbols',
+    line.beside && line.height < 64 && line.video && line.icon && line.title === 'Pause' && line.word === 'Pause'
+    && line.next === 'Next' && line.skip === 'Skip', JSON.stringify(line));
+  await t.screenshot('tour-1280', { viewport: true });
 }
 
 // --- The map in full screen -------------------------------------------------------------------

@@ -24,6 +24,10 @@
   <svg class="sprite" aria-hidden="true">
     <symbol id="icon-share" viewBox="0 0 16 16"><g fill="currentColor"><circle cx="12" cy="3.5" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="12" cy="12.5" r="2"/></g><path d="M5.7 7 10.3 4.5M5.7 9l4.6 2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
     <symbol id="icon-download" viewBox="0 0 16 16"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="icon-play" viewBox="0 0 16 16"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></symbol>
+    <symbol id="icon-pause" viewBox="0 0 16 16"><path d="M4 2.8h2.8v10.4H4zM9.2 2.8H12v10.4H9.2z" fill="currentColor"/></symbol>
+    <symbol id="icon-next" viewBox="0 0 16 16"><path d="M3 2.8v10.4L10 8z" fill="currentColor"/><path d="M11.2 2.8H13v10.4h-1.8z" fill="currentColor"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
   </svg>
   <header class="mast">
     <div class="wrap">
@@ -54,11 +58,11 @@
           <p class="note" id="outcomes-intro"></p>
         </div>
         <div class="tour" id="tour">
-          <div class="tour-head">
-            <span class="tour-count" id="tour-count"></span>
-            <button type="button" id="tour-play">Play</button><button type="button" id="tour-next" hidden>Next</button><button type="button" id="tour-skip" hidden>Skip</button>
-          </div>
+          <span class="tour-count" id="tour-count"></span>
           <p class="tour-text" id="tour-text" aria-live="polite"></p>
+          <div class="tour-buttons">
+            <button type="button" id="tour-play">Play</button><button type="button" id="tour-video">Watch the video</button><button type="button" class="icon" id="tour-next" title="Next" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-next"/></svg><span class="visually-hidden">Next</span></button><button type="button" class="icon" id="tour-skip" title="Skip" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-close"/></svg><span class="visually-hidden">Skip</span></button>
+          </div>
         </div>
         <div class="outcomes">
           <div class="countcol">
@@ -386,6 +390,18 @@
       </div>
     </section>
   </main>
+
+  <dialog class="explainer" id="explainer" aria-labelledby="explainer-title">
+    <div class="explainer-box">
+      <div class="explainer-head">
+        <h2 id="explainer-title">How House elections work</h2>
+        <button type="button" class="icon" id="explainer-close" title="Close"><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-close"/></svg><span class="visually-hidden">Close</span></button>
+      </div>
+      <video controls preload="none" playsinline width="540" height="960" poster="video/2-somevotes-house-elections-explainer-poster.webp" aria-labelledby="explainer-title">
+        <source src="video/2-somevotes-house-elections-explainer-720.mp4" type="video/mp4">
+      </video>
+    </div>
+  </dialog>
 
   <footer>
     <div class="wrap">

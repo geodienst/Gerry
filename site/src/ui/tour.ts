@@ -1,6 +1,7 @@
 // The explainer at the top of chapter 01: a few steps that play by
 // themselves once the chapter is in view and drive the rows, the waffle and the slider. Pause, Next and Skip while it plays,
-// Replay afterwards. A click on a row or a move of the slider hands the controls to the reader. With reduced motion it
+// as symbols on one line with the text; at rest, before and after, Play or Replay beside Watch the video, which opens the
+// explainer video in a dialog. A click on a row or a move of the slider hands the controls to the reader. With reduced motion it
 // waits for Play. Texts come from lib/chapters.ts (outcomesView().tour); this module only plays them.
 // ?notour leaves the explainer out (the site checks use it); ?tourms=N sets the time per step in milliseconds.
 // A shared link to the chapter (?count=neutral&vote=49.2) keeps its row and vote share: the explainer then waits for Play.
@@ -29,6 +30,8 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
   const play = $<HTMLButtonElement>('tour-play');
   const ahead = $<HTMLButtonElement>('tour-next');
   const skip = $<HTMLButtonElement>('tour-skip');
+  const watchVideo = $<HTMLButtonElement>('tour-video');
+  openVideo(watchVideo);
   let step = -1;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let state: 'idle' | 'playing' | 'paused' | 'done' = 'idle';
@@ -62,7 +65,8 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
   function start() {
     box.classList.remove('done');
     state = 'playing';
-    play.textContent = 'Pause';
+    label(play, 'Pause', 'pause');
+    watchVideo.hidden = true;
     ahead.hidden = false;
     skip.hidden = false;
     holdHeight();
@@ -72,11 +76,11 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
   function pause() {
     state = 'paused';
     clearTimeout(timer);
-    play.textContent = 'Play';
+    label(play, 'Play', 'play');
   }
   function resume() {
     state = 'playing';
-    play.textContent = 'Pause';
+    label(play, 'Pause', 'pause');
     step -= 1; // the step that was paused starts again
     next();
   }
@@ -92,8 +96,9 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
     text.textContent = tour.end;
     text.style.minHeight = '';
     count.textContent = '';
-    play.textContent = 'Replay';
-    box.classList.add('done'); // a slim line: only the button stays
+    label(play, 'Replay');
+    box.classList.add('done'); // a slim line: only the two buttons stay
+    watchVideo.hidden = false;
     ahead.hidden = true;
     skip.hidden = true;
   }
@@ -129,4 +134,37 @@ export function createTour(tour: OutcomesView['tour'], outcomes: Driven, { reduc
     }
   }, { threshold: 0.3 });
   watch.observe(chapter);
+}
+
+/** A tour button as a word (Play, Replay) or, while the tour runs, as a symbol that keeps its word for screen readers. */
+function label(button: HTMLButtonElement, word: string, icon?: 'play' | 'pause') {
+  button.classList.toggle('icon', Boolean(icon));
+  if (icon) {
+    button.innerHTML = `<svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-${icon}"/></svg><span class="visually-hidden">${word}</span>`;
+    button.title = word;
+  } else {
+    button.textContent = word;
+    button.removeAttribute('title');
+  }
+}
+
+/**
+ * Watch the video opens the explainer video in a dialog and plays it, as the reader asked for it. Escape, the close
+ * cross and a click beside the video close it; closing pauses the video and gives the focus back to the button.
+ */
+function openVideo(button: HTMLButtonElement) {
+  const dialog = $<HTMLDialogElement>('explainer');
+  const video = dialog.querySelector('video');
+  if (!video) return;
+  button.addEventListener('click', () => {
+    dialog.showModal();
+    video.play().catch(() => { /* the controls stay for the reader to start it */ });
+  });
+  $<HTMLButtonElement>('explainer-close').addEventListener('click', () => dialog.close());
+  // the dialog itself is only hit beside its box, on the backdrop
+  dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+  dialog.addEventListener('close', () => {
+    video.pause();
+    button.focus();
+  });
 }

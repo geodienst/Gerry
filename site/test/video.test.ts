@@ -107,8 +107,29 @@ test('three videos in the order teaser, explainer, How to rig a map, each with i
     ['video-house', 'How House elections work', 'PT1M40S', '1:40'],
     ['video-rig', 'How to rig a map', 'PT1M7S', '1:07'],
   ]);
-  // the players are the only ones on the page
-  assert.equal((html.match(/<video\b/g) ?? []).length, cards.length);
+  // besides them only the dialog of chapter 01 has a player
+  assert.equal((html.match(/<video\b/g) ?? []).length, cards.length + 1);
+});
+
+test('Watch the video in chapter 01 opens a dialog with the explainer, which loads nothing before it opens', () => {
+  const tour = /<div class="tour" id="tour">[\s\S]*?\n {8}<\/div>/.exec(html)?.[0] ?? '';
+  assert.match(tour, /<button type="button" id="tour-play">Play<\/button><button type="button" id="tour-video">Watch the video<\/button>/);
+  for (const [id, name, icon] of [['tour-next', 'Next', 'next'], ['tour-skip', 'Skip', 'close']]) {
+    assert.ok(tour.includes(`id="${id}" title="${name}" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><use href="#icon-${icon}"/></svg>`
+      + `<span class="visually-hidden">${name}</span>`), id);
+  }
+  const dialog = /<dialog class="explainer" id="explainer" aria-labelledby="explainer-title">[\s\S]*?<\/dialog>/.exec(html)?.[0] ?? '';
+  assert.match(dialog, /<h2 id="explainer-title">How House elections work<\/h2>/);
+  assert.match(dialog, /id="explainer-close" title="Close">[\s\S]*?<span class="visually-hidden">Close<\/span>/);
+  const video = /<video\b([^>]*)>([\s\S]*?)<\/video>/.exec(dialog);
+  assert.ok(video, 'no player in the dialog');
+  const attrs = video[1];
+  for (const word of ['controls', 'preload="none"', 'playsinline', 'poster="video/2-somevotes-house-elections-explainer-poster.webp"',
+    'aria-labelledby="explainer-title"']) {
+    assert.ok(attrs.includes(word), word);
+  }
+  assert.ok(!/\bautoplay\b/.test(attrs), 'autoplay');
+  assert.match(video[2], /<source src="video\/2-somevotes-house-elections-explainer-720\.mp4" type="video\/mp4">/);
 });
 
 test('each player has controls, preload="none", playsinline, no autoplay, a poster, an MP4 of the site and its title as name', () => {
