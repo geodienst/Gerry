@@ -280,8 +280,10 @@ test('decideView: Senate, competitive districts, redraws and the tables', () => 
   const s = senateView(r);
   assert.deepEqual([view.senate.title, view.senate.needed, view.senate.sentence, view.senate.note],
     [s.title, s.needed, s.sentence, s.note]);
-  // competitive: enacted 81, median 96, band 87 to 105; domain 75 to 110 in steps of 5 (rowDomain)
-  assert.deepEqual(view.competitive.figures, [{ value: '81', label: 'enacted maps' }, { value: '96', label: 'neutral median' }]);
+  // competitive: enacted 81, median 96, band 87 to 105; domain 75 to 110 in steps of 5 (rowDomain);
+  // the vote-proportional count has no districts, so it is a figure only, not a row of dots
+  assert.deepEqual(view.competitive.figures, [{ value: '81', label: 'enacted maps' }, { value: '96', label: 'neutral median' },
+    { value: '0', label: 'vote-proportional, no districts' }]);
   assert.deepEqual(view.competitive.dots.domain, [75, 110]);
   assert.deepEqual(view.competitive.dots.ticks.map((t) => t.text), ['75', '80', '85', '90', '95', '100', '105', '110']);
   assert.deepEqual(view.competitive.dots.rows, [
