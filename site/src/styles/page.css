@@ -57,7 +57,8 @@ footer p { margin: 0 0 0.3rem; max-width: 90ch; }
 .credit:hover { text-decoration: underline; }
 .credit img { width: 1.25rem; height: 1.25rem; }
 .credits { display: flex; flex-wrap: wrap; gap: 0.8rem 1.6rem; align-items: center; }
-.rug img { display: block; width: auto; height: 2.25rem; }
+/* as tall as the two lines of text on the left: two lines of 1.2rem and the 0.3rem between them */
+.rug img { display: block; width: auto; height: 2.7rem; }
 /* In dark mode the logos sit on a light ground so their red stays readable. */
 @media (prefers-color-scheme: dark) {
   .credit img { background: #fff; padding: 0.15rem; border-radius: 50%; }
