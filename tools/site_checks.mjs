@@ -1373,6 +1373,18 @@ async function graphics(t) {
   t.check('after the slider moves, Download PNG still saves the image of the 2016 and 2020 votes',
     await t.until('window.saved.length === 1', 3000) && await t.js("window.saved[0][0] === 'somevotes-national-51-8.png'"),
     await t.js('JSON.stringify(window.saved)'));
+  // More: the district map as a static image, closed at first; its preview loads only when More opens
+  const mapCaption = 'Votes: the 2016 and 2020 presidential results. Maps used on November 3, 2026. '
+    + 'Graphic: Govert Schoof, Geodienst, University of Groningen, somevotes.org (CC BY 4.0).';
+  const closed = await t.js(`(() => { const d = document.querySelector('#graphics details.gmore'); const img = d?.querySelector('img');
+    return !!img && !d.open && d.querySelector('summary').textContent === 'More' && img.naturalWidth === 0; })()`);
+  await t.js("{ const d = document.querySelector('#graphics details.gmore'); d.open = true; d.scrollIntoView({ block: 'center' }); }");
+  const opened = await t.until("document.querySelector('#graphic-map img').naturalWidth > 0", 3000);
+  await t.js("window.copied = ''; document.querySelector('#graphic-map [data-action=copy]').click()");
+  t.check('More is closed at first and opens on the district map, with its caption, the full-size PNG and Copy caption',
+    closed && opened && await t.js(`document.querySelector('#graphic-map .gcaption').textContent === ${JSON.stringify(mapCaption)}`)
+    && await t.js("document.querySelector('#graphic-map a[download]').getAttribute('href') === 'img/somevotes-map-all-states.png'")
+    && await t.until(`window.copied === ${JSON.stringify(mapCaption)}`, 2000), JSON.stringify({ closed, opened }));
   await t.screenshot('graphics-1280', { viewport: false });
 }
 
