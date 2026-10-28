@@ -1497,9 +1497,9 @@ async function videos(t) {
       === 'Teaser 0:57,How House elections work 1:40,How to rig a map 1:07', JSON.stringify(wide.map((p) => [p.name, p.time])));
   t.check('each has Download MP4 from the release, and the text in the video',
     JSON.stringify(wide.map((p) => p.links)) === JSON.stringify([
-      ['Download MP4 videos-2026-10-27/1-somevotes-teaser-9x16-v6.2.mp4'],
-      ['Download MP4 videos-2026-10-27/2-somevotes-house-elections-explainer-9x16-v2.8.mp4'],
-      ['Download MP4 videos-2026-10-27/3-somevotes-how-to-rig-a-map-9x16-v2.1.mp4'],
+      ['Download MP4 videos-2026-10-27/1-somevotes-teaser-9x16-v6.3.mp4'],
+      ['Download MP4 videos-2026-10-27/2-somevotes-house-elections-explainer-9x16-v2.9.mp4'],
+      ['Download MP4 videos-2026-10-27/3-somevotes-how-to-rig-a-map-9x16-v2.2.mp4'],
     ]) && wide.every((p) => p.text === 'Text in the video'), JSON.stringify(wide.map((p) => p.links)));
   t.check('on a wide screen the three stand side by side, level, each 300 to 420 px wide with its title above it and within 80% of the screen height',
     wide.length === 3 && wide.every((p, i) => p.box.y === wide[0].box.y && (i === 0 || p.box.x > wide[i - 1].box.right)

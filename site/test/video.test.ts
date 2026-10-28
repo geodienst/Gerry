@@ -160,9 +160,9 @@ test('the videos come from the site itself: no frames, embeds or players of othe
 
 test('under each player Download MP4 from the release videos-2026-10-27, and no other download', () => {
   assert.deepEqual(cards.map((c) => c.links), [
-    [['Download MP4', `${RELEASE}1-somevotes-teaser-9x16-v6.2.mp4`]],
-    [['Download MP4', `${RELEASE}2-somevotes-house-elections-explainer-9x16-v2.8.mp4`]],
-    [['Download MP4', `${RELEASE}3-somevotes-how-to-rig-a-map-9x16-v2.1.mp4`]],
+    [['Download MP4', `${RELEASE}1-somevotes-teaser-9x16-v6.3.mp4`]],
+    [['Download MP4', `${RELEASE}2-somevotes-house-elections-explainer-9x16-v2.9.mp4`]],
+    [['Download MP4', `${RELEASE}3-somevotes-how-to-rig-a-map-9x16-v2.2.mp4`]],
   ]);
   // these are all the links to video files on the page: Graphics to reuse has none of its own
   assert.equal([...html.matchAll(/<a\b[^>]*\bhref="[^"]+\.mp4"/g)].length, 3);
