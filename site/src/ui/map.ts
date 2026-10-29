@@ -107,7 +107,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   const realCoast = path(topoMesh(topology as never, topology.objects.states as never, (a, b) => a === b));
   const coast = borderLayer.append('path').attr('class', 'coast').attr('d', realCoast);
   // in the Gerrygram the real size of a state as a dashed line: always for Texas and California, and for the chosen state
-  const outlines = borderLayer.selectAll<SVGPathElement, StateFeature>('path.realsize').data(statesGeo.features).join('path')
+  const outlines = layer.insert('g', '.hoverline').selectAll<SVGPathElement, StateFeature>('path.realsize').data(statesGeo.features).join('path')
     .attr('class', 'realsize').attr('d', (f) => gerry.outlines[f.properties.postal])
     .classed('pale', (f) => !index.states[f.properties.postal]?.effects.drawing).attr('display', 'none');
   // the view 'states' draws the states, their lines and the coast as the Gerrygram, the district views as they are
@@ -194,7 +194,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
       coast.raise(); // over every plain state line, which would hide it; under the outline of the chosen state
       borders.classed('on', (f) => f.properties.postal === selected);
       borders.filter((f) => f.properties.postal === selected).raise();
-      outlines.attr('display', (f) => (view === 'states' && (ALWAYS_OUTLINED.has(f.properties.postal) || f.properties.postal === selected) ? null : 'none')).raise();
+      outlines.attr('display', (f) => (view === 'states' && (ALWAYS_OUTLINED.has(f.properties.postal) || f.properties.postal === selected) ? null : 'none'));
     },
     /** Zoom to a state, or back to the whole map for "". */
     zoomTo(postal: Postal, animate: boolean) {
