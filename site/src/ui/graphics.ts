@@ -292,7 +292,7 @@ export function mountGraphics(results: Results, view: OutcomesView, palette: Pal
   on(nationalCard, 'copy', () => { void copyCaption(national.caption); });
   on(statesCard, 'download', () => download(statesCard.canvas, states.file));
   on(statesCard, 'copy', () => { void copyCaption(states.caption); });
-  const mapCard = document.getElementById('graphic-map')!;
+  const mapCard = document.getElementById('graphic-gerrygram')!;
   mapCard.querySelector('[data-action="copy"]')!.addEventListener('click', () => {
     void copyCaption(mapCard.querySelector('.gcaption')!.textContent!);
   });

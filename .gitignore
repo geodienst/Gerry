@@ -20,3 +20,7 @@ dist/
 .DS_Store
 Thumbs.db
 .claude/settings.local.json
+
+# written by tools/gerrygram/make.mjs
+tools/gerrygram/gerrygram.html
+tools/gerrygram/gerrygram.svg
