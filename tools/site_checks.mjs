@@ -19,6 +19,8 @@ async function map(t) {
   t.check('the map title above the map names the view of the drawing effect', (await t.text('#map-title')) === 'Drawing effect by state');
   // the Gerrygram: the states drawn grown or squeezed, Texas larger than on the district map, every path valid
   const gerry = await t.js(`(() => { const tx = ${stateOf('TX')}.getBBox(); return { w: tx.width, d: [...document.querySelectorAll('#map path.statefill')].every((p) => /^M[\\d.]/.test(p.getAttribute('d'))) }; })()`);
+  const dashed = await t.js("[...document.querySelectorAll('#map path.realsize')].filter((p) => p.getAttribute('display') !== 'none').map((p) => p.__data__.properties.postal).sort().join()");
+  t.check('the Gerrygram shows the real size of Texas and California as dashed lines, and no other', dashed === 'CA,TX', dashed);
   await t.js("document.getElementById('view-districts').click()");
   const real = await t.js(`${stateOf('TX')}.getBBox().width`);
   t.check('in the view of the drawing effect the states are the Gerrygram: Texas wider than on the district map', gerry.d && gerry.w > real * 1.2, JSON.stringify({ gerry, real }));

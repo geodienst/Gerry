@@ -38,7 +38,8 @@ export function areaOf(rings: Ring[][]): number {
   return Math.abs(rings.flat().reduce((t, r) => t + ringArea(r), 0));
 }
 
-function centroidOf(rings: Ring[][]): Point {
+/** The area-weighted center of a state's rings. */
+export function centroidOf(rings: Ring[][]): Point {
   let x = 0; let y = 0; let total = 0;
   for (const ring of rings.flat()) {
     let cx = 0; let cy = 0; let a = 0;
@@ -86,14 +87,28 @@ export function cartogram(arcs: Point[][], states: CartogramState[], rounds = RO
   return out;
 }
 
-/** Scale and move points so their bounding box fits [[x0, y0], [x1, y1]], centered, keeping the shape. */
-export function fitPoints(arcs: Point[][], [[x0, y0], [x1, y1]]: [Point, Point]): Point[][] {
+/** The scale and shift { k, x, y } that fit the bounding box of points into [[x0, y0], [x1, y1]], centered. */
+export function fitOf(arcs: Point[][], [[x0, y0], [x1, y1]]: [Point, Point]) {
   let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
   for (const arc of arcs) for (const [x, y] of arc) { minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); }
   const k = Math.min((x1 - x0) / (maxX - minX), (y1 - y0) / (maxY - minY));
-  const ox = x0 + ((x1 - x0) - (maxX - minX) * k) / 2 - minX * k;
-  const oy = y0 + ((y1 - y0) - (maxY - minY) * k) / 2 - minY * k;
-  return arcs.map((arc) => arc.map(([x, y]) => [x * k + ox, y * k + oy] as Point));
+  return { k, x: x0 + ((x1 - x0) - (maxX - minX) * k) / 2 - minX * k, y: y0 + ((y1 - y0) - (maxY - minY) * k) / 2 - minY * k };
+}
+
+/** Scale and move points: by the fit of fitOf, or so their own bounding box fits the box, keeping the shape. */
+export function fitPoints(arcs: Point[][], box: [Point, Point], fit = fitOf(arcs, box)): Point[][] {
+  return arcs.map((arc) => arc.map(([x, y]) => [x * fit.k + fit.x, y * fit.k + fit.y] as Point));
+}
+
+/**
+ * Each state's real outline at the scale of the fitted Gerrygram, moved onto the center of its grown shape, so a
+ * reader sees how much it grew or shrank.
+ */
+export function realOutlines(real: Point[][], grown: Point[][], polygons: number[][][]): Ring[][] {
+  const [gx, gy] = centroidOf(ringsOf(polygons, grown));
+  const rings = ringsOf(polygons, real);
+  const [rx, ry] = centroidOf(rings);
+  return rings.map((polygon) => polygon.map((ring) => ring.map(([x, y]) => [x + gx - rx, y + gy - ry] as Point)));
 }
 
 /** An SVG path for rings. */

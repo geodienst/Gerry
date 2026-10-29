@@ -3,7 +3,7 @@
 // page, and in full screen from 900px, where the map and the record fill the window side by side, zooms too; on a
 // touch screen two fingers zoom and move, one finger scrolls the page.
 import { MAP, fitTransform, type Extent } from '../lib/axes.ts';
-import { cartogram, fitPoints, pathOf, ringsOf, type Point } from '../lib/cartogram.ts';
+import { cartogram, fitOf, fitPoints, pathOf, realOutlines, ringsOf, type Point } from '../lib/cartogram.ts';
 import { shareStops, shareTicks, effectBoxes } from '../lib/colors.ts';
 import { districtTip, stateTip, closeTip, tapLine, isClose, LEGEND_TEXT, SINGLE_SEAT_PARTY } from '../lib/model.ts';
 import { geoAlbersUsa, geoPath, select, zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type GeoProjection } from 'd3';
@@ -15,6 +15,7 @@ import type { CloseLegend, Index, MapHints } from '../lib/model.ts';
 import { node } from './dom.ts';
 
 const ZOOM_MS = 650;
+const ALWAYS_OUTLINED = new Set(['TX', 'CA']); // the Gerrygram shows their real size also on the whole map
 
 type DistrictFeature = Feature<Polygon | MultiPolygon, DistrictProps>;
 type StateFeature = Feature<Polygon | MultiPolygon, StateProps>;
@@ -105,6 +106,10 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   // the edge of the country, where a state borders on no other state
   const realCoast = path(topoMesh(topology as never, topology.objects.states as never, (a, b) => a === b));
   const coast = borderLayer.append('path').attr('class', 'coast').attr('d', realCoast);
+  // in the Gerrygram the real size of a state as a dashed line: always for Texas and California, and for the chosen state
+  const outlines = borderLayer.selectAll<SVGPathElement, StateFeature>('path.realsize').data(statesGeo.features).join('path')
+    .attr('class', 'realsize').attr('d', (f) => gerry.outlines[f.properties.postal])
+    .classed('pale', (f) => !index.states[f.properties.postal]?.effects.drawing).attr('display', 'none');
   // the view 'states' draws the states, their lines and the coast as the Gerrygram, the district views as they are
   let shapes: 'real' | 'gerry' = 'real';
   function reshape(next: 'real' | 'gerry') {
@@ -189,6 +194,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
       coast.raise(); // over every plain state line, which would hide it; under the outline of the chosen state
       borders.classed('on', (f) => f.properties.postal === selected);
       borders.filter((f) => f.properties.postal === selected).raise();
+      outlines.attr('display', (f) => (view === 'states' && (ALWAYS_OUTLINED.has(f.properties.postal) || f.properties.postal === selected) ? null : 'none')).raise();
     },
     /** Zoom to a state, or back to the whole map for "". */
     zoomTo(postal: Postal, animate: boolean) {
@@ -224,13 +230,19 @@ function gerrygram(topology: MapTopology, projection: GeoProjection, index: Inde
     const postal = g.properties.postal;
     return { postal, polygons: polygonsOf(g), shift: index.states[postal]?.effects.drawing ?? 0, fixed: postal === 'AK' || postal === 'HI' };
   });
-  const arcs = fitPoints(cartogram(projected, states), [[8, 8], [MAP.width - 8, MAP.height - 8]]);
+  const box: [Point, Point] = [[8, 8], [MAP.width - 8, MAP.height - 8]];
+  const grown = cartogram(projected, states);
+  const fit = fitOf(grown, box);
+  const arcs = fitPoints(grown, box, fit);
+  const real = fitPoints(projected, box, fit); // the real states at the scale of the Gerrygram
   const paths: Record<string, string> = {};
+  const outlines: Record<string, string> = {};
   const bounds: Record<string, Extent> = {};
   const uses = new Map<number, number>();
   for (const s of states) {
     const rings = ringsOf(s.polygons, arcs);
     paths[s.postal] = pathOf(rings);
+    outlines[s.postal] = pathOf(realOutlines(real, arcs, s.polygons));
     const points = rings.flat(2);
     bounds[s.postal] = [[Math.min(...points.map((p) => p[0])), Math.min(...points.map((p) => p[1]))],
       [Math.max(...points.map((p) => p[0])), Math.max(...points.map((p) => p[1]))]];
@@ -238,7 +250,7 @@ function gerrygram(topology: MapTopology, projection: GeoProjection, index: Inde
   }
   const coast = [...uses].filter(([i, n]) => n === 1 && arcs[i].length > 1)
     .map(([i]) => `M${arcs[i].map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join('L')}`).join('');
-  return { paths, bounds, coast };
+  return { paths, outlines, bounds, coast };
 }
 
 /** The legend under the map for the current view (site design, chapter 3). */
