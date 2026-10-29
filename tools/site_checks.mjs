@@ -14,9 +14,14 @@ const stateOf = (postal) => `[...document.querySelectorAll('#map path.statefill'
 // --- Task 6.3: the map ---------------------------------------------------------------------------
 async function map(t) {
   t.check('the page loads and draws the map', await t.load());
-  t.check('the map opens on "Districts: Democratic share"', await t.js(
-    "document.getElementById('view-districts').getAttribute('aria-pressed') === 'true' && document.getElementById('view-states').getAttribute('aria-pressed') === 'false' && document.querySelector('#map path.district').parentNode.getAttribute('display') !== 'none'"));
-  t.check('the map title above the map names the district view', (await t.text('#map-title')) === 'Democratic vote share by district');
+  t.check('the map opens on "States: drawing effect", the first of the three buttons', await t.js(
+    "document.getElementById('view-states').getAttribute('aria-pressed') === 'true' && document.getElementById('view-districts').getAttribute('aria-pressed') === 'false' && document.querySelector('#map path.statefill').parentNode.getAttribute('display') !== 'none' && document.querySelector('.seg[aria-label=\"Map view\"] button').id === 'view-states'"));
+  t.check('the map title above the map names the view of the drawing effect', (await t.text('#map-title')) === 'Drawing effect by state');
+  // the Gerrygram: the states drawn grown or squeezed, Texas larger than on the district map, every path valid
+  const gerry = await t.js(`(() => { const tx = ${stateOf('TX')}.getBBox(); return { w: tx.width, d: [...document.querySelectorAll('#map path.statefill')].every((p) => /^M[\\d.]/.test(p.getAttribute('d'))) }; })()`);
+  await t.js("document.getElementById('view-districts').click()");
+  const real = await t.js(`${stateOf('TX')}.getBBox().width`);
+  t.check('in the view of the drawing effect the states are the Gerrygram: Texas wider than on the district map', gerry.d && gerry.w > real * 1.2, JSON.stringify({ gerry, real }));
   await t.js("document.getElementById('view-districts').click()");
   t.check('435 districts and 50 states on the map',
     await t.js("document.querySelectorAll('#map path.district').length === 435 && document.querySelectorAll('#map path.statefill').length === 50"));
@@ -61,7 +66,7 @@ async function map(t) {
   await t.js('window.oldPage = true');
   await t.load('#TX');
   t.check('a page opened at #TX starts on Texas, zoomed in',
-    (await t.js('window.oldPage === undefined')) && await t.until(`document.getElementById('pick').value === 'TX' && ${ZOOM} > 2`));
+    (await t.js('window.oldPage === undefined')) && await t.until(`document.getElementById('pick').value === 'TX' && ${ZOOM} > 1.2`));
 
   await t.load();
   await t.js("document.getElementById('zoom-in').click()");
@@ -197,6 +202,7 @@ async function map(t) {
 // --- Task 6.6: the list and the sheet ------------------------------------------------------------
 async function list(t) {
   await t.load();
+  await t.js("document.getElementById('view-districts').click()");
   // Without a state the column follows the view of the map. The districts first: a bar per
   // five points of Democratic share from the lowest district (18.3%, bin 15%) to the highest (92.0%, bin 90%).
   t.check('without a state, in the view of the districts, the column shows the districts by share',
@@ -593,7 +599,7 @@ async function layout(t) {
   t.check('the four chapter titles have one size, at least a quarter larger than the lead sentence of chapter 01',
     heads.titles.length === 4 && heads.titles.every((s) => s === heads.titles[0]) && heads.titles[0] >= 1.25 * heads.lead, JSON.stringify(heads));
   // the national count comes first; State by state follows with its menu, views, zoom, colors and the list
-  const wanted = ['pick', 'view-districts', 'view-states', 'view-close', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
+  const wanted = ['pick', 'view-states', 'view-districts', 'view-close', 'zoom-in', 'zoom-out', 'zoom-reset', 'palette-party', 'palette-neutral', 'row'];
   t.check('Tab reaches the State menu, the view buttons, the zoom buttons, the color buttons and the list, in that order',
     wanted.every((id, i) => order.indexOf(id) > (i === 0 ? -1 : order.indexOf(wanted[i - 1]))), order.join(' '));
   t.check('no shape on the map is a tab stop', !order.includes('map shape'));
@@ -630,8 +636,8 @@ async function layout(t) {
   t.check('a state chosen with the State menu keeps the focus there and is announced',
     heard.focus === 'pick' && heard.live === 'polite' && heard.text === 'Nevada', JSON.stringify(heard));
   await t.js("document.querySelector('#sheet .back').click()");
-  // back to the column of the default view, the districts by share
-  const cleared = (await t.until(`${HEADING} === 'Districts by Democratic share'`)) && await t.text('#sheet-status');
+  // back to the column of the default view, the drawing effect by state
+  const cleared = (await t.until(`${HEADING} === 'Drawing effect by state'`)) && await t.text('#sheet-status');
   t.check('"Back" empties the live region', cleared === '', JSON.stringify(cleared));
 
   await t.load('', { dark: true });
@@ -1315,6 +1321,7 @@ async function largest(t) {
 // --- The tap line and the tooltip follow the state and the view ----------------------------------------------------
 async function tapline(t) {
   await t.load('', { width: 1280, height: 800 });
+  await t.js("document.getElementById('view-districts').click()");
   await t.click(await t.center(districtOf('TX')));
   const named = await t.text('#tapline');
   t.check('a click on a district names it under the map and outlines it', /^TX-\d+: /.test(named)
@@ -1359,7 +1366,7 @@ async function links(t) {
   await t.js("{ const p = document.getElementById('pick'); p.value = 'TX'; p.dispatchEvent(new Event('change')) }");
   await t.until("location.hash === '#TX'");
   await t.js('history.back()');
-  t.check('back from a state to #method shows the whole map again', await t.until(`location.hash === '#method' && ${HEADING} === 'Districts by Democratic share'`));
+  t.check('back from a state to #method shows the whole map again', await t.until(`location.hash === '#method' && ${HEADING} === 'Drawing effect by state'`));
   await t.load('#outcomes', { width: 1280, height: 800, query: 'notour&count=neutral&vote=49.2' });
   const kept = await t.js("location.search.includes('count=neutral') && location.search.includes('vote=49.2')");
   await t.js("document.querySelectorAll('#scen [role=radio]')[0].click()");

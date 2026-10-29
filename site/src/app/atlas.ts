@@ -15,7 +15,7 @@ import { renderClose, renderDistricts, renderList, renderSingle, renderState, re
 import type { Colors } from '../lib/colors.ts';
 import type { Index } from '../lib/model.ts';
 
-const VIEWS: MapView[] = ['districts', 'states', 'close'];
+const VIEWS: MapView[] = ['states', 'districts', 'close'];
 
 export interface SelectOptions {
   /** add the state to the browser history (#TX) */
@@ -38,7 +38,7 @@ export interface AtlasOptions {
 export type Atlas = ReturnType<typeof createAtlas>;
 
 export function createAtlas({ results, topology, index, colors: initialColors, reduceMotion }: AtlasOptions) {
-  const ui: { view: MapView; selected: Postal; zerosOpen: boolean } = { view: 'districts', selected: '', zerosOpen: false };
+  const ui: { view: MapView; selected: Postal; zerosOpen: boolean } = { view: 'states', selected: '', zerosOpen: false };
   let colors = initialColors;
   const sheet = $('sheet');
   const hints = mapHints({

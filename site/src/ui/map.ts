@@ -2,10 +2,11 @@
 // October 7, 2026, and the close races of October 8). Ctrl or Cmd plus scroll zooms, a plain scroll scrolls the
 // page, and in full screen from 900px, where the map and the record fill the window side by side, zooms too; on a
 // touch screen two fingers zoom and move, one finger scrolls the page.
-import { MAP, fitTransform } from '../lib/axes.ts';
+import { MAP, fitTransform, type Extent } from '../lib/axes.ts';
+import { cartogram, fitPoints, pathOf, ringsOf, type Point } from '../lib/cartogram.ts';
 import { shareStops, shareTicks, effectBoxes } from '../lib/colors.ts';
 import { districtTip, stateTip, closeTip, tapLine, isClose, LEGEND_TEXT, SINGLE_SEAT_PARTY } from '../lib/model.ts';
-import { geoAlbersUsa, geoPath, select, zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3';
+import { geoAlbersUsa, geoPath, select, zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type GeoProjection } from 'd3';
 import { feature as topoFeature, mesh as topoMesh } from 'topojson-client';
 import type { Feature, MultiPolygon, Polygon } from 'geojson';
 import type { DistrictProps, MapTopology, MapView, Postal, StateProps } from '../types.ts';
@@ -44,6 +45,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   const districtsGeo = topoFeature(topology, topology.objects.districts) as unknown as { features: DistrictFeature[] };
   const projection = geoAlbersUsa().fitExtent([[8, 8], [MAP.width - 8, MAP.height - 8]], { type: 'FeatureCollection', features: statesGeo.features });
   const path = geoPath(projection);
+  const gerry = gerrygram(topology, projection, index);
   const root = select(svg);
   root.append('rect').attr('class', 'bg').attr('width', MAP.width).attr('height', MAP.height);
   const layer = root.append('g');
@@ -52,7 +54,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   const borderLayer = layer.append('g');
   // the outline of the district under the mouse in the view 'close', over the state lines and the coast
   const hoverLine = layer.append('path').attr('class', 'hoverline').attr('display', 'none');
-  let view: MapView = 'districts';
+  let view: MapView = 'states';
 
   function showTip(event: PointerEvent, content: TipContent) {
     tip.replaceChildren(node('b', {}, content.title), ...content.lines.map((line) => node('span', {}, line)));
@@ -101,8 +103,18 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
   const borders = borderLayer.selectAll<SVGPathElement, StateFeature>('path').data(statesGeo.features).join('path')
     .attr('class', 'state').attr('d', path);
   // the edge of the country, where a state borders on no other state
-  const coast = borderLayer.append('path').attr('class', 'coast')
-    .attr('d', path(topoMesh(topology as never, topology.objects.states as never, (a, b) => a === b)));
+  const realCoast = path(topoMesh(topology as never, topology.objects.states as never, (a, b) => a === b));
+  const coast = borderLayer.append('path').attr('class', 'coast').attr('d', realCoast);
+  // the view 'states' draws the states, their lines and the coast as the Gerrygram, the district views as they are
+  let shapes: 'real' | 'gerry' = 'real';
+  function reshape(next: 'real' | 'gerry') {
+    if (next === shapes) return;
+    shapes = next;
+    const d = (f: StateFeature) => (next === 'gerry' ? gerry.paths[f.properties.postal] : path(f));
+    states.attr('d', d);
+    borders.attr('d', d);
+    coast.attr('d', next === 'gerry' ? gerry.coast : realCoast);
+  }
   // Zoom: wheel with Ctrl or Cmd, or plain in the wide full screen, touch only with two fingers, drag with the mouse.
   // The wheel delta is d3's, clamped to [-1, 1]: d3 multiplies it by 10 while Ctrl is held, which would make
   // one notch zoom 4x. A notch zooms at most 2x; a trackpad pinch (many small events) is as in d3.
@@ -158,6 +170,7 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
         districts.classed('picked', false);
       }
       view = nextView;
+      reshape(view === 'states' ? 'gerry' : 'real');
       const close = view === 'close';
       const fill = (id: string) => {
         const share = index.shareOf[id];
@@ -185,13 +198,47 @@ export function createMap({ svg, box, tip, tapline, gesture, index, topology, hi
         move(animate).call(zoom.transform, zoomIdentity);
         return;
       }
-      const t = fitTransform(path.bounds(feature));
+      const t = fitTransform(shapes === 'gerry' ? gerry.bounds[postal] : path.bounds(feature));
       move(animate).call(zoom.transform, zoomIdentity.translate(t.x, t.y).scale(t.k));
     },
     zoomBy(factor: number) {
       move(true).call(zoom.scaleBy, factor);
     },
   };
+}
+
+/**
+ * The Gerrygram in map coordinates (lib/cartogram.ts): the path of each state, the coast (the arcs only one state
+ * uses) and each state's bounds for the zoom, all fitted into the map like the real states.
+ */
+function gerrygram(topology: MapTopology, projection: GeoProjection, index: Index) {
+  const { scale: [sx, sy], translate: [tx, ty] } = topology.transform!;
+  const projected = topology.arcs.map((arc) => {
+    let x = 0; let y = 0;
+    return arc.map(([dx, dy]) => { x += dx; y += dy; return projection([x * sx + tx, y * sy + ty]); })
+      .filter((p): p is Point => p !== null);
+  });
+  const geometries = topology.objects.states.geometries as unknown as { type: string; arcs: number[][] | number[][][]; properties: StateProps }[];
+  const polygonsOf = (g: (typeof geometries)[number]) => (g.type === 'Polygon' ? [g.arcs as number[][]] : (g.arcs as number[][][]));
+  const states = geometries.map((g) => {
+    const postal = g.properties.postal;
+    return { postal, polygons: polygonsOf(g), shift: index.states[postal]?.effects.drawing ?? 0, fixed: postal === 'AK' || postal === 'HI' };
+  });
+  const arcs = fitPoints(cartogram(projected, states), [[8, 8], [MAP.width - 8, MAP.height - 8]]);
+  const paths: Record<string, string> = {};
+  const bounds: Record<string, Extent> = {};
+  const uses = new Map<number, number>();
+  for (const s of states) {
+    const rings = ringsOf(s.polygons, arcs);
+    paths[s.postal] = pathOf(rings);
+    const points = rings.flat(2);
+    bounds[s.postal] = [[Math.min(...points.map((p) => p[0])), Math.min(...points.map((p) => p[1]))],
+      [Math.max(...points.map((p) => p[0])), Math.max(...points.map((p) => p[1]))]];
+    for (const i of s.polygons.flat(2)) { const a = i >= 0 ? i : ~i; uses.set(a, (uses.get(a) ?? 0) + 1); }
+  }
+  const coast = [...uses].filter(([i, n]) => n === 1 && arcs[i].length > 1)
+    .map(([i]) => `M${arcs[i].map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join('L')}`).join('');
+  return { paths, bounds, coast };
 }
 
 /** The legend under the map for the current view (site design, chapter 3). */
@@ -244,4 +291,5 @@ export function drawLegend(el: HTMLElement, view: MapView, colors: Colors, close
   const blank = legend.append('span').attr('class', 'item');
   blank.append('i').attr('class', 'sw pale').attr('aria-hidden', 'true').style('background', colors.blank);
   blank.append('span').text(LEGEND_TEXT.blank);
+  if (view === 'states') legend.append('span').attr('class', 'note').text(LEGEND_TEXT.cartogram);
 }

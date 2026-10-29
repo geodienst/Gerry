@@ -135,6 +135,8 @@ export const LEGEND_TEXT = {
   high: 'More Democratic',
   // the six states with one seat, gray in the views of the districts and of the drawing effect
   blank: 'Gray: one seat, no districts',
+  // the view of the drawing effect draws the Gerrygram (lib/cartogram.ts)
+  cartogram: 'Custom cartogram +10% per seat.',
 };
 
 // --- "Drawing effect by state" and the state sheet (Task 6.4) -----------------------------------
